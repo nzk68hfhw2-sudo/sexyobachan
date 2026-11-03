@@ -93,7 +93,7 @@ function buildShell(P) {
   B(1.4, 2.35, 0.06, sk, 7.3, 1.17, 5.12); B(0.2, 1.6, 0.06, sk, -7.95, 1.75, 5.12); B(0.5, 1.6, 0.06, sk, 5.15, 1.75, 5.12);
   B(16.4, 0.16, 0.08, M.paintRed, 0, 0.8, 5.16); B(16.4, 0.16, 0.08, M.paintRed, 0, 2.72, 5.16);
   B(0.06, H + 0.4, 10.6, sk, 8.12, (H + 0.4) / 2, -0.1); B(0.06, H + 0.4, 10.6, sk, -8.12, (H + 0.4) / 2, -0.1);
-  B(16.6, 0.4, 10.8, M.black, 0, H + 0.2, -0.1); // roof slab
+  B(16.6, 0.4, 10.8, M.black, 0, H + 0.24, -0.1); // roof slab (kept off the ceiling plane to avoid z-fighting)
   B(16.8, 0.22, 0.3, M.chrome, 0, H + 0.28, 5.2); // roof edge trim
   // front door (glass with chrome frame) — hinged group for opening
   var door = group(P, D.door[0] + 0.02, 0, 5.0);

@@ -122,6 +122,7 @@ function addPick(obj, fn, opt) { opt = opt || {}; obj.userData.pick = { fn: fn, 
 function removePick(obj) { var i = PICKS.indexOf(obj); if (i >= 0) PICKS.splice(i, 1); }
 function pickAt(cx, cy) {
   if (!RAY) { RAY = new THREE.Raycaster(); RAYV = new THREE.Vector2(); }
+  if (RAY.layers && RAY.layers.enable) { RAY.layers.enable(LAYER_REAL_ONLY); }
   RAYV.set(cx / RENDER.w * 2 - 1, -(cy / RENDER.h) * 2 + 1); RAY.setFromCamera(RAYV, RENDER.camera); RAY.far = 40;
   var list = PICKS.filter(function (o) { var p = o.userData.pick; var vis = true; o.traverseAncestors(function (a) { if (!a.visible) vis = false; }); return vis && o.visible && (!p.stations || p.stations.indexOf(CAM.station) >= 0); });
   var hits = RAY.intersectObjects(list, true);

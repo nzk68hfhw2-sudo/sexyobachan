@@ -1307,7 +1307,7 @@ function buildShell(P) {
   B(1.4, 2.35, 0.06, sk, 7.3, 1.17, 5.12); B(0.2, 1.6, 0.06, sk, -7.95, 1.75, 5.12); B(0.5, 1.6, 0.06, sk, 5.15, 1.75, 5.12);
   B(16.4, 0.16, 0.08, M.paintRed, 0, 0.8, 5.16); B(16.4, 0.16, 0.08, M.paintRed, 0, 2.72, 5.16);
   B(0.06, H + 0.4, 10.6, sk, 8.12, (H + 0.4) / 2, -0.1); B(0.06, H + 0.4, 10.6, sk, -8.12, (H + 0.4) / 2, -0.1);
-  B(16.6, 0.4, 10.8, M.black, 0, H + 0.2, -0.1); // roof slab
+  B(16.6, 0.4, 10.8, M.black, 0, H + 0.24, -0.1); // roof slab (kept off the ceiling plane to avoid z-fighting)
   B(16.8, 0.22, 0.3, M.chrome, 0, H + 0.28, 5.2); // roof edge trim
   // front door (glass with chrome frame) — hinged group for opening
   var door = group(P, D.door[0] + 0.02, 0, 5.0);
@@ -2041,6 +2041,7 @@ function addPick(obj, fn, opt) { opt = opt || {}; obj.userData.pick = { fn: fn, 
 function removePick(obj) { var i = PICKS.indexOf(obj); if (i >= 0) PICKS.splice(i, 1); }
 function pickAt(cx, cy) {
   if (!RAY) { RAY = new THREE.Raycaster(); RAYV = new THREE.Vector2(); }
+  if (RAY.layers && RAY.layers.enable) { RAY.layers.enable(LAYER_REAL_ONLY); }
   RAYV.set(cx / RENDER.w * 2 - 1, -(cy / RENDER.h) * 2 + 1); RAY.setFromCamera(RAYV, RENDER.camera); RAY.far = 40;
   var list = PICKS.filter(function (o) { var p = o.userData.pick; var vis = true; o.traverseAncestors(function (a) { if (!a.visible) vis = false; }); return vis && o.visible && (!p.stations || p.stations.indexOf(CAM.station) >= 0); });
   var hits = RAY.intersectObjects(list, true);
@@ -2653,7 +2654,7 @@ function closeDocs(silent) {
   ov.classList.add('hide'); setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 380);
   var f = DOC.onClose; DOC.onClose = null; if (f && !silent) f();
 }
-function tapeHTML(spots) { return (spots || [[-8, -10, -8], [null, -10, 7]]).map(function (s) { return '<div class="tape" style="' + (s[0] == null ? 'right:-8px' : 'left:' + s[0] + 'px') + ';top:' + s[1] + 'px;transform:rotate(' + s[2] + 'deg)"></div>'; }).join(''); }
+function tapeHTML(spots) { return (spots || [[8, -10, -8], [null, -10, 7]]).map(function (s) { return '<div class="tape" style="' + (s[0] == null ? 'right:8px' : 'left:' + s[0] + 'px') + ';top:' + s[1] + 'px;transform:rotate(' + s[2] + 'deg)"></div>'; }).join(''); }
 function docRules(list, night) { // list: [{n,en,ja,fake,red,redJa,ul}]
   var real = list.filter(function (r) { return !r.fake; }), fakes = list.filter(function (r) { return r.fake; });
   var h = '<div class="doc rules" style="background-image:url(' + PAPER.rules + ');--r:-1.2deg">' + tapeHTML() +
@@ -2716,6 +2717,7 @@ var AUDIO = { ctx: null, ok: false, buf: {}, noise: {}, music: null, juke: null,
 var SONGS = { title: 'audio/sunny_side_diner.m4a', boogie: 'audio/diner_boogie.m4a', warped: 'audio/warped_diner.m4a', jingle: 'audio/jingle_in_reverse.m4a' };
 function audioUnlock() {
   if (AUDIO.ctx) { if (AUDIO.ctx.state !== 'running') try { AUDIO.ctx.resume(); } catch (e) {} return; }
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {} // iOS: play even with the silent switch on
   var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
   try { AUDIO.ctx = new AC({ latencyHint: 'interactive' }); } catch (e) { try { AUDIO.ctx = new AC(); } catch (e2) { return; } }
   var c = AUDIO.ctx;
@@ -3349,7 +3351,7 @@ function makePerson(o) {
   // hair styles
   buildHair(P, head, hairM, o);
   // glasses frame (3D)
-  if (o.glasses && !o.faceless) { var gm = stdMat({ color: 0x1a1a1a, roughness: 0.3, metalness: 0.5 }); var gb = mesh(new THREE.TorusGeometry(0.024, 0.003, 4, 16), gm, -0.035, 0.012, 0.106, head); var gb2 = mesh(new THREE.TorusGeometry(0.024, 0.003, 4, 16), gm, 0.035, 0.012, 0.106, head); }
+  if (o.glasses && !o.faceless) { var gm = stdMat({ color: 0x1a1a1a, roughness: 0.3, metalness: 0.5 }); P.glasses = [mesh(new THREE.TorusGeometry(0.024, 0.003, 4, 16), gm, -0.035, 0.012, 0.106, head), mesh(new THREE.TorusGeometry(0.024, 0.003, 4, 16), gm, 0.035, 0.012, 0.106, head)]; }
   // arms
   ['L', 'R'].forEach(function (sd, i) {
     var s = i ? 1 : -1;
@@ -3449,6 +3451,7 @@ function revealHorror(P, k) { // k 0..1
   if (!P.horror) return; var h = P.horror; h.k = k; h.mesh.visible = k > 0.001; h.mat.opacity = k; h.mat.emissiveIntensity = 0.35 * k;
   P.headM.color.setScalar(1 - k * 0.75); P.skinM.color.set(rgbs(P.o.skin)).multiplyScalar(1 - k * 0.6);
   if (P.eyes) P.eyes.forEach(function (e) { e.visible = k < 0.5; });
+  if (P.glasses) P.glasses.forEach(function (g) { g.visible = k < 0.3; });
   if (P.parts.veil) P.parts.veil.visible = k < 0.3;
 }
 function disposePerson(P) { if (P.root.parent) P.root.parent.remove(P.root); P.root.traverse(function (m) { if (m.isMesh) { m.geometry.dispose(); } }); P.mats.forEach(function (m) { if (m.map) m.map.dispose(); m.dispose(); }); removeHorror(P); }
@@ -3472,11 +3475,11 @@ function updatePerson(P, dt, camPos) {
   } else { rot(pr.thighL, 0, 0, 0, k, dt); rot(pr.thighR, 0, 0, 0, k, dt); rot(pr.shinL, 0, 0, 0, k, dt); rot(pr.shinR, 0, 0, 0, k, dt); pr.hips.position.y = damp(pr.hips.position.y, 0.9, k, dt); }
   // breathing / spine
   var br = Math.sin(t * 1.6) * 0.012;
-  rot(pr.spine, (a === 'lean' ? 0.2 : 0.04) + br + (a === 'eat' ? 0.18 : 0) + (a === 'lunge' ? 0.5 : 0), 0, 0, 4, dt);
+  rot(pr.spine, (a === 'lean' ? 0.2 : 0.04) + br + (a === 'eat' ? 0.18 : 0) + (a === 'lunge' ? 0.5 : 0) + (a === 'walk' ? 0.06 : 0), a === 'walk' ? Math.sin(t * 7) * 0.12 : 0, a === 'walk' ? Math.sin(t * 7) * 0.03 : 0, a === 'walk' ? 10 : 4, dt);
   // arms by pose
   var L = { sx: 0.1, sz: -0.12, ex: -0.3 }, Rr = { sx: 0.1, sz: 0.12, ex: -0.3 };
   if (sit) { L = { sx: -0.55, sz: -0.12, ex: -0.9 }; Rr = { sx: -0.55, sz: 0.12, ex: -0.9 }; }
-  if (a === 'walk') { var s2 = Math.sin(t * 7) * 0.4; L = { sx: -s2, sz: -0.1, ex: -0.25 }; Rr = { sx: s2, sz: 0.1, ex: -0.25 }; }
+  if (a === 'walk') { var s2 = Math.sin(t * 7) * 0.45; L = { sx: -s2, sz: -0.12, ex: -0.3 - Math.max(0, s2) * 0.5 }; Rr = { sx: s2, sz: 0.12, ex: -0.3 - Math.max(0, -s2) * 0.5 }; }
   if (a === 'menu') { L = { sx: -1.25, sz: -0.25, ex: -1.0 }; Rr = { sx: -1.25, sz: 0.25, ex: -1.0 }; }
   if (a === 'hand') { Rr = { sx: -2.7 + Math.sin(t * 6) * 0.08, sz: 0.3, ex: -0.35 }; }
   if (a === 'drink') { var ph = (P.animT % 6) < 2.2; Rr = ph ? { sx: -1.3, sz: 0.35, ex: -2.2 } : { sx: -0.6, sz: 0.15, ex: -1.0 }; }
@@ -3723,11 +3726,12 @@ function customerLeave(C, angry) {
 }
 function removeCustomer(C) { removePick(C.P.root); disposePerson(C.P); if (C.kid) disposePerson(C.kid); if (C.refl) { disposePerson(C.refl); C.refl = null; } if (C.marker && C.marker.parentNode) C.marker.parentNode.removeChild(C.marker); var i = CUSTS.indexOf(C); if (i >= 0) CUSTS.splice(i, 1); }
 // ---- menu prop in hands ------------------------------------------------------------------
-var MENU_TEX = null;
-function menuTex() {
+var MENU_TEX = null, MENU_MOOD = 'happy';
+function menuTex(mood) {
+  if (mood && mood !== MENU_MOOD) { MENU_MOOD = mood; if (MENU_TEX) MENU_TEX.dispose(); MENU_TEX = null; }
   if (MENU_TEX) return MENU_TEX;
   var c = mkCanvas(256, 360), g = c.getContext('2d'); g.fillStyle = '#c8282e'; g.fillRect(0, 0, 256, 360); g.fillStyle = '#f3e6c8'; g.fillRect(10, 10, 236, 340);
-  drawSunny(g, 128, 150, 70, { wave: 0.6 }); g.fillStyle = '#c8282e'; g.font = '40px ' + F.logo; g.textAlign = 'center'; g.fillText('Sunny Side', 128, 290); g.font = '18px ' + F.slab; g.fillText('MENU', 128, 322);
+  drawSunny(g, 128, 150, 70, { wave: 0.6, mood: MENU_MOOD, look: MENU_MOOD === 'stare' ? 0.8 : 0 }); g.fillStyle = '#c8282e'; g.font = '40px ' + F.logo; g.textAlign = 'center'; g.fillText('Sunny Side', 128, 290); g.font = '18px ' + F.slab; g.fillText('MENU', 128, 322);
   MENU_TEX = toTex(c, { clamp: true }); return MENU_TEX;
 }
 function showMenuProp(C) { if (C.menuProp) return; var m = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.31), new THREE.MeshStandardMaterial({ map: menuTex(), roughness: 0.25, side: THREE.DoubleSide, envMapIntensity: 1.2 })); m.position.set(0, -0.06, 0.12); m.rotation.x = -0.3; C.P.parts.handR.add(m); C.menuProp = m; m.castShadow = true; }
@@ -3874,6 +3878,7 @@ function updateCustomers(dt) {
     moveCustomer(C, dt);
     updatePerson(C.P, dt, cp); if (C.kid) updatePerson(C.kid, dt, cp);
     if (C.anomaly && C.anomaly.update) C.anomaly.update(C, dt);
+    if (C.kid && C.kid.doll && GAME.day >= 2 && C.seat && GAME.mode === 'play') dollBeat(C, dt);
     if (C.state === 'reading') { C.readT -= dt; if (C.readT <= 0) { C.state = 'ready'; hideMenuProp(C); setPose(C.P, 'hand'); C.pat = C.patMax = PATIENCE.ready; sfx('pop', C.P.root.position, { vol: 0.3 }); } }
     if (C.state === 'eating') { C.eatT -= dt; if (C.eatT <= 0) { C.state = 'check'; setPose(C.P, 'hand'); C.pat = C.patMax = PATIENCE.check; clearDishesLater(C); } }
     var waiting = C.state === 'wait' || C.state === 'seated' || C.state === 'ready' || C.state === 'ordered' || C.state === 'check';
@@ -3981,6 +3986,21 @@ function afterCook(T) {
     if (T.onReady) T.onReady();
     refreshTickets();
   }
+}
+
+// the kid's doll slowly turns its head to watch you (and, for a blink, isn't a doll)
+function dollBeat(C, dt) {
+  var d = C.kid.doll, h = d.userData.head; C.dollT = (C.dollT || (8 + Math.random() * 20)) - dt;
+  if (C.dollT > 0) { h.rotation.y = damp(h.rotation.y, 0, 2, dt); return; }
+  var cam = RENDER.camera.position, wp = new THREE.Vector3(); h.getWorldPosition(wp);
+  var inv = new THREE.Matrix4().copy(d.matrixWorld).invert(), lp = cam.clone().applyMatrix4(inv);
+  h.rotation.y = damp(h.rotation.y, Math.atan2(lp.x, lp.z), 1.2, dt);
+  if (C.dollT < -3.5 && !C.dollFlash && wp.distanceTo(cam) < 7) {
+    C.dollFlash = 1; var n = pickFace(['doll'], 'doll'), old = d.userData.headMat.map;
+    d.userData.headMat.map = toTex(horrorCanvas(n), { clamp: true }); d.userData.headMat.needsUpdate = true; sfx('whisper', wp, { vol: 0.4 });
+    setTimeout(function () { d.userData.headMat.map = old; d.userData.headMat.needsUpdate = true; }, 220);
+  }
+  if (C.dollT < -7) { C.dollT = 25 + Math.random() * 30; C.dollFlash = 0; }
 }
 
 
@@ -4558,12 +4578,14 @@ function jumpscare(n, opt) {
   SAVE.deaths = (SAVE.deaths || 0) + 1; writeSave();
 }
 function updateJumpscare(dt) {
-  if (!JS.on) return; JS.t += dt; var t = JS.t, mild = JS.mild;
+  if (!JS.on) return; if (JS.freeze != null) { JS.t = JS.freeze; dt = 0.016; } else JS.t += dt; var t = JS.t, mild = JS.mild;
   if (JS.P) {
     revealHorror(JS.P, Math.min(1, t / 0.25));
-    if (t < 0.55) { // lunge toward the camera
+    if (t < 0.6) { // lunge: the head stops ~0.55m from the lens, level with it (the body never crosses the camera)
       var cam = RENDER.camera.position, hp = new THREE.Vector3(); JS.P.parts.head.getWorldPosition(hp);
-      var dir = cam.clone().sub(hp); var dist = dir.length(); if (dist > 0.35) { dir.multiplyScalar(Math.min(1, dt * 7)); JS.P.root.position.add(dir); }
+      var away = hp.clone().sub(cam); away.y = 0; if (away.lengthSq() < 1e-4) away.set(0, 0, 1); away.normalize();
+      var goal = cam.clone().add(away.multiplyScalar(0.55)); goal.y = cam.y - 0.02;
+      JS.P.root.position.add(goal.sub(hp).multiplyScalar(Math.min(1, dt * 9)));
       setPose(JS.P, 'lunge'); JS.P.parts.head.lookAt(cam);
     }
     if (CAM.override && JS.track) { JS.P.parts.head.getWorldPosition(JS.track); CAM.override.target.copy(JS.track); }
@@ -4751,8 +4773,18 @@ function ambientScare() {
   if (r < 0.3) { sfx('steps', new THREE.Vector3(-9.6, 0.2, 0.2), { n: 4, vol: 0.9 }); }
   else if (r < 0.5) { distantFigure(['shadow', 'crawler'], st === 'DOOR' || st === 'BOOTHS' ? new THREE.Vector3(-6 + Math.random() * 10, 1.1, 22 + Math.random() * 6) : new THREE.Vector3(-9.9, 1.2, 0.2), 1.6); }
   else if (r < 0.65) { sfx('freezerBang', new THREE.Vector3(6.5, 1.2, -4)); }
-  else if (r < 0.8) { tvGlitch(1.2); }
+  else if (r < 0.72) { tvGlitch(1.2); }
+  else if (r < 0.86 && (st === 'COUNTER' || st === 'BOOTHS') && GAME.day >= 2) { behindYou(); }
   else { sfx('coyote'); }
+}
+function behindYou() { // only the window sees it: someone standing right behind you
+  var P = personFrom(ARCH[Math.floor(Math.random() * ARCH.length)]); P.odd = 1; P.lookAtCam = true; setPose(P, 'standStare');
+  var n = pickFace(['human', 'glitch'], 'behind'); attachHorror(P, n); revealHorror(P, 1);
+  var cam = RENDER.camera.position, dir = new THREE.Vector3(); RENDER.camera.getWorldDirection(dir); dir.y = 0; dir.normalize();
+  P.root.position.set(cam.x - dir.x * 0.9, 0, cam.z - dir.z * 0.9); P.root.rotation.y = Math.atan2(dir.x, dir.z);
+  RENDER.scene.add(P.root); setLayer(P.root, LAYER_REFL_ONLY);
+  sfx('breath', P.root.position, { len: 1.6, vol: 0.6 });
+  setTimeout(function () { disposePerson(P); }, 1400);
 }
 function distantFigure(kinds, pos, dur) {
   var n = pickFace(kinds, 'far'), tex = toTex(horrorCanvas(n), { clamp: true });
@@ -4796,6 +4828,7 @@ function sunnyProgress(day) {
   drawSunny(g, 128, 180, 80, { line: true, mood: day >= 4 ? 'hollow' : 'happy', scribble: day >= 3 ? 7 + day : 0 });
   if (day >= 4) { g.fillStyle = '#a01018'; g.font = '20px ' + F.hand; g.fillText((SAVE.name || 'YOU') + ' STAY', 128, 320); }
   var m = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.28), new THREE.MeshStandardMaterial({ map: toTex(c, { clamp: true }), roughness: 0.85 })); m.rotation.x = -PI / 2; m.rotation.z = 0.3; m.position.set(D.booths[1] - 0.05, 0.783, 4.45); RENDER.scene.add(m); WORLD.coloring = m;
+  menuTex(day >= 5 ? 'grin' : day >= 4 ? 'stare' : 'happy');
   if (WORLD.costume) { RENDER.scene.remove(WORLD.costume); WORLD.costume = null; }
   if (day >= 3) {
     var n = pickFace(['costume', 'plush'], 'lot'), tex = toTex(sunnyCostumeCanvas(day, n), { clamp: true });
@@ -4891,6 +4924,7 @@ function enterFreezer() {
   WORLD.lights.fill.position.set(6.6, 2.7, -4.0); WORLD.lights.fill.color.set(0x9fc8ff); WORLD.lights.fill.intensity = 7; GAME.breath = steamEmit(5.6, 1.5, -3.6, 0.8, 0.05);
   LSTATE.coldT = Math.max(LSTATE.coldT, 0.9);
   sfx('freeze'); setCold(0, true); updateMainButton();
+  GAME.jukeWas = JUKE.key ? [JUKE.key, JUKE.label] : null; jukeStop(0.6);
   U.count = el('div', 'count', '', UI);
 }
 function leaveFreezer() {
@@ -4898,6 +4932,7 @@ function leaveFreezer() {
   setTimeout(function () { WORLD.freezerDoor.rotation.y = 0; setSpace('kitchen'); }, 900);
   WORLD.lights.fill.intensity = 0; setCold(0, false); if (GAME.breath) { steamStop(GAME.breath); GAME.breath = null; } if (U.count && U.count.parentNode) U.count.parentNode.removeChild(U.count); U.count = null;
   if (!GAME.inAnomaly) LSTATE.coldT = 0.25 + GAME.day * 0.04;
+  var jw = GAME.jukeWas; GAME.jukeWas = null; if (jw && !GAME.inAnomaly && LSTATE.lightsOn) setTimeout(function () { if (!JUKE.key && GAME.mode === 'play' && !CAM.inFreezer) jukePlay(jw[0], { label: jw[1] }); }, 1200);
   updateMainButton();
 }
 function updateFreezer(dt) {
@@ -5035,6 +5070,7 @@ function updateGame(dt, t) {
   UI.style.setProperty('--wear', clamp((GAME.day - 1) * 0.12 + (GAME.min / SHIFT_LEN) * 0.12, 0, 0.6).toFixed(2));
   PU.uCold.value = LSTATE.cold * 0.85; PU.uGrain.value = 0.035 + LSTATE.cold * 0.025; PU.uVig.value = 0.55 + LSTATE.cold * 0.15;
   PU.uSat.value = 1.05 - LSTATE.cold * 0.22;
+  if (GAME.day >= 2 && !ACTIVE.some(function (a) { return a.id === 'sunny'; })) { GAME.eyeT = (GAME.eyeT || 0) - dt; if (GAME.eyeT <= 0) { var cx = RENDER.camera.position.x - 0.1, look = clamp(cx / 4, -1, 1); GAME.eyeT = GAME.day >= 4 ? 2 : 6; if (Math.abs(look - (GAME.eyeLook || 0)) > 0.15 || GAME.day < 4 && Math.random() < 0.5) { GAME.eyeLook = GAME.day >= 3 || Math.random() < 0.5 ? look : 0; setNeonEyes(GAME.eyeLook, null); } } }
   if (GAME.min >= SHIFT_LEN && !GAME.inAnomaly && !JS.on) shiftComplete();
   if (GAME.min >= SHIFT_LEN + 30 && !JS.on) shiftComplete();
 }

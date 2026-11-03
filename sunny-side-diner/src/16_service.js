@@ -98,11 +98,12 @@ function customerLeave(C, angry) {
 }
 function removeCustomer(C) { removePick(C.P.root); disposePerson(C.P); if (C.kid) disposePerson(C.kid); if (C.refl) { disposePerson(C.refl); C.refl = null; } if (C.marker && C.marker.parentNode) C.marker.parentNode.removeChild(C.marker); var i = CUSTS.indexOf(C); if (i >= 0) CUSTS.splice(i, 1); }
 // ---- menu prop in hands ------------------------------------------------------------------
-var MENU_TEX = null;
-function menuTex() {
+var MENU_TEX = null, MENU_MOOD = 'happy';
+function menuTex(mood) {
+  if (mood && mood !== MENU_MOOD) { MENU_MOOD = mood; if (MENU_TEX) MENU_TEX.dispose(); MENU_TEX = null; }
   if (MENU_TEX) return MENU_TEX;
   var c = mkCanvas(256, 360), g = c.getContext('2d'); g.fillStyle = '#c8282e'; g.fillRect(0, 0, 256, 360); g.fillStyle = '#f3e6c8'; g.fillRect(10, 10, 236, 340);
-  drawSunny(g, 128, 150, 70, { wave: 0.6 }); g.fillStyle = '#c8282e'; g.font = '40px ' + F.logo; g.textAlign = 'center'; g.fillText('Sunny Side', 128, 290); g.font = '18px ' + F.slab; g.fillText('MENU', 128, 322);
+  drawSunny(g, 128, 150, 70, { wave: 0.6, mood: MENU_MOOD, look: MENU_MOOD === 'stare' ? 0.8 : 0 }); g.fillStyle = '#c8282e'; g.font = '40px ' + F.logo; g.textAlign = 'center'; g.fillText('Sunny Side', 128, 290); g.font = '18px ' + F.slab; g.fillText('MENU', 128, 322);
   MENU_TEX = toTex(c, { clamp: true }); return MENU_TEX;
 }
 function showMenuProp(C) { if (C.menuProp) return; var m = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.31), new THREE.MeshStandardMaterial({ map: menuTex(), roughness: 0.25, side: THREE.DoubleSide, envMapIntensity: 1.2 })); m.position.set(0, -0.06, 0.12); m.rotation.x = -0.3; C.P.parts.handR.add(m); C.menuProp = m; m.castShadow = true; }
@@ -249,6 +250,7 @@ function updateCustomers(dt) {
     moveCustomer(C, dt);
     updatePerson(C.P, dt, cp); if (C.kid) updatePerson(C.kid, dt, cp);
     if (C.anomaly && C.anomaly.update) C.anomaly.update(C, dt);
+    if (C.kid && C.kid.doll && GAME.day >= 2 && C.seat && GAME.mode === 'play') dollBeat(C, dt);
     if (C.state === 'reading') { C.readT -= dt; if (C.readT <= 0) { C.state = 'ready'; hideMenuProp(C); setPose(C.P, 'hand'); C.pat = C.patMax = PATIENCE.ready; sfx('pop', C.P.root.position, { vol: 0.3 }); } }
     if (C.state === 'eating') { C.eatT -= dt; if (C.eatT <= 0) { C.state = 'check'; setPose(C.P, 'hand'); C.pat = C.patMax = PATIENCE.check; clearDishesLater(C); } }
     var waiting = C.state === 'wait' || C.state === 'seated' || C.state === 'ready' || C.state === 'ordered' || C.state === 'check';
@@ -356,4 +358,19 @@ function afterCook(T) {
     if (T.onReady) T.onReady();
     refreshTickets();
   }
+}
+
+// the kid's doll slowly turns its head to watch you (and, for a blink, isn't a doll)
+function dollBeat(C, dt) {
+  var d = C.kid.doll, h = d.userData.head; C.dollT = (C.dollT || (8 + Math.random() * 20)) - dt;
+  if (C.dollT > 0) { h.rotation.y = damp(h.rotation.y, 0, 2, dt); return; }
+  var cam = RENDER.camera.position, wp = new THREE.Vector3(); h.getWorldPosition(wp);
+  var inv = new THREE.Matrix4().copy(d.matrixWorld).invert(), lp = cam.clone().applyMatrix4(inv);
+  h.rotation.y = damp(h.rotation.y, Math.atan2(lp.x, lp.z), 1.2, dt);
+  if (C.dollT < -3.5 && !C.dollFlash && wp.distanceTo(cam) < 7) {
+    C.dollFlash = 1; var n = pickFace(['doll'], 'doll'), old = d.userData.headMat.map;
+    d.userData.headMat.map = toTex(horrorCanvas(n), { clamp: true }); d.userData.headMat.needsUpdate = true; sfx('whisper', wp, { vol: 0.4 });
+    setTimeout(function () { d.userData.headMat.map = old; d.userData.headMat.needsUpdate = true; }, 220);
+  }
+  if (C.dollT < -7) { C.dollT = 25 + Math.random() * 30; C.dollFlash = 0; }
 }

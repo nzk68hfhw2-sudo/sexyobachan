@@ -354,12 +354,14 @@ function jumpscare(n, opt) {
   SAVE.deaths = (SAVE.deaths || 0) + 1; writeSave();
 }
 function updateJumpscare(dt) {
-  if (!JS.on) return; JS.t += dt; var t = JS.t, mild = JS.mild;
+  if (!JS.on) return; if (JS.freeze != null) { JS.t = JS.freeze; dt = 0.016; } else JS.t += dt; var t = JS.t, mild = JS.mild;
   if (JS.P) {
     revealHorror(JS.P, Math.min(1, t / 0.25));
-    if (t < 0.55) { // lunge toward the camera
+    if (t < 0.6) { // lunge: the head stops ~0.55m from the lens, level with it (the body never crosses the camera)
       var cam = RENDER.camera.position, hp = new THREE.Vector3(); JS.P.parts.head.getWorldPosition(hp);
-      var dir = cam.clone().sub(hp); var dist = dir.length(); if (dist > 0.35) { dir.multiplyScalar(Math.min(1, dt * 7)); JS.P.root.position.add(dir); }
+      var away = hp.clone().sub(cam); away.y = 0; if (away.lengthSq() < 1e-4) away.set(0, 0, 1); away.normalize();
+      var goal = cam.clone().add(away.multiplyScalar(0.55)); goal.y = cam.y - 0.02;
+      JS.P.root.position.add(goal.sub(hp).multiplyScalar(Math.min(1, dt * 9)));
       setPose(JS.P, 'lunge'); JS.P.parts.head.lookAt(cam);
     }
     if (CAM.override && JS.track) { JS.P.parts.head.getWorldPosition(JS.track); CAM.override.target.copy(JS.track); }

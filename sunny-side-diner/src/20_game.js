@@ -97,8 +97,18 @@ function ambientScare() {
   if (r < 0.3) { sfx('steps', new THREE.Vector3(-9.6, 0.2, 0.2), { n: 4, vol: 0.9 }); }
   else if (r < 0.5) { distantFigure(['shadow', 'crawler'], st === 'DOOR' || st === 'BOOTHS' ? new THREE.Vector3(-6 + Math.random() * 10, 1.1, 22 + Math.random() * 6) : new THREE.Vector3(-9.9, 1.2, 0.2), 1.6); }
   else if (r < 0.65) { sfx('freezerBang', new THREE.Vector3(6.5, 1.2, -4)); }
-  else if (r < 0.8) { tvGlitch(1.2); }
+  else if (r < 0.72) { tvGlitch(1.2); }
+  else if (r < 0.86 && (st === 'COUNTER' || st === 'BOOTHS') && GAME.day >= 2) { behindYou(); }
   else { sfx('coyote'); }
+}
+function behindYou() { // only the window sees it: someone standing right behind you
+  var P = personFrom(ARCH[Math.floor(Math.random() * ARCH.length)]); P.odd = 1; P.lookAtCam = true; setPose(P, 'standStare');
+  var n = pickFace(['human', 'glitch'], 'behind'); attachHorror(P, n); revealHorror(P, 1);
+  var cam = RENDER.camera.position, dir = new THREE.Vector3(); RENDER.camera.getWorldDirection(dir); dir.y = 0; dir.normalize();
+  P.root.position.set(cam.x - dir.x * 0.9, 0, cam.z - dir.z * 0.9); P.root.rotation.y = Math.atan2(dir.x, dir.z);
+  RENDER.scene.add(P.root); setLayer(P.root, LAYER_REFL_ONLY);
+  sfx('breath', P.root.position, { len: 1.6, vol: 0.6 });
+  setTimeout(function () { disposePerson(P); }, 1400);
 }
 function distantFigure(kinds, pos, dur) {
   var n = pickFace(kinds, 'far'), tex = toTex(horrorCanvas(n), { clamp: true });
@@ -142,6 +152,7 @@ function sunnyProgress(day) {
   drawSunny(g, 128, 180, 80, { line: true, mood: day >= 4 ? 'hollow' : 'happy', scribble: day >= 3 ? 7 + day : 0 });
   if (day >= 4) { g.fillStyle = '#a01018'; g.font = '20px ' + F.hand; g.fillText((SAVE.name || 'YOU') + ' STAY', 128, 320); }
   var m = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.28), new THREE.MeshStandardMaterial({ map: toTex(c, { clamp: true }), roughness: 0.85 })); m.rotation.x = -PI / 2; m.rotation.z = 0.3; m.position.set(D.booths[1] - 0.05, 0.783, 4.45); RENDER.scene.add(m); WORLD.coloring = m;
+  menuTex(day >= 5 ? 'grin' : day >= 4 ? 'stare' : 'happy');
   if (WORLD.costume) { RENDER.scene.remove(WORLD.costume); WORLD.costume = null; }
   if (day >= 3) {
     var n = pickFace(['costume', 'plush'], 'lot'), tex = toTex(sunnyCostumeCanvas(day, n), { clamp: true });
@@ -237,6 +248,7 @@ function enterFreezer() {
   WORLD.lights.fill.position.set(6.6, 2.7, -4.0); WORLD.lights.fill.color.set(0x9fc8ff); WORLD.lights.fill.intensity = 7; GAME.breath = steamEmit(5.6, 1.5, -3.6, 0.8, 0.05);
   LSTATE.coldT = Math.max(LSTATE.coldT, 0.9);
   sfx('freeze'); setCold(0, true); updateMainButton();
+  GAME.jukeWas = JUKE.key ? [JUKE.key, JUKE.label] : null; jukeStop(0.6);
   U.count = el('div', 'count', '', UI);
 }
 function leaveFreezer() {
@@ -244,6 +256,7 @@ function leaveFreezer() {
   setTimeout(function () { WORLD.freezerDoor.rotation.y = 0; setSpace('kitchen'); }, 900);
   WORLD.lights.fill.intensity = 0; setCold(0, false); if (GAME.breath) { steamStop(GAME.breath); GAME.breath = null; } if (U.count && U.count.parentNode) U.count.parentNode.removeChild(U.count); U.count = null;
   if (!GAME.inAnomaly) LSTATE.coldT = 0.25 + GAME.day * 0.04;
+  var jw = GAME.jukeWas; GAME.jukeWas = null; if (jw && !GAME.inAnomaly && LSTATE.lightsOn) setTimeout(function () { if (!JUKE.key && GAME.mode === 'play' && !CAM.inFreezer) jukePlay(jw[0], { label: jw[1] }); }, 1200);
   updateMainButton();
 }
 function updateFreezer(dt) {
@@ -381,6 +394,7 @@ function updateGame(dt, t) {
   UI.style.setProperty('--wear', clamp((GAME.day - 1) * 0.12 + (GAME.min / SHIFT_LEN) * 0.12, 0, 0.6).toFixed(2));
   PU.uCold.value = LSTATE.cold * 0.85; PU.uGrain.value = 0.035 + LSTATE.cold * 0.025; PU.uVig.value = 0.55 + LSTATE.cold * 0.15;
   PU.uSat.value = 1.05 - LSTATE.cold * 0.22;
+  if (GAME.day >= 2 && !ACTIVE.some(function (a) { return a.id === 'sunny'; })) { GAME.eyeT = (GAME.eyeT || 0) - dt; if (GAME.eyeT <= 0) { var cx = RENDER.camera.position.x - 0.1, look = clamp(cx / 4, -1, 1); GAME.eyeT = GAME.day >= 4 ? 2 : 6; if (Math.abs(look - (GAME.eyeLook || 0)) > 0.15 || GAME.day < 4 && Math.random() < 0.5) { GAME.eyeLook = GAME.day >= 3 || Math.random() < 0.5 ? look : 0; setNeonEyes(GAME.eyeLook, null); } } }
   if (GAME.min >= SHIFT_LEN && !GAME.inAnomaly && !JS.on) shiftComplete();
   if (GAME.min >= SHIFT_LEN + 30 && !JS.on) shiftComplete();
 }

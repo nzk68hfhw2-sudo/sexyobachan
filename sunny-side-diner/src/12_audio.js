@@ -3,6 +3,7 @@ var AUDIO = { ctx: null, ok: false, buf: {}, noise: {}, music: null, juke: null,
 var SONGS = { title: 'audio/sunny_side_diner.m4a', boogie: 'audio/diner_boogie.m4a', warped: 'audio/warped_diner.m4a', jingle: 'audio/jingle_in_reverse.m4a' };
 function audioUnlock() {
   if (AUDIO.ctx) { if (AUDIO.ctx.state !== 'running') try { AUDIO.ctx.resume(); } catch (e) {} return; }
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {} // iOS: play even with the silent switch on
   var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
   try { AUDIO.ctx = new AC({ latencyHint: 'interactive' }); } catch (e) { try { AUDIO.ctx = new AC(); } catch (e2) { return; } }
   var c = AUDIO.ctx;

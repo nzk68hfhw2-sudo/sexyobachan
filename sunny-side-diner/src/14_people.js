@@ -154,7 +154,7 @@ function makePerson(o) {
   // hair styles
   buildHair(P, head, hairM, o);
   // glasses frame (3D)
-  if (o.glasses && !o.faceless) { var gm = stdMat({ color: 0x1a1a1a, roughness: 0.3, metalness: 0.5 }); var gb = mesh(new THREE.TorusGeometry(0.024, 0.003, 4, 16), gm, -0.035, 0.012, 0.106, head); var gb2 = mesh(new THREE.TorusGeometry(0.024, 0.003, 4, 16), gm, 0.035, 0.012, 0.106, head); }
+  if (o.glasses && !o.faceless) { var gm = stdMat({ color: 0x1a1a1a, roughness: 0.3, metalness: 0.5 }); P.glasses = [mesh(new THREE.TorusGeometry(0.024, 0.003, 4, 16), gm, -0.035, 0.012, 0.106, head), mesh(new THREE.TorusGeometry(0.024, 0.003, 4, 16), gm, 0.035, 0.012, 0.106, head)]; }
   // arms
   ['L', 'R'].forEach(function (sd, i) {
     var s = i ? 1 : -1;
@@ -254,6 +254,7 @@ function revealHorror(P, k) { // k 0..1
   if (!P.horror) return; var h = P.horror; h.k = k; h.mesh.visible = k > 0.001; h.mat.opacity = k; h.mat.emissiveIntensity = 0.35 * k;
   P.headM.color.setScalar(1 - k * 0.75); P.skinM.color.set(rgbs(P.o.skin)).multiplyScalar(1 - k * 0.6);
   if (P.eyes) P.eyes.forEach(function (e) { e.visible = k < 0.5; });
+  if (P.glasses) P.glasses.forEach(function (g) { g.visible = k < 0.3; });
   if (P.parts.veil) P.parts.veil.visible = k < 0.3;
 }
 function disposePerson(P) { if (P.root.parent) P.root.parent.remove(P.root); P.root.traverse(function (m) { if (m.isMesh) { m.geometry.dispose(); } }); P.mats.forEach(function (m) { if (m.map) m.map.dispose(); m.dispose(); }); removeHorror(P); }
@@ -277,11 +278,11 @@ function updatePerson(P, dt, camPos) {
   } else { rot(pr.thighL, 0, 0, 0, k, dt); rot(pr.thighR, 0, 0, 0, k, dt); rot(pr.shinL, 0, 0, 0, k, dt); rot(pr.shinR, 0, 0, 0, k, dt); pr.hips.position.y = damp(pr.hips.position.y, 0.9, k, dt); }
   // breathing / spine
   var br = Math.sin(t * 1.6) * 0.012;
-  rot(pr.spine, (a === 'lean' ? 0.2 : 0.04) + br + (a === 'eat' ? 0.18 : 0) + (a === 'lunge' ? 0.5 : 0), 0, 0, 4, dt);
+  rot(pr.spine, (a === 'lean' ? 0.2 : 0.04) + br + (a === 'eat' ? 0.18 : 0) + (a === 'lunge' ? 0.5 : 0) + (a === 'walk' ? 0.06 : 0), a === 'walk' ? Math.sin(t * 7) * 0.12 : 0, a === 'walk' ? Math.sin(t * 7) * 0.03 : 0, a === 'walk' ? 10 : 4, dt);
   // arms by pose
   var L = { sx: 0.1, sz: -0.12, ex: -0.3 }, Rr = { sx: 0.1, sz: 0.12, ex: -0.3 };
   if (sit) { L = { sx: -0.55, sz: -0.12, ex: -0.9 }; Rr = { sx: -0.55, sz: 0.12, ex: -0.9 }; }
-  if (a === 'walk') { var s2 = Math.sin(t * 7) * 0.4; L = { sx: -s2, sz: -0.1, ex: -0.25 }; Rr = { sx: s2, sz: 0.1, ex: -0.25 }; }
+  if (a === 'walk') { var s2 = Math.sin(t * 7) * 0.45; L = { sx: -s2, sz: -0.12, ex: -0.3 - Math.max(0, s2) * 0.5 }; Rr = { sx: s2, sz: 0.12, ex: -0.3 - Math.max(0, -s2) * 0.5 }; }
   if (a === 'menu') { L = { sx: -1.25, sz: -0.25, ex: -1.0 }; Rr = { sx: -1.25, sz: 0.25, ex: -1.0 }; }
   if (a === 'hand') { Rr = { sx: -2.7 + Math.sin(t * 6) * 0.08, sz: 0.3, ex: -0.35 }; }
   if (a === 'drink') { var ph = (P.animT % 6) < 2.2; Rr = ph ? { sx: -1.3, sz: 0.35, ex: -2.2 } : { sx: -0.6, sz: 0.15, ex: -1.0 }; }
