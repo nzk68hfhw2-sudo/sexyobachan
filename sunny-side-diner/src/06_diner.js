@@ -105,7 +105,7 @@ function buildShell(P) {
   var osm = new THREE.MeshStandardMaterial({ map: toTex(openSign, { clamp: true }), roughness: 0.5 });
   var osMesh = mesh(new THREE.PlaneGeometry(0.2, 0.1), osm, 0.9, 2.08, 0.035, door, false);
   var cs = canvasSign([['SORRY', 40], ["WE'RE CLOSED", 34]], '#f3e6c8', '#7e1418', 256, 128);
-  var csMesh = mesh(new THREE.PlaneGeometry(0.34, 0.17), new THREE.MeshStandardMaterial({ map: toTex(cs, { clamp: true }), roughness: 0.5 }), 0.9, 2.08, -0.036, door, false); csMesh.rotation.y = PI; csMesh.scale.setScalar(0.6);
+  var csMesh = mesh(new THREE.PlaneGeometry(0.34, 0.17), new THREE.MeshStandardMaterial({ map: toTex(cs, { clamp: true }), roughness: 0.5 }), 1.0, 2.17, -0.036, door, false); csMesh.rotation.y = PI; csMesh.scale.setScalar(0.42);
   mesh(boxGeo(0.22, 0.12, 0.06, 1), M.chrome, 0.9, 2.08, 0, door);
   WORLD.door = door; WORLD.doorSign = osMesh;
   // window glass (planar reflection + rain shader assigned later in fx)
@@ -365,6 +365,11 @@ function buildFreezer(P) {
   for (var b = 0; b < 8; b++) B(0.35, 0.25, 0.4, M.card, 7.6, 0.55 + Math.floor(b / 2) * 0.5, -4.8 + (b % 2) * 0.9 + (b % 3) * 0.2);
   var wrap = stdMat({ color: 0xd9d2c8, roughness: 0.6 }); wrap.userData.tm = 1;
   for (var h = 0; h < 3; h++) { var sp = new THREE.SphereGeometry(0.16, 12, 10); sp.scale(1, 2.1, 1); batchAdd(sp, wrap, 6.0 + h * 0.5, 1.9, -4.7); batchAdd(new THREE.CylinderGeometry(0.004, 0.004, 0.6, 4), M.chrome, 6.0 + h * 0.5, 2.6, -4.7); }
+  // inner wall of the walk-in (frosted) with the inside face of the door
+  B(0.06, D.H, 0.75, M.frost, 5.1, D.H / 2, -4.83); B(0.06, D.H, 0.5, M.frost, 5.1, D.H / 2, -3.05); B(0.06, 0.95, 1.08, M.frost, 5.1, 2.62, -3.87);
+  B(0.05, 2.08, 1.04, M.steel, 5.11, 1.04, -3.87);
+  B(0.06, 0.06, 0.22, M.chrome, 5.16, 1.1, -4.25); B(0.06, 0.18, 0.04, stdMat({ color: 0xb01018, roughness: 0.4 }), 5.16, 1.0, -4.3);
+  var frostLight = mesh(new THREE.BoxGeometry(0.4, 0.04, 0.12), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.0, 2.6, 3.2) }), 6.6, D.H - 0.05, -4.0, P, false);
   // freezer door (heavy, with latch) on the wall x=5, z -4.4..-3.4
   var fd = group(P, 4.89, 0, -3.35); WORLD.freezerDoor = fd;
   mesh(boxGeo(0.12, 2.1, 1.05, 1), M.steel, 0, 1.05, -0.525, fd);
@@ -608,14 +613,15 @@ function wetStreaks(X) {
   g.globalCompositeOperation = 'destination-in'; var gx = g.createLinearGradient(0, 0, 64, 0); gx.addColorStop(0, 'rgba(0,0,0,0)'); gx.addColorStop(0.5, 'rgba(0,0,0,1)'); gx.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gx; g.fillRect(0, 0, 64, 256);
   var tex = toTex(c, { clamp: true });
   WORLD.streaks = [];
-  [[-9.5, 11.6, [2.6, 0.5, 1.4], 1.6, 9], [-9.5, 11.6, [0.4, 1.8, 2.4], 1.0, 7], [4, 14, [1.6, 1.8, 2.0], 1.2, 7], [13, 16, [1.4, 1.5, 1.6], 2.4, 6], [-1.5, 6.2, [2.2, 1.4, 0.8], 7, 3.2], [18, 24, [1.2, 1.2, 1.1], 1.0, 4]].forEach(function (s) {
-    var m = new THREE.MeshBasicMaterial({ map: tex, color: new THREE.Color(s[2][0], s[2][1], s[2][2]), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.5 });
+  [[-9.5, 11.6, [2.6, 0.5, 1.4], 2.2, 12], [-9.5, 11.6, [0.4, 1.8, 2.4], 1.3, 9], [4, 14, [1.6, 1.8, 2.0], 1.6, 9], [13, 16, [1.4, 1.5, 1.6], 3.0, 8], [-1.5, 6.2, [2.2, 1.4, 0.8], 9, 4.5], [18, 24, [1.2, 1.2, 1.1], 1.2, 5]].forEach(function (s) {
+    var m = new THREE.MeshBasicMaterial({ map: tex, color: new THREE.Color(s[2][0], s[2][1], s[2][2]), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.8, fog: false });
     var p = new THREE.Mesh(new THREE.PlaneGeometry(s[3], s[4]), m); p.rotation.x = -PI / 2; p.position.set(s[0], 0.012, s[1] + s[4] * 0.45); p.renderOrder = 2; X.add(p);
-    WORLD.streaks.push({ m: p, base: 0.5, x: s[0], z: s[1] });
+    WORLD.streaks.push({ m: p, base: 0.85, x: s[0], z: s[1] });
   });
 }
 function updateStreaks(t) {
   if (!WORLD.streaks) return; var cam = RENDER.camera.position, wet = 0.25 + FX.rain * 0.75;
-  WORLD.streaks.forEach(function (s, i) { var ang = Math.atan2(cam.x - s.x, cam.z - s.z); s.m.rotation.z = -ang; s.m.position.x = s.x + Math.sin(ang) * s.m.geometry.parameters.height * 0.45; s.m.position.z = s.z + Math.cos(ang) * s.m.geometry.parameters.height * 0.45;
+  WORLD.streaks.forEach(function (s, i) { var ang = Math.atan2(cam.x - s.x, cam.z - s.z), H = s.m.geometry.parameters.height, dist = Math.hypot(cam.x - s.x, cam.z - s.z), L = Math.min(H, dist * 0.5), k = L / H;
+    s.m.rotation.z = -ang; s.m.scale.y = k; s.m.position.x = s.x + Math.sin(ang) * L * 0.5; s.m.position.z = s.z + Math.cos(ang) * L * 0.5;
     s.m.material.opacity = s.base * wet * (0.85 + 0.15 * Math.sin(t * 7 + i * 2.1)) * (i < 2 ? LSTATE.neon : 1); });
 }

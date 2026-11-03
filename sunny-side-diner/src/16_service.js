@@ -293,7 +293,7 @@ function updateMarker(C) {
     _mv.project(RENDER.camera);
     if (d > 14) vis = false;
     else if (loc.z > 0 || _mv.x < -1 || _mv.x > 1) { edge = (loc.z > 0 ? -Math.sign(loc.x || 1) : Math.sign(_mv.x)) || 1; }
-    var x = edge ? (edge < 0 ? 30 : RENDER.w - 30) : (_mv.x * 0.5 + 0.5) * RENDER.w, y = edge ? RENDER.h * 0.45 : (-_mv.y * 0.5 + 0.5) * RENDER.h; var top = 118 + 70; if (y < top) y = top; if (y > RENDER.h - 260) y = RENDER.h - 260;
+    var x = edge ? (edge < 0 ? 40 : RENDER.w - 40) : (_mv.x * 0.5 + 0.5) * RENDER.w, y = edge ? RENDER.h * 0.45 : (-_mv.y * 0.5 + 0.5) * RENDER.h; var top = 118 + 70; if (y < top) y = top; if (y > RENDER.h - 260) y = RENDER.h - 260; x = clamp(x, 40, RENDER.w - 40);
     C.marker.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + (edge ? 0.9 : clamp(3.2 / d, 0.65, 1.1)).toFixed(2) + ')'; C.marker.style.left = '0'; C.marker.style.top = '0';
   }
   if (C.marker._edge !== edge) { C.marker._edge = edge; C.marker.classList.toggle('edge', !!edge); C.marker.classList.toggle('el', edge < 0); C.marker._n = null; C.marker.style.pointerEvents = edge ? 'auto' : 'none';

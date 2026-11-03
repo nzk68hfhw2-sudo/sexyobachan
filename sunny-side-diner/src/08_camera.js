@@ -1,12 +1,12 @@
 // ---- fixed-point camera stations, smooth moves, drag-look, tap picking ----------
 var STATIONS = {
   COUNTER: { n: 1, pos: [0.55, 1.66, -2.2], yaw: 0, pitch: -0.18, en: 'Counter', ja: 'カウンター', yawLim: 2.9, map: [0.55, -2.0] },
-  BOOTHS: { n: 2, pos: [4.75, 1.68, 2.35], yaw: -PI / 2 + 0.3, pitch: -0.17, en: 'Booths', ja: 'ボックス席', yawLim: 1.4, map: [4.4, 2.6] },
+  BOOTHS: { n: 2, pos: [4.75, 1.68, 2.35], yaw: -PI / 2 + 0.3, pitch: -0.17, en: 'Booths', ja: 'ボックス席', yawLim: 1.4, map: [3.3, 2.5] },
   REGISTER: { n: 3, pos: [6.5, 1.66, 0.25], yaw: 0.12, pitch: -0.3, en: 'Register', ja: 'レジ', yawLim: 1.9, map: [6.5, 0.6] },
   KITCHEN: { n: 4, pos: [2.55, 1.78, -3.3], yaw: -2.3, pitch: -0.42, en: 'Kitchen', ja: '厨房', yawLim: 1.6, map: [0.9, -3.8] },
   JUKEBOX: { n: 5, pos: [-5.3, 1.62, 1.6], yaw: -PI / 2 + 0.45, pitch: -0.1, en: 'Jukebox', ja: 'ジュークボックス', yawLim: 1.5, map: [-6.4, 2.2] },
   FREEZER: { n: 6, pos: [3.55, 1.62, -3.95], yaw: PI / 2, pitch: -0.05, en: 'Freezer', ja: '冷凍庫', yawLim: 1.2, map: [4.2, -4.0] },
-  DOOR: { n: 7, pos: [6.0, 1.62, 4.1], yaw: 0.05, pitch: -0.06, en: 'Front Door', ja: '入口', yawLim: 1.3, map: [6.0, 4.4] },
+  DOOR: { n: 7, pos: [6.0, 1.62, 4.1], yaw: 0.05, pitch: -0.06, en: 'Front Door', ja: '入口', yawLim: 1.3, map: [6.6, 4.3] },
   BACKDOOR: { n: 8, pos: [-1.3, 1.62, -3.85], yaw: PI + 0.62, pitch: -0.08, en: 'Back Door', ja: '裏口', yawLim: 1.3, map: [-2.4, -4.6] }
 };
 var STATION_ORDER = ['COUNTER', 'BOOTHS', 'REGISTER', 'KITCHEN', 'JUKEBOX', 'FREEZER', 'DOOR', 'BACKDOOR'];

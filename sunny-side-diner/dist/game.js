@@ -508,7 +508,7 @@ function texCeiling() {
 // wet asphalt (parking lot) 1 tex = 6m
 function texAsphalt() {
   var S = TEXQ >> 1, T = new TexSet(S, S, 101), a = T.a, r = T.r, hg = T.hg, rnd = T.rnd;
-  a.fillStyle = '#27272a'; a.fillRect(0, 0, S, S); r.fillStyle = grey(150); r.fillRect(0, 0, S, S);
+  a.fillStyle = '#38383c'; a.fillRect(0, 0, S, S); r.fillStyle = grey(95); r.fillRect(0, 0, S, S);
   for (var i = 0; i < 9000; i++) { var v = rnd() * 70; a.fillStyle = rgba(30 + v, 30 + v, 32 + v, 0.5); a.fillRect(rnd() * S, rnd() * S, 1.5, 1.5); }
   for (var p = 0; p < 9; p++) { // puddles (mirror)
     var px = rnd() * S, py = rnd() * S, pr = 20 + rnd() * 70;
@@ -727,6 +727,7 @@ function initRenderer() {
   RENDER.hdr = !!(r.capabilities.isWebGL2 && (r.extensions.get('EXT_color_buffer_float') || r.extensions.get('EXT_color_buffer_half_float')));
   RENDER.ftype = RENDER.hdr ? THREE.HalfFloatType : THREE.UnsignedByteType;
   RENDER.scene = new THREE.Scene();
+  RENDER.scene.fog = new THREE.FogExp2(0x0b0e16, 0.011);
   RENDER.camera = new THREE.PerspectiveCamera(62, 1, 0.05, 260);
   RENDER.scene.add(RENDER.camera);
   PU = {
@@ -1056,18 +1057,18 @@ function drawSunny(g, cx, cy, s, opt) {
 function sunnyCanvas(size, opt) { var c = mkCanvas(size, size), g = c.getContext('2d'); drawSunny(g, size / 2, size * 0.46, size * 0.33, opt); return c; }
 
 // neon tube look: draw path with glow layers
-function neonStroke(g, drawPath, col, w) {
+function neonStroke(g, drawPath, col, w) { // glow via shadowBlur (works in Safari, unlike ctx.filter)
   g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
-  g.strokeStyle = col; g.globalAlpha = 0.25; g.lineWidth = w * 3.2; g.filter = 'blur(' + (w * 0.9) + 'px)'; drawPath(); g.stroke();
-  g.filter = 'none'; g.globalAlpha = 1; g.lineWidth = w; drawPath(); g.stroke();
-  g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = w * 0.35; drawPath(); g.stroke();
+  g.shadowColor = col; g.shadowBlur = w * 3.5; g.strokeStyle = col; g.globalAlpha = 0.55; g.lineWidth = w * 1.6; drawPath(); g.stroke();
+  g.shadowBlur = w * 1.5; g.globalAlpha = 1; g.lineWidth = w; drawPath(); g.stroke();
+  g.shadowBlur = 0; g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = w * 0.35; drawPath(); g.stroke();
   g.restore();
 }
 function neonText(g, txt, x, y, font, col, w) {
   g.save(); g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
-  g.strokeStyle = col; g.globalAlpha = 0.3; g.lineWidth = w * 3; g.filter = 'blur(' + w + 'px)'; g.strokeText(txt, x, y);
-  g.filter = 'none'; g.globalAlpha = 1; g.lineWidth = w; g.strokeText(txt, x, y);
-  g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = w * 0.33; g.strokeText(txt, x, y);
+  g.shadowColor = col; g.shadowBlur = w * 3; g.strokeStyle = col; g.globalAlpha = 0.6; g.lineWidth = w * 1.5; g.strokeText(txt, x, y);
+  g.shadowBlur = w * 1.2; g.globalAlpha = 1; g.lineWidth = w; g.strokeText(txt, x, y);
+  g.shadowBlur = 0; g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = w * 0.33; g.strokeText(txt, x, y);
   g.restore();
 }
 // interior neon over the pass window: "Sunny Side" + mascot outline. eyes drawn separately.
@@ -1318,7 +1319,7 @@ function buildShell(P) {
   var osm = new THREE.MeshStandardMaterial({ map: toTex(openSign, { clamp: true }), roughness: 0.5 });
   var osMesh = mesh(new THREE.PlaneGeometry(0.2, 0.1), osm, 0.9, 2.08, 0.035, door, false);
   var cs = canvasSign([['SORRY', 40], ["WE'RE CLOSED", 34]], '#f3e6c8', '#7e1418', 256, 128);
-  var csMesh = mesh(new THREE.PlaneGeometry(0.34, 0.17), new THREE.MeshStandardMaterial({ map: toTex(cs, { clamp: true }), roughness: 0.5 }), 0.9, 2.08, -0.036, door, false); csMesh.rotation.y = PI; csMesh.scale.setScalar(0.6);
+  var csMesh = mesh(new THREE.PlaneGeometry(0.34, 0.17), new THREE.MeshStandardMaterial({ map: toTex(cs, { clamp: true }), roughness: 0.5 }), 1.0, 2.17, -0.036, door, false); csMesh.rotation.y = PI; csMesh.scale.setScalar(0.42);
   mesh(boxGeo(0.22, 0.12, 0.06, 1), M.chrome, 0.9, 2.08, 0, door);
   WORLD.door = door; WORLD.doorSign = osMesh;
   // window glass (planar reflection + rain shader assigned later in fx)
@@ -1578,6 +1579,11 @@ function buildFreezer(P) {
   for (var b = 0; b < 8; b++) B(0.35, 0.25, 0.4, M.card, 7.6, 0.55 + Math.floor(b / 2) * 0.5, -4.8 + (b % 2) * 0.9 + (b % 3) * 0.2);
   var wrap = stdMat({ color: 0xd9d2c8, roughness: 0.6 }); wrap.userData.tm = 1;
   for (var h = 0; h < 3; h++) { var sp = new THREE.SphereGeometry(0.16, 12, 10); sp.scale(1, 2.1, 1); batchAdd(sp, wrap, 6.0 + h * 0.5, 1.9, -4.7); batchAdd(new THREE.CylinderGeometry(0.004, 0.004, 0.6, 4), M.chrome, 6.0 + h * 0.5, 2.6, -4.7); }
+  // inner wall of the walk-in (frosted) with the inside face of the door
+  B(0.06, D.H, 0.75, M.frost, 5.1, D.H / 2, -4.83); B(0.06, D.H, 0.5, M.frost, 5.1, D.H / 2, -3.05); B(0.06, 0.95, 1.08, M.frost, 5.1, 2.62, -3.87);
+  B(0.05, 2.08, 1.04, M.steel, 5.11, 1.04, -3.87);
+  B(0.06, 0.06, 0.22, M.chrome, 5.16, 1.1, -4.25); B(0.06, 0.18, 0.04, stdMat({ color: 0xb01018, roughness: 0.4 }), 5.16, 1.0, -4.3);
+  var frostLight = mesh(new THREE.BoxGeometry(0.4, 0.04, 0.12), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.0, 2.6, 3.2) }), 6.6, D.H - 0.05, -4.0, P, false);
   // freezer door (heavy, with latch) on the wall x=5, z -4.4..-3.4
   var fd = group(P, 4.89, 0, -3.35); WORLD.freezerDoor = fd;
   mesh(boxGeo(0.12, 2.1, 1.05, 1), M.steel, 0, 1.05, -0.525, fd);
@@ -1821,15 +1827,16 @@ function wetStreaks(X) {
   g.globalCompositeOperation = 'destination-in'; var gx = g.createLinearGradient(0, 0, 64, 0); gx.addColorStop(0, 'rgba(0,0,0,0)'); gx.addColorStop(0.5, 'rgba(0,0,0,1)'); gx.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gx; g.fillRect(0, 0, 64, 256);
   var tex = toTex(c, { clamp: true });
   WORLD.streaks = [];
-  [[-9.5, 11.6, [2.6, 0.5, 1.4], 1.6, 9], [-9.5, 11.6, [0.4, 1.8, 2.4], 1.0, 7], [4, 14, [1.6, 1.8, 2.0], 1.2, 7], [13, 16, [1.4, 1.5, 1.6], 2.4, 6], [-1.5, 6.2, [2.2, 1.4, 0.8], 7, 3.2], [18, 24, [1.2, 1.2, 1.1], 1.0, 4]].forEach(function (s) {
-    var m = new THREE.MeshBasicMaterial({ map: tex, color: new THREE.Color(s[2][0], s[2][1], s[2][2]), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.5 });
+  [[-9.5, 11.6, [2.6, 0.5, 1.4], 2.2, 12], [-9.5, 11.6, [0.4, 1.8, 2.4], 1.3, 9], [4, 14, [1.6, 1.8, 2.0], 1.6, 9], [13, 16, [1.4, 1.5, 1.6], 3.0, 8], [-1.5, 6.2, [2.2, 1.4, 0.8], 9, 4.5], [18, 24, [1.2, 1.2, 1.1], 1.2, 5]].forEach(function (s) {
+    var m = new THREE.MeshBasicMaterial({ map: tex, color: new THREE.Color(s[2][0], s[2][1], s[2][2]), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.8, fog: false });
     var p = new THREE.Mesh(new THREE.PlaneGeometry(s[3], s[4]), m); p.rotation.x = -PI / 2; p.position.set(s[0], 0.012, s[1] + s[4] * 0.45); p.renderOrder = 2; X.add(p);
-    WORLD.streaks.push({ m: p, base: 0.5, x: s[0], z: s[1] });
+    WORLD.streaks.push({ m: p, base: 0.85, x: s[0], z: s[1] });
   });
 }
 function updateStreaks(t) {
   if (!WORLD.streaks) return; var cam = RENDER.camera.position, wet = 0.25 + FX.rain * 0.75;
-  WORLD.streaks.forEach(function (s, i) { var ang = Math.atan2(cam.x - s.x, cam.z - s.z); s.m.rotation.z = -ang; s.m.position.x = s.x + Math.sin(ang) * s.m.geometry.parameters.height * 0.45; s.m.position.z = s.z + Math.cos(ang) * s.m.geometry.parameters.height * 0.45;
+  WORLD.streaks.forEach(function (s, i) { var ang = Math.atan2(cam.x - s.x, cam.z - s.z), H = s.m.geometry.parameters.height, dist = Math.hypot(cam.x - s.x, cam.z - s.z), L = Math.min(H, dist * 0.5), k = L / H;
+    s.m.rotation.z = -ang; s.m.scale.y = k; s.m.position.x = s.x + Math.sin(ang) * L * 0.5; s.m.position.z = s.z + Math.cos(ang) * L * 0.5;
     s.m.material.opacity = s.base * wet * (0.85 + 0.15 * Math.sin(t * 7 + i * 2.1)) * (i < 2 ? LSTATE.neon : 1); });
 }
 
@@ -1871,7 +1878,8 @@ function buildLights() {
 }
 function applyLightQuality() {
   var L = WORLD.lights; if (!L.counterA) return;
-  var sh = Q.shadow > 0;
+  var sh = Q.shadow > 0, low = Q === QUAL.LOW;
+  [L.juke, L.bounce, L.sign, L.fill].forEach(function (l) { l.visible = !low; });
   [L.counterA, L.counterB, L.booths].forEach(function (s) { s.castShadow = sh; s.shadow.mapSize.set(Q.shadowSize, Q.shadowSize); if (s.shadow.map) { s.shadow.map.dispose(); s.shadow.map = null; } });
   RENDER.shadowDirty = true;
 }
@@ -1912,12 +1920,12 @@ function updateLights(dt, t) {
 // ---- fixed-point camera stations, smooth moves, drag-look, tap picking ----------
 var STATIONS = {
   COUNTER: { n: 1, pos: [0.55, 1.66, -2.2], yaw: 0, pitch: -0.18, en: 'Counter', ja: 'カウンター', yawLim: 2.9, map: [0.55, -2.0] },
-  BOOTHS: { n: 2, pos: [4.75, 1.68, 2.35], yaw: -PI / 2 + 0.3, pitch: -0.17, en: 'Booths', ja: 'ボックス席', yawLim: 1.4, map: [4.4, 2.6] },
+  BOOTHS: { n: 2, pos: [4.75, 1.68, 2.35], yaw: -PI / 2 + 0.3, pitch: -0.17, en: 'Booths', ja: 'ボックス席', yawLim: 1.4, map: [3.3, 2.5] },
   REGISTER: { n: 3, pos: [6.5, 1.66, 0.25], yaw: 0.12, pitch: -0.3, en: 'Register', ja: 'レジ', yawLim: 1.9, map: [6.5, 0.6] },
   KITCHEN: { n: 4, pos: [2.55, 1.78, -3.3], yaw: -2.3, pitch: -0.42, en: 'Kitchen', ja: '厨房', yawLim: 1.6, map: [0.9, -3.8] },
   JUKEBOX: { n: 5, pos: [-5.3, 1.62, 1.6], yaw: -PI / 2 + 0.45, pitch: -0.1, en: 'Jukebox', ja: 'ジュークボックス', yawLim: 1.5, map: [-6.4, 2.2] },
   FREEZER: { n: 6, pos: [3.55, 1.62, -3.95], yaw: PI / 2, pitch: -0.05, en: 'Freezer', ja: '冷凍庫', yawLim: 1.2, map: [4.2, -4.0] },
-  DOOR: { n: 7, pos: [6.0, 1.62, 4.1], yaw: 0.05, pitch: -0.06, en: 'Front Door', ja: '入口', yawLim: 1.3, map: [6.0, 4.4] },
+  DOOR: { n: 7, pos: [6.0, 1.62, 4.1], yaw: 0.05, pitch: -0.06, en: 'Front Door', ja: '入口', yawLim: 1.3, map: [6.6, 4.3] },
   BACKDOOR: { n: 8, pos: [-1.3, 1.62, -3.85], yaw: PI + 0.62, pitch: -0.08, en: 'Back Door', ja: '裏口', yawLim: 1.3, map: [-2.4, -4.6] }
 };
 var STATION_ORDER = ['COUNTER', 'BOOTHS', 'REGISTER', 'KITCHEN', 'JUKEBOX', 'FREEZER', 'DOOR', 'BACKDOOR'];
@@ -2140,7 +2148,7 @@ function updateReflection() {
   // window visible? (camera in front of it and facing it)
   if (!_v3) _v3 = new THREE.Vector3();
   cam.getWorldDirection(_v3);
-  var visible = cam.position.z < 4.98 && cam.position.z > -2.9 && cam.position.x < 8 && _v3.z > -0.25 && !CAM.inFreezer;
+  var visible = Q !== QUAL.LOW && cam.position.z < 4.98 && cam.position.z > -2.9 && cam.position.x < 8 && _v3.z > -0.25 && !CAM.inFreezer;
   r.uni.uHas.value = visible ? 1 : 0;
   if (!visible || r.skip % every) return;
   var sw = Math.max(64, Math.round(RENDER.sw * (Q === QUAL.HIGH ? 0.5 : 0.36))), sh = Math.max(64, Math.round(RENDER.sh * (Q === QUAL.HIGH ? 0.5 : 0.36)));
@@ -2645,7 +2653,7 @@ function closeDocs(silent) {
   ov.classList.add('hide'); setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 380);
   var f = DOC.onClose; DOC.onClose = null; if (f && !silent) f();
 }
-function tapeHTML(spots) { return (spots || [[-18, -10, -8], [null, -10, 7]]).map(function (s) { return '<div class="tape" style="' + (s[0] == null ? 'right:-18px' : 'left:' + s[0] + 'px') + ';top:' + s[1] + 'px;transform:rotate(' + s[2] + 'deg)"></div>'; }).join(''); }
+function tapeHTML(spots) { return (spots || [[-8, -10, -8], [null, -10, 7]]).map(function (s) { return '<div class="tape" style="' + (s[0] == null ? 'right:-8px' : 'left:' + s[0] + 'px') + ';top:' + s[1] + 'px;transform:rotate(' + s[2] + 'deg)"></div>'; }).join(''); }
 function docRules(list, night) { // list: [{n,en,ja,fake,red,redJa,ul}]
   var real = list.filter(function (r) { return !r.fake; }), fakes = list.filter(function (r) { return r.fake; });
   var h = '<div class="doc rules" style="background-image:url(' + PAPER.rules + ');--r:-1.2deg">' + tapeHTML() +
@@ -3910,7 +3918,7 @@ function updateMarker(C) {
     _mv.project(RENDER.camera);
     if (d > 14) vis = false;
     else if (loc.z > 0 || _mv.x < -1 || _mv.x > 1) { edge = (loc.z > 0 ? -Math.sign(loc.x || 1) : Math.sign(_mv.x)) || 1; }
-    var x = edge ? (edge < 0 ? 30 : RENDER.w - 30) : (_mv.x * 0.5 + 0.5) * RENDER.w, y = edge ? RENDER.h * 0.45 : (-_mv.y * 0.5 + 0.5) * RENDER.h; var top = 118 + 70; if (y < top) y = top; if (y > RENDER.h - 260) y = RENDER.h - 260;
+    var x = edge ? (edge < 0 ? 40 : RENDER.w - 40) : (_mv.x * 0.5 + 0.5) * RENDER.w, y = edge ? RENDER.h * 0.45 : (-_mv.y * 0.5 + 0.5) * RENDER.h; var top = 118 + 70; if (y < top) y = top; if (y > RENDER.h - 260) y = RENDER.h - 260; x = clamp(x, 40, RENDER.w - 40);
     C.marker.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + (edge ? 0.9 : clamp(3.2 / d, 0.65, 1.1)).toFixed(2) + ')'; C.marker.style.left = '0'; C.marker.style.top = '0';
   }
   if (C.marker._edge !== edge) { C.marker._edge = edge; C.marker.classList.toggle('edge', !!edge); C.marker.classList.toggle('el', edge < 0); C.marker._n = null; C.marker.style.pointerEvents = edge ? 'auto' : 'none';
@@ -4266,7 +4274,7 @@ var ACTIVE = []; // running anomalies
 function anomalyOnset(A, opt) {
   opt = opt || {};
   A.onsetAt = GAME.min; GAME.anomalyNow = A;
-  GAME.inAnomaly = (GAME.inAnomaly || 0) + 1;
+  if (!A.bg && !A.counted) { A.counted = true; GAME.inAnomaly = (GAME.inAnomaly || 0) + 1; }
   if (!opt.keepMusic) jukeStop(0.05, 0.6);
   if (!opt.noZap) { LSTATE.neonOn = false; sfx('zap', new THREE.Vector3(1.5, 2.5, -2.6)); setTimeout(function () { LSTATE.neonOn = !GAME.neonOff; }, 900); LSTATE.flick = 1.2; }
   LSTATE.coldT = Math.min(1, 0.75 + GAME.day * 0.05);
@@ -4278,7 +4286,8 @@ function anomalyResolve(A, msg) {
   if (A.done) return; A.done = true; A.ok = true;
   var i = ACTIVE.indexOf(A); if (i >= 0) ACTIVE.splice(i, 1);
   if (A.cleanup) A.cleanup();
-  GAME.inAnomaly = Math.max(0, (GAME.inAnomaly || 1) - 1); GAME.resolved++;
+  if (A.def && A.def.cleanup) try { A.def.cleanup(A); } catch (e) {}
+  if (A.counted) { A.counted = false; GAME.inAnomaly = Math.max(0, (GAME.inAnomaly || 1) - 1); } GAME.resolved++;
   SAVE.anomalies[A.id] = 2; writeSave();
   if (!GAME.inAnomaly) {
     LSTATE.coldT = 0.25 + GAME.day * 0.04;
@@ -4345,7 +4354,7 @@ var ANOM = {
   // R3 — the pink phone (rings three times in a night)
   phone: {
     hint: ['That phone? Let it ring. Twice. Third time you can pick up.', 'あの電話か？ 2回は鳴らしとけ。3回目なら出ていい。'],
-    start: function (A) { A.ring = 0; A.next = 1; A.face = pickFace(['shadow', 'glitch'], 'phone'); ringSession(A); },
+    start: function (A) { A.bg = true; A.ring = 0; A.next = 1; A.face = pickFace(['shadow', 'glitch'], 'phone'); ringSession(A); },
     update: function (A, dt) {
       if (A.ringing) { A.rt -= dt; A.rr -= dt; if (A.rr <= 0) { A.rr = 2.4; sfx('ring', WORLD.phonePos, { distort: (A.ring - 1) * 0.35, vol: 1.1 }); WORLD.handset.position.x = -0.17 + (Math.random() - 0.5) * 0.004; } if (A.rt <= 0) { A.ringing = false; if (A.ring >= 3) anomalyResolve(A, false); else A.wait = 70 + Math.random() * 90; } }
       else if (A.wait != null && !A.done) { A.wait -= dt; if (A.wait <= 0) { A.wait = null; ringSession(A); } }
@@ -4423,12 +4432,12 @@ var ANOM = {
       A.face = pickFace(['human', 'crawler'], 'reflection');
       var C = spawnCustomer(ARCH[Math.floor(Math.random() * ARCH.length)], { anomaly: A, silentEntry: true });
       A.cust = C; C.anomaly = A; C.P.odd = 0.15;
-      var seat = freeSeats('booth')[0] || SEATS.filter(function (s) { return s.kind === 'booth' && s.side < 0; })[0];
+      var fb = freeSeats('booth').filter(function (x) { return x.booth === 2 || x.booth === 3; }); var seat = fb[Math.floor(Math.random() * fb.length)] || freeSeats('booth')[0] || SEATS.filter(function (s) { return s.kind === 'booth' && s.side < 0; })[0];
       if (seat.taken && seat.taken.anomaly == null) { /* fallback: share */ }
       C.path = []; sitDown(C, seat); C.state = 'reflect'; setPose(C.P, 'drink');
       var cup = makeCup(true); cup.position.copy(seat.eatPos); RENDER.scene.add(cup); A.cup = cup;
       // the reflection: same spot, only the window camera sees it — standing, staring, wrong face
-      var R = personFrom(C.arch, C.P.o.seed); R.root.position.copy(C.P.root.position); R.root.position.y = 0; R.root.rotation.y = 0; setPose(R, 'standStare'); R.odd = 1; R.lookAtCam = true;
+      var R = personFrom(C.arch, C.P.o.seed); R.root.position.copy(C.P.root.position); R.root.position.y = 0; R.root.position.z += 0.35; R.root.rotation.y = PI * 0.75; setPose(R, 'standStare'); R.odd = 1; R.lookAtCam = true; R.eyeStare = true;
       attachHorror(R, A.face); revealHorror(R, 1); RENDER.scene.add(R.root); setLayer(R.root, LAYER_REFL_ONLY); setLayer(C.P.root, LAYER_REAL_ONLY);
       A.refl = R; C.refl = R;
       anomalyOnset(A);
@@ -4877,9 +4886,9 @@ function comeInside() { CAM.outside = false; releaseShot(0.8); setTimeout(functi
 function enterFreezer() {
   CAM.inFreezer = true; GAME.freezeT = 0; GAME.freezeCount = 0;
   sfx('door', new THREE.Vector3(5, 1.2, -3.8)); WORLD.freezerDoor.rotation.y = 1.2;
-  closeShot(new THREE.Vector3(7.1, 1.55, -4.1), new THREE.Vector3(5.0, 1.3, -3.9), 0.9);
+  closeShot(new THREE.Vector3(5.55, 1.62, -3.45), new THREE.Vector3(7.6, 1.25, -4.7), 0.9);
   setTimeout(function () { if (CAM.inFreezer) { WORLD.freezerDoor.rotation.y = 0; sfx('bang', new THREE.Vector3(5, 1.2, -3.8), { vol: 0.5 }); setSpace('freezer'); jukeWobble(0); } }, 1000);
-  WORLD.lights.fill.position.set(6.6, 2.5, -4.0); WORLD.lights.fill.intensity = 4;
+  WORLD.lights.fill.position.set(6.6, 2.7, -4.0); WORLD.lights.fill.color.set(0x9fc8ff); WORLD.lights.fill.intensity = 7; GAME.breath = steamEmit(5.6, 1.5, -3.6, 0.8, 0.05);
   LSTATE.coldT = Math.max(LSTATE.coldT, 0.9);
   sfx('freeze'); setCold(0, true); updateMainButton();
   U.count = el('div', 'count', '', UI);
@@ -4887,7 +4896,7 @@ function enterFreezer() {
 function leaveFreezer() {
   CAM.inFreezer = false; sfx('door', new THREE.Vector3(5, 1.2, -3.8)); WORLD.freezerDoor.rotation.y = 1.2; releaseShot(0.8);
   setTimeout(function () { WORLD.freezerDoor.rotation.y = 0; setSpace('kitchen'); }, 900);
-  WORLD.lights.fill.intensity = 0; setCold(0, false); if (U.count && U.count.parentNode) U.count.parentNode.removeChild(U.count); U.count = null;
+  WORLD.lights.fill.intensity = 0; setCold(0, false); if (GAME.breath) { steamStop(GAME.breath); GAME.breath = null; } if (U.count && U.count.parentNode) U.count.parentNode.removeChild(U.count); U.count = null;
   if (!GAME.inAnomaly) LSTATE.coldT = 0.25 + GAME.day * 0.04;
   updateMainButton();
 }
@@ -4906,7 +4915,7 @@ function nearOdd() { var f = 0, cp = RENDER.camera.position; CUSTS.forEach(funct
 function frozenDeath() { GAME.mode = 'dead'; setMain(null); PU.uDesat = PU.uDesat; var t0 = performance.now(); var st = function () { var k = (performance.now() - t0) / 2500; PU.uBlack.value = clamp(k, 0, 1); PU.uSat.value = 1.05 - k; if (k < 1) requestAnimationFrame(st); else { PU.uSat.value = 1.05; gameOver(); } }; requestAnimationFrame(st); sfx('freeze', null, { vol: 1.5 }); }
 // ---- map (pinned floor plan) & 3D markers ---------------------------------------------------------
 var MAP_CSS = [
-  '.mapcard{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 104px);transform:translateX(-50%) rotate(-.8deg);width:min(360px,calc(100% - 32px));padding:14px 14px 12px;background-size:100% 100%;border-radius:3px;filter:drop-shadow(0 12px 20px rgba(0,0,0,.55));pointer-events:auto;animation:docin .35s cubic-bezier(.2,.9,.25,1.1) both;--r:-.8deg;--r1:3deg}',
+  '.mapcard{position:absolute;left:0;right:0;margin:0 auto;bottom:calc(env(safe-area-inset-bottom,0px) + 104px);width:min(360px,calc(100% - 32px));padding:14px 14px 12px;background-size:100% 100%;border-radius:3px;filter:drop-shadow(0 12px 20px rgba(0,0,0,.55));pointer-events:auto;animation:docin .35s cubic-bezier(.2,.9,.25,1.1) both;--r:-.8deg;--r1:3deg}',
   '.mapcard .pin{position:absolute;left:50%;top:-6px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#7ad,#1d4a8a);box-shadow:0 3px 4px rgba(0,0,0,.4)}',
   '.mapcard h4{margin:0 0 6px;font:400 17px/1 "Special Elite",monospace;color:#22201c;text-align:center;letter-spacing:.08em}',
   '.mapcard svg{display:block;width:100%;height:auto}',
@@ -4931,7 +4940,7 @@ function mapSVG() {
     s += '<g class="st" data-st="' + k + '"><circle cx="' + x + '" cy="' + y + '" r="' + (cur ? 13 : 11) + '" fill="' + (cur ? '#c8282e' : '#fbf3e0') + '" stroke="#22201c" stroke-width="2"/>' +
       (alert ? '<circle cx="' + (x + 9) + '" cy="' + (y - 9) + '" r="5" fill="#ff4fa3" stroke="#fff" stroke-width="1.2"/>' : '') +
       '<text x="' + x + '" y="' + (y + 4) + '" font-family="Alfa Slab One" font-size="12" text-anchor="middle" fill="' + (cur ? '#fff' : '#22201c') + '">' + st.n + '</text>' +
-      '<text x="' + x + '" y="' + (y + (st.map[1] > 3 ? -16 : 23)) + '" font-family="Oswald" font-size="9" letter-spacing=".6" text-anchor="middle" fill="#22201c">' + st.en.toUpperCase() + '</text></g>';
+      '<text x="' + x + '" y="' + (y + (st.map[1] > 2 || k === 'REGISTER' ? -16 : 23)) + '" font-family="Oswald" font-size="9" letter-spacing=".6" text-anchor="middle" fill="#22201c">' + st.en.toUpperCase() + '</text></g>';
   });
   return s + '</svg>';
 }
@@ -5102,9 +5111,9 @@ var SCR_CSS = [
   '.cm{position:absolute;inset:0;overflow:hidden;background:#f4c870;transition:opacity .08s}',
   '.cm canvas{position:absolute;inset:0;width:100%;height:100%}',
   '.cm .tvframe{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 120px rgba(40,20,0,.75),inset 0 0 30px rgba(0,0,0,.5);background:repeating-linear-gradient(0deg,rgba(0,0,0,.08) 0 1px,transparent 1px 3px)}',
-  '.logo{position:absolute;left:0;right:0;top:calc(var(--top-safe) + 4px);text-align:center;pointer-events:none}',
-  '.logo .l1{font:400 54px/1 Pacifico,cursive;color:#c8282e;text-shadow:0 3px 0 #fff4d8,0 6px 0 #7e1418,0 12px 18px rgba(0,0,0,.35);transform:rotate(-5deg);display:inline-block}',
-  '.logo .l2{margin-top:6px;font:400 17px/1 "Alfa Slab One",serif;color:#7e1418;letter-spacing:.2em}',
+  '.logo{position:absolute;left:0;right:0;top:calc(var(--top-safe) + 18px);text-align:center;pointer-events:none}',
+  '.logo .l1{font:400 min(46px,11.5vw)/1.05 Pacifico,cursive;color:#c8282e;text-shadow:0 3px 0 #fff4d8,0 6px 0 #7e1418,0 12px 18px rgba(0,0,0,.35);transform:rotate(-4deg);display:inline-block;padding:0 8px}',
+  '.logo .l2{margin-top:12px;font:400 17px/1 "Alfa Slab One",serif;color:#7e1418;letter-spacing:.2em}',
   '.logo .l3{display:inline-block;margin-top:10px;padding:6px 14px;border-radius:999px;background:#c8282e;color:#fff4d8;font:600 13px/1 Oswald,sans-serif;letter-spacing:.24em;box-shadow:0 3px 0 #7e1418}',
   '.titlemenu{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);transform:translateX(-50%);width:min(320px,calc(100% - 40px));display:flex;flex-direction:column;gap:14px}',
   '.titlemenu .mb{position:relative;left:auto;transform:none;max-width:none;width:100%}',
@@ -5127,7 +5136,7 @@ var SCR_CSS = [
   '.form label{display:block;font:400 13px/1.3 "Special Elite",monospace;color:#555;margin-top:12px}',
   '.form .stampbox{margin-top:16px;display:inline-block;padding:4px 10px;border:3px solid #c8282e;color:#c8282e;font:400 18px/1 "Alfa Slab One";transform:rotate(-8deg)}',
   // settings / archive
-  '.panel{position:absolute;left:50%;top:calc(var(--top-safe) + 8px);bottom:calc(env(safe-area-inset-bottom,0px) + 96px);transform:translateX(-50%);width:min(370px,calc(100% - 32px));padding:22px 20px;background-size:100% 100%;border-radius:4px;filter:drop-shadow(0 14px 24px rgba(0,0,0,.6));overflow-y:auto;-webkit-overflow-scrolling:touch;color:#22201c;animation:docin .4s cubic-bezier(.2,.9,.25,1.1) both;--r:0deg;--r1:2deg}',
+  '.panel{position:absolute;left:0;right:0;margin:0 auto;top:calc(var(--top-safe) + 8px);bottom:calc(env(safe-area-inset-bottom,0px) + 96px);width:min(370px,calc(100% - 32px));padding:22px 20px;background-size:100% 100%;border-radius:4px;filter:drop-shadow(0 14px 24px rgba(0,0,0,.6));overflow-y:auto;-webkit-overflow-scrolling:touch;color:#22201c;animation:docin .4s cubic-bezier(.2,.9,.25,1.1) both;--r:0deg;--r1:2deg}',
   '.panel h2{margin:0 0 12px;font:400 30px/1 Pacifico,cursive;color:#c8282e;text-align:center}',
   '.row{margin:14px 0}.row .lb{display:flex;justify-content:space-between;font:600 14px/1.2 Oswald,sans-serif;letter-spacing:.1em}.row .lb .ja{font:500 11px/1.4 "Zen Kaku Gothic New";letter-spacing:0;color:#6b5a44}',
   '.seg{display:flex;gap:6px;margin-top:8px}.seg button{flex:1;height:38px;border-radius:999px;border:2px solid #22201c;background:#fbf3e0;font:600 12px/1 Oswald,sans-serif;letter-spacing:.08em;color:#22201c;pointer-events:auto}.seg button.on{background:#c8282e;color:#fff4d8;border-color:#7e1418;box-shadow:inset 0 2px 3px rgba(0,0,0,.3)}',
@@ -5164,7 +5173,7 @@ function showTitle(first) {
   GAME.mode = 'title'; setGameHUD(false);
   RENDER.scene.environment = RENDER.scene.environment;
   FX.rainT = 1; LSTATE.coldT = 0.3; LSTATE.lightsOn = true; LSTATE.neonOn = true;
-  CAM.override = { pos: new THREE.Vector3(-8.5, 1.6, 25), target: new THREE.Vector3(-1.5, 2.6, 4), k: 1, dur: 1 }; CAM.titleDrift = 0;
+  CAM.override = { pos: new THREE.Vector3(-4.6, 1.35, 16.5), target: new THREE.Vector3(-1.2, 2.3, 4), k: 1, dur: 1 }; CAM.titleDrift = 0;
   playMusic('title', { vol: 0.85 });
   var s = scr('', '<div class="cm"><canvas></canvas><div class="tvframe"></div></div><div class="logo"><div class="l1">Sunny Side Diner</div><div class="l2">— OPEN 24 HOURS! —</div><div class="l3">RISE AND SHINE!</div></div><div class="titlemenu"></div><div class="ver">v' + GAME_VERSION + '</div>');
   SCR.title = s; CM.on = true; CM.t = 0; CM.el = s.querySelector('.cm'); CM.cv = s.querySelector('.cm canvas'); CM.next = 4 + Math.random() * 3;
@@ -5370,7 +5379,13 @@ function playTVCommercial(done) {
   var cmC = mkCanvas(512, 384), cmT = toTex(cmC, { clamp: true, nomip: true }); var oldMap = WORLD.tvMat.map; WORLD.tvMat.map = cmT; WORLD.tvMat.needsUpdate = true; TV.mode = 'cm';
   // live view of tonight's counter (for the last line)
   var liveRT = new THREE.WebGLRenderTarget(512, 384), liveCam = new THREE.PerspectiveCamera(50, 4 / 3, 0.05, 50); liveCam.position.set(0.9, 1.5, -2.4); liveCam.lookAt(0.55, 1.06, -1.5);
-  var faces = ARCH.slice(0, 8).map(function (a) { var o = {}; for (var k in a.o) o[k] = a.o[k]; o.seed = 7; o.smile = 1; return faceCanvas(o); });
+  var faces = ARCH.slice(0, 8).map(function (a) { var o = {}; for (var k in a.o) o[k] = a.o[k]; o.seed = 7; o.smile = 1; var c = faceCanvas(o), g = c.getContext('2d');
+    // paint the hair / hat back on so they read as people in the old film
+    g.fillStyle = o.hat ? (o.hatC || '#6b4a2a') : (o.hairC || '#3a2618');
+    g.beginPath(); g.ellipse(128, 70, 62, o.hair === 'bald' ? 10 : 34, 0, PI, 0); g.fill(); g.fillRect(66, 66, 124, o.hat ? 8 : 14);
+    if (o.hair === 'long' || o.hair === 'pony' || o.hair === 'bob' || o.hair === 'beehive') { g.fillRect(66, 66, 14, 90); g.fillRect(176, 66, 14, 90); }
+    if (o.hair === 'beehive') { g.beginPath(); g.ellipse(128, 50, 50, 40, 0, 0, TAU); g.fill(); }
+    return c; });
   var lyr = scr('', '<div class="lyr"><div class="e"><span class="t"></span><b></b></div><div class="j"></div></div>'); lyr.style.pointerEvents = 'none';
   var started = performance.now(), ended = false, cut = false, off = false;
   var skip = el('button', 'mb pe hidden', icon('skip', 30) + '<span class="tx"><span class="en">SKIP</span><span class="ja">スキップ</span></span>', UI); skip.style.cssText = 'position:absolute;right:20px;top:calc(var(--top-safe) + 8px);min-width:140px;';
@@ -5444,8 +5459,8 @@ function initGame() {
   onTap(U.rulesBtn, function () { sfx('click'); if (GAME.mode === 'play') showRules(); });
   onTap(U.mapBtn, function () { sfx('click'); if (GAME.mode === 'play') toggleMap(); });
   onFrame(updateGame);
-  onFrame(function (dt) { drawCMFrame(dt); if (GAME.mode === 'title' && CAM.override && !SCR.warn) { CAM.titleDrift = (CAM.titleDrift || 0) + dt; CAM.override.pos.set(-8.5 + Math.sin(CAM.titleDrift * 0.07) * 1.5, 1.6, 25 - Math.sin(CAM.titleDrift * 0.05) * 2); } });
-  CAM.override = { pos: new THREE.Vector3(-8.5, 1.6, 25), target: new THREE.Vector3(-1.5, 2.6, 4), k: 1, dur: 1 };
+  onFrame(function (dt) { drawCMFrame(dt); if (GAME.mode === 'title' && CAM.override && !SCR.warn) { CAM.titleDrift = (CAM.titleDrift || 0) + dt; CAM.override.pos.set(-4.6 + Math.sin(CAM.titleDrift * 0.07) * 1.2, 1.35, 16.5 - Math.sin(CAM.titleDrift * 0.05) * 1.5); } });
+  CAM.override = { pos: new THREE.Vector3(-4.6, 1.35, 16.5), target: new THREE.Vector3(-1.2, 2.3, 4), k: 1, dur: 1 };
   FX.rainT = 1;
   if (DEV && /[?&]skipwarn/.test(location.search)) { audioUnlock(); showTitle(); } else showWarning();
 }

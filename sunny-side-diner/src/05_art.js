@@ -98,18 +98,18 @@ function drawSunny(g, cx, cy, s, opt) {
 function sunnyCanvas(size, opt) { var c = mkCanvas(size, size), g = c.getContext('2d'); drawSunny(g, size / 2, size * 0.46, size * 0.33, opt); return c; }
 
 // neon tube look: draw path with glow layers
-function neonStroke(g, drawPath, col, w) {
+function neonStroke(g, drawPath, col, w) { // glow via shadowBlur (works in Safari, unlike ctx.filter)
   g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
-  g.strokeStyle = col; g.globalAlpha = 0.25; g.lineWidth = w * 3.2; g.filter = 'blur(' + (w * 0.9) + 'px)'; drawPath(); g.stroke();
-  g.filter = 'none'; g.globalAlpha = 1; g.lineWidth = w; drawPath(); g.stroke();
-  g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = w * 0.35; drawPath(); g.stroke();
+  g.shadowColor = col; g.shadowBlur = w * 3.5; g.strokeStyle = col; g.globalAlpha = 0.55; g.lineWidth = w * 1.6; drawPath(); g.stroke();
+  g.shadowBlur = w * 1.5; g.globalAlpha = 1; g.lineWidth = w; drawPath(); g.stroke();
+  g.shadowBlur = 0; g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = w * 0.35; drawPath(); g.stroke();
   g.restore();
 }
 function neonText(g, txt, x, y, font, col, w) {
   g.save(); g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
-  g.strokeStyle = col; g.globalAlpha = 0.3; g.lineWidth = w * 3; g.filter = 'blur(' + w + 'px)'; g.strokeText(txt, x, y);
-  g.filter = 'none'; g.globalAlpha = 1; g.lineWidth = w; g.strokeText(txt, x, y);
-  g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = w * 0.33; g.strokeText(txt, x, y);
+  g.shadowColor = col; g.shadowBlur = w * 3; g.strokeStyle = col; g.globalAlpha = 0.6; g.lineWidth = w * 1.5; g.strokeText(txt, x, y);
+  g.shadowBlur = w * 1.2; g.globalAlpha = 1; g.lineWidth = w; g.strokeText(txt, x, y);
+  g.shadowBlur = 0; g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = w * 0.33; g.strokeText(txt, x, y);
   g.restore();
 }
 // interior neon over the pass window: "Sunny Side" + mascot outline. eyes drawn separately.

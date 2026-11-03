@@ -155,7 +155,7 @@ function closeDocs(silent) {
   ov.classList.add('hide'); setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 380);
   var f = DOC.onClose; DOC.onClose = null; if (f && !silent) f();
 }
-function tapeHTML(spots) { return (spots || [[-18, -10, -8], [null, -10, 7]]).map(function (s) { return '<div class="tape" style="' + (s[0] == null ? 'right:-18px' : 'left:' + s[0] + 'px') + ';top:' + s[1] + 'px;transform:rotate(' + s[2] + 'deg)"></div>'; }).join(''); }
+function tapeHTML(spots) { return (spots || [[-8, -10, -8], [null, -10, 7]]).map(function (s) { return '<div class="tape" style="' + (s[0] == null ? 'right:-8px' : 'left:' + s[0] + 'px') + ';top:' + s[1] + 'px;transform:rotate(' + s[2] + 'deg)"></div>'; }).join(''); }
 function docRules(list, night) { // list: [{n,en,ja,fake,red,redJa,ul}]
   var real = list.filter(function (r) { return !r.fake; }), fakes = list.filter(function (r) { return r.fake; });
   var h = '<div class="doc rules" style="background-image:url(' + PAPER.rules + ');--r:-1.2deg">' + tapeHTML() +

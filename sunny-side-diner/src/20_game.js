@@ -232,9 +232,9 @@ function comeInside() { CAM.outside = false; releaseShot(0.8); setTimeout(functi
 function enterFreezer() {
   CAM.inFreezer = true; GAME.freezeT = 0; GAME.freezeCount = 0;
   sfx('door', new THREE.Vector3(5, 1.2, -3.8)); WORLD.freezerDoor.rotation.y = 1.2;
-  closeShot(new THREE.Vector3(7.1, 1.55, -4.1), new THREE.Vector3(5.0, 1.3, -3.9), 0.9);
+  closeShot(new THREE.Vector3(5.55, 1.62, -3.45), new THREE.Vector3(7.6, 1.25, -4.7), 0.9);
   setTimeout(function () { if (CAM.inFreezer) { WORLD.freezerDoor.rotation.y = 0; sfx('bang', new THREE.Vector3(5, 1.2, -3.8), { vol: 0.5 }); setSpace('freezer'); jukeWobble(0); } }, 1000);
-  WORLD.lights.fill.position.set(6.6, 2.5, -4.0); WORLD.lights.fill.intensity = 4;
+  WORLD.lights.fill.position.set(6.6, 2.7, -4.0); WORLD.lights.fill.color.set(0x9fc8ff); WORLD.lights.fill.intensity = 7; GAME.breath = steamEmit(5.6, 1.5, -3.6, 0.8, 0.05);
   LSTATE.coldT = Math.max(LSTATE.coldT, 0.9);
   sfx('freeze'); setCold(0, true); updateMainButton();
   U.count = el('div', 'count', '', UI);
@@ -242,7 +242,7 @@ function enterFreezer() {
 function leaveFreezer() {
   CAM.inFreezer = false; sfx('door', new THREE.Vector3(5, 1.2, -3.8)); WORLD.freezerDoor.rotation.y = 1.2; releaseShot(0.8);
   setTimeout(function () { WORLD.freezerDoor.rotation.y = 0; setSpace('kitchen'); }, 900);
-  WORLD.lights.fill.intensity = 0; setCold(0, false); if (U.count && U.count.parentNode) U.count.parentNode.removeChild(U.count); U.count = null;
+  WORLD.lights.fill.intensity = 0; setCold(0, false); if (GAME.breath) { steamStop(GAME.breath); GAME.breath = null; } if (U.count && U.count.parentNode) U.count.parentNode.removeChild(U.count); U.count = null;
   if (!GAME.inAnomaly) LSTATE.coldT = 0.25 + GAME.day * 0.04;
   updateMainButton();
 }
@@ -261,7 +261,7 @@ function nearOdd() { var f = 0, cp = RENDER.camera.position; CUSTS.forEach(funct
 function frozenDeath() { GAME.mode = 'dead'; setMain(null); PU.uDesat = PU.uDesat; var t0 = performance.now(); var st = function () { var k = (performance.now() - t0) / 2500; PU.uBlack.value = clamp(k, 0, 1); PU.uSat.value = 1.05 - k; if (k < 1) requestAnimationFrame(st); else { PU.uSat.value = 1.05; gameOver(); } }; requestAnimationFrame(st); sfx('freeze', null, { vol: 1.5 }); }
 // ---- map (pinned floor plan) & 3D markers ---------------------------------------------------------
 var MAP_CSS = [
-  '.mapcard{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 104px);transform:translateX(-50%) rotate(-.8deg);width:min(360px,calc(100% - 32px));padding:14px 14px 12px;background-size:100% 100%;border-radius:3px;filter:drop-shadow(0 12px 20px rgba(0,0,0,.55));pointer-events:auto;animation:docin .35s cubic-bezier(.2,.9,.25,1.1) both;--r:-.8deg;--r1:3deg}',
+  '.mapcard{position:absolute;left:0;right:0;margin:0 auto;bottom:calc(env(safe-area-inset-bottom,0px) + 104px);width:min(360px,calc(100% - 32px));padding:14px 14px 12px;background-size:100% 100%;border-radius:3px;filter:drop-shadow(0 12px 20px rgba(0,0,0,.55));pointer-events:auto;animation:docin .35s cubic-bezier(.2,.9,.25,1.1) both;--r:-.8deg;--r1:3deg}',
   '.mapcard .pin{position:absolute;left:50%;top:-6px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#7ad,#1d4a8a);box-shadow:0 3px 4px rgba(0,0,0,.4)}',
   '.mapcard h4{margin:0 0 6px;font:400 17px/1 "Special Elite",monospace;color:#22201c;text-align:center;letter-spacing:.08em}',
   '.mapcard svg{display:block;width:100%;height:auto}',
@@ -286,7 +286,7 @@ function mapSVG() {
     s += '<g class="st" data-st="' + k + '"><circle cx="' + x + '" cy="' + y + '" r="' + (cur ? 13 : 11) + '" fill="' + (cur ? '#c8282e' : '#fbf3e0') + '" stroke="#22201c" stroke-width="2"/>' +
       (alert ? '<circle cx="' + (x + 9) + '" cy="' + (y - 9) + '" r="5" fill="#ff4fa3" stroke="#fff" stroke-width="1.2"/>' : '') +
       '<text x="' + x + '" y="' + (y + 4) + '" font-family="Alfa Slab One" font-size="12" text-anchor="middle" fill="' + (cur ? '#fff' : '#22201c') + '">' + st.n + '</text>' +
-      '<text x="' + x + '" y="' + (y + (st.map[1] > 3 ? -16 : 23)) + '" font-family="Oswald" font-size="9" letter-spacing=".6" text-anchor="middle" fill="#22201c">' + st.en.toUpperCase() + '</text></g>';
+      '<text x="' + x + '" y="' + (y + (st.map[1] > 2 || k === 'REGISTER' ? -16 : 23)) + '" font-family="Oswald" font-size="9" letter-spacing=".6" text-anchor="middle" fill="#22201c">' + st.en.toUpperCase() + '</text></g>';
   });
   return s + '</svg>';
 }

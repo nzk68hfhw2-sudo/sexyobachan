@@ -13,9 +13,9 @@ var SCR_CSS = [
   '.cm{position:absolute;inset:0;overflow:hidden;background:#f4c870;transition:opacity .08s}',
   '.cm canvas{position:absolute;inset:0;width:100%;height:100%}',
   '.cm .tvframe{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 120px rgba(40,20,0,.75),inset 0 0 30px rgba(0,0,0,.5);background:repeating-linear-gradient(0deg,rgba(0,0,0,.08) 0 1px,transparent 1px 3px)}',
-  '.logo{position:absolute;left:0;right:0;top:calc(var(--top-safe) + 4px);text-align:center;pointer-events:none}',
-  '.logo .l1{font:400 54px/1 Pacifico,cursive;color:#c8282e;text-shadow:0 3px 0 #fff4d8,0 6px 0 #7e1418,0 12px 18px rgba(0,0,0,.35);transform:rotate(-5deg);display:inline-block}',
-  '.logo .l2{margin-top:6px;font:400 17px/1 "Alfa Slab One",serif;color:#7e1418;letter-spacing:.2em}',
+  '.logo{position:absolute;left:0;right:0;top:calc(var(--top-safe) + 18px);text-align:center;pointer-events:none}',
+  '.logo .l1{font:400 min(46px,11.5vw)/1.05 Pacifico,cursive;color:#c8282e;text-shadow:0 3px 0 #fff4d8,0 6px 0 #7e1418,0 12px 18px rgba(0,0,0,.35);transform:rotate(-4deg);display:inline-block;padding:0 8px}',
+  '.logo .l2{margin-top:12px;font:400 17px/1 "Alfa Slab One",serif;color:#7e1418;letter-spacing:.2em}',
   '.logo .l3{display:inline-block;margin-top:10px;padding:6px 14px;border-radius:999px;background:#c8282e;color:#fff4d8;font:600 13px/1 Oswald,sans-serif;letter-spacing:.24em;box-shadow:0 3px 0 #7e1418}',
   '.titlemenu{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);transform:translateX(-50%);width:min(320px,calc(100% - 40px));display:flex;flex-direction:column;gap:14px}',
   '.titlemenu .mb{position:relative;left:auto;transform:none;max-width:none;width:100%}',
@@ -38,7 +38,7 @@ var SCR_CSS = [
   '.form label{display:block;font:400 13px/1.3 "Special Elite",monospace;color:#555;margin-top:12px}',
   '.form .stampbox{margin-top:16px;display:inline-block;padding:4px 10px;border:3px solid #c8282e;color:#c8282e;font:400 18px/1 "Alfa Slab One";transform:rotate(-8deg)}',
   // settings / archive
-  '.panel{position:absolute;left:50%;top:calc(var(--top-safe) + 8px);bottom:calc(env(safe-area-inset-bottom,0px) + 96px);transform:translateX(-50%);width:min(370px,calc(100% - 32px));padding:22px 20px;background-size:100% 100%;border-radius:4px;filter:drop-shadow(0 14px 24px rgba(0,0,0,.6));overflow-y:auto;-webkit-overflow-scrolling:touch;color:#22201c;animation:docin .4s cubic-bezier(.2,.9,.25,1.1) both;--r:0deg;--r1:2deg}',
+  '.panel{position:absolute;left:0;right:0;margin:0 auto;top:calc(var(--top-safe) + 8px);bottom:calc(env(safe-area-inset-bottom,0px) + 96px);width:min(370px,calc(100% - 32px));padding:22px 20px;background-size:100% 100%;border-radius:4px;filter:drop-shadow(0 14px 24px rgba(0,0,0,.6));overflow-y:auto;-webkit-overflow-scrolling:touch;color:#22201c;animation:docin .4s cubic-bezier(.2,.9,.25,1.1) both;--r:0deg;--r1:2deg}',
   '.panel h2{margin:0 0 12px;font:400 30px/1 Pacifico,cursive;color:#c8282e;text-align:center}',
   '.row{margin:14px 0}.row .lb{display:flex;justify-content:space-between;font:600 14px/1.2 Oswald,sans-serif;letter-spacing:.1em}.row .lb .ja{font:500 11px/1.4 "Zen Kaku Gothic New";letter-spacing:0;color:#6b5a44}',
   '.seg{display:flex;gap:6px;margin-top:8px}.seg button{flex:1;height:38px;border-radius:999px;border:2px solid #22201c;background:#fbf3e0;font:600 12px/1 Oswald,sans-serif;letter-spacing:.08em;color:#22201c;pointer-events:auto}.seg button.on{background:#c8282e;color:#fff4d8;border-color:#7e1418;box-shadow:inset 0 2px 3px rgba(0,0,0,.3)}',
@@ -75,7 +75,7 @@ function showTitle(first) {
   GAME.mode = 'title'; setGameHUD(false);
   RENDER.scene.environment = RENDER.scene.environment;
   FX.rainT = 1; LSTATE.coldT = 0.3; LSTATE.lightsOn = true; LSTATE.neonOn = true;
-  CAM.override = { pos: new THREE.Vector3(-8.5, 1.6, 25), target: new THREE.Vector3(-1.5, 2.6, 4), k: 1, dur: 1 }; CAM.titleDrift = 0;
+  CAM.override = { pos: new THREE.Vector3(-4.6, 1.35, 16.5), target: new THREE.Vector3(-1.2, 2.3, 4), k: 1, dur: 1 }; CAM.titleDrift = 0;
   playMusic('title', { vol: 0.85 });
   var s = scr('', '<div class="cm"><canvas></canvas><div class="tvframe"></div></div><div class="logo"><div class="l1">Sunny Side Diner</div><div class="l2">— OPEN 24 HOURS! —</div><div class="l3">RISE AND SHINE!</div></div><div class="titlemenu"></div><div class="ver">v' + GAME_VERSION + '</div>');
   SCR.title = s; CM.on = true; CM.t = 0; CM.el = s.querySelector('.cm'); CM.cv = s.querySelector('.cm canvas'); CM.next = 4 + Math.random() * 3;
@@ -281,7 +281,13 @@ function playTVCommercial(done) {
   var cmC = mkCanvas(512, 384), cmT = toTex(cmC, { clamp: true, nomip: true }); var oldMap = WORLD.tvMat.map; WORLD.tvMat.map = cmT; WORLD.tvMat.needsUpdate = true; TV.mode = 'cm';
   // live view of tonight's counter (for the last line)
   var liveRT = new THREE.WebGLRenderTarget(512, 384), liveCam = new THREE.PerspectiveCamera(50, 4 / 3, 0.05, 50); liveCam.position.set(0.9, 1.5, -2.4); liveCam.lookAt(0.55, 1.06, -1.5);
-  var faces = ARCH.slice(0, 8).map(function (a) { var o = {}; for (var k in a.o) o[k] = a.o[k]; o.seed = 7; o.smile = 1; return faceCanvas(o); });
+  var faces = ARCH.slice(0, 8).map(function (a) { var o = {}; for (var k in a.o) o[k] = a.o[k]; o.seed = 7; o.smile = 1; var c = faceCanvas(o), g = c.getContext('2d');
+    // paint the hair / hat back on so they read as people in the old film
+    g.fillStyle = o.hat ? (o.hatC || '#6b4a2a') : (o.hairC || '#3a2618');
+    g.beginPath(); g.ellipse(128, 70, 62, o.hair === 'bald' ? 10 : 34, 0, PI, 0); g.fill(); g.fillRect(66, 66, 124, o.hat ? 8 : 14);
+    if (o.hair === 'long' || o.hair === 'pony' || o.hair === 'bob' || o.hair === 'beehive') { g.fillRect(66, 66, 14, 90); g.fillRect(176, 66, 14, 90); }
+    if (o.hair === 'beehive') { g.beginPath(); g.ellipse(128, 50, 50, 40, 0, 0, TAU); g.fill(); }
+    return c; });
   var lyr = scr('', '<div class="lyr"><div class="e"><span class="t"></span><b></b></div><div class="j"></div></div>'); lyr.style.pointerEvents = 'none';
   var started = performance.now(), ended = false, cut = false, off = false;
   var skip = el('button', 'mb pe hidden', icon('skip', 30) + '<span class="tx"><span class="en">SKIP</span><span class="ja">スキップ</span></span>', UI); skip.style.cssText = 'position:absolute;right:20px;top:calc(var(--top-safe) + 8px);min-width:140px;';
@@ -355,8 +361,8 @@ function initGame() {
   onTap(U.rulesBtn, function () { sfx('click'); if (GAME.mode === 'play') showRules(); });
   onTap(U.mapBtn, function () { sfx('click'); if (GAME.mode === 'play') toggleMap(); });
   onFrame(updateGame);
-  onFrame(function (dt) { drawCMFrame(dt); if (GAME.mode === 'title' && CAM.override && !SCR.warn) { CAM.titleDrift = (CAM.titleDrift || 0) + dt; CAM.override.pos.set(-8.5 + Math.sin(CAM.titleDrift * 0.07) * 1.5, 1.6, 25 - Math.sin(CAM.titleDrift * 0.05) * 2); } });
-  CAM.override = { pos: new THREE.Vector3(-8.5, 1.6, 25), target: new THREE.Vector3(-1.5, 2.6, 4), k: 1, dur: 1 };
+  onFrame(function (dt) { drawCMFrame(dt); if (GAME.mode === 'title' && CAM.override && !SCR.warn) { CAM.titleDrift = (CAM.titleDrift || 0) + dt; CAM.override.pos.set(-4.6 + Math.sin(CAM.titleDrift * 0.07) * 1.2, 1.35, 16.5 - Math.sin(CAM.titleDrift * 0.05) * 1.5); } });
+  CAM.override = { pos: new THREE.Vector3(-4.6, 1.35, 16.5), target: new THREE.Vector3(-1.2, 2.3, 4), k: 1, dur: 1 };
   FX.rainT = 1;
   if (DEV && /[?&]skipwarn/.test(location.search)) { audioUnlock(); showTitle(); } else showWarning();
 }

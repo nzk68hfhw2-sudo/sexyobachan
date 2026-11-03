@@ -95,7 +95,7 @@ function updateReflection() {
   // window visible? (camera in front of it and facing it)
   if (!_v3) _v3 = new THREE.Vector3();
   cam.getWorldDirection(_v3);
-  var visible = cam.position.z < 4.98 && cam.position.z > -2.9 && cam.position.x < 8 && _v3.z > -0.25 && !CAM.inFreezer;
+  var visible = Q !== QUAL.LOW && cam.position.z < 4.98 && cam.position.z > -2.9 && cam.position.x < 8 && _v3.z > -0.25 && !CAM.inFreezer;
   r.uni.uHas.value = visible ? 1 : 0;
   if (!visible || r.skip % every) return;
   var sw = Math.max(64, Math.round(RENDER.sw * (Q === QUAL.HIGH ? 0.5 : 0.36))), sh = Math.max(64, Math.round(RENDER.sh * (Q === QUAL.HIGH ? 0.5 : 0.36)));

@@ -291,7 +291,7 @@ function texCeiling() {
 // wet asphalt (parking lot) 1 tex = 6m
 function texAsphalt() {
   var S = TEXQ >> 1, T = new TexSet(S, S, 101), a = T.a, r = T.r, hg = T.hg, rnd = T.rnd;
-  a.fillStyle = '#27272a'; a.fillRect(0, 0, S, S); r.fillStyle = grey(150); r.fillRect(0, 0, S, S);
+  a.fillStyle = '#38383c'; a.fillRect(0, 0, S, S); r.fillStyle = grey(95); r.fillRect(0, 0, S, S);
   for (var i = 0; i < 9000; i++) { var v = rnd() * 70; a.fillStyle = rgba(30 + v, 30 + v, 32 + v, 0.5); a.fillRect(rnd() * S, rnd() * S, 1.5, 1.5); }
   for (var p = 0; p < 9; p++) { // puddles (mirror)
     var px = rnd() * S, py = rnd() * S, pr = 20 + rnd() * 70;

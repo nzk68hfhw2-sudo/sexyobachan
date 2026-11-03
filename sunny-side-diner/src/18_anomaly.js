@@ -70,7 +70,7 @@ var ACTIVE = []; // running anomalies
 function anomalyOnset(A, opt) {
   opt = opt || {};
   A.onsetAt = GAME.min; GAME.anomalyNow = A;
-  GAME.inAnomaly = (GAME.inAnomaly || 0) + 1;
+  if (!A.bg && !A.counted) { A.counted = true; GAME.inAnomaly = (GAME.inAnomaly || 0) + 1; }
   if (!opt.keepMusic) jukeStop(0.05, 0.6);
   if (!opt.noZap) { LSTATE.neonOn = false; sfx('zap', new THREE.Vector3(1.5, 2.5, -2.6)); setTimeout(function () { LSTATE.neonOn = !GAME.neonOff; }, 900); LSTATE.flick = 1.2; }
   LSTATE.coldT = Math.min(1, 0.75 + GAME.day * 0.05);
@@ -82,7 +82,8 @@ function anomalyResolve(A, msg) {
   if (A.done) return; A.done = true; A.ok = true;
   var i = ACTIVE.indexOf(A); if (i >= 0) ACTIVE.splice(i, 1);
   if (A.cleanup) A.cleanup();
-  GAME.inAnomaly = Math.max(0, (GAME.inAnomaly || 1) - 1); GAME.resolved++;
+  if (A.def && A.def.cleanup) try { A.def.cleanup(A); } catch (e) {}
+  if (A.counted) { A.counted = false; GAME.inAnomaly = Math.max(0, (GAME.inAnomaly || 1) - 1); } GAME.resolved++;
   SAVE.anomalies[A.id] = 2; writeSave();
   if (!GAME.inAnomaly) {
     LSTATE.coldT = 0.25 + GAME.day * 0.04;
@@ -149,7 +150,7 @@ var ANOM = {
   // R3 — the pink phone (rings three times in a night)
   phone: {
     hint: ['That phone? Let it ring. Twice. Third time you can pick up.', 'あの電話か？ 2回は鳴らしとけ。3回目なら出ていい。'],
-    start: function (A) { A.ring = 0; A.next = 1; A.face = pickFace(['shadow', 'glitch'], 'phone'); ringSession(A); },
+    start: function (A) { A.bg = true; A.ring = 0; A.next = 1; A.face = pickFace(['shadow', 'glitch'], 'phone'); ringSession(A); },
     update: function (A, dt) {
       if (A.ringing) { A.rt -= dt; A.rr -= dt; if (A.rr <= 0) { A.rr = 2.4; sfx('ring', WORLD.phonePos, { distort: (A.ring - 1) * 0.35, vol: 1.1 }); WORLD.handset.position.x = -0.17 + (Math.random() - 0.5) * 0.004; } if (A.rt <= 0) { A.ringing = false; if (A.ring >= 3) anomalyResolve(A, false); else A.wait = 70 + Math.random() * 90; } }
       else if (A.wait != null && !A.done) { A.wait -= dt; if (A.wait <= 0) { A.wait = null; ringSession(A); } }
@@ -227,12 +228,12 @@ var ANOM = {
       A.face = pickFace(['human', 'crawler'], 'reflection');
       var C = spawnCustomer(ARCH[Math.floor(Math.random() * ARCH.length)], { anomaly: A, silentEntry: true });
       A.cust = C; C.anomaly = A; C.P.odd = 0.15;
-      var seat = freeSeats('booth')[0] || SEATS.filter(function (s) { return s.kind === 'booth' && s.side < 0; })[0];
+      var fb = freeSeats('booth').filter(function (x) { return x.booth === 2 || x.booth === 3; }); var seat = fb[Math.floor(Math.random() * fb.length)] || freeSeats('booth')[0] || SEATS.filter(function (s) { return s.kind === 'booth' && s.side < 0; })[0];
       if (seat.taken && seat.taken.anomaly == null) { /* fallback: share */ }
       C.path = []; sitDown(C, seat); C.state = 'reflect'; setPose(C.P, 'drink');
       var cup = makeCup(true); cup.position.copy(seat.eatPos); RENDER.scene.add(cup); A.cup = cup;
       // the reflection: same spot, only the window camera sees it — standing, staring, wrong face
-      var R = personFrom(C.arch, C.P.o.seed); R.root.position.copy(C.P.root.position); R.root.position.y = 0; R.root.rotation.y = 0; setPose(R, 'standStare'); R.odd = 1; R.lookAtCam = true;
+      var R = personFrom(C.arch, C.P.o.seed); R.root.position.copy(C.P.root.position); R.root.position.y = 0; R.root.position.z += 0.35; R.root.rotation.y = PI * 0.75; setPose(R, 'standStare'); R.odd = 1; R.lookAtCam = true; R.eyeStare = true;
       attachHorror(R, A.face); revealHorror(R, 1); RENDER.scene.add(R.root); setLayer(R.root, LAYER_REFL_ONLY); setLayer(C.P.root, LAYER_REAL_ONLY);
       A.refl = R; C.refl = R;
       anomalyOnset(A);

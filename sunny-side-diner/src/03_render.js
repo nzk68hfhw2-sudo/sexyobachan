@@ -132,6 +132,7 @@ function initRenderer() {
   RENDER.hdr = !!(r.capabilities.isWebGL2 && (r.extensions.get('EXT_color_buffer_float') || r.extensions.get('EXT_color_buffer_half_float')));
   RENDER.ftype = RENDER.hdr ? THREE.HalfFloatType : THREE.UnsignedByteType;
   RENDER.scene = new THREE.Scene();
+  RENDER.scene.fog = new THREE.FogExp2(0x0b0e16, 0.011);
   RENDER.camera = new THREE.PerspectiveCamera(62, 1, 0.05, 260);
   RENDER.scene.add(RENDER.camera);
   PU = {

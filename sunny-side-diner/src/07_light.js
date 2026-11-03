@@ -34,7 +34,8 @@ function buildLights() {
 }
 function applyLightQuality() {
   var L = WORLD.lights; if (!L.counterA) return;
-  var sh = Q.shadow > 0;
+  var sh = Q.shadow > 0, low = Q === QUAL.LOW;
+  [L.juke, L.bounce, L.sign, L.fill].forEach(function (l) { l.visible = !low; });
   [L.counterA, L.counterB, L.booths].forEach(function (s) { s.castShadow = sh; s.shadow.mapSize.set(Q.shadowSize, Q.shadowSize); if (s.shadow.map) { s.shadow.map.dispose(); s.shadow.map = null; } });
   RENDER.shadowDirty = true;
 }
