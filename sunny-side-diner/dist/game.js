@@ -4006,9 +4006,9 @@ function updateCustomers(dt) {
 function clearDishesLater(C) { C.dishes.forEach(function (d) { if (d.userData.em) { steamStop(d.userData.em); d.userData.em = null; } }); }
 // ---- attention markers (DOM badges over heads) ------------------------------------------------
 var MARK_CSS = [
-  '.cmark{position:absolute;width:34px;height:34px;margin:-40px 0 0 -17px;border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none;color:#fff8e6;',
+  '.cmark{position:absolute;width:40px;height:40px;margin:-44px 0 0 -20px;border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer;color:#fff8e6;',
   ' background:radial-gradient(circle at 35% 30%,#e8444a,#9e1218);box-shadow:0 0 0 2px #e9edf0,0 4px 10px rgba(0,0,0,.5);transition:opacity .2s;}',
-  '.cmark::before{content:"";position:absolute;inset:-6px;border-radius:50%;background:conic-gradient(var(--pc,#8fd3c1) var(--p,100%),rgba(0,0,0,.35) 0);-webkit-mask:radial-gradient(circle,transparent 19px,#000 20px);mask:radial-gradient(circle,transparent 19px,#000 20px);}',
+  '.cmark::before{content:"";position:absolute;inset:-6px;border-radius:50%;background:conic-gradient(var(--pc,#8fd3c1) var(--p,100%),rgba(0,0,0,.35) 0);-webkit-mask:radial-gradient(circle,transparent 22px,#000 23px);mask:radial-gradient(circle,transparent 22px,#000 23px);}',
   '.cmark.edge::after{content:"";position:absolute;right:-13px;top:50%;margin-top:-7px;border:7px solid transparent;border-left:9px solid #e9edf0}.cmark.edge.el::after{right:auto;left:-13px;border-left:7px solid transparent;border-right:9px solid #e9edf0}',
   '.cmark .ic{width:18px;height:18px}.cmark.mint{background:radial-gradient(circle at 35% 30%,#b9eedd,#2f7e6e);color:#0c2a24}',
   '.rpop{position:absolute;right:20px;top:calc(var(--top-safe) + 70px);width:170px;padding:14px 14px 18px;font:400 12px/1.5 DotGothic16,monospace;color:#2e2e34;background-size:100% 100%;filter:drop-shadow(0 8px 12px rgba(0,0,0,.5));animation:rpin .9s steps(10) both;transition:transform .6s ease-in,opacity .6s;}',
@@ -4038,8 +4038,8 @@ function updateMarker(C) {
     var x = edge ? (edge < 0 ? 40 : RENDER.w - 40) : (_mv.x * 0.5 + 0.5) * RENDER.w, y = edge ? RENDER.h * 0.45 : (-_mv.y * 0.5 + 0.5) * RENDER.h; var top = 118 + 70; if (y < top) y = top; if (y > RENDER.h - 260) y = RENDER.h - 260; x = clamp(x, 40, RENDER.w - 40);
     C.marker.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + (edge ? 0.9 : clamp(3.2 / d, 0.65, 1.1)).toFixed(2) + ')'; C.marker.style.left = '0'; C.marker.style.top = '0';
   }
-  if (C.marker._edge !== edge) { C.marker._edge = edge; C.marker.classList.toggle('edge', !!edge); C.marker.classList.toggle('el', edge < 0); C.marker._n = null; C.marker.style.pointerEvents = edge ? 'auto' : 'none';
-    if (!C.marker._tap) { C.marker._tap = 1; onTap(C.marker, function () { turnToward(C.P.root.position); }); } }
+  if (C.marker._edge !== edge) { C.marker._edge = edge; C.marker.classList.toggle('edge', !!edge); C.marker.classList.toggle('el', edge < 0); C.marker._n = null;
+    if (!C.marker._tap) { C.marker._tap = 1; onTap(C.marker, function () { if (C.marker._edge) turnToward(C.P.root.position); else tapCustomer(C); }); } }
   C.marker.style.display = vis ? 'flex' : 'none';
   if (vis) {
     if (C.marker._n !== need) { C.marker.innerHTML = icon(need, 18) + (edge ? '<i class="arw"></i>' : ''); C.marker._n = need; C.marker.classList.toggle('mint', need === 'serve'); }
@@ -5139,9 +5139,11 @@ function updateHotspots(t) {
     h.sp.material.opacity = 0.55 + 0.35 * Math.sin(t * 2.5 + i);
     _hv.copy(h.sp.position).project(RENDER.camera);
     var sc = vis && _hv.z < 1 && Math.abs(_hv.x) < 0.95 && Math.abs(_hv.y) < 0.92 && d < 14;
-    if (sc) { var x = (_hv.x * 0.5 + 0.5) * RENDER.w, y = (-_hv.y * 0.5 + 0.5) * RENDER.h - 18; if (y < 118 + 60) sc = false; else { h.lab.style.left = x + 'px'; h.lab.style.top = y + 'px'; } }
+    h.sx = null; if (sc) { var x = (_hv.x * 0.5 + 0.5) * RENDER.w, y = (-_hv.y * 0.5 + 0.5) * RENDER.h - 18; if (y < 118 + 60) sc = false; else { h.sx = x; h.sy = y; h.d = d; h.lab.style.left = x + 'px'; h.lab.style.top = y + 'px'; } }
     h.lab.style.opacity = sc ? 0.9 : 0;
   });
+  // labels that would overlap: keep the nearer one
+  HOT.forEach(function (a) { if (a.sx == null) return; HOT.forEach(function (b) { if (b === a || b.sx == null) return; if (Math.abs(a.sx - b.sx) < 80 && Math.abs(a.sy - b.sy) < 18 && a.d > b.d) a.lab.style.opacity = 0; }); });
 }
 // ---- pause -----------------------------------------------------------------------------------------
 var PAUSE = { el: null };

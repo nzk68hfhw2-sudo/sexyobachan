@@ -351,9 +351,11 @@ function updateHotspots(t) {
     h.sp.material.opacity = 0.55 + 0.35 * Math.sin(t * 2.5 + i);
     _hv.copy(h.sp.position).project(RENDER.camera);
     var sc = vis && _hv.z < 1 && Math.abs(_hv.x) < 0.95 && Math.abs(_hv.y) < 0.92 && d < 14;
-    if (sc) { var x = (_hv.x * 0.5 + 0.5) * RENDER.w, y = (-_hv.y * 0.5 + 0.5) * RENDER.h - 18; if (y < 118 + 60) sc = false; else { h.lab.style.left = x + 'px'; h.lab.style.top = y + 'px'; } }
+    h.sx = null; if (sc) { var x = (_hv.x * 0.5 + 0.5) * RENDER.w, y = (-_hv.y * 0.5 + 0.5) * RENDER.h - 18; if (y < 118 + 60) sc = false; else { h.sx = x; h.sy = y; h.d = d; h.lab.style.left = x + 'px'; h.lab.style.top = y + 'px'; } }
     h.lab.style.opacity = sc ? 0.9 : 0;
   });
+  // labels that would overlap: keep the nearer one
+  HOT.forEach(function (a) { if (a.sx == null) return; HOT.forEach(function (b) { if (b === a || b.sx == null) return; if (Math.abs(a.sx - b.sx) < 80 && Math.abs(a.sy - b.sy) < 18 && a.d > b.d) a.lab.style.opacity = 0; }); });
 }
 // ---- pause -----------------------------------------------------------------------------------------
 var PAUSE = { el: null };
