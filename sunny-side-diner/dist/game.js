@@ -2450,6 +2450,10 @@ var UI_CSS = function () {
     '.chip.cold .ic{color:var(--cyan)}.chip .bar{width:90px;height:8px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden}.chip .bar b{display:block;height:100%;width:0;background:linear-gradient(90deg,#5be8ff,#e8fbff);border-radius:4px;transition:width .2s}',
     '.chip.hide{opacity:0;transform:translateX(-10px);}',
     '.pausebtn{top:calc(var(--top-safe) + 4px);right:20px;}',
+    '.speedbtn{top:calc(var(--top-safe) + 72px);right:24px;width:48px;height:48px;flex-direction:column;gap:0}',
+    '.speedbtn .ic{width:18px;height:18px}.speedbtn b{font:600 13px/1 Oswald,sans-serif;letter-spacing:.04em;margin-top:1px}',
+    '.speedbtn.on{box-shadow:0 4px 0 #050506,0 8px 16px rgba(0,0,0,.55),0 0 14px rgba(91,232,255,.65)}.speedbtn.on b{color:#bff4ff}',
+    '.speedbtn.hold{filter:brightness(.55)}',
     // ---- bottom bands
     '.shade{position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(0deg,rgba(5,5,8,.92) 0%,rgba(5,5,8,.7) 38%,rgba(5,5,8,0) 100%);pointer-events:none;transition:opacity .5s;}',
     '.btnband{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);height:76px;}',
@@ -2482,8 +2486,11 @@ var UI_CSS = function () {
     '.slip .opt .ic{flex:0 0 auto;width:26px;height:26px;color:#c8282e;}',
     '.slip .opt .en{font:400 21px/1.05 "Shadows Into Light",cursive;color:#1d2f6f;letter-spacing:0;}',
     '.slip .opt .ja{font:600 11.5px/1.3 "Klee One","Zen Kaku Gothic New",serif;color:#4a5a7a;}',
-    '.slip .opt.dim{opacity:.4;pointer-events:none;}',
-    '.slip .opt.warn .ic{color:#7e1418}',
+    '.slip .opt.o-dim{opacity:.4;pointer-events:none;}',
+    '.slip .opt.o-warn .ic{color:#7e1418}',
+    '.slip .opt.o-minor{min-height:38px;padding:4px 8px;opacity:.72}',
+    '.slip .opt.o-minor .ic{width:20px;height:20px;color:#6a7480}',
+    '.slip .opt.o-minor .en{font-size:16px;color:#5a6478}.slip .opt.o-minor .ja{font-size:10.5px;color:#7a8290}',
     // toast / big title
     '.toast{position:absolute;left:50%;top:calc(var(--top-safe) + 70px);transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(12,13,16,.88);border:1.5px solid rgba(216,221,226,.35);text-align:center;font-size:13px;color:var(--cream);box-shadow:0 8px 18px rgba(0,0,0,.5);transition:opacity .3s,transform .3s;max-width:calc(100% - 40px);}',
     '.toast .en{font-size:16px;color:#fff3d6}.toast.hide{opacity:0;transform:translateX(-50%) translateY(-6px)}',
@@ -2508,6 +2515,9 @@ function buildUI() {
   U.tips = el('div', 'chip hide', icon('coin') + '<span>$0.00</span>', U.hud);
   U.cold = el('div', 'chip cold hide', icon('thermo') + '<div class="bar"><b></b></div>', U.hud);
   U.pause = el('button', 'sb dark pausebtn pe', icon('pause', 24), UI); U.pause.setAttribute('aria-label', 'Pause');
+  U.speed = el('button', 'sb dark speedbtn pe', icon('skip', 18) + '<b>×1</b>', UI); U.speed.setAttribute('aria-label', 'Game speed');
+  pressFX(U.speed);
+  onTap(U.speed, function () { GAME.spd = (GAME.spd || 1) >= 3 ? 1 : (GAME.spd || 1) + 1; sfx('click'); refreshSpeed(); toast('Speed ×' + GAME.spd, GAME.spd > 1 ? '時間を早送り（異変・料理・冷凍庫のあいだは等速）' : 'ふつうの速さ', 1.8); });
   // subtitles
   U.sub = el('div', 'subband hide', '<div class="sub"><div class="who"></div><div class="l1"></div><div class="l2"></div><svg class="more" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div>', UI);
   U.subTap = el('div', 'subtap', null, UI); U.subTap.style.display = 'none';
@@ -2530,8 +2540,9 @@ function pressFX(b) {
   b.addEventListener('pointerdown', function () { b.classList.add('down'); });
   ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { b.addEventListener(n, function () { b.classList.remove('down'); }); });
 }
+function refreshSpeed() { if (!U.speed) return; var s = GAME.spd || 1; U.speed.querySelector('b').textContent = '×' + s; U.speed.classList.toggle('on', s > 1); U.speed.classList.toggle('hold', s > 1 && !!(GAME.inAnomaly || MINI.active || CAM.inFreezer)); }
 function setGameHUD(on) {
-  [U.hud, U.pause, U.band, U.shade].forEach(function (e) { e.style.display = on ? '' : 'none'; });
+  [U.hud, U.pause, U.speed, U.band, U.shade].forEach(function (e) { e.style.display = on ? '' : 'none'; });
 }
 function layoutUI() { /* CSS handles layout; hook for future */ }
 function setMain(act) {
@@ -2562,7 +2573,7 @@ function showChoices(title, opts, meta) {
   meta = meta || {};
   var h = '<div class="hd"><span>GUEST CHECK</span><b>No. ' + (meta.no || (1000 + Math.floor(Math.random() * 8999))) + '</b><span>' + (meta.table || '') + '</span></div>';
   if (title) h += '<div class="t">' + title + '</div>';
-  opts.forEach(function (o, i) { h += '<div class="opt' + (o.dim ? ' dim' : '') + (o.warn ? ' warn' : '') + '" data-i="' + i + '">' + icon(o.icon || 'ok', 26) + '<div><span class="en">' + o.en + '</span><span class="ja">' + o.ja + '</span></div></div>'; });
+  opts.forEach(function (o, i) { h += '<div class="opt' + (o.dim ? ' o-dim' : '') + (o.warn ? ' o-warn' : '') + (o.minor ? ' o-minor' : '') + '" data-i="' + i + '">' + icon(o.icon || 'ok', o.minor ? 20 : 26) + '<div><span class="en">' + o.en + '</span><span class="ja">' + o.ja + '</span></div></div>'; });
   if (!meta.noCancel) h += '<div class="opt" data-i="-1">' + icon('back', 26) + '<div><span class="en">Never mind</span><span class="ja">やめる</span></div></div>';
   U.slip.innerHTML = h;
   U.slip.style.setProperty('--slipbg', PAPER.slip ? 'url(' + PAPER.slip + ')' : 'none');
@@ -3995,7 +4006,7 @@ function updateCustomers(dt) {
     if (C.state === 'eating') { C.eatT -= dt; if (C.eatT <= 0) { C.state = 'check'; setPose(C.P, 'hand'); C.pat = C.patMax = PATIENCE.check; clearDishesLater(C); } }
     var waiting = C.state === 'wait' || C.state === 'seated' || C.state === 'ready' || C.state === 'ordered' || C.state === 'check';
     if (waiting && !C.anomaly && GAME.mode === 'play') {
-      C.pat -= dt * (GAME.day > 3 ? 1.1 : 1);
+      C.pat -= dt / (GAME.spd || 1) * (GAME.day > 3 ? 1.1 : 1); // patience runs in real time
       C.patSum = C.patSum == null ? 1 : lerp(C.patSum, C.pat / C.patMax, dt * 0.05);
       if (C.pat <= 0) { var L = pickL(LINES.angry); custSay(C, L[0], L[1]); customerLeave(C, true); }
     }
@@ -4052,7 +4063,7 @@ var RAIL_CSS = [
   '.tk{position:relative;width:86px;min-height:96px;padding:18px 8px 8px;background-size:100% 100%;color:#1d2f6f;font:400 14px/1.15 "Shadows Into Light",cursive;pointer-events:auto;cursor:pointer;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));transform:rotate(var(--r));transition:transform .15s;}',
   '.tk:active{transform:rotate(var(--r)) translateY(3px)}',
   '.tk::before{content:"";position:absolute;left:50%;top:-6px;width:30px;height:12px;margin-left:-15px;background:linear-gradient(#e9edf0,#8a939b);border-radius:3px;box-shadow:0 2px 3px rgba(0,0,0,.4)}',
-  '.tk .no{position:absolute;left:8px;right:8px;top:5px;display:flex;justify-content:space-between;font:600 8.5px/1 Oswald,sans-serif;letter-spacing:.12em;color:#2f7e6e}',
+  '.tk .no{position:absolute;left:8px;right:8px;top:5px;display:flex;justify-content:space-between;gap:4px;font:600 8.5px/1 Oswald,sans-serif;letter-spacing:.12em;color:#2f7e6e}',
   '.tk .it{display:block}.tk .it.d{text-decoration:line-through;color:#6a7aa0}.tk .it.o{color:#5a1010;text-shadow:0 0 2px rgba(120,0,0,.5)}',
   '.tk.ready{box-shadow:none}.tk.ready::after{content:"READY";position:absolute;right:-6px;bottom:6px;transform:rotate(-12deg);font:400 13px/1 "Alfa Slab One",serif;color:#c8282e;border:2px solid #c8282e;padding:2px 4px;border-radius:3px;background:rgba(255,255,255,.4)}'
 ].join('\n');
@@ -4079,7 +4090,7 @@ function tapTicket(T) {
     if (it.odd) o.push({ icon: 'cook', en: 'Make "' + it.odd.en + '"', ja: '「' + it.odd.ja.replace(/[「」]/g, '') + '」を作る', warn: true, fn: function () { cookOdd(T, it); } });
     else o.push({ icon: MENU[it.id].icon, en: 'Make ' + MENU[it.id].en, ja: MENU[it.id].ja + 'を作る', fn: function () { startMini(MENU[it.id].mini, function (q) { it.done = true; it.q = q; afterCook(T); }); } });
   });
-  o.push({ icon: 'tear', en: 'Tear up this ticket', ja: 'この伝票を破って捨てる', warn: true, fn: function () { tearTicket(T); } });
+  o.push({ icon: 'tear', en: 'Tear up ticket', ja: '伝票を破って捨てる', minor: true, fn: function () { tearTicket(T); } });
   showChoices('No.' + T.no + ' — ' + T.table, o, { no: T.no, table: T.table });
 }
 function cookOdd(T, it) { sfx('sizzle', new THREE.Vector3(0.9, 0.9, -4.7), { len: 2 }); it.done = true; it.q = 0; afterCook(T); toast('It smells... sweet.', '……甘いにおいがする。', 2.5); }
@@ -4790,7 +4801,9 @@ function loreCount() { var n = 0; LORE.forEach(function (l) { if (SAVE.lore[l.id
 var GAME = { mode: 'boot', day: 1, min: 0, rate: 60 / 135, tips: 0, sales: 0, served: 0, angry: 0, refusedNormal: 0, resolved: 0, callsLeft: 2, sched: [], usedFaces: {}, paused: false };
 var SHIFT_LEN = 480; // 22:00 -> 06:00
 function newGameState(day) {
+  var keepSpd = GAME && GAME.spd;
   GAME = { mode: 'play', day: day, min: 0, rate: 60 / 135, tips: 0, sales: 0, served: 0, angry: 0, refusedNormal: 0, resolved: 0, callsLeft: 2, sched: [], usedFaces: {}, paused: false, inAnomaly: 0, lightsSwitched: 0, cold: 0 };
+  GAME.spd = keepSpd || 1;
   GAME.oddFail = function (C) { anomalyFail(C.anomaly, C.anomaly ? C.anomaly.face : pickFace(['human']), { person: C.P, rule: 'offmenu' }); };
 }
 function clearWorld() {
@@ -4970,6 +4983,8 @@ function updateMainButton() {
   var st = CAM.station, a = null;
   if (CAM.inFreezer) a = { icon: 'door', en: 'COME OUT', ja: '冷凍庫から出る', fn: leaveFreezer };
   else if (CAM.outside) a = { icon: 'back', en: 'GO BACK INSIDE', ja: '店にもどる', fn: comeInside };
+  else if (st !== 'KITCHEN' && st !== 'REGISTER' && st !== 'FREEZER' && st !== 'BACKDOOR' && TICKETS.some(function (T) { return !T.ready && !T.booth4; }) && !(st === 'JUKEBOX' && ACTIVE.some(function (A) { return A.id === 'phone' && A.ringing || A.id === 'jukebox'; })) && !(st === 'DOOR' && ACTIVE.some(function (A) { return A.id === 'dayshift'; })))
+    a = { icon: 'cook', en: 'TO KITCHEN', ja: '厨房へ行って料理を作る', glow: true, fn: function () { goStation('KITCHEN'); } };
   else if (st === 'KITCHEN') { var t = TICKETS.filter(function (T) { return !T.ready; })[0]; if (t) a = { icon: 'ticket', en: 'NEXT TICKET', ja: '次の伝票を作る', fn: function () { tapTicket(t); } }; }
   else if (st === 'FREEZER') a = { icon: 'snow', en: 'HIDE INSIDE', ja: '冷凍庫に隠れる', fn: enterFreezer };
   else if (st === 'REGISTER') a = { icon: 'bulb', en: 'SWITCHES', ja: '照明・ネオン・店長に電話', fn: registerMenu };
@@ -5174,12 +5189,13 @@ function updateGame(dt, t) {
   if (GAME.mode !== 'play') { if (GAME.mode === 'title' || GAME.mode === 'cut') { updateCustomers(dt); } if (SUBQ.cur) subUpdate(dt); return; }
   if (SUBQ.cur) subUpdate(dt);
   if (GAME.paused || PAUSE.el) return;
-  GAME.min += dt * GAME.rate * (GAME.fast || 1);
-  runSchedule(); updateCustomers(dt); updateAnomalies(dt); updateFreezer(dt);
+  var spd = GAME.inAnomaly || MINI.active || CAM.inFreezer ? 1 : (GAME.spd || 1);
+  GAME.min += dt * spd * GAME.rate * (GAME.fast || 1);
+  runSchedule(); updateCustomers(dt * spd); updateAnomalies(dt); updateFreezer(dt);
   // pre-anomaly tape wobble on the jukebox
   var nextA = GAME.sched.filter(function (e) { return e.type === 'anom'; })[0], wob = 0;
   if (nextA) wob = clamp(1 - (nextA.at - GAME.min) / 25, 0, 1); JUKE.wobble = wob; JUKE.drift = wob * 0.6;
-  HUD_T -= dt; if (HUD_T <= 0) { HUD_T = 0.5; setClock(GAME.min, GAME.day); updateMainButton(); }
+  HUD_T -= dt; if (HUD_T <= 0) { HUD_T = 0.5; setClock(GAME.min, GAME.day); updateMainButton(); refreshSpeed(); }
   UI.classList.toggle('flick', GAME.day >= 3 && GAME.min > 200);
   UI.style.setProperty('--wear', clamp((GAME.day - 1) * 0.12 + (GAME.min / SHIFT_LEN) * 0.12, 0, 0.6).toFixed(2));
   PU.uCold.value = LSTATE.cold * 0.85; PU.uGrain.value = 0.035 + LSTATE.cold * 0.025; PU.uVig.value = 0.55 + LSTATE.cold * 0.15;
@@ -5250,12 +5266,12 @@ function onTapNothing() { if (MAPV.el) toggleMap(); }
 var SCR_CSS = [
   '.scr{position:absolute;inset:0;pointer-events:auto;transition:opacity .45s;}',
   '.scr.hide{opacity:0;pointer-events:none}',
-  '.warn{background:#050506;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(var(--top-safe) + 10px) 26px calc(env(safe-area-inset-bottom,0px) + 30px);text-align:center;}',
-  '.warn .w1{font:400 26px/1.1 "Alfa Slab One",serif;color:#ff4f4f;letter-spacing:.12em;text-shadow:0 0 16px rgba(255,60,60,.5)}',
-  '.warn .w2{margin-top:14px;font:600 16px/1.5 Oswald,sans-serif;color:#e8e0d0;letter-spacing:.04em;max-width:330px}',
-  '.warn .w3{margin-top:8px;font:500 13px/1.6 "Zen Kaku Gothic New",sans-serif;color:#b8ab95;max-width:330px}',
-  '.warn .hp{margin-top:30px;display:flex;align-items:center;gap:12px;color:#8fd3c1;font:600 13px/1.3 Oswald,sans-serif;letter-spacing:.12em;text-align:left}.warn .hp .ic{width:34px;height:34px}',
-  '.warn .tap{margin-top:46px;font:400 22px/1 "Alfa Slab One",serif;color:#fff3d6;letter-spacing:.18em;animation:blink 1.4s ease-in-out infinite}.warn .tap small{display:block;font:600 12px/1.6 "Zen Kaku Gothic New";letter-spacing:.1em;color:#b8ab95;margin-top:8px}',
+  '.warnscr{background:#050506;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(var(--top-safe) + 10px) 26px calc(env(safe-area-inset-bottom,0px) + 30px);text-align:center;}',
+  '.warnscr .w1{font:400 26px/1.1 "Alfa Slab One",serif;color:#ff4f4f;letter-spacing:.12em;text-shadow:0 0 16px rgba(255,60,60,.5)}',
+  '.warnscr .w2{margin-top:14px;font:600 16px/1.5 Oswald,sans-serif;color:#e8e0d0;letter-spacing:.04em;max-width:330px}',
+  '.warnscr .w3{margin-top:8px;font:500 13px/1.6 "Zen Kaku Gothic New",sans-serif;color:#b8ab95;max-width:330px}',
+  '.warnscr .hp{margin-top:30px;display:flex;align-items:center;gap:12px;color:#8fd3c1;font:600 13px/1.3 Oswald,sans-serif;letter-spacing:.12em;text-align:left}.warnscr .hp .ic{width:34px;height:34px}',
+  '.warnscr .tap{margin-top:46px;font:400 22px/1 "Alfa Slab One",serif;color:#fff3d6;letter-spacing:.18em;animation:blink 1.4s ease-in-out infinite}.warnscr .tap small{display:block;font:600 12px/1.6 "Zen Kaku Gothic New";letter-spacing:.1em;color:#b8ab95;margin-top:8px}',
   '@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}',
   // title CM
   '.cm{position:absolute;inset:0;overflow:hidden;background:#f4c870;transition:opacity .08s}',
@@ -5309,7 +5325,7 @@ function killScr(d, fade) { if (!d) return; if (fade) { d.classList.add('hide');
 // ---- warning ---------------------------------------------------------------------------
 function showWarning() {
   GAME.mode = 'warn';
-  var w = scr('warn', '<div class="w1">WARNING</div><div class="w2">This game contains jump scares, loud sounds, and blood.</div><div class="w3">※ホラー演出・急な大きい音・流血表現があります</div>' +
+  var w = scr('warnscr', '<div class="w1">WARNING</div><div class="w2">This game contains jump scares, loud sounds, and blood.</div><div class="w3">※ホラー演出・急な大きい音・流血表現があります</div>' +
     '<div class="hp">' + icon('headphones', 34) + '<div>HEADPHONES RECOMMENDED<br><span style="font:500 12px \'Zen Kaku Gothic New\';letter-spacing:0;color:#b8ab95">イヤホン推奨</span></div></div><div class="tap">TAP TO START<small>タップしてはじめる</small></div>');
   SCR.warn = w;
   onTap(w, function () {

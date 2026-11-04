@@ -103,6 +103,10 @@ var UI_CSS = function () {
     '.chip.cold .ic{color:var(--cyan)}.chip .bar{width:90px;height:8px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden}.chip .bar b{display:block;height:100%;width:0;background:linear-gradient(90deg,#5be8ff,#e8fbff);border-radius:4px;transition:width .2s}',
     '.chip.hide{opacity:0;transform:translateX(-10px);}',
     '.pausebtn{top:calc(var(--top-safe) + 4px);right:20px;}',
+    '.speedbtn{top:calc(var(--top-safe) + 72px);right:24px;width:48px;height:48px;flex-direction:column;gap:0}',
+    '.speedbtn .ic{width:18px;height:18px}.speedbtn b{font:600 13px/1 Oswald,sans-serif;letter-spacing:.04em;margin-top:1px}',
+    '.speedbtn.on{box-shadow:0 4px 0 #050506,0 8px 16px rgba(0,0,0,.55),0 0 14px rgba(91,232,255,.65)}.speedbtn.on b{color:#bff4ff}',
+    '.speedbtn.hold{filter:brightness(.55)}',
     // ---- bottom bands
     '.shade{position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(0deg,rgba(5,5,8,.92) 0%,rgba(5,5,8,.7) 38%,rgba(5,5,8,0) 100%);pointer-events:none;transition:opacity .5s;}',
     '.btnband{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);height:76px;}',
@@ -135,8 +139,11 @@ var UI_CSS = function () {
     '.slip .opt .ic{flex:0 0 auto;width:26px;height:26px;color:#c8282e;}',
     '.slip .opt .en{font:400 21px/1.05 "Shadows Into Light",cursive;color:#1d2f6f;letter-spacing:0;}',
     '.slip .opt .ja{font:600 11.5px/1.3 "Klee One","Zen Kaku Gothic New",serif;color:#4a5a7a;}',
-    '.slip .opt.dim{opacity:.4;pointer-events:none;}',
-    '.slip .opt.warn .ic{color:#7e1418}',
+    '.slip .opt.o-dim{opacity:.4;pointer-events:none;}',
+    '.slip .opt.o-warn .ic{color:#7e1418}',
+    '.slip .opt.o-minor{min-height:38px;padding:4px 8px;opacity:.72}',
+    '.slip .opt.o-minor .ic{width:20px;height:20px;color:#6a7480}',
+    '.slip .opt.o-minor .en{font-size:16px;color:#5a6478}.slip .opt.o-minor .ja{font-size:10.5px;color:#7a8290}',
     // toast / big title
     '.toast{position:absolute;left:50%;top:calc(var(--top-safe) + 70px);transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(12,13,16,.88);border:1.5px solid rgba(216,221,226,.35);text-align:center;font-size:13px;color:var(--cream);box-shadow:0 8px 18px rgba(0,0,0,.5);transition:opacity .3s,transform .3s;max-width:calc(100% - 40px);}',
     '.toast .en{font-size:16px;color:#fff3d6}.toast.hide{opacity:0;transform:translateX(-50%) translateY(-6px)}',
@@ -161,6 +168,9 @@ function buildUI() {
   U.tips = el('div', 'chip hide', icon('coin') + '<span>$0.00</span>', U.hud);
   U.cold = el('div', 'chip cold hide', icon('thermo') + '<div class="bar"><b></b></div>', U.hud);
   U.pause = el('button', 'sb dark pausebtn pe', icon('pause', 24), UI); U.pause.setAttribute('aria-label', 'Pause');
+  U.speed = el('button', 'sb dark speedbtn pe', icon('skip', 18) + '<b>×1</b>', UI); U.speed.setAttribute('aria-label', 'Game speed');
+  pressFX(U.speed);
+  onTap(U.speed, function () { GAME.spd = (GAME.spd || 1) >= 3 ? 1 : (GAME.spd || 1) + 1; sfx('click'); refreshSpeed(); toast('Speed ×' + GAME.spd, GAME.spd > 1 ? '時間を早送り（異変・料理・冷凍庫のあいだは等速）' : 'ふつうの速さ', 1.8); });
   // subtitles
   U.sub = el('div', 'subband hide', '<div class="sub"><div class="who"></div><div class="l1"></div><div class="l2"></div><svg class="more" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div>', UI);
   U.subTap = el('div', 'subtap', null, UI); U.subTap.style.display = 'none';
@@ -183,8 +193,9 @@ function pressFX(b) {
   b.addEventListener('pointerdown', function () { b.classList.add('down'); });
   ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { b.addEventListener(n, function () { b.classList.remove('down'); }); });
 }
+function refreshSpeed() { if (!U.speed) return; var s = GAME.spd || 1; U.speed.querySelector('b').textContent = '×' + s; U.speed.classList.toggle('on', s > 1); U.speed.classList.toggle('hold', s > 1 && !!(GAME.inAnomaly || MINI.active || CAM.inFreezer)); }
 function setGameHUD(on) {
-  [U.hud, U.pause, U.band, U.shade].forEach(function (e) { e.style.display = on ? '' : 'none'; });
+  [U.hud, U.pause, U.speed, U.band, U.shade].forEach(function (e) { e.style.display = on ? '' : 'none'; });
 }
 function layoutUI() { /* CSS handles layout; hook for future */ }
 function setMain(act) {
@@ -215,7 +226,7 @@ function showChoices(title, opts, meta) {
   meta = meta || {};
   var h = '<div class="hd"><span>GUEST CHECK</span><b>No. ' + (meta.no || (1000 + Math.floor(Math.random() * 8999))) + '</b><span>' + (meta.table || '') + '</span></div>';
   if (title) h += '<div class="t">' + title + '</div>';
-  opts.forEach(function (o, i) { h += '<div class="opt' + (o.dim ? ' dim' : '') + (o.warn ? ' warn' : '') + '" data-i="' + i + '">' + icon(o.icon || 'ok', 26) + '<div><span class="en">' + o.en + '</span><span class="ja">' + o.ja + '</span></div></div>'; });
+  opts.forEach(function (o, i) { h += '<div class="opt' + (o.dim ? ' o-dim' : '') + (o.warn ? ' o-warn' : '') + (o.minor ? ' o-minor' : '') + '" data-i="' + i + '">' + icon(o.icon || 'ok', o.minor ? 20 : 26) + '<div><span class="en">' + o.en + '</span><span class="ja">' + o.ja + '</span></div></div>'; });
   if (!meta.noCancel) h += '<div class="opt" data-i="-1">' + icon('back', 26) + '<div><span class="en">Never mind</span><span class="ja">やめる</span></div></div>';
   U.slip.innerHTML = h;
   U.slip.style.setProperty('--slipbg', PAPER.slip ? 'url(' + PAPER.slip + ')' : 'none');

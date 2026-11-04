@@ -2,7 +2,9 @@
 var GAME = { mode: 'boot', day: 1, min: 0, rate: 60 / 135, tips: 0, sales: 0, served: 0, angry: 0, refusedNormal: 0, resolved: 0, callsLeft: 2, sched: [], usedFaces: {}, paused: false };
 var SHIFT_LEN = 480; // 22:00 -> 06:00
 function newGameState(day) {
+  var keepSpd = GAME && GAME.spd;
   GAME = { mode: 'play', day: day, min: 0, rate: 60 / 135, tips: 0, sales: 0, served: 0, angry: 0, refusedNormal: 0, resolved: 0, callsLeft: 2, sched: [], usedFaces: {}, paused: false, inAnomaly: 0, lightsSwitched: 0, cold: 0 };
+  GAME.spd = keepSpd || 1;
   GAME.oddFail = function (C) { anomalyFail(C.anomaly, C.anomaly ? C.anomaly.face : pickFace(['human']), { person: C.P, rule: 'offmenu' }); };
 }
 function clearWorld() {
@@ -182,6 +184,8 @@ function updateMainButton() {
   var st = CAM.station, a = null;
   if (CAM.inFreezer) a = { icon: 'door', en: 'COME OUT', ja: '冷凍庫から出る', fn: leaveFreezer };
   else if (CAM.outside) a = { icon: 'back', en: 'GO BACK INSIDE', ja: '店にもどる', fn: comeInside };
+  else if (st !== 'KITCHEN' && st !== 'REGISTER' && st !== 'FREEZER' && st !== 'BACKDOOR' && TICKETS.some(function (T) { return !T.ready && !T.booth4; }) && !(st === 'JUKEBOX' && ACTIVE.some(function (A) { return A.id === 'phone' && A.ringing || A.id === 'jukebox'; })) && !(st === 'DOOR' && ACTIVE.some(function (A) { return A.id === 'dayshift'; })))
+    a = { icon: 'cook', en: 'TO KITCHEN', ja: '厨房へ行って料理を作る', glow: true, fn: function () { goStation('KITCHEN'); } };
   else if (st === 'KITCHEN') { var t = TICKETS.filter(function (T) { return !T.ready; })[0]; if (t) a = { icon: 'ticket', en: 'NEXT TICKET', ja: '次の伝票を作る', fn: function () { tapTicket(t); } }; }
   else if (st === 'FREEZER') a = { icon: 'snow', en: 'HIDE INSIDE', ja: '冷凍庫に隠れる', fn: enterFreezer };
   else if (st === 'REGISTER') a = { icon: 'bulb', en: 'SWITCHES', ja: '照明・ネオン・店長に電話', fn: registerMenu };
@@ -386,12 +390,13 @@ function updateGame(dt, t) {
   if (GAME.mode !== 'play') { if (GAME.mode === 'title' || GAME.mode === 'cut') { updateCustomers(dt); } if (SUBQ.cur) subUpdate(dt); return; }
   if (SUBQ.cur) subUpdate(dt);
   if (GAME.paused || PAUSE.el) return;
-  GAME.min += dt * GAME.rate * (GAME.fast || 1);
-  runSchedule(); updateCustomers(dt); updateAnomalies(dt); updateFreezer(dt);
+  var spd = GAME.inAnomaly || MINI.active || CAM.inFreezer ? 1 : (GAME.spd || 1);
+  GAME.min += dt * spd * GAME.rate * (GAME.fast || 1);
+  runSchedule(); updateCustomers(dt * spd); updateAnomalies(dt); updateFreezer(dt);
   // pre-anomaly tape wobble on the jukebox
   var nextA = GAME.sched.filter(function (e) { return e.type === 'anom'; })[0], wob = 0;
   if (nextA) wob = clamp(1 - (nextA.at - GAME.min) / 25, 0, 1); JUKE.wobble = wob; JUKE.drift = wob * 0.6;
-  HUD_T -= dt; if (HUD_T <= 0) { HUD_T = 0.5; setClock(GAME.min, GAME.day); updateMainButton(); }
+  HUD_T -= dt; if (HUD_T <= 0) { HUD_T = 0.5; setClock(GAME.min, GAME.day); updateMainButton(); refreshSpeed(); }
   UI.classList.toggle('flick', GAME.day >= 3 && GAME.min > 200);
   UI.style.setProperty('--wear', clamp((GAME.day - 1) * 0.12 + (GAME.min / SHIFT_LEN) * 0.12, 0, 0.6).toFixed(2));
   PU.uCold.value = LSTATE.cold * 0.85; PU.uGrain.value = 0.035 + LSTATE.cold * 0.025; PU.uVig.value = 0.55 + LSTATE.cold * 0.15;

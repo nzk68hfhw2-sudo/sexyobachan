@@ -2,12 +2,12 @@
 var SCR_CSS = [
   '.scr{position:absolute;inset:0;pointer-events:auto;transition:opacity .45s;}',
   '.scr.hide{opacity:0;pointer-events:none}',
-  '.warn{background:#050506;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(var(--top-safe) + 10px) 26px calc(env(safe-area-inset-bottom,0px) + 30px);text-align:center;}',
-  '.warn .w1{font:400 26px/1.1 "Alfa Slab One",serif;color:#ff4f4f;letter-spacing:.12em;text-shadow:0 0 16px rgba(255,60,60,.5)}',
-  '.warn .w2{margin-top:14px;font:600 16px/1.5 Oswald,sans-serif;color:#e8e0d0;letter-spacing:.04em;max-width:330px}',
-  '.warn .w3{margin-top:8px;font:500 13px/1.6 "Zen Kaku Gothic New",sans-serif;color:#b8ab95;max-width:330px}',
-  '.warn .hp{margin-top:30px;display:flex;align-items:center;gap:12px;color:#8fd3c1;font:600 13px/1.3 Oswald,sans-serif;letter-spacing:.12em;text-align:left}.warn .hp .ic{width:34px;height:34px}',
-  '.warn .tap{margin-top:46px;font:400 22px/1 "Alfa Slab One",serif;color:#fff3d6;letter-spacing:.18em;animation:blink 1.4s ease-in-out infinite}.warn .tap small{display:block;font:600 12px/1.6 "Zen Kaku Gothic New";letter-spacing:.1em;color:#b8ab95;margin-top:8px}',
+  '.warnscr{background:#050506;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(var(--top-safe) + 10px) 26px calc(env(safe-area-inset-bottom,0px) + 30px);text-align:center;}',
+  '.warnscr .w1{font:400 26px/1.1 "Alfa Slab One",serif;color:#ff4f4f;letter-spacing:.12em;text-shadow:0 0 16px rgba(255,60,60,.5)}',
+  '.warnscr .w2{margin-top:14px;font:600 16px/1.5 Oswald,sans-serif;color:#e8e0d0;letter-spacing:.04em;max-width:330px}',
+  '.warnscr .w3{margin-top:8px;font:500 13px/1.6 "Zen Kaku Gothic New",sans-serif;color:#b8ab95;max-width:330px}',
+  '.warnscr .hp{margin-top:30px;display:flex;align-items:center;gap:12px;color:#8fd3c1;font:600 13px/1.3 Oswald,sans-serif;letter-spacing:.12em;text-align:left}.warnscr .hp .ic{width:34px;height:34px}',
+  '.warnscr .tap{margin-top:46px;font:400 22px/1 "Alfa Slab One",serif;color:#fff3d6;letter-spacing:.18em;animation:blink 1.4s ease-in-out infinite}.warnscr .tap small{display:block;font:600 12px/1.6 "Zen Kaku Gothic New";letter-spacing:.1em;color:#b8ab95;margin-top:8px}',
   '@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}',
   // title CM
   '.cm{position:absolute;inset:0;overflow:hidden;background:#f4c870;transition:opacity .08s}',
@@ -61,7 +61,7 @@ function killScr(d, fade) { if (!d) return; if (fade) { d.classList.add('hide');
 // ---- warning ---------------------------------------------------------------------------
 function showWarning() {
   GAME.mode = 'warn';
-  var w = scr('warn', '<div class="w1">WARNING</div><div class="w2">This game contains jump scares, loud sounds, and blood.</div><div class="w3">※ホラー演出・急な大きい音・流血表現があります</div>' +
+  var w = scr('warnscr', '<div class="w1">WARNING</div><div class="w2">This game contains jump scares, loud sounds, and blood.</div><div class="w3">※ホラー演出・急な大きい音・流血表現があります</div>' +
     '<div class="hp">' + icon('headphones', 34) + '<div>HEADPHONES RECOMMENDED<br><span style="font:500 12px \'Zen Kaku Gothic New\';letter-spacing:0;color:#b8ab95">イヤホン推奨</span></div></div><div class="tap">TAP TO START<small>タップしてはじめる</small></div>');
   SCR.warn = w;
   onTap(w, function () {

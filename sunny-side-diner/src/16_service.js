@@ -255,7 +255,7 @@ function updateCustomers(dt) {
     if (C.state === 'eating') { C.eatT -= dt; if (C.eatT <= 0) { C.state = 'check'; setPose(C.P, 'hand'); C.pat = C.patMax = PATIENCE.check; clearDishesLater(C); } }
     var waiting = C.state === 'wait' || C.state === 'seated' || C.state === 'ready' || C.state === 'ordered' || C.state === 'check';
     if (waiting && !C.anomaly && GAME.mode === 'play') {
-      C.pat -= dt * (GAME.day > 3 ? 1.1 : 1);
+      C.pat -= dt / (GAME.spd || 1) * (GAME.day > 3 ? 1.1 : 1); // patience runs in real time
       C.patSum = C.patSum == null ? 1 : lerp(C.patSum, C.pat / C.patMax, dt * 0.05);
       if (C.pat <= 0) { var L = pickL(LINES.angry); custSay(C, L[0], L[1]); customerLeave(C, true); }
     }
@@ -312,7 +312,7 @@ var RAIL_CSS = [
   '.tk{position:relative;width:86px;min-height:96px;padding:18px 8px 8px;background-size:100% 100%;color:#1d2f6f;font:400 14px/1.15 "Shadows Into Light",cursive;pointer-events:auto;cursor:pointer;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));transform:rotate(var(--r));transition:transform .15s;}',
   '.tk:active{transform:rotate(var(--r)) translateY(3px)}',
   '.tk::before{content:"";position:absolute;left:50%;top:-6px;width:30px;height:12px;margin-left:-15px;background:linear-gradient(#e9edf0,#8a939b);border-radius:3px;box-shadow:0 2px 3px rgba(0,0,0,.4)}',
-  '.tk .no{position:absolute;left:8px;right:8px;top:5px;display:flex;justify-content:space-between;font:600 8.5px/1 Oswald,sans-serif;letter-spacing:.12em;color:#2f7e6e}',
+  '.tk .no{position:absolute;left:8px;right:8px;top:5px;display:flex;justify-content:space-between;gap:4px;font:600 8.5px/1 Oswald,sans-serif;letter-spacing:.12em;color:#2f7e6e}',
   '.tk .it{display:block}.tk .it.d{text-decoration:line-through;color:#6a7aa0}.tk .it.o{color:#5a1010;text-shadow:0 0 2px rgba(120,0,0,.5)}',
   '.tk.ready{box-shadow:none}.tk.ready::after{content:"READY";position:absolute;right:-6px;bottom:6px;transform:rotate(-12deg);font:400 13px/1 "Alfa Slab One",serif;color:#c8282e;border:2px solid #c8282e;padding:2px 4px;border-radius:3px;background:rgba(255,255,255,.4)}'
 ].join('\n');
@@ -339,7 +339,7 @@ function tapTicket(T) {
     if (it.odd) o.push({ icon: 'cook', en: 'Make "' + it.odd.en + '"', ja: '「' + it.odd.ja.replace(/[「」]/g, '') + '」を作る', warn: true, fn: function () { cookOdd(T, it); } });
     else o.push({ icon: MENU[it.id].icon, en: 'Make ' + MENU[it.id].en, ja: MENU[it.id].ja + 'を作る', fn: function () { startMini(MENU[it.id].mini, function (q) { it.done = true; it.q = q; afterCook(T); }); } });
   });
-  o.push({ icon: 'tear', en: 'Tear up this ticket', ja: 'この伝票を破って捨てる', warn: true, fn: function () { tearTicket(T); } });
+  o.push({ icon: 'tear', en: 'Tear up ticket', ja: '伝票を破って捨てる', minor: true, fn: function () { tearTicket(T); } });
   showChoices('No.' + T.no + ' — ' + T.table, o, { no: T.no, table: T.table });
 }
 function cookOdd(T, it) { sfx('sizzle', new THREE.Vector3(0.9, 0.9, -4.7), { len: 2 }); it.done = true; it.q = 0; afterCook(T); toast('It smells... sweet.', '……甘いにおいがする。', 2.5); }
