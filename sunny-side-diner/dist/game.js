@@ -4969,7 +4969,14 @@ function sunnyCostumeCanvas(day, n) { // a person-sized Sunny suit standing in t
   return c;
 }
 // ---- stations: arrival hooks, main button ----------------------------------------------------------
+// walk back out to the guest and face them
+function returnTo(C) {
+  var st = C.seat ? (C.seat.kind === 'stool' ? 'COUNTER' : 'BOOTHS') : 'REGISTER';
+  CAM.afterArrive = function () { if (C.P && C.state !== 'gone') turnToward(C.P.root.position); };
+  if (st === CAM.station) { var f = CAM.afterArrive; CAM.afterArrive = null; f(); } else goStation(st);
+}
 function onArrive(st) {
+  if (CAM.afterArrive && !CAM.moving) { var fa = CAM.afterArrive; CAM.afterArrive = null; setTimeout(fa, 50); }
   setSpace(st === 'KITCHEN' || st === 'BACKDOOR' ? 'kitchen' : st === 'FREEZER' ? 'kitchen' : st === 'JUKEBOX' ? 'diner' : 'diner');
   WORLD.lights.fill.intensity = st === 'BACKDOOR' ? 6 : 0;
   if (st === 'BACKDOOR') WORLD.lights.fill.position.set(-2.0, 2.4, -4.3);
@@ -4985,7 +4992,14 @@ function updateMainButton() {
   else if (CAM.outside) a = { icon: 'back', en: 'GO BACK INSIDE', ja: '店にもどる', fn: comeInside };
   else if (st !== 'KITCHEN' && st !== 'REGISTER' && st !== 'FREEZER' && st !== 'BACKDOOR' && TICKETS.some(function (T) { return !T.ready && !T.booth4; }) && !(st === 'JUKEBOX' && ACTIVE.some(function (A) { return A.id === 'phone' && A.ringing || A.id === 'jukebox'; })) && !(st === 'DOOR' && ACTIVE.some(function (A) { return A.id === 'dayshift'; })))
     a = { icon: 'cook', en: 'TO KITCHEN', ja: '厨房へ行って料理を作る', glow: true, fn: function () { goStation('KITCHEN'); } };
-  else if (st === 'KITCHEN') { var t = TICKETS.filter(function (T) { return !T.ready; })[0]; if (t) a = { icon: 'ticket', en: 'NEXT TICKET', ja: '次の伝票を作る', fn: function () { tapTicket(t); } }; }
+  else if (st === 'KITCHEN') {
+    var t = TICKETS.filter(function (T) { return !T.ready; })[0];
+    var rc = CUSTS.filter(function (C) { return C.state === 'ordered' && C.ticket && C.ticket.ready && C.seat; })[0];
+    var wc = CUSTS.filter(function (C) { return ['wait', 'seated', 'ready', 'check'].indexOf(C.state) >= 0 && !C.anomaly; })[0];
+    if (t) a = { icon: 'ticket', en: 'NEXT TICKET', ja: '次の伝票を作る', fn: function () { tapTicket(t); } };
+    else if (rc) a = { icon: 'serve', en: 'SERVE', ja: '料理を運ぶ（' + (rc.seat.kind === 'stool' ? 'カウンター' : rc.seat.booth + '番席') + 'へ戻る）', glow: true, fn: function () { returnTo(rc); } };
+    else if (wc) a = { icon: 'back', en: 'TO FLOOR', ja: '客席へ戻る', glow: true, fn: function () { returnTo(wc); } };
+  }
   else if (st === 'FREEZER') a = { icon: 'snow', en: 'HIDE INSIDE', ja: '冷凍庫に隠れる', fn: enterFreezer };
   else if (st === 'REGISTER') a = { icon: 'bulb', en: 'SWITCHES', ja: '照明・ネオン・店長に電話', fn: registerMenu };
   else if (st === 'JUKEBOX') { var ph = ACTIVE.filter(function (A) { return A.id === 'phone' && A.ringing; })[0]; a = ph ? { icon: 'phone', en: 'ANSWER THE PHONE', ja: 'ピンクの電話に出る', glow: true, fn: function () { ANOM.phone.answer(ph); } } : { icon: 'record', en: 'CHOOSE A RECORD', ja: 'レコードを選ぶ', fn: jukeMenu }; }
