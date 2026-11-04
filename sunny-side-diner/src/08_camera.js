@@ -55,7 +55,7 @@ function updateCamera(dt, t) {
   var p = CAM.pos, yaw = CAM.yaw + CAM.lookYaw, pitch = CAM.pitch + CAM.lookPitch;
   var px = p.x, py = p.y, pz = p.z;
   // idle breathing
-  py += Math.sin(t * 1.1) * 0.006; yaw += Math.sin(t * 0.37) * 0.004;
+  py += Math.sin(t * 1.1) * 0.006 + (CAM.bob || 0); CAM.bob = damp(CAM.bob || 0, 0, 6, dt); yaw += Math.sin(t * 0.37) * 0.004;
   if (CAM.override) { // scripted shot {pos, target, k}
     var o = CAM.override; o.k = Math.min(1, (o.k || 0) + dt / (o.dur || 0.8)); var kk = smooth(o.k);
     var base = new THREE.Vector3(px, py, pz), dir = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
@@ -89,27 +89,30 @@ function initInput() {
   var cv = RENDER.renderer.domElement;
   cv.addEventListener('pointerdown', function (e) {
     if (typeof AUDIO !== 'undefined') audioUnlock();
+    if (!MINI.active && e.pointerType !== 'mouse' && joyStart(e)) { try { cv.setPointerCapture(e.pointerId); } catch (er) {} return; }
+    if (INPUT.down) return;
     INPUT.down = true; INPUT.id = e.pointerId; INPUT.x0 = INPUT.x = e.clientX; INPUT.y0 = INPUT.y = e.clientY; INPUT.t0 = performance.now(); INPUT.moved = 0;
     try { cv.setPointerCapture(e.pointerId); } catch (er) {}
     if (MINI.active && MINI.onDown) MINI.onDown(e.clientX, e.clientY);
   });
   cv.addEventListener('pointermove', function (e) {
+    if (joyMove(e)) return;
     if (!INPUT.down || e.pointerId !== INPUT.id) return;
     var dx = e.clientX - INPUT.x, dy = e.clientY - INPUT.y; INPUT.x = e.clientX; INPUT.y = e.clientY;
     INPUT.moved += Math.abs(dx) + Math.abs(dy);
     if (MINI.active && MINI.onMove) { MINI.onMove(e.clientX, e.clientY, dx, dy); return; }
     if (!INPUT.enabled || CAM.moving || CAM.override || CAM.locked) return;
     var sens = 0.0055 * (SAVE.settings.sens || 1);
-    var st = STATIONS[CAM.station];
-    CAM.tYaw = clamp(CAM.tYaw - dx * sens, -st.yawLim, st.yawLim);
+    CAM.tYaw -= dx * sens; // free look all the way round
     CAM.tPitch = clamp(CAM.tPitch - dy * sens * 0.8, -0.65, 0.55);
   });
   var up = function (e) {
-    if (!INPUT.down) return; INPUT.down = false;
+    if (joyEnd(e)) return;
+    if (!INPUT.down || e.pointerId !== INPUT.id) return; INPUT.down = false;
     if (MINI.active && MINI.onUp) { MINI.onUp(e.clientX, e.clientY, INPUT.moved, performance.now() - INPUT.t0); return; }
     if (INPUT.moved < 12 && performance.now() - INPUT.t0 < 600 && INPUT.enabled && !CAM.moving) pickAt(e.clientX, e.clientY);
   };
-  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', function () { INPUT.down = false; if (MINI.active && MINI.onUp) MINI.onUp(INPUT.x, INPUT.y, 99, 0); });
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', function (e) { if (joyEnd(e)) return; INPUT.down = false; if (MINI.active && MINI.onUp) MINI.onUp(INPUT.x, INPUT.y, 99, 0); });
   window.addEventListener('keydown', function (e) {
     if (e.target && e.target.tagName === 'INPUT') return;
     if (typeof onKey === 'function') onKey(e);
@@ -124,7 +127,7 @@ function pickAt(cx, cy) {
   if (!RAY) { RAY = new THREE.Raycaster(); RAYV = new THREE.Vector2(); }
   if (RAY.layers && RAY.layers.enable) { RAY.layers.enable(LAYER_REAL_ONLY); }
   RAYV.set(cx / RENDER.w * 2 - 1, -(cy / RENDER.h) * 2 + 1); RAY.setFromCamera(RAYV, RENDER.camera); RAY.far = 40;
-  var list = PICKS.filter(function (o) { var p = o.userData.pick; var vis = true; o.traverseAncestors(function (a) { if (!a.visible) vis = false; }); return vis && o.visible && (!p.stations || p.stations.indexOf(CAM.station) >= 0); });
+  var list = PICKS.filter(function (o) { var p = o.userData.pick; var vis = true; o.traverseAncestors(function (a) { if (!a.visible) vis = false; }); if (!vis || !o.visible) return false; if (!p.stations || p.stations.indexOf(CAM.station) >= 0) return true; var wp = new THREE.Vector3(); o.getWorldPosition(wp); return wp.distanceTo(RENDER.camera.position) < 7.5; });
   var hits = RAY.intersectObjects(list, true);
   if (!hits.length) { if (typeof onTapNothing === 'function') onTapNothing(); return; }
   var o = hits[0].object; while (o && !o.userData.pick) o = o.parent;

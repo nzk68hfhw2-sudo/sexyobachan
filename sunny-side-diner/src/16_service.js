@@ -278,7 +278,7 @@ var MARK_CSS = [
 var _mv = null;
 function turnToward(p) {
   var st = STATIONS[CAM.station], cam = RENDER.camera.position, yaw = Math.atan2(p.x - cam.x, p.z - cam.z);
-  CAM.tYaw = clamp(angDiff(CAM.yaw, yaw), -st.yawLim, st.yawLim); CAM.tPitch = -0.1; sfx('click');
+  CAM.tYaw = CAM.tYaw + angDiff(CAM.yaw + CAM.tYaw, yaw); CAM.tPitch = -0.1; sfx('click');
 }
 function updateMarker(C) {
   if (!C.marker) { C.marker = el('div', 'cmark', '', U.layer); }

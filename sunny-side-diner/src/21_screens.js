@@ -172,7 +172,7 @@ function startNight(day) {
 }
 function tutorialHints() {
   setTimeout(function () { if (GAME.mode === 'play') toast('Guests wait at the door. Tap them to seat them.', 'お客さんは入口で待っている。タップして席へ案内', 4); }, 5000);
-  setTimeout(function () { if (GAME.mode === 'play') toast('Drag to look around. MAP or the glowing rings to move.', 'ドラッグで見回す。MAP か光る輪で移動', 4); }, 15000);
+  setTimeout(function () { if (GAME.mode === 'play') toast(isMobile() ? 'Drag the LEFT side to walk, the right side to look.' : 'WASD / arrow keys to walk. Drag to look.', isMobile() ? '画面の左側をドラッグで歩く・右側で見回す（MAPや光る輪でも移動）' : 'WASD・矢印キーで歩く。ドラッグで見回す', 5); }, 15000);
   setTimeout(function () { if (GAME.mode === 'play') toast('Orders go to the KITCHEN. Cook, then serve.', '注文は厨房へ。作ってから運ぶ', 4); }, 40000);
 }
 // ---- results / sunny card ---------------------------------------------------------------------------
@@ -356,7 +356,7 @@ function drawCM(g, w, h, t, faces) {
 function initGame() {
   buildUI(); buildPapers(); buildRail(); buildMiniUI();
   var st = document.createElement('style'); st.textContent = MAP_CSS + '\n' + SCR_CSS; (document.head || document.documentElement).appendChild(st);
-  buildHotspots(); initVoices(); preloadFaces();
+  buildHotspots(); initMove(); initVoices(); preloadFaces();
   onTap(U.pause, function () { sfx('click'); pauseGame(); });
   onTap(U.rulesBtn, function () { sfx('click'); if (GAME.mode === 'play') showRules(); });
   onTap(U.mapBtn, function () { sfx('click'); if (GAME.mode === 'play') toggleMap(); });
