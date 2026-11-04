@@ -74,6 +74,8 @@ function duckMusic(on) { if (!AUDIO.ok) return; AUDIO.musicDuck.gain.setTargetAt
 // ---- loading songs (XHR -> decodeAudioData; failure falls back to synthesized loops) -----
 function loadSongs() {
   for (var k in SONGS) (function (k) {
+    var emb = embeddedBuffer(SONGS[k]);
+    if (emb) { try { var pe = AUDIO.ctx.decodeAudioData(emb, function (b) { AUDIO.buf[k] = b; if (k === 'boogie') AUDIO.buf.reverse = reverseBuf(b); onSongReady(k); }, function () { fallbackSong(k, 'decode'); }); if (pe && pe.catch) pe.catch(function () {}); } catch (e) { fallbackSong(k, 'decode'); } return; }
     var x = new XMLHttpRequest(); x.open('GET', assetURL(SONGS[k]), true); x.responseType = 'arraybuffer';
     x.onload = function () {
       if (x.status >= 400) return fallbackSong(k, 'HTTP ' + x.status);

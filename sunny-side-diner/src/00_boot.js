@@ -50,7 +50,9 @@ var ASSET_BASE = BASE_URL;
   } catch (e) {}
   if (ASSET_BASE.charAt(ASSET_BASE.length - 1) !== '/') ASSET_BASE += '/';
 })();
-function assetURL(p) { return ASSET_BASE + p; }
+// window.__SSD_EMBED (single-file HTML build) maps asset paths to data: URLs, so no server is needed
+function assetURL(p) { var E = window.__SSD_EMBED; return E && E[p] ? E[p] : ASSET_BASE + p; }
+function embeddedBuffer(p) { var E = window.__SSD_EMBED, u = E && E[p]; if (!u) return null; var b = atob(u.slice(u.indexOf(',') + 1)), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a.buffer; }
 
 var ROOT, UI, CANVAS_HOST;
 var BOOT_ERRORS = [];

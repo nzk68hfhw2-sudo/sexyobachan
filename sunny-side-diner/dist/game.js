@@ -55,7 +55,9 @@ var ASSET_BASE = BASE_URL;
   } catch (e) {}
   if (ASSET_BASE.charAt(ASSET_BASE.length - 1) !== '/') ASSET_BASE += '/';
 })();
-function assetURL(p) { return ASSET_BASE + p; }
+// window.__SSD_EMBED (single-file HTML build) maps asset paths to data: URLs, so no server is needed
+function assetURL(p) { var E = window.__SSD_EMBED; return E && E[p] ? E[p] : ASSET_BASE + p; }
+function embeddedBuffer(p) { var E = window.__SSD_EMBED, u = E && E[p]; if (!u) return null; var b = atob(u.slice(u.indexOf(',') + 1)), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a.buffer; }
 
 var ROOT, UI, CANVAS_HOST;
 var BOOT_ERRORS = [];
@@ -2949,6 +2951,8 @@ function duckMusic(on) { if (!AUDIO.ok) return; AUDIO.musicDuck.gain.setTargetAt
 // ---- loading songs (XHR -> decodeAudioData; failure falls back to synthesized loops) -----
 function loadSongs() {
   for (var k in SONGS) (function (k) {
+    var emb = embeddedBuffer(SONGS[k]);
+    if (emb) { try { var pe = AUDIO.ctx.decodeAudioData(emb, function (b) { AUDIO.buf[k] = b; if (k === 'boogie') AUDIO.buf.reverse = reverseBuf(b); onSongReady(k); }, function () { fallbackSong(k, 'decode'); }); if (pe && pe.catch) pe.catch(function () {}); } catch (e) { fallbackSong(k, 'decode'); } return; }
     var x = new XMLHttpRequest(); x.open('GET', assetURL(SONGS[k]), true); x.responseType = 'arraybuffer';
     x.onload = function () {
       if (x.status >= 400) return fallbackSong(k, 'HTTP ' + x.status);
