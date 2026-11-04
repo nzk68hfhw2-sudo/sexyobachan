@@ -51,10 +51,10 @@ function updateLights(dt, t) {
   var p = LSTATE.power * fl, c = LSTATE.cold;
   var warm = new THREE.Color(0xffc58a), cold = new THREE.Color(0xa9c8ff);
   [L.counterA, L.counterB, L.booths].forEach(function (s) { s.intensity = s.userData.base * p * (1 - c * 0.35); s.color.copy(warm).lerp(cold, c); });
-  L.kitchen.intensity = L.kitchen.userData.base * (LSTATE.lightsOn ? LSTATE.powerT : 0) * (0.94 + 0.06 * Math.sin(t * 120)) * (LSTATE.kitchenFlick ? (Math.random() < 0.2 ? 0.1 : 1) : 1);
-  L.hemi.intensity = L.hemi.userData.base * (0.45 + 0.55 * p) * (1 + c * 0.3);
+  L.kitchen.intensity = L.kitchen.userData.base * (LSTATE.lightsOn ? LSTATE.powerT : 0) * (0.94 + 0.06 * Math.sin(t * 120)) * (LSTATE.kitchenFlick ? (Math.random() < 0.2 ? 0.1 : 1) : 1) * (LSTATE.kitchenOff ? 0 : 1);
+  L.hemi.intensity = L.hemi.userData.base * (0.45 + 0.55 * p) * (1 + c * 0.3) * (LSTATE.kitchenOff ? 0.12 : 1);
   L.hemi.color.set(0xffe2c0).lerp(new THREE.Color(0x6080c0), c);
-  L.bounce.intensity = L.bounce.userData.base * p * (1 - c * 0.5);
+  L.bounce.intensity = L.bounce.userData.base * p * (1 - c * 0.5) * (LSTATE.kitchenOff ? 0.1 : 1);
   var nf = LSTATE.neon * (LSTATE.neonBuzz ? (Math.random() < 0.08 ? 0.2 : 1) : 1);
   L.neon.intensity = L.neon.userData.base * nf;
   if (WORLD.neonInMat) WORLD.neonInMat.color.setScalar(2.6 * nf + 0.02);
@@ -65,8 +65,8 @@ function updateLights(dt, t) {
   L.juke.intensity = L.juke.userData.base * (0.8 + 0.2 * Math.sin(t * 2.0)) * (LSTATE.jukeOff ? 0.1 : 1) * (0.4 + 0.6 * p);
   if (WORLD.jukeFaceMat) WORLD.jukeFaceMat.color.setRGB(1.9, 1.6, 1.4).multiplyScalar((LSTATE.jukeOff ? 0.15 : 1) * (0.55 + 0.45 * p));
   if (WORLD.jukePillar) WORLD.jukePillar.color.setRGB(3.0, 1.2, 0.5).multiplyScalar((LSTATE.jukeOff ? 0.05 : 1) * (0.9 + 0.1 * Math.sin(t * 3)));
-  WORLD.pendants.forEach(function (b, i) { b.material = p > 0.2 ? M.bulb : M.bulbOff; });
+  WORLD.pendants.forEach(function (b, i) { b.material = p > 0.2 && !b.userData.off ? M.bulb : M.bulbOff; });
   M.bulb.color.setRGB(6 * p, 4.2 * p, 2.4 * p).lerp(new THREE.Color(3 * p, 3.6 * p, 4.4 * p), c);
-  M.fluor.color.setRGB(4.2, 4.6, 4.8).multiplyScalar(LSTATE.lightsOn ? LSTATE.powerT : 0.02);
+  M.fluor.color.setRGB(4.2, 4.6, 4.8).multiplyScalar(LSTATE.lightsOn && !LSTATE.kitchenOff ? LSTATE.powerT : 0.02);
   if (WORLD.doorSign) WORLD.doorSign.material.color.setScalar(LSTATE.neonOn ? 1 : 0.25);
 }

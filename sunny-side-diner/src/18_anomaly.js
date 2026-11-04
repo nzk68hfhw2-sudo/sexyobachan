@@ -22,7 +22,7 @@ var FAKES = [
   { against: 'backdoor', en: 'If I knock on the back door, let me in. I always forget my keys.', ja: 'わたしが裏口をノックしたら入れてくれ。いつも鍵を忘れるんだ。' },
   { against: 'headlights', en: 'If a car sits outside with its lights on, wave so they know we\'re open.', ja: 'ライトをつけた車が外にいたら、営業中だとわかるよう手を振ること。' }
 ];
-var DAY_ANOM = { 1: 2, 2: 3, 3: 4, 4: 5, 5: 6 };
+var DAY_ANOM = { 1: 3, 2: 4, 3: 5, 4: 6, 5: 7 };
 var DAY_FAKES = { 1: 0, 2: 0, 3: 1, 4: 2, 5: 2 };
 function rulesForDay(day) { return RULES.filter(function (r) { return r.day <= day; }); }
 function rulesDocList(day, fakes) {
@@ -90,6 +90,7 @@ function anomalyResolve(A, msg) {
     setTimeout(function () { if (GAME.mode === 'play' && !GAME.inAnomaly && !JUKE.key && !GAME.blackout) jukePlay('warped', { label: 'B3 Last Call' }); }, 7000);
   }
   if (msg !== false) toast('...it\'s gone.', '……いなくなった。', 2.2);
+  afterCalm(A);
   sfx('heart', null, { n: 2, gap: 0.9, vol: 0.5 });
 }
 function anomalyFail(A, faceN, opt) {
@@ -318,11 +319,13 @@ function ringSession(A) { A.ring++; A.ringing = true; A.rt = 14; A.rr = 0; setTi
 // wherever you are, the ringing phone asks you: pick up, or let it ring
 function phonePrompt(A, ring) {
   if (!A.ringing || A.ring !== ring || A.done || GAME.mode !== 'play') return;
-  if (MINI.active || DOC.open || CAM.inFreezer || CAM.outside || JS.on || PAUSE.el) { setTimeout(function () { phonePrompt(A, ring); }, 1200); return; }
+  // (shown during cooking too — picking up means leaving the griddle)
+  if (DOC.open || CAM.inFreezer || CAM.outside || JS.on || PAUSE.el) { setTimeout(function () { phonePrompt(A, ring); }, 1200); return; }
   var nth = ['', '1st ring', '2nd time', '3rd time'][Math.min(3, ring)], nthJa = ['', '1回目', '2回目', '3回目'][Math.min(3, ring)];
   showCall('The pink phone — ' + nth, 'ピンクの電話が鳴っている（' + nthJa + '）', function () {
     if (!A.ringing) { toast('It stopped ringing.', '電話は鳴りやんだ。', 1.6); return; }
     var answer = function () { if (A.ringing) ANOM.phone.answer(A); };
+    if (MINI.active) abortMini('You left the griddle — the food is ruined.', '鉄板から離れたので料理がだめになった');
     if (CAM.station === 'JUKEBOX') answer(); else { CAM.afterArrive = function () { turnToward(WORLD.phonePos); setTimeout(answer, 350); }; goStation('JUKEBOX'); }
   }, function () { toast('You let it ring.', '電話は鳴らしておいた。', 1.4); });
 }
@@ -344,7 +347,7 @@ function jumpscare(n, opt) {
   if (JS.on || GAME.mode === 'dead') return;
   opt = opt || {}; JS = { on: true, t: 0, n: n || 1, P: opt.person || null, mild: SAVE.settings.scare === 'MILD' };
   GAME.mode = 'dead'; GAME.deathAt = GAME.min;
-  stopVoice(); talkCancel(); hideChoices(); hideCall(); closeDocs(true); if (MINI.active) { MINI.active = false; U.mini.classList.add('hide'); }
+  stopVoice(); talkCancel(); hideChoices(); hideCall(); closeDocs(true); if (MINI.active) { MINI.active = false; U.mini.classList.add('hide'); U.chips.innerHTML = ''; } setMain2(null); stackCooking();
   jukeStop(0.05); stopMusic(0.05);
   setMain(null); setGameHUD(false);
   LSTATE.flick = 3; LSTATE.coldT = 1;

@@ -97,6 +97,7 @@ function customerLeave(C, angry) {
   clearDishes(C); hideMenuProp(C);
   if (C.ticket && !C.ticket.done) { C.ticket.cancel = true; removeTicket(C.ticket); }
   standUp(C); C.state = 'leaving'; C.marker && (C.marker.style.display = 'none');
+  if (!angry) leaveWhisper(C);
   walkTo(C, routeOut(C), function () { C.state = 'gone'; removeCustomer(C); });
   if (C.leavingSeat) { C.leavingSeat = false; C.seat = null; }
   if (angry) { GAME.angry++; }
@@ -164,13 +165,13 @@ function tapCustomer(C) {
 function seatCustomer(C, seat) {
   if (C.anomaly && C.anomaly.onServe && C.anomaly.onServe(C, 'seat') === true) return;
   C.state = 'toSeat'; sfx('click');
-  walkTo(C, routeToSeat(seat), function () { sitDown(C, seat); C.state = 'seated'; C.pat = C.patMax = PATIENCE.seated; C.P.lookAtCam = false; });
+  walkTo(C, routeToSeat(seat), function () { sitDown(C, seat); C.state = 'seated'; C.pat = C.patMax = PATIENCE.seated; C.P.lookAtCam = false; if (!C.anomaly || !C.anomaly.manualMenu) giveMenu(C, true); });
   var g = C.arch.id && ARCH_LINES[C.arch.id] ? pickL(ARCH_LINES[C.arch.id].greet) : pickL(LINES.greet);
   if (!C.anomaly || !C.anomaly.mute) custSay(C, g[0], g[1]);
 }
-function giveMenu(C) {
-  if (C.anomaly && C.anomaly.onServe && C.anomaly.onServe(C, 'menu') === true) return;
-  showMenuProp(C); setPose(C.P, 'menu'); C.state = 'reading'; sfx('paper', C.P.root.position); C.readT = 7 + Math.random() * 6; C.P.lookAtCam = false;
+function giveMenu(C, auto) {
+  if (!auto && C.anomaly && C.anomaly.onServe && C.anomaly.onServe(C, 'menu') === true) return;
+  showMenuProp(C); setPose(C.P, 'menu'); C.state = 'reading'; sfx('paper', C.P.root.position); C.readT = 3.5 + Math.random() * 2.5; C.P.lookAtCam = false;
 }
 function makeOrder(C) {
   var n = 1 + (Math.random() < 0.55 ? 1 : 0) + (Math.random() < 0.2 ? 1 : 0), likes = C.arch.likes || ['coffee', 'pie'], items = [], used = {};
@@ -229,11 +230,12 @@ function ignoreCustomer(C) {
 }
 function serveCustomer(C) {
   if (!C.ticket || !C.ticket.ready) return;
+  if (C.ticket.bad && !C.ticket.bad.done) { var BA = C.ticket.bad; C.ticket.served = true; placeDishes(C); sfx('cup', C.seat.eatPos); setPose(C.P, 'eat'); custSay(C, '...It\'s looking at me.', '……これ、こっちを見てる。', { odd: true }).then(function () { anomalyFail(BA, BA.face, { person: C.P, rule: 'badfood' }); }); return; }
   if (C.anomaly && C.anomaly.onServe && C.anomaly.onServe(C, 'serve') === true) return;
   if (C.items.some(function (it) { return it.odd; }) && GAME.oddFail) { GAME.oddFail(C); return; }
   removeTicket(C.ticket); C.ticket.done = true;
   placeDishes(C); sfx('cup', C.seat.eatPos); sfx('cutlery', C.seat.eatPos, { delay: 0.2 });
-  C.state = 'eating'; C.eatT = 16 + Math.random() * 10; setPose(C.P, 'eat');
+  C.state = 'eating'; C.eatT = 11 + Math.random() * 7; setPose(C.P, 'eat');
   var L = pickL(LINES.served); custSay(C, L[0], L[1]);
   GAME.served++;
 }
@@ -265,7 +267,7 @@ function updateCustomers(dt) {
     if (C.anomaly && C.anomaly.update) C.anomaly.update(C, dt);
     if (C.kid && C.kid.doll && GAME.day >= 2 && C.seat && GAME.mode === 'play') dollBeat(C, dt);
     if (C.state === 'reading') { C.readT -= dt; if (C.readT <= 0) { C.state = 'ready'; hideMenuProp(C); setPose(C.P, 'hand'); C.pat = C.patMax = PATIENCE.ready; sfx('pop', C.P.root.position, { vol: 0.3 }); } }
-    if (C.state === 'eating') { C.eatT -= dt; if (C.eatT <= 0) { C.state = 'check'; setPose(C.P, 'hand'); C.pat = C.patMax = PATIENCE.check; clearDishesLater(C); } }
+    if (C.state === 'eating') { C.eatT -= dt; if (C.eatT <= 0) { clearDishesLater(C); if (GAME.mode === 'play') payCustomer(C); else { C.state = 'check'; } } }
     var waiting = C.state === 'wait' || C.state === 'seated' || C.state === 'ready' || C.state === 'ordered' || C.state === 'check';
     if (waiting && !C.anomaly && GAME.mode === 'play') {
       C.pat -= dt / (GAME.spd || 1) * (GAME.day > 3 ? 1.1 : 1); // patience runs in real time
@@ -346,16 +348,19 @@ function refreshTickets() {
   U.rail.style.display = CAM.station === 'KITCHEN' && TICKETS.length && GAME.mode === 'play' && !MINI.active ? '' : 'none';
 }
 function tapTicket(T) {
-  if (MINI.active || TALK.busy) return;
+  if (MINI.active) return;
   var o = [];
   T.items.forEach(function (it) {
     if (it.done) return;
-    if (it.odd) o.push({ icon: 'cook', en: 'Make "' + it.odd.en + '"', ja: '「' + it.odd.ja.replace(/[「」]/g, '') + '」を作る', warn: true, fn: function () { cookOdd(T, it); } });
-    else o.push({ icon: MENU[it.id].icon, en: 'Make ' + MENU[it.id].en, ja: MENU[it.id].ja + 'を作る', fn: function () { startMini(MENU[it.id].mini, function (q) { it.done = true; it.q = q; afterCook(T); }); } });
+    if (it.odd) o.push({ icon: 'cook', en: 'Make "' + it.odd.en + '"', ja: '「' + it.odd.ja.replace(/[「」]/g, '') + '」を作る', warn: true, fn: function () { if (T.you) ANOM.youticket.cook(T.you); else cookOdd(T, it); } });
+    else o.push({ icon: MENU[it.id].icon, en: 'Make ' + MENU[it.id].en, ja: MENU[it.id].ja + 'を作る', fn: function () { cookItem(T, it); } });
   });
   o.push({ icon: 'tear', en: 'Tear up ticket', ja: '伝票を破って捨てる', minor: true, fn: function () { tearTicket(T); } });
   showChoices('No.' + T.no + ' — ' + T.table, o, { no: T.no, table: T.table });
 }
+function cookItem(T, it) { startMini(MENU[it.id].mini, function (q, badA) { it.done = true; it.q = q; if (badA) { it.bad = badA; T.bad = badA; badA.ticket = T; } afterCook(T); }); }
+// NEXT TICKET: start the next dish straight away (only odd tickets need a decision)
+function quickCook(T) { if (MINI.active) return; var it = T.items.filter(function (x) { return !x.done; })[0]; if (!it) return; if (it.odd) { tapTicket(T); return; } cookItem(T, it); }
 function cookOdd(T, it) { sfx('sizzle', new THREE.Vector3(0.9, 0.9, -4.7), { len: 2 }); it.done = true; it.q = 0; afterCook(T); toast('It smells... sweet.', '……甘いにおいがする。', 2.5); }
 function tearTicket(T) {
   sfx('tearPaper'); removeTicket(T); T.torn = true;
@@ -366,7 +371,7 @@ function afterCook(T) {
   refreshTickets();
   if (T.items.every(function (it) { return it.done; })) {
     T.ready = true; sfx('orderBell', new THREE.Vector3(1.4, 1.4, -2.8));
-    say('YOU', 'Order up!', 'できたよ！（オーダーアップ）', { voice: 'you', cls: 'you', silent: !SAVE.settings.voiceMode || true, hold: 0.4 });
+    say('YOU', 'Order up!', 'できたよ！（オーダーアップ）', { voice: 'you', cls: 'you', silent: !SAVE.settings.voiceMode || true, hold: 0.4 }); TALK.busy = false;
     // plates on the pass shelf
     T.plates = []; T.items.forEach(function (it, i) { var d = dishMesh(it.odd ? 'odd' : it.id); d.position.set(0.6 + (TICKETS.indexOf(T) * 0.5 + i * 0.25) % 2.1, 1.28, -2.8); RENDER.scene.add(d); T.plates.push(d); });
     if (T.onReady) T.onReady();

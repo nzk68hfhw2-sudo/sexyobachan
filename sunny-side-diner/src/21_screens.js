@@ -172,7 +172,7 @@ function startNight(day) {
 }
 function tutorialHints() {
   setTimeout(function () { if (GAME.mode === 'play') toast('Guests wait at the door. Tap them to seat them.', 'お客さんは入口で待っている。タップして席へ案内', 4); }, 5000);
-  setTimeout(function () { if (GAME.mode === 'play') toast(isMobile() ? 'Drag the LEFT side to walk, the right side to look.' : 'WASD / arrow keys to walk. Drag to look.', isMobile() ? '画面の左側をドラッグで歩く・右側で見回す（MAPや光る輪でも移動）' : 'WASD・矢印キーで歩く。ドラッグで見回す', 5); }, 15000);
+  setTimeout(function () { if (GAME.mode === 'play') toast(isMobile() ? 'Drag the LEFT side to walk, the right side to look.' : 'WASD / arrow keys to walk. Drag to look.', isMobile() ? '画面の左側をドラッグで歩く・右側で見回す（MAPや光る輪でも移動）' : 'WASD・矢印キーで歩く。ドラッグで見回す', 5); }, 25000);
   setTimeout(function () { if (GAME.mode === 'play') toast('Orders go to the KITCHEN. Cook, then serve.', '注文は厨房へ。作ってから運ぶ', 4); }, 40000);
 }
 // ---- results / sunny card ---------------------------------------------------------------------------

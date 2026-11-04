@@ -15,6 +15,8 @@ const run = require('./shot.js'); const fs = require('fs');
       if (s.eval) { const r = await page.evaluate(c => { try { return JSON.stringify(window.__ssdEval(c)); } catch (e) { return 'ERR ' + e.message + ' ' + e.stack; } }, s.eval); if (s.log !== false) console.log('eval>', String(r).slice(0, 2500)); }
       if (s.evalfile) await page.evaluate(fs.readFileSync(require('path').join(__dirname, '..', s.evalfile), 'utf8'));
       if (s.key) await page.keyboard.press(s.key);
+      if (s.mousedown) { await page.mouse.move(s.mousedown[0], s.mousedown[1]); await page.mouse.down(); }
+      if (s.mouseup) { await page.mouse.move(s.mouseup[0], s.mouseup[1]); await page.mouse.up(); }
       if (s.shot) await page.screenshot({ path: process.env.S + '/' + s.shot + '.png', timeout: 180000 });
     }
   } catch (e) { console.log('ERR', e.message); }

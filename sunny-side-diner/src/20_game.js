@@ -1,9 +1,9 @@
 // ---- the shift: clock, schedule, stations, freezer, switches, calls, map, end states ----
-var GAME = { mode: 'boot', day: 1, min: 0, rate: 60 / 135, tips: 0, sales: 0, served: 0, angry: 0, refusedNormal: 0, resolved: 0, callsLeft: 2, sched: [], usedFaces: {}, paused: false };
+var GAME = { mode: 'boot', day: 1, min: 0, rate: 60 / 80, tips: 0, sales: 0, served: 0, angry: 0, refusedNormal: 0, resolved: 0, callsLeft: 2, sched: [], usedFaces: {}, paused: false };
 var SHIFT_LEN = 480; // 22:00 -> 06:00
 function newGameState(day) {
   var keepSpd = GAME && GAME.spd;
-  GAME = { mode: 'play', day: day, min: 0, rate: 60 / 135, tips: 0, sales: 0, served: 0, angry: 0, refusedNormal: 0, resolved: 0, callsLeft: 2, sched: [], usedFaces: {}, paused: false, inAnomaly: 0, lightsSwitched: 0, cold: 0 };
+  GAME = { mode: 'play', day: day, min: 0, rate: 60 / 80, tips: 0, sales: 0, served: 0, angry: 0, refusedNormal: 0, resolved: 0, callsLeft: 2, sched: [], usedFaces: {}, paused: false, inAnomaly: 0, lightsSwitched: 0, cold: 0 };
   GAME.spd = keepSpd || 1;
   GAME.oddFail = function (C) { anomalyFail(C.anomaly, C.anomaly ? C.anomaly.face : pickFace(['human']), { person: C.P, rule: 'offmenu' }); };
 }
@@ -14,7 +14,9 @@ function clearWorld() {
   SEATS.forEach(function (s) { s.taken = null; });
   if (FX.visitor) { FX.visitor.state = 'idle'; FX.visitor.obj.visible = false; }
   hideCall(); hideChoices();
-  LSTATE.lightsOn = true; LSTATE.neonOn = true; LSTATE.coldT = 0; LSTATE.cold = 0; LSTATE.flick = 0; LSTATE.eyesExtra = 1; LSTATE.kitchenFlick = false;
+  LSTATE.lightsOn = true; LSTATE.neonOn = true; LSTATE.coldT = 0; LSTATE.cold = 0; LSTATE.flick = 0; LSTATE.eyesExtra = 1; LSTATE.kitchenFlick = false; LSTATE.kitchenOff = false; LSTATE.powerT = 1;
+  if (WORLD.pendants) WORLD.pendants.forEach(function (b) { b.userData.off = false; }); if (WORLD.lights && WORLD.lights.fill) WORLD.lights.fill.intensity = 0;
+  if (typeof setMain2 === 'function' && U.main2) { setMain2(null); } MINI.active = false; if (MINI.objs && MINI.objs.parent) MINI.objs.parent.remove(MINI.objs); if (U.mini) { U.mini.classList.add('hide'); U.chips.innerHTML = ''; } if (typeof stackCooking === 'function' && U.mini) stackCooking(); scaresReset();
   setNeonEyes(0, null); jukeGlass(0, false);
   WORLD.backDoor.rotation.y = 0; CAM.inFreezer = false; CAM.outside = false; WORLD.freezerDoor.rotation.y = 0;
   FX.rainT = 0; FX.rain = 0;
@@ -23,35 +25,44 @@ function clearWorld() {
 }
 // ---- schedule ----------------------------------------------------------------------------
 function buildSchedule(day) {
-  var S = [], rnd = R, t = 4;
-  // regular customers: busy early, sparse late
-  while (t < SHIFT_LEN - 25) {
+  var S = [], rnd = R, t = 3;
+  // regular customers: a steady trickle (never more than 3 inside at once)
+  while (t < SHIFT_LEN - 30) {
     S.push({ at: t, type: 'cust' });
-    t += t < 150 ? rnd.range(9, 16) - Math.min(4, day) : rnd.range(30, 48);
+    t += t < 160 ? rnd.range(26, 38) - day * 1.5 : rnd.range(36, 54) - day * 2;
   }
   // anomalies
-  var pool = rulesForDay(day).map(function (r) { return r.id; }).filter(function (id) { return id !== 'dayshift'; });
+  var pool = rulesForDay(day).map(function (r) { return r.id; }).filter(function (id) { return id !== 'dayshift' && id !== 'costume'; });
   var n = Math.min(DAY_ANOM[day], pool.length), pick = [];
   if (day >= 2 && pool.indexOf('booth4') >= 0 && rnd() < 0.85) pick.push('booth4');
-  if (pool.indexOf('phone') >= 0 && (day === 1 || rnd() < 0.6)) pick.push('phone');
+  if (pool.indexOf('phone') >= 0 && (day === 1 || rnd() < 0.7)) pick.push('phone');
+  // every night has at least one thing that only happens at the griddle (tonight's new one first)
+  var cooks = pool.filter(function (id) { return COOK_ANOM.indexOf(id) >= 0; }); R.shuffle(cooks);
+  var cook1 = cooks.filter(function (id) { return ruleDay(id) === day; })[0] || cooks[0]; if (cook1) pick.push(cook1);
   var rest = pool.filter(function (id) { return pick.indexOf(id) < 0; }); R.shuffle(rest);
-  if (day === 1) rest = rest.filter(function (id) { return id !== 'faceless' || true; });
   while (pick.length < n && rest.length) pick.push(rest.shift());
-  var slots = [], s0 = 62 + rnd.range(0, 15);
+  var slots = [], s0 = 26 + rnd.range(0, 8);
   var others = pick.filter(function (id) { return id !== 'booth4' && id !== 'phone'; });
-  var gap = (430 - s0) / Math.max(1, others.length);
-  others.forEach(function (id, i) { slots.push({ at: s0 + gap * i + rnd.range(0, gap * 0.5), type: 'anom', id: id }); });
+  // the night opens with something you can see (a cooking one waits for the griddle, so it goes later)
+  others.sort(function (a, b) { return (COOK_ANOM.indexOf(a) >= 0) - (COOK_ANOM.indexOf(b) >= 0) || Math.random() - 0.5; });
+  if (others.length > 2) { var c0 = others.filter(function (id) { return COOK_ANOM.indexOf(id) >= 0; })[0]; if (c0) { others.splice(others.indexOf(c0), 1); others.splice(1, 0, c0); } }
+  var gap = (420 - s0) / Math.max(1, others.length);
+  others.forEach(function (id, i) { slots.push({ at: i === 0 ? s0 : s0 + gap * i + rnd.range(-gap * 0.2, gap * 0.3), type: 'anom', id: id }); });
   if (pick.indexOf('booth4') >= 0) slots.push({ at: 300 + rnd.range(-12, 8), type: 'anom', id: 'booth4' });
-  if (pick.indexOf('phone') >= 0) slots.push({ at: rnd.range(70, 140), type: 'anom', id: 'phone' });
+  if (pick.indexOf('phone') >= 0) slots.push({ at: day === 1 ? rnd.range(48, 80) : rnd.range(40, 110), type: 'anom', id: 'phone' });
   if (day === 5) slots.push({ at: 452, type: 'anom', id: 'dayshift' });
   // keep anomalies apart from each other
   slots.sort(function (a, b) { return a.at - b.at; });
-  for (var i = 1; i < slots.length; i++) if (slots[i].id !== 'phone' && slots[i - 1].id !== 'phone' && slots[i].at - slots[i - 1].at < 30) slots[i].at = slots[i - 1].at + 30;
+  for (var i = 1; i < slots.length; i++) if (slots[i].id !== 'phone' && slots[i - 1].id !== 'phone' && slots[i].at - slots[i - 1].at < 26) slots[i].at = slots[i - 1].at + 26;
   S = S.concat(slots);
-  // atmosphere beats
+  // atmosphere beats — from the very start of the night
+  S.push({ at: day === 1 ? 11 + rnd.range(0, 3) : rnd.range(6, 16), type: 'ghostbell' }); // the bell rings. nobody.
   S.push({ at: 180, type: 'midnight1' }); // 1:00 the jukebox skips to the late record
   S.push({ at: 200 + rnd.range(0, 40), type: 'rain' });
-  for (var k = 0; k < 2 + day; k++) S.push({ at: rnd.range(150, 460), type: 'scare' });
+  for (var k = 0; k < 5 + day; k++) S.push({ at: k === 0 ? rnd.range(45, 70) : rnd.range(70, 465), type: 'scare' });
+  S.push({ at: rnd.range(150, 260), type: 'hallway' });
+  if (day >= 2) S.push({ at: rnd.range(300, 440), type: 'hallway' });
+  S.push({ at: rnd.range(90, 200), type: 'fakeout' }); S.push({ at: rnd.range(260, 430), type: 'fakeout' });
   S.push({ at: rnd.range(240, 420), type: 'thunder' });
   S.sort(function (a, b) { return a.at - b.at; });
   return S;
@@ -61,16 +72,20 @@ function runSchedule() {
     var e = GAME.sched.shift();
     if (e.type === 'cust') {
       var live = CUSTS.filter(function (c) { return c.state !== 'gone' && c.state !== 'leaving'; }).length;
-      if (live >= (GAME.min < 150 ? 4 : 3) || GAME.inAnomaly > 1) { e.at += 6; GAME.sched.push(e); GAME.sched.sort(function (a, b) { return a.at - b.at; }); continue; }
+      if (live >= 3 || GAME.inAnomaly > 1) { e.at += 6; GAME.sched.push(e); GAME.sched.sort(function (a, b) { return a.at - b.at; }); continue; }
       var arch = pickArch();
       if (FX.visitor.state === 'idle' && Math.random() < 0.6) visitorArrive({ onPark: function () { setTimeout(visitorLeaveLater, 3000); } });
       var C = spawnCustomer(arch, { kid: arch.kid });
       GAME.lastCust = C;
-    } else if (e.type === 'anom') { if (GAME.inAnomaly && e.id !== 'phone') { e.at += 12; GAME.sched.push(e); GAME.sched.sort(function (a, b) { return a.at - b.at; }); continue; } var A = makeAnomaly(e.id, e.at); bindAnomaly(A); startAnomaly(A); }
+    } else if (e.type === 'anom' && COOK_ANOM.indexOf(e.id) >= 0) { if (GAME.cookArmed) { e.at += 10; GAME.sched.push(e); GAME.sched.sort(function (a, b) { return a.at - b.at; }); continue; } GAME.cookArmed = e.id; } // waits for the next dish
+    else if (e.type === 'anom') { if (GAME.inAnomaly && e.id !== 'phone') { e.at += 12; GAME.sched.push(e); GAME.sched.sort(function (a, b) { return a.at - b.at; }); continue; } var A = makeAnomaly(e.id, e.at); bindAnomaly(A); startAnomaly(A); }
     else if (e.type === 'midnight1') { if (!GAME.inAnomaly && JUKE.key === 'boogie') jukeSkipTo('warped', 'B3 Last Call'); JUKE.label = 'B3 Last Call'; LSTATE.coldT = Math.max(LSTATE.coldT, 0.2); toast('1:00 AM — the jukebox skips to another record: B3 "Last Call"', '午前1時。ジュークボックスがB3「Last Call」に変わった', 3.4); }
     else if (e.type === 'rain') { FX.rainT = 0.55 + GAME.day * 0.09; sfx('thunder', null, { vol: 0.5 }); }
     else if (e.type === 'thunder') { sfx('thunder'); PU.uFlash.value = 0.25; setTimeout(function () { PU.uFlash.value = 0; }, 90); }
     else if (e.type === 'scare') ambientScare();
+    else if (e.type === 'ghostbell') ghostBell();
+    else if (e.type === 'hallway') { if (GAME.inAnomaly || MINI.active || CAM.inFreezer || CAM.outside) { e.at += 15; GAME.sched.push(e); GAME.sched.sort(function (a, b) { return a.at - b.at; }); continue; } hallwayLights(); }
+    else if (e.type === 'fakeout') { if (GAME.inAnomaly) { e.at += 20; GAME.sched.push(e); GAME.sched.sort(function (a, b) { return a.at - b.at; }); continue; } fakeOut(); }
   }
 }
 function visitorLeaveLater() { setTimeout(function () { if (FX.visitor.state === 'parked' && !FX.visitor.high) visitorLeave(); }, 25000 + Math.random() * 30000); }
@@ -187,8 +202,10 @@ function onArrive(st) {
 function updateMainButton() {
   if (!U.main) return;
   if (GAME.mode !== 'play') { setMain(null); return; }
-  if (MINI.active) { setMain(MINI.main || null); return; }
-  var trap = ACTIVE.filter(function (A) { return A.trap; })[0]; if (trap) { setMain(trap.trap); return; }
+  var trap = ACTIVE.filter(function (A) { return A.trap; })[0];
+  if (MINI.active) { setMain(MINI.main || null); setMain2(trap ? trap.trap : null); stackCooking(); return; }
+  setMain2(null);
+  if (trap) { setMain(trap.trap); return; }
   var st = CAM.station, a = null;
   if (CAM.inFreezer) a = { icon: 'door', en: 'COME OUT', ja: '冷凍庫から出る', fn: leaveFreezer };
   else if (CAM.outside) a = { icon: 'back', en: 'GO BACK INSIDE', ja: '店にもどる', fn: comeInside };
@@ -198,7 +215,7 @@ function updateMainButton() {
     var t = TICKETS.filter(function (T) { return !T.ready; })[0];
     var rc = CUSTS.filter(function (C) { return C.state === 'ordered' && C.ticket && C.ticket.ready && C.seat; })[0];
     var wc = CUSTS.filter(function (C) { return ['wait', 'seated', 'ready', 'check'].indexOf(C.state) >= 0 && !C.anomaly; })[0];
-    if (t) a = { icon: 'ticket', en: 'NEXT TICKET', ja: '次の伝票を作る', fn: function () { tapTicket(t); } };
+    if (t) a = { icon: 'ticket', en: 'NEXT TICKET', ja: '次の伝票を作る', glow: true, fn: function () { quickCook(t); } };
     else if (rc) a = { icon: 'serve', en: 'SERVE', ja: '料理を運ぶ（' + (rc.seat.kind === 'stool' ? 'カウンター' : rc.seat.booth + '番席') + 'へ戻る）', glow: true, fn: function () { returnTo(rc); } };
     else if (wc) a = { icon: 'back', en: 'TO FLOOR', ja: '客席へ戻る', glow: true, fn: function () { returnTo(wc); } };
   }
@@ -405,13 +422,17 @@ function updateGame(dt, t) {
   if (GAME.mode !== 'play') { if (GAME.mode === 'title' || GAME.mode === 'cut') { updateCustomers(dt); } if (SUBQ.cur) subUpdate(dt); return; }
   if (SUBQ.cur) subUpdate(dt);
   if (GAME.paused || PAUSE.el) return;
-  var spd = GAME.inAnomaly || MINI.active || CAM.inFreezer ? 1 : (GAME.spd || 1);
+  GAME.realT = (GAME.realT || 0) + dt;
+  var nextA = GAME.sched.filter(function (e) { return e.type === 'anom'; })[0], wob = 0;
+  GAME.soon = !!(nextA && nextA.at - GAME.min < 30) || !!GAME.cookArmed;
+  var spd = GAME.inAnomaly || MINI.active || CAM.inFreezer || GAME.soon ? 1 : (GAME.spd || 1);
   GAME.min += dt * spd * GAME.rate * (GAME.fast || 1);
   runSchedule(); updateCustomers(dt * spd); updateAnomalies(dt); updateFreezer(dt);
+  updateHush(nextA, dt); updateNightScares(dt);
   // pre-anomaly tape wobble on the jukebox
-  var nextA = GAME.sched.filter(function (e) { return e.type === 'anom'; })[0], wob = 0;
   if (nextA) wob = clamp(1 - (nextA.at - GAME.min) / 25, 0, 1); JUKE.wobble = wob; JUKE.drift = wob * 0.6;
   HUD_T -= dt; if (HUD_T <= 0) { HUD_T = 0.5; setClock(GAME.min, GAME.day); var nT = TICKETS.length; pruneTickets(); if (TICKETS.length !== nT) refreshTickets(); updateMainButton(); refreshSpeed(); }
+  if (MINI.active && RENDER.frame % 4 === 0) stackCooking();
   UI.classList.toggle('flick', GAME.day >= 3 && GAME.min > 200);
   UI.style.setProperty('--wear', clamp((GAME.day - 1) * 0.12 + (GAME.min / SHIFT_LEN) * 0.12, 0, 0.6).toFixed(2));
   PU.uCold.value = LSTATE.cold * 0.85; PU.uGrain.value = 0.035 + LSTATE.cold * 0.025; PU.uVig.value = 0.55 + LSTATE.cold * 0.15;
@@ -468,7 +489,7 @@ function onKey(e) {
   if (e.key === 'Escape') { if (DOC.open) closeDocs(); else if (PAUSE.el) resumeGame(); else if (SLIP.open) hideChoices(); else if (MAPV.el) toggleMap(); else pauseGame(); return; }
   if (GAME.mode !== 'play' || PAUSE.el) return;
   var n = parseInt(e.key, 10); if (n >= 1 && n <= 8) { goStation(STATION_ORDER[n - 1]); return; }
-  if (e.key === ' ' || e.key === 'Enter') { if (SUBQ.cur) subAdvance(); else if (U.mainAct && U.mainAct.fn) U.mainAct.fn(); e.preventDefault(); }
+  if (e.key === ' ' || e.key === 'Enter') { if (SUBQ.cur && !MINI.active) subAdvance(); else if (U.mainAct && U.mainAct.fn) U.mainAct.fn(); e.preventDefault(); }
   if (e.key === 'm' || e.key === 'M') toggleMap();
   if (e.key === 'r' || e.key === 'R') showRules();
   if (MINI.active && (e.key === 'h' || e.key === 'H') && MINI.onDown && !MINI.keyHold) { MINI.keyHold = 1; MINI.onDown(RENDER.w / 2, RENDER.h / 2); }

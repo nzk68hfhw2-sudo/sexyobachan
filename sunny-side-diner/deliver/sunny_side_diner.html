@@ -1925,10 +1925,10 @@ function updateLights(dt, t) {
   var p = LSTATE.power * fl, c = LSTATE.cold;
   var warm = new THREE.Color(0xffc58a), cold = new THREE.Color(0xa9c8ff);
   [L.counterA, L.counterB, L.booths].forEach(function (s) { s.intensity = s.userData.base * p * (1 - c * 0.35); s.color.copy(warm).lerp(cold, c); });
-  L.kitchen.intensity = L.kitchen.userData.base * (LSTATE.lightsOn ? LSTATE.powerT : 0) * (0.94 + 0.06 * Math.sin(t * 120)) * (LSTATE.kitchenFlick ? (Math.random() < 0.2 ? 0.1 : 1) : 1);
-  L.hemi.intensity = L.hemi.userData.base * (0.45 + 0.55 * p) * (1 + c * 0.3);
+  L.kitchen.intensity = L.kitchen.userData.base * (LSTATE.lightsOn ? LSTATE.powerT : 0) * (0.94 + 0.06 * Math.sin(t * 120)) * (LSTATE.kitchenFlick ? (Math.random() < 0.2 ? 0.1 : 1) : 1) * (LSTATE.kitchenOff ? 0 : 1);
+  L.hemi.intensity = L.hemi.userData.base * (0.45 + 0.55 * p) * (1 + c * 0.3) * (LSTATE.kitchenOff ? 0.12 : 1);
   L.hemi.color.set(0xffe2c0).lerp(new THREE.Color(0x6080c0), c);
-  L.bounce.intensity = L.bounce.userData.base * p * (1 - c * 0.5);
+  L.bounce.intensity = L.bounce.userData.base * p * (1 - c * 0.5) * (LSTATE.kitchenOff ? 0.1 : 1);
   var nf = LSTATE.neon * (LSTATE.neonBuzz ? (Math.random() < 0.08 ? 0.2 : 1) : 1);
   L.neon.intensity = L.neon.userData.base * nf;
   if (WORLD.neonInMat) WORLD.neonInMat.color.setScalar(2.6 * nf + 0.02);
@@ -1939,9 +1939,9 @@ function updateLights(dt, t) {
   L.juke.intensity = L.juke.userData.base * (0.8 + 0.2 * Math.sin(t * 2.0)) * (LSTATE.jukeOff ? 0.1 : 1) * (0.4 + 0.6 * p);
   if (WORLD.jukeFaceMat) WORLD.jukeFaceMat.color.setRGB(1.9, 1.6, 1.4).multiplyScalar((LSTATE.jukeOff ? 0.15 : 1) * (0.55 + 0.45 * p));
   if (WORLD.jukePillar) WORLD.jukePillar.color.setRGB(3.0, 1.2, 0.5).multiplyScalar((LSTATE.jukeOff ? 0.05 : 1) * (0.9 + 0.1 * Math.sin(t * 3)));
-  WORLD.pendants.forEach(function (b, i) { b.material = p > 0.2 ? M.bulb : M.bulbOff; });
+  WORLD.pendants.forEach(function (b, i) { b.material = p > 0.2 && !b.userData.off ? M.bulb : M.bulbOff; });
   M.bulb.color.setRGB(6 * p, 4.2 * p, 2.4 * p).lerp(new THREE.Color(3 * p, 3.6 * p, 4.4 * p), c);
-  M.fluor.color.setRGB(4.2, 4.6, 4.8).multiplyScalar(LSTATE.lightsOn ? LSTATE.powerT : 0.02);
+  M.fluor.color.setRGB(4.2, 4.6, 4.8).multiplyScalar(LSTATE.lightsOn && !LSTATE.kitchenOff ? LSTATE.powerT : 0.02);
   if (WORLD.doorSign) WORLD.doorSign.material.color.setScalar(LSTATE.neonOn ? 1 : 0.25);
 }
 
@@ -2517,6 +2517,20 @@ var UI_CSS = function () {
     '.sub .more{position:absolute;right:2px;bottom:-2px;width:18px;height:18px;color:rgba(243,230,200,.7);animation:bob 1s ease-in-out infinite;}',
     '@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}',
     '.subtap{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 16px + 76px + 6px);height:120px;pointer-events:auto;}',
+    // while cooking: taps belong to the griddle. Windows stack under the cooking panel (JS sets top): panel -> phone -> subtitle -> 2nd button
+    '#ssd-ui.cooking .subtap{display:none!important}',
+    '#ssd-ui.cooking .subband{bottom:auto;z-index:6;padding:8px 12px 10px;border-radius:12px;background:rgba(8,8,11,.78);border:1px solid rgba(216,221,226,.22);}',
+    '#ssd-ui.cooking .subband .sub .l1{font-size:17px}#ssd-ui.cooking .subband .sub .more{display:none}',
+    '#ssd-ui.cooking .callcard{z-index:7}',
+    '#ssd-ui.cooking .subband.hide{transition:none}#ssd-ui.cooking .speedbtn{opacity:0;pointer-events:none}',
+    '#ssd-ui.cooking.tight1 .subband{padding:5px 10px 6px;min-height:0}#ssd-ui.cooking.tight1 .subband .sub{padding:2px}#ssd-ui.cooking.tight1 .subband .sub .who{height:18px;line-height:18px;margin-bottom:3px}#ssd-ui.cooking.tight1 .subband .sub .l1{font-size:15px;line-height:1.25;min-height:0}#ssd-ui.cooking.tight1 .subband .sub .l2{font-size:11.5px;line-height:1.35;margin-top:2px}',
+    '#ssd-ui.cooking.tight1 .callcard{padding:8px 12px}#ssd-ui.cooking.tight1 .callcard .ct{font-size:15px}#ssd-ui.cooking.tight1 .callcard .cj{margin:0 0 6px 34px;font-size:10.5px}#ssd-ui.cooking.tight1 .callcard button{height:40px}',
+    '#ssd-ui.cooking.tight1 .mb2{height:48px}',
+    '#ssd-ui.cooking.tight2 .mini .tt{display:none}#ssd-ui.cooking.tight2 .mini .ins{margin-top:0}#ssd-ui.cooking.tight2 .subband .sub .l2{display:none}',
+    '.mb2{position:absolute;left:50%;transform:translateX(-50%);height:54px;min-width:200px;max-width:calc(100% - 40px);z-index:7;}',
+    '.mb2 .ic{width:24px;height:24px}.mb2 .en{font-size:16px}',
+    '.mb2:active,.mb2.down{transform:translateX(-50%) translateY(3px);}',
+    '.mb2.hidden{transform:translateX(-50%) translateY(8px) scale(.96);}',
     // ---- choice slip (guest check)
     '.slip{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 16px + 76px + 12px);width:min(340px,calc(100% - 40px));transform:translateX(-50%) rotate(-1.2deg);',
     ' padding:30px 18px 16px;color:#1f3b8a;background-color:#eef3e4;background-image:var(--slipbg);background-size:cover;border-radius:2px;',
@@ -2563,7 +2577,7 @@ function buildUI() {
   U.pause = el('button', 'sb dark pausebtn pe', icon('pause', 24), UI); U.pause.setAttribute('aria-label', 'Pause');
   U.speed = el('button', 'sb dark speedbtn pe', icon('skip', 18) + '<b>×1</b>', UI); U.speed.setAttribute('aria-label', 'Game speed');
   pressFX(U.speed);
-  onTap(U.speed, function () { GAME.spd = (GAME.spd || 1) >= 3 ? 1 : (GAME.spd || 1) + 1; sfx('click'); refreshSpeed(); toast('Speed ×' + GAME.spd, GAME.spd > 1 ? '時間を早送り（異変・料理・冷凍庫のあいだは等速）' : 'ふつうの速さ', 1.8); });
+  onTap(U.speed, function () { GAME.spd = (GAME.spd || 1) >= 3 ? 1 : (GAME.spd || 1) + 1; sfx('click'); refreshSpeed(); toast('Speed ×' + GAME.spd, GAME.spd > 1 ? '時間を早送り（異変の気配・料理・冷凍庫のあいだは等速）' : 'ふつうの速さ', 1.8); });
   // subtitles
   U.sub = el('div', 'subband hide', '<div class="sub"><div class="who"></div><div class="l1"></div><div class="l2"></div><svg class="more" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div>', UI);
   U.subTap = el('div', 'subtap', null, UI); U.subTap.style.display = 'none';
@@ -2574,6 +2588,8 @@ function buildUI() {
   U.rulesBtn = el('button', 'sb left pe', icon('rules', 24) + '<span class="lbl">RULES</span>', U.band);
   U.mapBtn = el('button', 'sb mint right pe', icon('map', 24) + '<span class="lbl">MAP</span>', U.band);
   U.main = el('button', 'mb pe hidden', '', U.band);
+  U.main2 = el('button', 'mb mb2 danger pe hidden', '', UI); pressFX(U.main2);
+  onTap(U.main2, function () { if (U.main2Act && U.main2Act.fn) { sfx('click'); U.main2Act.fn(); } });
   U.toast = el('div', 'toast hide', '', UI);
   U.flash = el('div', 'flash', null, UI);
   U.layer = el('div', null, null, UI); U.layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
@@ -2586,7 +2602,7 @@ function pressFX(b) {
   b.addEventListener('pointerdown', function () { b.classList.add('down'); });
   ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { b.addEventListener(n, function () { b.classList.remove('down'); }); });
 }
-function refreshSpeed() { if (!U.speed) return; var s = GAME.spd || 1; U.speed.querySelector('b').textContent = '×' + s; U.speed.classList.toggle('on', s > 1); U.speed.classList.toggle('hold', s > 1 && !!(GAME.inAnomaly || MINI.active || CAM.inFreezer)); }
+function refreshSpeed() { if (!U.speed) return; var s = GAME.spd || 1; U.speed.querySelector('b').textContent = '×' + s; U.speed.classList.toggle('on', s > 1); U.speed.classList.toggle('hold', s > 1 && !!(GAME.inAnomaly || MINI.active || CAM.inFreezer || GAME.soon)); }
 function setGameHUD(on) {
   [U.hud, U.pause, U.speed, U.band, U.shade].forEach(function (e) { e.style.display = on ? '' : 'none'; });
 }
@@ -2598,6 +2614,30 @@ function setMain(act) {
   if (U.main._key !== key) { U.main.innerHTML = icon(act.icon || 'ok', 30) + '<span class="tx"><span class="en">' + act.en + '</span><span class="ja">' + act.ja + '</span></span>'; U.main._key = key; }
   U.main.classList.remove('hidden');
   U.main.classList.toggle('danger', !!act.danger); U.main.classList.toggle('glow', !!act.glow);
+}
+function setMain2(act) {
+  U.main2Act = act;
+  if (!act) { U.main2.classList.add('hidden'); return; }
+  var key = act.icon + act.en + act.ja;
+  if (U.main2._key !== key) { U.main2.innerHTML = icon(act.icon || 'ok', 24) + '<span class="tx"><span class="en">' + act.en + '</span><span class="ja">' + act.ja + '</span></span>'; U.main2._key = key; }
+  U.main2.classList.remove('hidden'); U.main2.classList.toggle('glow', !!act.glow);
+}
+// cooking layout: stack the windows top-to-bottom under the cooking panel so nothing overlaps
+function stackCooking() {
+  var on = !!(MINI.active && GAME.mode === 'play');
+  if (UI.classList.contains('cooking') !== on) UI.classList.toggle('cooking', on);
+  var list = [U.call, SUBQ.cur ? U.sub : null, U.main2Act ? U.main2 : null, U.toast.classList.contains('hide') ? null : U.toast];
+  if (!on) { if (U._stacked) { U._stacked = false; [U.call, U.sub, U.main2, U.toast].forEach(function (e) { if (e) e.style.top = ''; }); } return; }
+  U._stacked = true;
+  var base = UI.getBoundingClientRect().top, r = U.mini.getBoundingClientRect(), y = (U.mini.classList.contains('hide') ? r.top + 8 : r.bottom) - base + 8;
+  // keep clear of the cooking chips / main button at the bottom: tighten the subtitle if needed
+  var chipsOn = !!U.chips.firstChild, lim = (chipsOn ? U.chips.getBoundingClientRect().top : (U.mainAct ? U.main.getBoundingClientRect().top : U.band.getBoundingClientRect().top + 8)) - base - 6;
+  var measure = function () { var n = (U.mini.classList.contains('hide') ? r.top + 8 : U.mini.getBoundingClientRect().bottom) - base + 8; list.forEach(function (e) { if (e) n += e.offsetHeight + 6; }); return n; };
+  // tighten step by step until everything fits above the cooking controls
+  UI.classList.remove('tight1', 'tight2');
+  if (measure() > lim) { UI.classList.add('tight1'); if (measure() > lim) UI.classList.add('tight2'); }
+  y = (U.mini.classList.contains('hide') ? r.top + 8 : U.mini.getBoundingClientRect().bottom) - base + (UI.classList.contains('tight2') ? 6 : 8);
+  list.forEach(function (e) { if (!e) return; e.style.top = Math.round(y) + 'px'; y += e.offsetHeight + 6; });
 }
 function setClock(min, night) { // min since 22:00
   var tot = (22 * 60 + Math.floor(min)) % 1440, h = Math.floor(tot / 60), m = tot % 60, ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
@@ -2639,7 +2679,7 @@ function hideChoices() { U.slip.classList.add('hide'); SLIP.open = false; U.sub.
 function showCall(title, ja, onPick, onLet) {
   hideCall();
   var c = el('div', 'callcard', '<div class="ct">' + icon('phone', 24) + '<span>' + title + '</span></div><div class="cj">' + ja + '</div><div class="cb"><button class="pick">PICK UP<small>電話に出る</small></button><button class="let">LET IT RING<small>出ない</small></button></div>', UI);
-  U.call = c; UI.classList.add('calling');
+  U.call = c; UI.classList.add('calling'); if (MINI.active) stackCooking();
   onTap(c.querySelector('.pick'), function () { sfx('click'); hideCall(); onPick && onPick(); });
   onTap(c.querySelector('.let'), function () { sfx('click'); hideCall(); onLet && onLet(); });
 }
@@ -2653,7 +2693,7 @@ function subShow(line) {
   who.className = 'who ' + (line.cls || WHO_CLASS[line.who] || '');
   U.sub.querySelector('.l1').textContent = ''; U.sub.querySelector('.l2').textContent = line.ja || '';
   U.sub.querySelector('.more').style.opacity = 0;
-  U.sub.classList.remove('hide'); U.subTap.style.display = '';
+  U.sub.classList.remove('hide'); U.subTap.style.display = MINI.active ? 'none' : '';
   U.sub.classList.toggle('top', SLIP.open); U.subTap.classList.toggle('top', SLIP.open);
 }
 function subUpdate(dt) {
@@ -3231,11 +3271,12 @@ function startAmbience() {
 function updateAmbience(dt) {
   if (!AMB.hum) return; var t = AUDIO.ctx.currentTime, sp = AUDIO.space;
   var inside = sp !== 'outside', fz = sp === 'freezer';
-  AMB.hum.g.gain.setTargetAtTime((fz ? 0.09 : AMB.hum.base) * (typeof GAME !== 'undefined' && GAME && GAME.blackout ? 0 : 1), t, 0.5);
-  AMB.neon.g.gain.setTargetAtTime(AMB.neon.base * LSTATE.neon * (inside ? 1 : 0.3), t, 0.2);
-  AMB.room.g.gain.setTargetAtTime(0.02, t, 0.5);
+  var hush = typeof GAME !== 'undefined' && GAME && GAME.hush ? 0.08 : 1; // the hush before something happens
+  AMB.hum.g.gain.setTargetAtTime((fz ? 0.09 : AMB.hum.base) * (typeof GAME !== 'undefined' && GAME && GAME.blackout ? 0 : 1) * hush, t, hush < 1 ? 1.2 : 0.5);
+  AMB.neon.g.gain.setTargetAtTime(AMB.neon.base * LSTATE.neon * (inside ? 1 : 0.3) * hush, t, hush < 1 ? 1.2 : 0.2);
+  AMB.room.g.gain.setTargetAtTime(0.02 * hush, t, 0.5);
   var r = FX.rain || 0, muff = fz ? 0.15 : (inside ? 0.45 : 1);
-  AMB.rain.g.gain.setTargetAtTime(r * 0.09 * muff, t, 0.6); AMB.rain.b.frequency.setTargetAtTime(inside ? 1100 : 2400, t, 0.5);
+  AMB.rain.g.gain.setTargetAtTime(r * 0.09 * muff * (hush < 1 ? 0.3 : 1), t, 0.6); AMB.rain.b.frequency.setTargetAtTime(inside ? 1100 : 2400, t, 0.5);
   AMB.rainLow.g.gain.setTargetAtTime(r * 0.12 * muff, t, 0.6);
   AMB.wind.g.gain.setTargetAtTime((0.02 + r * 0.04) * (inside ? 0.4 : 1) * (0.7 + 0.3 * Math.sin(t * 0.3)), t, 1);
   AMB.wind.b.frequency.setTargetAtTime(300 + 200 * Math.sin(t * 0.13), t, 1);
@@ -3912,6 +3953,7 @@ function customerLeave(C, angry) {
   clearDishes(C); hideMenuProp(C);
   if (C.ticket && !C.ticket.done) { C.ticket.cancel = true; removeTicket(C.ticket); }
   standUp(C); C.state = 'leaving'; C.marker && (C.marker.style.display = 'none');
+  if (!angry) leaveWhisper(C);
   walkTo(C, routeOut(C), function () { C.state = 'gone'; removeCustomer(C); });
   if (C.leavingSeat) { C.leavingSeat = false; C.seat = null; }
   if (angry) { GAME.angry++; }
@@ -3979,13 +4021,13 @@ function tapCustomer(C) {
 function seatCustomer(C, seat) {
   if (C.anomaly && C.anomaly.onServe && C.anomaly.onServe(C, 'seat') === true) return;
   C.state = 'toSeat'; sfx('click');
-  walkTo(C, routeToSeat(seat), function () { sitDown(C, seat); C.state = 'seated'; C.pat = C.patMax = PATIENCE.seated; C.P.lookAtCam = false; });
+  walkTo(C, routeToSeat(seat), function () { sitDown(C, seat); C.state = 'seated'; C.pat = C.patMax = PATIENCE.seated; C.P.lookAtCam = false; if (!C.anomaly || !C.anomaly.manualMenu) giveMenu(C, true); });
   var g = C.arch.id && ARCH_LINES[C.arch.id] ? pickL(ARCH_LINES[C.arch.id].greet) : pickL(LINES.greet);
   if (!C.anomaly || !C.anomaly.mute) custSay(C, g[0], g[1]);
 }
-function giveMenu(C) {
-  if (C.anomaly && C.anomaly.onServe && C.anomaly.onServe(C, 'menu') === true) return;
-  showMenuProp(C); setPose(C.P, 'menu'); C.state = 'reading'; sfx('paper', C.P.root.position); C.readT = 7 + Math.random() * 6; C.P.lookAtCam = false;
+function giveMenu(C, auto) {
+  if (!auto && C.anomaly && C.anomaly.onServe && C.anomaly.onServe(C, 'menu') === true) return;
+  showMenuProp(C); setPose(C.P, 'menu'); C.state = 'reading'; sfx('paper', C.P.root.position); C.readT = 3.5 + Math.random() * 2.5; C.P.lookAtCam = false;
 }
 function makeOrder(C) {
   var n = 1 + (Math.random() < 0.55 ? 1 : 0) + (Math.random() < 0.2 ? 1 : 0), likes = C.arch.likes || ['coffee', 'pie'], items = [], used = {};
@@ -4044,11 +4086,12 @@ function ignoreCustomer(C) {
 }
 function serveCustomer(C) {
   if (!C.ticket || !C.ticket.ready) return;
+  if (C.ticket.bad && !C.ticket.bad.done) { var BA = C.ticket.bad; C.ticket.served = true; placeDishes(C); sfx('cup', C.seat.eatPos); setPose(C.P, 'eat'); custSay(C, '...It\'s looking at me.', '……これ、こっちを見てる。', { odd: true }).then(function () { anomalyFail(BA, BA.face, { person: C.P, rule: 'badfood' }); }); return; }
   if (C.anomaly && C.anomaly.onServe && C.anomaly.onServe(C, 'serve') === true) return;
   if (C.items.some(function (it) { return it.odd; }) && GAME.oddFail) { GAME.oddFail(C); return; }
   removeTicket(C.ticket); C.ticket.done = true;
   placeDishes(C); sfx('cup', C.seat.eatPos); sfx('cutlery', C.seat.eatPos, { delay: 0.2 });
-  C.state = 'eating'; C.eatT = 16 + Math.random() * 10; setPose(C.P, 'eat');
+  C.state = 'eating'; C.eatT = 11 + Math.random() * 7; setPose(C.P, 'eat');
   var L = pickL(LINES.served); custSay(C, L[0], L[1]);
   GAME.served++;
 }
@@ -4080,7 +4123,7 @@ function updateCustomers(dt) {
     if (C.anomaly && C.anomaly.update) C.anomaly.update(C, dt);
     if (C.kid && C.kid.doll && GAME.day >= 2 && C.seat && GAME.mode === 'play') dollBeat(C, dt);
     if (C.state === 'reading') { C.readT -= dt; if (C.readT <= 0) { C.state = 'ready'; hideMenuProp(C); setPose(C.P, 'hand'); C.pat = C.patMax = PATIENCE.ready; sfx('pop', C.P.root.position, { vol: 0.3 }); } }
-    if (C.state === 'eating') { C.eatT -= dt; if (C.eatT <= 0) { C.state = 'check'; setPose(C.P, 'hand'); C.pat = C.patMax = PATIENCE.check; clearDishesLater(C); } }
+    if (C.state === 'eating') { C.eatT -= dt; if (C.eatT <= 0) { clearDishesLater(C); if (GAME.mode === 'play') payCustomer(C); else { C.state = 'check'; } } }
     var waiting = C.state === 'wait' || C.state === 'seated' || C.state === 'ready' || C.state === 'ordered' || C.state === 'check';
     if (waiting && !C.anomaly && GAME.mode === 'play') {
       C.pat -= dt / (GAME.spd || 1) * (GAME.day > 3 ? 1.1 : 1); // patience runs in real time
@@ -4161,16 +4204,19 @@ function refreshTickets() {
   U.rail.style.display = CAM.station === 'KITCHEN' && TICKETS.length && GAME.mode === 'play' && !MINI.active ? '' : 'none';
 }
 function tapTicket(T) {
-  if (MINI.active || TALK.busy) return;
+  if (MINI.active) return;
   var o = [];
   T.items.forEach(function (it) {
     if (it.done) return;
-    if (it.odd) o.push({ icon: 'cook', en: 'Make "' + it.odd.en + '"', ja: '「' + it.odd.ja.replace(/[「」]/g, '') + '」を作る', warn: true, fn: function () { cookOdd(T, it); } });
-    else o.push({ icon: MENU[it.id].icon, en: 'Make ' + MENU[it.id].en, ja: MENU[it.id].ja + 'を作る', fn: function () { startMini(MENU[it.id].mini, function (q) { it.done = true; it.q = q; afterCook(T); }); } });
+    if (it.odd) o.push({ icon: 'cook', en: 'Make "' + it.odd.en + '"', ja: '「' + it.odd.ja.replace(/[「」]/g, '') + '」を作る', warn: true, fn: function () { if (T.you) ANOM.youticket.cook(T.you); else cookOdd(T, it); } });
+    else o.push({ icon: MENU[it.id].icon, en: 'Make ' + MENU[it.id].en, ja: MENU[it.id].ja + 'を作る', fn: function () { cookItem(T, it); } });
   });
   o.push({ icon: 'tear', en: 'Tear up ticket', ja: '伝票を破って捨てる', minor: true, fn: function () { tearTicket(T); } });
   showChoices('No.' + T.no + ' — ' + T.table, o, { no: T.no, table: T.table });
 }
+function cookItem(T, it) { startMini(MENU[it.id].mini, function (q, badA) { it.done = true; it.q = q; if (badA) { it.bad = badA; T.bad = badA; badA.ticket = T; } afterCook(T); }); }
+// NEXT TICKET: start the next dish straight away (only odd tickets need a decision)
+function quickCook(T) { if (MINI.active) return; var it = T.items.filter(function (x) { return !x.done; })[0]; if (!it) return; if (it.odd) { tapTicket(T); return; } cookItem(T, it); }
 function cookOdd(T, it) { sfx('sizzle', new THREE.Vector3(0.9, 0.9, -4.7), { len: 2 }); it.done = true; it.q = 0; afterCook(T); toast('It smells... sweet.', '……甘いにおいがする。', 2.5); }
 function tearTicket(T) {
   sfx('tearPaper'); removeTicket(T); T.torn = true;
@@ -4181,7 +4227,7 @@ function afterCook(T) {
   refreshTickets();
   if (T.items.every(function (it) { return it.done; })) {
     T.ready = true; sfx('orderBell', new THREE.Vector3(1.4, 1.4, -2.8));
-    say('YOU', 'Order up!', 'できたよ！（オーダーアップ）', { voice: 'you', cls: 'you', silent: !SAVE.settings.voiceMode || true, hold: 0.4 });
+    say('YOU', 'Order up!', 'できたよ！（オーダーアップ）', { voice: 'you', cls: 'you', silent: !SAVE.settings.voiceMode || true, hold: 0.4 }); TALK.busy = false;
     // plates on the pass shelf
     T.plates = []; T.items.forEach(function (it, i) { var d = dishMesh(it.odd ? 'odd' : it.id); d.position.set(0.6 + (TICKETS.indexOf(T) * 0.5 + i * 0.25) % 2.1, 1.28, -2.8); RENDER.scene.add(d); T.plates.push(d); });
     if (T.onReady) T.onReady();
@@ -4228,9 +4274,9 @@ var MINI_CSS = [
   '.gauge.fill{background:rgba(255,255,255,.1)}.gauge .zone{position:absolute;top:-3px;bottom:-3px;border:2px solid #5be8ff;border-radius:6px;box-shadow:0 0 8px #5be8ff}',
   '.gauge .bar{position:absolute;left:0;top:0;bottom:0;border-radius:7px;background:linear-gradient(90deg,#8fd3c1,#e8fbff);width:0}',
   '.gauge .nd{position:absolute;top:-6px;width:4px;height:26px;margin-left:-2px;background:#fff;border-radius:2px;box-shadow:0 0 6px #fff}',
-  '.chips{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px + 76px + 14px);display:flex;flex-wrap:wrap;gap:8px;justify-content:center;pointer-events:none}',
-  '.chip2{pointer-events:auto;min-width:92px;height:46px;padding:0 12px;border-radius:10px;border:2px solid #d8dde2;background:linear-gradient(180deg,#fff8e6,#e7d4a8);color:#7e1418;font:400 15px/1 "Alfa Slab One",serif;box-shadow:0 4px 0 #8a7448,0 6px 12px rgba(0,0,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center}',
-  '.chip2 small{font:600 10px/1.2 "Zen Kaku Gothic New",sans-serif;color:#6b4a2a}.chip2:active{transform:translateY(3px);box-shadow:0 1px 0 #8a7448}',
+  '.chips{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px + 76px + 14px);display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;max-width:440px;margin:0 auto;pointer-events:none}',
+  '.chip2{pointer-events:auto;min-width:0;height:46px;padding:0 3px;border-radius:10px;border:2px solid #d8dde2;background:linear-gradient(180deg,#fff8e6,#e7d4a8);color:#7e1418;font:400 13px/1 "Alfa Slab One",serif;white-space:nowrap;box-shadow:0 4px 0 #8a7448,0 6px 12px rgba(0,0,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center}',
+  '.chip2 small{font:600 9.5px/1.2 "Zen Kaku Gothic New",sans-serif;color:#6b4a2a;white-space:nowrap}.chip2:active{transform:translateY(3px);box-shadow:0 1px 0 #8a7448}',
   '.seq{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}.seq span{font:600 11px/1 Oswald,sans-serif;letter-spacing:.08em;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.1);color:#cfd6dd}.seq span.now{background:#c8282e;color:#fff}.seq span.ok{background:#2f7e6e;color:#e8fff8}',
   '.stamp{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%) rotate(-12deg) scale(1.6);font:400 40px/1 "Alfa Slab One",serif;color:#c8282e;border:5px solid #c8282e;padding:6px 14px;border-radius:8px;background:rgba(251,243,224,.85);opacity:0;pointer-events:none;animation:stamp 1.1s ease-out both;letter-spacing:.06em}',
   '.stamp small{display:block;font:700 13px/1.2 "Zen Kaku Gothic New",sans-serif;text-align:center;letter-spacing:0}',
@@ -4270,21 +4316,42 @@ function startMini(type, done) {
   hideChoices(); U.rail.style.display = 'none';
   MINI = { active: true, type: type, done: done, t: 0, objs: new THREE.Group(), score: [], phase: 0 };
   RENDER.scene.add(MINI.objs);
+  MINI.bad = cookWantsBad(type);
   ({ pancake: miniPancake, egg: miniEgg, burger: miniBurger, coffee: miniCoffee, pie: miniPie, shake: miniShake })[type]();
-  updateMainButton();
+  updateMainButton(); stackCooking();
+  cookHookStart(MINI);
 }
 function endMini(q) {
   var M = MINI; if (!M.active) return;
-  M.active = false; U.mini.classList.add('hide'); U.chips.innerHTML = '';
+  M.active = false; M.endPending = true; U.mini.classList.add('hide'); U.chips.innerHTML = ''; setMain2(null); stackCooking();
+  cookHookEnd(M, q);
   stamp(q); if (q > 0.85) sfx('orderBell', null, { vol: 0.35 });
   setTimeout(function () {
     if (M.emit) steamStop(M.emit);
     RENDER.scene.remove(M.objs); freeGeo(M.objs);
     if (M.cut) fadeBlack(0.18, function () { CAM.override = null; }); else releaseShot(0.6);
     PU.uDof.value = 0; CAM.focusLock = 0; PU.uBloom.value = 0.9;
-    M.done && M.done(q);
+    M.endPending = false;
+    if (M.bad && GAME.mode === 'play') badFoodChoice(M, q); else if (GAME.mode === 'play') M.done && M.done(q);
     updateMainButton(); refreshTickets();
   }, 900);
+}
+// leave the griddle in the middle of cooking (e.g. to pick up the phone): the dish is ruined, the ticket stays
+function abortMini(en, ja) {
+  var M = MINI; if (!M.active) return false;
+  M.active = false; M.aborted = true; U.mini.classList.add('hide'); U.chips.innerHTML = ''; setMain2(null);
+  if (M.emit) steamStop(M.emit);
+  RENDER.scene.remove(M.objs); freeGeo(M.objs);
+  if (WORLD.coffeePot) WORLD.coffeePot.visible = true;
+  if (M.type === 'pie' && WORLD.pieCase) WORLD.pieCase.children.forEach(function (c) { if (c.material === glassMat()) c.visible = true; });
+  if (WORLD.shakeCup) WORLD.shakeCup.position.x = 0;
+  CAM.override = null; PU.uDof.value = 0; CAM.focusLock = 0; PU.uBloom.value = 0.9;
+  sfx('scrape', null, { vol: 0.5 }); GAME.ruined = (GAME.ruined || 0) + 1;
+  cookHookEnd(M, -1);
+  stackCooking();
+  if (en) toast(en, ja, 2.8);
+  updateMainButton(); refreshTickets();
+  return true;
 }
 function miniMain(act) { MINI.main = act; updateMainButton(); }
 function zoneScore(v, a, b, soft) { if (v >= a && v <= b) return 1; var d = v < a ? a - v : v - b; return clamp(1 - d / (soft || 0.25), 0, 1); }
@@ -4300,18 +4367,19 @@ function miniPancake() {
   var pc = group(M.objs, base.x, base.y, base.z), cake = mesh(new THREE.CylinderGeometry(1, 1, 1, 32), [sideM, topM, botM], 0, 0.006, 0, pc); pc.scale.set(0.001, 0.012, 0.001);
   var bub = []; for (var i = 0; i < 14; i++) { var b = mesh(new THREE.CircleGeometry(0.004 + Math.random() * 0.004, 8), new THREE.MeshBasicMaterial({ color: 0x8a6a3a }), (Math.random() - 0.5) * 0.1, 0.0125, (Math.random() - 0.5) * 0.1, pc, false); b.rotation.x = -PI / 2; b.visible = false; b.scale.setScalar(1 / 0.08); bub.push(b); }
   var size = 0, cookA = 0, cookB = 0, holding = false, flipT = -1, side = 'A';
+  if (M.bad) { botM.map = toTex(burntFaceCanvas(), { clamp: true }); botM.needsUpdate = true; }
   miniPanel('cook', 'PANCAKES', 'パンケーキ', 'HOLD to pour the batter — fill the ring', '長押しで生地を流す（輪の大きさまで）', { fill: 1, zone: [0.68, 0.82] });
   M.onDown = function () { if (M.phase === 0) { holding = true; sfx('pour', base, { len: 3 }); } };
   M.onUp = function () { if (M.phase === 0 && holding) { holding = false; M.score.push(zoneScore(size, 0.68, 0.82, 0.3)); M.phase = 1; ring.visible = false; sfx('sizzle', base, { len: 4 }); miniPanel('cook', 'PANCAKES', 'パンケーキ', 'Wait for bubbles, then FLIP when golden', '泡が出て、焼き色が金色になったら返す', { zone: [0.36, 0.5] }); miniMain({ icon: 'spatula', en: 'FLIP', ja: 'ひっくり返す', glow: true, fn: flip }); } };
   function flip() { if (M.phase !== 1) return; M.score.push(zoneScore(cookA, 0.36, 0.5, 0.25)); M.phase = 2; flipT = 0; sfx('flip', base); sfx('scrape', base); miniMain(null); }
   function plate() { if (M.phase !== 3) return; M.score.push(zoneScore(cookB, 0.36, 0.5, 0.25)); M.phase = 4; sfx('scrape', base); sfx('cup', base, { delay: 0.3 }); miniMain(null); var q = (M.score[0] + M.score[1] + M.score[2]) / 3; endMini(q); }
   M.update = function (dt) {
-    if (M.phase === 0 && holding) { size = Math.min(1.2, size + dt * 0.42); }
+    if (M.phase === 0 && holding) { size = Math.min(1.2, size + dt * 0.55); }
     var r = 0.02 + size * 0.075; pc.scale.x = pc.scale.z = damp(pc.scale.x, r, 12, dt);
     if (M.phase === 0) miniGauge(size / 1.2 * 1.0);
-    if (M.phase === 1) { cookA += dt * 0.085; miniGauge(cookA); cookCol(cookA * 0.6, topM.color.set(0xf3e0b0)); cookCol(0.05, topM.color); cookCol(cookA, botM.color); bub.forEach(function (b, i) { b.visible = cookA > 0.18 + i * 0.012; }); topM.color.set(0xf0dcaa); }
-    if (M.phase === 2) { flipT += dt / 0.45; var k = Math.min(1, flipT); pc.position.y = base.y + Math.sin(k * PI) * 0.12; pc.rotation.x = k * PI; if (k >= 1) { M.phase = 3; pc.rotation.x = PI; pc.position.y = base.y + 0.012; bub.forEach(function (b) { b.visible = false; }); miniPanel('cook', 'PANCAKES', 'パンケーキ', 'Golden again? PLATE IT', 'もう片面も金色になったらお皿へ', { zone: [0.36, 0.5] }); miniMain({ icon: 'serve', en: 'PLATE IT', ja: 'お皿にのせる', glow: true, fn: plate }); } }
-    if (M.phase === 3) { cookB += dt * 0.11; miniGauge(cookB); cookCol(cookB, topM.color); }
+    if (M.phase === 1) { cookA += dt * 0.15; miniGauge(cookA); cookCol(cookA * 0.6, topM.color.set(0xf3e0b0)); cookCol(0.05, topM.color); cookCol(cookA, botM.color); bub.forEach(function (b, i) { b.visible = cookA > 0.18 + i * 0.012; }); topM.color.set(0xf0dcaa); }
+    if (M.phase === 2) { flipT += dt / 0.45; var k = Math.min(1, flipT); pc.position.y = base.y + Math.sin(k * PI) * 0.12; pc.rotation.x = k * PI; if (k >= 1) { M.phase = 3; pc.rotation.x = PI; pc.position.y = base.y + 0.012; bub.forEach(function (b) { b.visible = false; }); if (M.bad) { sfx('whisper', base, { vol: 0.35 }); } miniPanel('cook', 'PANCAKES', 'パンケーキ', 'Golden again? PLATE IT', 'もう片面も金色になったらお皿へ', { zone: [0.36, 0.5] }); miniMain({ icon: 'serve', en: 'PLATE IT', ja: 'お皿にのせる', glow: true, fn: plate }); } }
+    if (M.phase === 3) { cookB += dt * 0.19; miniGauge(cookB); cookCol(cookB, topM.color); }
     if ((M.phase === 1 && cookA > 1.05) || (M.phase === 3 && cookB > 1.05)) { sfx('zap', base, { vol: 0.3 }); M.score.push(0, 0); M.phase = 5; miniMain(null); endMini(0.1); }
   };
 }
@@ -4323,15 +4391,23 @@ function miniEgg() {
   var white = mesh(eggWhiteGeo(9), wm, base.x, base.y, base.z, M.objs); white.scale.setScalar(0.01); white.visible = false;
   var yolk = mesh(new THREE.SphereGeometry(0.024, 18, 12, 0, TAU, 0, PI / 2), f.yolk, base.x, base.y + 0.004, base.z, M.objs); yolk.scale.set(1, 0.8, 1); yolk.visible = false;
   var shell = mesh(new THREE.SphereGeometry(0.03, 14, 10), stdMat({ color: 0xf3ead8, roughness: 0.6 }), base.x, base.y + 0.25, base.z, M.objs); shell.scale.set(1, 1.3, 1);
-  var setK = 0, dropT = -1, swiped = false;
+  var setK = 0, dropT = -1, swiped = false, eye = null;
+  if (M.bad) { // the yolk is an eye. it looks for you.
+    eye = group(M.objs, base.x, base.y + 0.006, base.z); eye.visible = false;
+    mesh(new THREE.SphereGeometry(0.023, 18, 14), stdMat({ color: 0xf0e2c4, roughness: 0.25 }), 0, 0, 0, eye);
+    mesh(new THREE.CircleGeometry(0.011, 20), new THREE.MeshStandardMaterial({ color: 0x4a2e14, roughness: 0.3 }), 0, 0, 0.0232, eye, false);
+    mesh(new THREE.CircleGeometry(0.005, 16), new THREE.MeshBasicMaterial({ color: 0x050505 }), 0, 0, 0.0234, eye, false);
+    yolk.material = stdMat({ color: 0xb02a1a, roughness: 0.3 }); yolk.scale.set(1.15, 0.25, 1.15);
+  }
   miniPanel('cook', 'SUNNY SIDE UP', '目玉焼き', 'TAP to crack the egg', 'タップで卵を割る', null);
   miniMain({ icon: 'cook', en: 'CRACK EGG', ja: '卵を割る', glow: true, fn: function () { if (M.phase) return; M.phase = 1; dropT = 0; sfx('crack', base); miniMain(null); } });
   M.onMove = function (x, y, dx, dy) { if (M.phase === 2 && !swiped && INPUT.y0 - y > 60) { swiped = true; slide(); } };
   function slide() { if (M.phase !== 2) return; M.phase = 3; sfx('scrape', base); var q = zoneScore(setK, 0.62, 0.8, 0.22); endMini(q); miniMain(null); }
   M.update = function (dt) {
-    if (M.phase === 1) { dropT += dt / 0.35; shell.position.y = base.y + 0.25 - Math.min(1, dropT) * 0.2; if (dropT >= 1) { shell.visible = false; white.visible = yolk.visible = true; M.phase = 2; sfx('sizzle', base, { len: 5 }); miniPanel('cook', 'SUNNY SIDE UP', '目玉焼き', 'Whites set? SWIPE UP to plate (don\'t flip!)', '白身が固まったら上にスワイプでお皿へ（返さない）', { zone: [0.62, 0.8] }); miniMain({ icon: 'serve', en: 'TO PLATE', ja: 'お皿にすべらせる', fn: slide }); } }
+    if (M.phase === 1) { dropT += dt / 0.35; shell.position.y = base.y + 0.25 - Math.min(1, dropT) * 0.2; if (dropT >= 1) { shell.visible = false; white.visible = yolk.visible = true; if (eye) { eye.visible = true; eye.lookAt(base.x, base.y - 1, base.z + 0.2); } M.phase = 2; sfx('sizzle', base, { len: 5 }); miniPanel('cook', 'SUNNY SIDE UP', '目玉焼き', 'Whites set? SWIPE UP to plate (don\'t flip!)', '白身が固まったら上にスワイプでお皿へ（返さない）', { zone: [0.62, 0.8] }); miniMain({ icon: 'serve', en: 'TO PLATE', ja: 'お皿にすべらせる', fn: slide }); } }
     if (M.phase >= 2) { white.scale.setScalar(damp(white.scale.x, 1, 6, dt)); }
-    if (M.phase === 2) { setK += dt * 0.11; miniGauge(setK); wm.opacity = clamp(0.35 + setK * 0.9, 0, 1); cookCol(Math.max(0, setK - 0.8) * 1.5, wm.color.set(0xf6f0e2)); if (setK < 0.8) wm.color.set(0xf6f0e2); if (setK > 1.1) { M.phase = 4; sfx('zap', base, { vol: 0.3 }); miniMain(null); endMini(0.1); } }
+    if (eye && M.phase === 2) { var q0 = eye.quaternion.clone(); eye.lookAt(RENDER.camera.position); var q1 = eye.quaternion.clone(); eye.quaternion.copy(q0).slerp(q1, Math.min(1, dt * (setK > 0.3 ? 1.5 : 0.2))); if (!M.eyeSnd && setK > 0.3) { M.eyeSnd = 1; sfx('whisper', base, { vol: 0.3 }); } }
+    if (M.phase === 2) { setK += dt * 0.17; miniGauge(setK); wm.opacity = clamp(0.35 + setK * 0.9, 0, 1); cookCol(Math.max(0, setK - 0.8) * 1.5, wm.color.set(0xf6f0e2)); if (setK < 0.8) wm.color.set(0xf6f0e2); if (setK > 1.1) { M.phase = 4; sfx('zap', base, { vol: 0.3 }); miniMain(null); endMini(0.1); } }
   };
 }
 // ---------------- CHEESEBURGER ---------------------------------------------------------------
@@ -4339,7 +4415,7 @@ function miniBurger() {
   var M = MINI; shotTo('prep', false, [-1.3, 0.97, -3.6]); var f = foodMats();
   var base = new THREE.Vector3(-1.3, 0.955, -3.6);
   mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.01, 28), f.plate, base.x, base.y - 0.005, base.z, M.objs);
-  var mid = ['cheese', 'lettuce', 'tomato'].sort(function () { return Math.random() - 0.5; });
+  var mid = ['cheese', 'lettuce', 'tomato'].sort(function () { return Math.random() - 0.5; }).slice(0, 2);
   var seq = ['bun', 'patty'].concat(mid).concat(['top']);
   var LBL = { bun: ['BUN', 'パン（下）'], patty: ['PATTY', 'パティ'], cheese: ['CHEESE', 'チーズ'], lettuce: ['LETTUCE', 'レタス'], tomato: ['TOMATO', 'トマト'], top: ['TOP BUN', 'パン（上）'] };
   var idx = 0, miss = 0, h = 0;
@@ -4355,17 +4431,17 @@ function miniBurger() {
       if (k !== seq[idx]) { miss++; sfx('thump', base, { vol: 0.4 }); CAM.shake = 0.25; return; }
       var m, y = base.y + h;
       if (k === 'bun') { m = mesh(new THREE.CylinderGeometry(0.058, 0.055, 0.022, 24), [f.bun, f.bunIn, f.bun], base.x, y + 0.011, base.z, M.objs); h += 0.022; }
-      if (k === 'patty') { m = mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.02, 24), f.patty, base.x, y + 0.01, base.z, M.objs); h += 0.02; sfx('sizzle', base, { len: 0.8, vol: 0.6 }); }
+      if (k === 'patty') { m = mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.02, 24), M.bad ? stdMat({ color: 0x8a2a24, roughness: 0.35 }) : f.patty, base.x, y + 0.01, base.z, M.objs); h += 0.02; sfx('sizzle', base, { len: 0.8, vol: 0.6 }); if (M.bad) M.pulse = m; }
       if (k === 'cheese') { m = mesh(new THREE.BoxGeometry(0.11, 0.004, 0.11, 6, 1, 6), f.cheese, base.x, y + 0.002, base.z, M.objs); droop(m.geometry, 0.04, 0.012); m.rotation.y = 0.6; h += 0.004; }
       if (k === 'lettuce') { m = mesh(new THREE.CircleGeometry(0.068, 18), f.lettuce, base.x, y + 0.003, base.z, M.objs); m.rotation.x = -PI / 2; wavy(m.geometry); h += 0.006; }
       if (k === 'tomato') { m = mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.008, 18), f.tomato, base.x, y + 0.004, base.z, M.objs); h += 0.008; }
       if (k === 'top') { m = mesh(new THREE.SphereGeometry(0.06, 24, 12, 0, TAU, 0, PI / 2), f.bun, base.x, y, base.z, M.objs); m.scale.y = 0.62; }
       m.position.y += 0.08; var y0 = m.position.y; var t0 = performance.now(); var drop = function () { var k2 = Math.min(1, (performance.now() - t0) / 180); m.position.y = y0 - 0.08 * k2 * k2; if (k2 < 1) requestAnimationFrame(drop); }; drop();
       sfx('thump', base, { vol: 0.5 }); c.style.visibility = 'hidden'; idx++; panel();
-      if (idx >= seq.length) { U.chips.innerHTML = ''; var q = clamp(1 - miss * 0.22 - Math.max(0, M.t - 12) * 0.03, 0.15, 1); endMini(q); }
+      if (idx >= seq.length) { U.chips.innerHTML = ''; var q = clamp(1 - miss * 0.22 - Math.max(0, M.t - 8) * 0.03, 0.15, 1); endMini(q); }
     });
   });
-  M.update = function () { };
+  M.update = function (dt, t) { if (M.pulse) { var b = Math.pow(Math.max(0, Math.sin(t * 7.5)), 6); M.pulse.scale.set(1 + b * 0.08, 1 + b * 0.35, 1 + b * 0.08); M.beatT = (M.beatT || 0) - dt; if (M.beatT <= 0) { M.beatT = 0.84; sfx('heart', base, { n: 1, vol: 0.35 }); } } };
 }
 // ---------------- COFFEE ---------------------------------------------------------------
 function miniCoffee() {
@@ -4375,20 +4451,23 @@ function miniCoffee() {
   M.expo = 0.82;
   var pot = makeCoffeePot(); pot.position.set(-2.05, 1.25, -1.62); pot.rotation.z = 0; M.objs.add(pot); WORLD.coffeePot.visible = false;
   var lineM = mesh(new THREE.TorusGeometry(0.044 * 1.25, 0.0015, 4, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.4, 2.4, 3) }), -1.88, 1.056 + 0.067 * 1.25, -1.62, M.objs, false); lineM.rotation.x = PI / 2;
-  var level = 0, holding = false, pourSnd = 0;
-  miniPanel('coffee', 'COFFEE', 'コーヒー', 'HOLD to pour — release at the glowing line', '長押しで注ぐ（光る線で離す）', { fill: 1, zone: [0.82, 0.93] });
-  M.onDown = function () { if (M.phase) return; holding = true; sfx('pour', cup.position, { len: 2.6 }); };
-  M.onUp = function () { if (M.phase || !holding) return; holding = false; M.phase = 1; var q = level > 1.0 ? 0.15 : zoneScore(level, 0.82, 0.93, 0.3); WORLD.coffeePot.visible = true; if (level > 1.0) { toast('Spilled!', 'こぼれた！', 1.4); } sfx('cup', cup.position); M.emit = steamEmit(cup.position.x, cup.position.y + 0.1, cup.position.z, 3, 0.03); if (GAME.day >= 2 && Math.random() < 0.25) coffeeFace(cf); endMini(q); };
+  var level = 0, holding = false, pourSnd = 0, auto = false, target = 0.86 + Math.random() * 0.05;
+  miniPanel('coffee', 'COFFEE', 'コーヒー', 'TAP to pour a cup', 'タップでコーヒーを注ぐ', { fill: 1, zone: [0.82, 0.93] });
+  var pour = function () { if (M.phase || auto) return; auto = holding = true; sfx('pour', cup.position, { len: 1.8 }); miniMain(null); };
+  miniMain({ icon: 'coffee', en: 'POUR', ja: 'コーヒーを注ぐ', glow: true, fn: pour });
+  M.onDown = function () { pour(); };
+  M.onUp = function () { };
+  var finish = function () { holding = false; M.phase = 1; var q = 0.92; WORLD.coffeePot.visible = true; sfx('cup', cup.position); M.emit = steamEmit(cup.position.x, cup.position.y + 0.1, cup.position.z, 3, 0.03); if (M.bad) { } else if (GAME.day >= 2 && Math.random() < 0.25) coffeeFace(cf); endMini(q); };
   M.update = function (dt) {
     pot.rotation.z = damp(pot.rotation.z, holding ? -1.1 : 0, 8, dt);
-    if (holding) level += dt * 0.32;
+    if (holding) { level += dt * 0.6; if (M.bad && !M.faced && level > 0.45) { M.faced = 1; coffeeFace(cf, 2600); } if (level >= target) finish(); }
     miniGauge(level / 1.05); cf.position.y = 0.012 + Math.min(level, 1.05) * 0.06; cf.visible = level > 0.02;
   };
 }
-function coffeeFace(cf) { // a face looks up from the coffee for an instant
+function coffeeFace(cf, ms) { // a face looks up from the coffee for an instant
   var n = pickFace(['glitch', 'human'], 'coffee'); if (!n) return;
   var c = horrorCanvas(n), t = toTex(c, { clamp: true }), old = cf.material; cf.material = new THREE.MeshStandardMaterial({ map: t, roughness: 0.05, color: 0x9a7a6a });
-  sfx('whisper', null, { vol: 0.3 }); setTimeout(function () { cf.material = old; t.dispose(); }, 260);
+  sfx('whisper', null, { vol: 0.3 }); setTimeout(function () { cf.material = old; t.dispose(); }, ms || 260);
 }
 // ---------------- CHERRY PIE ---------------------------------------------------------------
 function miniPie() {
@@ -4458,7 +4537,7 @@ var FAKES = [
   { against: 'backdoor', en: 'If I knock on the back door, let me in. I always forget my keys.', ja: 'わたしが裏口をノックしたら入れてくれ。いつも鍵を忘れるんだ。' },
   { against: 'headlights', en: 'If a car sits outside with its lights on, wave so they know we\'re open.', ja: 'ライトをつけた車が外にいたら、営業中だとわかるよう手を振ること。' }
 ];
-var DAY_ANOM = { 1: 2, 2: 3, 3: 4, 4: 5, 5: 6 };
+var DAY_ANOM = { 1: 3, 2: 4, 3: 5, 4: 6, 5: 7 };
 var DAY_FAKES = { 1: 0, 2: 0, 3: 1, 4: 2, 5: 2 };
 function rulesForDay(day) { return RULES.filter(function (r) { return r.day <= day; }); }
 function rulesDocList(day, fakes) {
@@ -4526,6 +4605,7 @@ function anomalyResolve(A, msg) {
     setTimeout(function () { if (GAME.mode === 'play' && !GAME.inAnomaly && !JUKE.key && !GAME.blackout) jukePlay('warped', { label: 'B3 Last Call' }); }, 7000);
   }
   if (msg !== false) toast('...it\'s gone.', '……いなくなった。', 2.2);
+  afterCalm(A);
   sfx('heart', null, { n: 2, gap: 0.9, vol: 0.5 });
 }
 function anomalyFail(A, faceN, opt) {
@@ -4754,11 +4834,13 @@ function ringSession(A) { A.ring++; A.ringing = true; A.rt = 14; A.rr = 0; setTi
 // wherever you are, the ringing phone asks you: pick up, or let it ring
 function phonePrompt(A, ring) {
   if (!A.ringing || A.ring !== ring || A.done || GAME.mode !== 'play') return;
-  if (MINI.active || DOC.open || CAM.inFreezer || CAM.outside || JS.on || PAUSE.el) { setTimeout(function () { phonePrompt(A, ring); }, 1200); return; }
+  // (shown during cooking too — picking up means leaving the griddle)
+  if (DOC.open || CAM.inFreezer || CAM.outside || JS.on || PAUSE.el) { setTimeout(function () { phonePrompt(A, ring); }, 1200); return; }
   var nth = ['', '1st ring', '2nd time', '3rd time'][Math.min(3, ring)], nthJa = ['', '1回目', '2回目', '3回目'][Math.min(3, ring)];
   showCall('The pink phone — ' + nth, 'ピンクの電話が鳴っている（' + nthJa + '）', function () {
     if (!A.ringing) { toast('It stopped ringing.', '電話は鳴りやんだ。', 1.6); return; }
     var answer = function () { if (A.ringing) ANOM.phone.answer(A); };
+    if (MINI.active) abortMini('You left the griddle — the food is ruined.', '鉄板から離れたので料理がだめになった');
     if (CAM.station === 'JUKEBOX') answer(); else { CAM.afterArrive = function () { turnToward(WORLD.phonePos); setTimeout(answer, 350); }; goStation('JUKEBOX'); }
   }, function () { toast('You let it ring.', '電話は鳴らしておいた。', 1.4); });
 }
@@ -4780,7 +4862,7 @@ function jumpscare(n, opt) {
   if (JS.on || GAME.mode === 'dead') return;
   opt = opt || {}; JS = { on: true, t: 0, n: n || 1, P: opt.person || null, mild: SAVE.settings.scare === 'MILD' };
   GAME.mode = 'dead'; GAME.deathAt = GAME.min;
-  stopVoice(); talkCancel(); hideChoices(); hideCall(); closeDocs(true); if (MINI.active) { MINI.active = false; U.mini.classList.add('hide'); }
+  stopVoice(); talkCancel(); hideChoices(); hideCall(); closeDocs(true); if (MINI.active) { MINI.active = false; U.mini.classList.add('hide'); U.chips.innerHTML = ''; } setMain2(null); stackCooking();
   jukeStop(0.05); stopMusic(0.05);
   setMain(null); setGameHUD(false);
   LSTATE.flick = 3; LSTATE.coldT = 1;
@@ -4898,11 +4980,11 @@ function loreCount() { var n = 0; LORE.forEach(function (l) { if (SAVE.lore[l.id
 
 // ===== 20_game.js =====
 // ---- the shift: clock, schedule, stations, freezer, switches, calls, map, end states ----
-var GAME = { mode: 'boot', day: 1, min: 0, rate: 60 / 135, tips: 0, sales: 0, served: 0, angry: 0, refusedNormal: 0, resolved: 0, callsLeft: 2, sched: [], usedFaces: {}, paused: false };
+var GAME = { mode: 'boot', day: 1, min: 0, rate: 60 / 80, tips: 0, sales: 0, served: 0, angry: 0, refusedNormal: 0, resolved: 0, callsLeft: 2, sched: [], usedFaces: {}, paused: false };
 var SHIFT_LEN = 480; // 22:00 -> 06:00
 function newGameState(day) {
   var keepSpd = GAME && GAME.spd;
-  GAME = { mode: 'play', day: day, min: 0, rate: 60 / 135, tips: 0, sales: 0, served: 0, angry: 0, refusedNormal: 0, resolved: 0, callsLeft: 2, sched: [], usedFaces: {}, paused: false, inAnomaly: 0, lightsSwitched: 0, cold: 0 };
+  GAME = { mode: 'play', day: day, min: 0, rate: 60 / 80, tips: 0, sales: 0, served: 0, angry: 0, refusedNormal: 0, resolved: 0, callsLeft: 2, sched: [], usedFaces: {}, paused: false, inAnomaly: 0, lightsSwitched: 0, cold: 0 };
   GAME.spd = keepSpd || 1;
   GAME.oddFail = function (C) { anomalyFail(C.anomaly, C.anomaly ? C.anomaly.face : pickFace(['human']), { person: C.P, rule: 'offmenu' }); };
 }
@@ -4913,7 +4995,9 @@ function clearWorld() {
   SEATS.forEach(function (s) { s.taken = null; });
   if (FX.visitor) { FX.visitor.state = 'idle'; FX.visitor.obj.visible = false; }
   hideCall(); hideChoices();
-  LSTATE.lightsOn = true; LSTATE.neonOn = true; LSTATE.coldT = 0; LSTATE.cold = 0; LSTATE.flick = 0; LSTATE.eyesExtra = 1; LSTATE.kitchenFlick = false;
+  LSTATE.lightsOn = true; LSTATE.neonOn = true; LSTATE.coldT = 0; LSTATE.cold = 0; LSTATE.flick = 0; LSTATE.eyesExtra = 1; LSTATE.kitchenFlick = false; LSTATE.kitchenOff = false; LSTATE.powerT = 1;
+  if (WORLD.pendants) WORLD.pendants.forEach(function (b) { b.userData.off = false; }); if (WORLD.lights && WORLD.lights.fill) WORLD.lights.fill.intensity = 0;
+  if (typeof setMain2 === 'function' && U.main2) { setMain2(null); } MINI.active = false; if (MINI.objs && MINI.objs.parent) MINI.objs.parent.remove(MINI.objs); if (U.mini) { U.mini.classList.add('hide'); U.chips.innerHTML = ''; } if (typeof stackCooking === 'function' && U.mini) stackCooking(); scaresReset();
   setNeonEyes(0, null); jukeGlass(0, false);
   WORLD.backDoor.rotation.y = 0; CAM.inFreezer = false; CAM.outside = false; WORLD.freezerDoor.rotation.y = 0;
   FX.rainT = 0; FX.rain = 0;
@@ -4922,35 +5006,44 @@ function clearWorld() {
 }
 // ---- schedule ----------------------------------------------------------------------------
 function buildSchedule(day) {
-  var S = [], rnd = R, t = 4;
-  // regular customers: busy early, sparse late
-  while (t < SHIFT_LEN - 25) {
+  var S = [], rnd = R, t = 3;
+  // regular customers: a steady trickle (never more than 3 inside at once)
+  while (t < SHIFT_LEN - 30) {
     S.push({ at: t, type: 'cust' });
-    t += t < 150 ? rnd.range(9, 16) - Math.min(4, day) : rnd.range(30, 48);
+    t += t < 160 ? rnd.range(26, 38) - day * 1.5 : rnd.range(36, 54) - day * 2;
   }
   // anomalies
-  var pool = rulesForDay(day).map(function (r) { return r.id; }).filter(function (id) { return id !== 'dayshift'; });
+  var pool = rulesForDay(day).map(function (r) { return r.id; }).filter(function (id) { return id !== 'dayshift' && id !== 'costume'; });
   var n = Math.min(DAY_ANOM[day], pool.length), pick = [];
   if (day >= 2 && pool.indexOf('booth4') >= 0 && rnd() < 0.85) pick.push('booth4');
-  if (pool.indexOf('phone') >= 0 && (day === 1 || rnd() < 0.6)) pick.push('phone');
+  if (pool.indexOf('phone') >= 0 && (day === 1 || rnd() < 0.7)) pick.push('phone');
+  // every night has at least one thing that only happens at the griddle (tonight's new one first)
+  var cooks = pool.filter(function (id) { return COOK_ANOM.indexOf(id) >= 0; }); R.shuffle(cooks);
+  var cook1 = cooks.filter(function (id) { return ruleDay(id) === day; })[0] || cooks[0]; if (cook1) pick.push(cook1);
   var rest = pool.filter(function (id) { return pick.indexOf(id) < 0; }); R.shuffle(rest);
-  if (day === 1) rest = rest.filter(function (id) { return id !== 'faceless' || true; });
   while (pick.length < n && rest.length) pick.push(rest.shift());
-  var slots = [], s0 = 62 + rnd.range(0, 15);
+  var slots = [], s0 = 26 + rnd.range(0, 8);
   var others = pick.filter(function (id) { return id !== 'booth4' && id !== 'phone'; });
-  var gap = (430 - s0) / Math.max(1, others.length);
-  others.forEach(function (id, i) { slots.push({ at: s0 + gap * i + rnd.range(0, gap * 0.5), type: 'anom', id: id }); });
+  // the night opens with something you can see (a cooking one waits for the griddle, so it goes later)
+  others.sort(function (a, b) { return (COOK_ANOM.indexOf(a) >= 0) - (COOK_ANOM.indexOf(b) >= 0) || Math.random() - 0.5; });
+  if (others.length > 2) { var c0 = others.filter(function (id) { return COOK_ANOM.indexOf(id) >= 0; })[0]; if (c0) { others.splice(others.indexOf(c0), 1); others.splice(1, 0, c0); } }
+  var gap = (420 - s0) / Math.max(1, others.length);
+  others.forEach(function (id, i) { slots.push({ at: i === 0 ? s0 : s0 + gap * i + rnd.range(-gap * 0.2, gap * 0.3), type: 'anom', id: id }); });
   if (pick.indexOf('booth4') >= 0) slots.push({ at: 300 + rnd.range(-12, 8), type: 'anom', id: 'booth4' });
-  if (pick.indexOf('phone') >= 0) slots.push({ at: rnd.range(70, 140), type: 'anom', id: 'phone' });
+  if (pick.indexOf('phone') >= 0) slots.push({ at: day === 1 ? rnd.range(48, 80) : rnd.range(40, 110), type: 'anom', id: 'phone' });
   if (day === 5) slots.push({ at: 452, type: 'anom', id: 'dayshift' });
   // keep anomalies apart from each other
   slots.sort(function (a, b) { return a.at - b.at; });
-  for (var i = 1; i < slots.length; i++) if (slots[i].id !== 'phone' && slots[i - 1].id !== 'phone' && slots[i].at - slots[i - 1].at < 30) slots[i].at = slots[i - 1].at + 30;
+  for (var i = 1; i < slots.length; i++) if (slots[i].id !== 'phone' && slots[i - 1].id !== 'phone' && slots[i].at - slots[i - 1].at < 26) slots[i].at = slots[i - 1].at + 26;
   S = S.concat(slots);
-  // atmosphere beats
+  // atmosphere beats — from the very start of the night
+  S.push({ at: day === 1 ? 11 + rnd.range(0, 3) : rnd.range(6, 16), type: 'ghostbell' }); // the bell rings. nobody.
   S.push({ at: 180, type: 'midnight1' }); // 1:00 the jukebox skips to the late record
   S.push({ at: 200 + rnd.range(0, 40), type: 'rain' });
-  for (var k = 0; k < 2 + day; k++) S.push({ at: rnd.range(150, 460), type: 'scare' });
+  for (var k = 0; k < 5 + day; k++) S.push({ at: k === 0 ? rnd.range(45, 70) : rnd.range(70, 465), type: 'scare' });
+  S.push({ at: rnd.range(150, 260), type: 'hallway' });
+  if (day >= 2) S.push({ at: rnd.range(300, 440), type: 'hallway' });
+  S.push({ at: rnd.range(90, 200), type: 'fakeout' }); S.push({ at: rnd.range(260, 430), type: 'fakeout' });
   S.push({ at: rnd.range(240, 420), type: 'thunder' });
   S.sort(function (a, b) { return a.at - b.at; });
   return S;
@@ -4960,16 +5053,20 @@ function runSchedule() {
     var e = GAME.sched.shift();
     if (e.type === 'cust') {
       var live = CUSTS.filter(function (c) { return c.state !== 'gone' && c.state !== 'leaving'; }).length;
-      if (live >= (GAME.min < 150 ? 4 : 3) || GAME.inAnomaly > 1) { e.at += 6; GAME.sched.push(e); GAME.sched.sort(function (a, b) { return a.at - b.at; }); continue; }
+      if (live >= 3 || GAME.inAnomaly > 1) { e.at += 6; GAME.sched.push(e); GAME.sched.sort(function (a, b) { return a.at - b.at; }); continue; }
       var arch = pickArch();
       if (FX.visitor.state === 'idle' && Math.random() < 0.6) visitorArrive({ onPark: function () { setTimeout(visitorLeaveLater, 3000); } });
       var C = spawnCustomer(arch, { kid: arch.kid });
       GAME.lastCust = C;
-    } else if (e.type === 'anom') { if (GAME.inAnomaly && e.id !== 'phone') { e.at += 12; GAME.sched.push(e); GAME.sched.sort(function (a, b) { return a.at - b.at; }); continue; } var A = makeAnomaly(e.id, e.at); bindAnomaly(A); startAnomaly(A); }
+    } else if (e.type === 'anom' && COOK_ANOM.indexOf(e.id) >= 0) { if (GAME.cookArmed) { e.at += 10; GAME.sched.push(e); GAME.sched.sort(function (a, b) { return a.at - b.at; }); continue; } GAME.cookArmed = e.id; } // waits for the next dish
+    else if (e.type === 'anom') { if (GAME.inAnomaly && e.id !== 'phone') { e.at += 12; GAME.sched.push(e); GAME.sched.sort(function (a, b) { return a.at - b.at; }); continue; } var A = makeAnomaly(e.id, e.at); bindAnomaly(A); startAnomaly(A); }
     else if (e.type === 'midnight1') { if (!GAME.inAnomaly && JUKE.key === 'boogie') jukeSkipTo('warped', 'B3 Last Call'); JUKE.label = 'B3 Last Call'; LSTATE.coldT = Math.max(LSTATE.coldT, 0.2); toast('1:00 AM — the jukebox skips to another record: B3 "Last Call"', '午前1時。ジュークボックスがB3「Last Call」に変わった', 3.4); }
     else if (e.type === 'rain') { FX.rainT = 0.55 + GAME.day * 0.09; sfx('thunder', null, { vol: 0.5 }); }
     else if (e.type === 'thunder') { sfx('thunder'); PU.uFlash.value = 0.25; setTimeout(function () { PU.uFlash.value = 0; }, 90); }
     else if (e.type === 'scare') ambientScare();
+    else if (e.type === 'ghostbell') ghostBell();
+    else if (e.type === 'hallway') { if (GAME.inAnomaly || MINI.active || CAM.inFreezer || CAM.outside) { e.at += 15; GAME.sched.push(e); GAME.sched.sort(function (a, b) { return a.at - b.at; }); continue; } hallwayLights(); }
+    else if (e.type === 'fakeout') { if (GAME.inAnomaly) { e.at += 20; GAME.sched.push(e); GAME.sched.sort(function (a, b) { return a.at - b.at; }); continue; } fakeOut(); }
   }
 }
 function visitorLeaveLater() { setTimeout(function () { if (FX.visitor.state === 'parked' && !FX.visitor.high) visitorLeave(); }, 25000 + Math.random() * 30000); }
@@ -5086,8 +5183,10 @@ function onArrive(st) {
 function updateMainButton() {
   if (!U.main) return;
   if (GAME.mode !== 'play') { setMain(null); return; }
-  if (MINI.active) { setMain(MINI.main || null); return; }
-  var trap = ACTIVE.filter(function (A) { return A.trap; })[0]; if (trap) { setMain(trap.trap); return; }
+  var trap = ACTIVE.filter(function (A) { return A.trap; })[0];
+  if (MINI.active) { setMain(MINI.main || null); setMain2(trap ? trap.trap : null); stackCooking(); return; }
+  setMain2(null);
+  if (trap) { setMain(trap.trap); return; }
   var st = CAM.station, a = null;
   if (CAM.inFreezer) a = { icon: 'door', en: 'COME OUT', ja: '冷凍庫から出る', fn: leaveFreezer };
   else if (CAM.outside) a = { icon: 'back', en: 'GO BACK INSIDE', ja: '店にもどる', fn: comeInside };
@@ -5097,7 +5196,7 @@ function updateMainButton() {
     var t = TICKETS.filter(function (T) { return !T.ready; })[0];
     var rc = CUSTS.filter(function (C) { return C.state === 'ordered' && C.ticket && C.ticket.ready && C.seat; })[0];
     var wc = CUSTS.filter(function (C) { return ['wait', 'seated', 'ready', 'check'].indexOf(C.state) >= 0 && !C.anomaly; })[0];
-    if (t) a = { icon: 'ticket', en: 'NEXT TICKET', ja: '次の伝票を作る', fn: function () { tapTicket(t); } };
+    if (t) a = { icon: 'ticket', en: 'NEXT TICKET', ja: '次の伝票を作る', glow: true, fn: function () { quickCook(t); } };
     else if (rc) a = { icon: 'serve', en: 'SERVE', ja: '料理を運ぶ（' + (rc.seat.kind === 'stool' ? 'カウンター' : rc.seat.booth + '番席') + 'へ戻る）', glow: true, fn: function () { returnTo(rc); } };
     else if (wc) a = { icon: 'back', en: 'TO FLOOR', ja: '客席へ戻る', glow: true, fn: function () { returnTo(wc); } };
   }
@@ -5304,13 +5403,17 @@ function updateGame(dt, t) {
   if (GAME.mode !== 'play') { if (GAME.mode === 'title' || GAME.mode === 'cut') { updateCustomers(dt); } if (SUBQ.cur) subUpdate(dt); return; }
   if (SUBQ.cur) subUpdate(dt);
   if (GAME.paused || PAUSE.el) return;
-  var spd = GAME.inAnomaly || MINI.active || CAM.inFreezer ? 1 : (GAME.spd || 1);
+  GAME.realT = (GAME.realT || 0) + dt;
+  var nextA = GAME.sched.filter(function (e) { return e.type === 'anom'; })[0], wob = 0;
+  GAME.soon = !!(nextA && nextA.at - GAME.min < 30) || !!GAME.cookArmed;
+  var spd = GAME.inAnomaly || MINI.active || CAM.inFreezer || GAME.soon ? 1 : (GAME.spd || 1);
   GAME.min += dt * spd * GAME.rate * (GAME.fast || 1);
   runSchedule(); updateCustomers(dt * spd); updateAnomalies(dt); updateFreezer(dt);
+  updateHush(nextA, dt); updateNightScares(dt);
   // pre-anomaly tape wobble on the jukebox
-  var nextA = GAME.sched.filter(function (e) { return e.type === 'anom'; })[0], wob = 0;
   if (nextA) wob = clamp(1 - (nextA.at - GAME.min) / 25, 0, 1); JUKE.wobble = wob; JUKE.drift = wob * 0.6;
   HUD_T -= dt; if (HUD_T <= 0) { HUD_T = 0.5; setClock(GAME.min, GAME.day); var nT = TICKETS.length; pruneTickets(); if (TICKETS.length !== nT) refreshTickets(); updateMainButton(); refreshSpeed(); }
+  if (MINI.active && RENDER.frame % 4 === 0) stackCooking();
   UI.classList.toggle('flick', GAME.day >= 3 && GAME.min > 200);
   UI.style.setProperty('--wear', clamp((GAME.day - 1) * 0.12 + (GAME.min / SHIFT_LEN) * 0.12, 0, 0.6).toFixed(2));
   PU.uCold.value = LSTATE.cold * 0.85; PU.uGrain.value = 0.035 + LSTATE.cold * 0.025; PU.uVig.value = 0.55 + LSTATE.cold * 0.15;
@@ -5367,7 +5470,7 @@ function onKey(e) {
   if (e.key === 'Escape') { if (DOC.open) closeDocs(); else if (PAUSE.el) resumeGame(); else if (SLIP.open) hideChoices(); else if (MAPV.el) toggleMap(); else pauseGame(); return; }
   if (GAME.mode !== 'play' || PAUSE.el) return;
   var n = parseInt(e.key, 10); if (n >= 1 && n <= 8) { goStation(STATION_ORDER[n - 1]); return; }
-  if (e.key === ' ' || e.key === 'Enter') { if (SUBQ.cur) subAdvance(); else if (U.mainAct && U.mainAct.fn) U.mainAct.fn(); e.preventDefault(); }
+  if (e.key === ' ' || e.key === 'Enter') { if (SUBQ.cur && !MINI.active) subAdvance(); else if (U.mainAct && U.mainAct.fn) U.mainAct.fn(); e.preventDefault(); }
   if (e.key === 'm' || e.key === 'M') toggleMap();
   if (e.key === 'r' || e.key === 'R') showRules();
   if (MINI.active && (e.key === 'h' || e.key === 'H') && MINI.onDown && !MINI.keyHold) { MINI.keyHold = 1; MINI.onDown(RENDER.w / 2, RENDER.h / 2); }
@@ -5551,7 +5654,7 @@ function startNight(day) {
 }
 function tutorialHints() {
   setTimeout(function () { if (GAME.mode === 'play') toast('Guests wait at the door. Tap them to seat them.', 'お客さんは入口で待っている。タップして席へ案内', 4); }, 5000);
-  setTimeout(function () { if (GAME.mode === 'play') toast(isMobile() ? 'Drag the LEFT side to walk, the right side to look.' : 'WASD / arrow keys to walk. Drag to look.', isMobile() ? '画面の左側をドラッグで歩く・右側で見回す（MAPや光る輪でも移動）' : 'WASD・矢印キーで歩く。ドラッグで見回す', 5); }, 15000);
+  setTimeout(function () { if (GAME.mode === 'play') toast(isMobile() ? 'Drag the LEFT side to walk, the right side to look.' : 'WASD / arrow keys to walk. Drag to look.', isMobile() ? '画面の左側をドラッグで歩く・右側で見回す（MAPや光る輪でも移動）' : 'WASD・矢印キーで歩く。ドラッグで見回す', 5); }, 25000);
   setTimeout(function () { if (GAME.mode === 'play') toast('Orders go to the KITCHEN. Cook, then serve.', '注文は厨房へ。作ってから運ぶ', 4); }, 40000);
 }
 // ---- results / sunny card ---------------------------------------------------------------------------
@@ -5819,6 +5922,365 @@ var CODE_CSS = [
   '.codein{width:100%;height:46px;margin-top:8px;padding:0 10px;border:2px solid #22201c;border-radius:8px;background:#fffaf0;font:400 16px/46px "Special Elite",monospace;letter-spacing:.05em;color:#1d2f6f;outline:none;-webkit-user-select:text;user-select:text;text-transform:uppercase}',
   '.codemsg{margin-top:8px;font:600 12px/1.5 "Zen Kaku Gothic New",sans-serif}.codemsg.bad{color:#a01018}.codemsg.ok{color:#2f7e6e}'
 ].join('\n');
+
+
+// ===== 23_kitchen.js =====
+// ---- the kitchen at night: Sunny's radio show, cooking-only anomalies ---------------------
+// New rules (inserted next to the other rules of the same night)
+(function addKitchenRules() {
+  var add = [
+    { id: 'passwin', day: 1, en: 'While you cook, keep your eyes on the griddle. If something taps on the glass above you, do NOT look up.', ja: '料理中は鉄板から目を離さないこと。上のガラスを何かが叩いても、顔を上げないこと。', ul: 'do NOT look up', red: 'Finish the dish. Then it\'s gone.', redJa: '料理を仕上げれば、いなくなる' },
+    { id: 'badfood', day: 2, en: 'If the food comes out wrong — an eye, a face, meat that moves — throw it in the trash. Never serve it.', ja: '料理がおかしくなったら（目玉・顔・動く肉）、ゴミ箱に捨てること。絶対にお客さんに出さないこと。', ul: 'Never serve it.' },
+    { id: 'behind', day: 3, en: 'If the kitchen goes dark while you cook, keep cooking. Do not turn around, whatever you hear.', ja: '料理中に厨房が暗くなっても、料理を続けること。何が聞こえても、ふりむかないこと。', ul: 'Do not turn around', red: 'Not even for the face in the steel.', redJa: 'ステンレスに顔が映っても' },
+    { id: 'youticket', day: 4, en: 'Every ticket has a table number. If a ticket says YOU, tear it up. Do not cook it.', ja: '伝票には必ず席番号がある。「YOU」と書かれた伝票は破ること。作らないこと。', ul: 'tear it up' },
+    { id: 'costume', day: 4, en: 'We do not own a Sunny costume. If you see one in the parking lot, stop looking at it. Every time you look, it comes closer.', ja: 'うちに Sunny の着ぐるみはない。駐車場で見かけたら、見るのをやめること。見るたびに近づいてくる。', ul: 'stop looking at it' }
+  ];
+  add.forEach(function (r) {
+    var at = RULES.length; for (var i = 0; i < RULES.length; i++) if (RULES[i].day > r.day) { at = i; break; }
+    RULES.splice(at, 0, r);
+  });
+  FAKES.push({ against: 'passwin', en: 'If someone taps on the pass window while you cook, look up and smile. It\'s just June.', ja: '料理中にパス窓を誰かが叩いたら、顔を上げてにっこり。ジューンだよ。' });
+  FAKES.push({ against: 'badfood', en: 'Never throw food away. Whatever comes off the griddle gets served.', ja: '食べ物は絶対に捨てるな。鉄板から出たものは全部出すこと。' });
+})();
+var COOK_ANOM = ['passwin', 'badfood', 'behind', 'youticket'];
+function ruleDay(id) { var r = RULES.filter(function (x) { return x.id === id; })[0]; return r ? r.day : 9; }
+// ---- Sunny on the kitchen radio, like a cooking-show host. Stranger as the night goes on ----
+var RADIO = { next: 0, endNext: 0, pos: null };
+var RADIO_LINES = {
+  start0: [["Good morning, chef! Let's cook it like sunshine!", 'おはよう、シェフ！おひさまみたいに作ろうね！'], ["Rise and shine! What's on the griddle tonight?", 'Rise and shine！ 今夜の鉄板には何がのるのかな？'], ["You're on the air with Sunny! Nice and easy now!", 'サニーの料理番組へようこそ！ ゆっくりでいいよ！'], ['Hiya, {name}! Show the folks at home how it\'s done!', 'やあ、{name}！ おうちのみんなにお手本を見せて！']],
+  ok0: [["You're so good at this!", 'じょうずだね！'], ['Ding ding! Order up!', 'チンチン！ できあがり！'], ['Look at that! Pretty as a sunrise!', '見て！ 朝日みたいにきれい！']],
+  bad0: [['Oopsie! We all burn one sometimes!', 'あらら！ だれだってこがすよ！'], ["That's okay! Try again, chef!", 'だいじょうぶ！ もういっかい、シェフ！']],
+  start1: [['Nice. Nice. Nice. Nice.', 'いいね。いいね。いいね。いいね。'], ['Keep your face down on the griddle. Just cook.', '鉄板から顔を上げないで。作るだけでいいの。'], ['I like watching you cook. I can see you from everywhere.', 'きみが料理するの、見てるの好き。どこからでも見えるんだ。'], ['{name}... is that how you hold a spatula, {name}?', '{name}……それがフライ返しの持ち方なの、{name}？']],
+  ok1: [['Good. Good. Good.', 'いいね。いいね。いいね。'], ['Everyone will eat it. Everyone.', 'みんな食べるよ。みんな。'], ['Just like I taught the last one.', '前の子に教えたとおりだね。']],
+  bad1: [['You burned it. I saw.', 'こがしたね。見てたよ。'], ['Again. Again. Do it again.', 'もういっかい。もういっかい。']],
+  start2: [['Make one more plate. For table four.', 'もう一皿つくって。4番の席の分。'], ["Don't turn around. It's me. It's always me.", 'ふりむかないで。ぼくだよ。いつだって、ぼくだよ。'], ['When the sun comes up, will you still be here? Stay. Stay.', 'おひさまがのぼっても、ここにいてくれる？ いて。いて。'], ['{name}. {name}. I wrote your name on the menu.', '{name}。{name}。きみの名前、メニューに書いたよ。'], ['The griddle is warm. Warm like a hand. Put your hand on it.', '鉄板、あったかいね。手みたいにあったかい。手をのせてみて。'], ['Shh. Somebody is listening. Keep cooking.', 'しーっ。だれかが聞いてる。作りつづけて。'], ['Good morning. Good morning. Good morning. Is it morning yet?', 'おはよう。おはよう。おはよう。もう朝？']],
+  ok2: [['Perfect. Just like the last cook.', 'かんぺき。前のコックさんみたい。'], ['Mmm. I can taste it from here.', 'んん。ここまで味がするよ。'], ['Ding. Ding. Ding. Ding.', 'チン。チン。チン。チン。']],
+  bad2: [["It's fine. They'll eat anything now.", 'いいの。もう、なんでも食べるから。'], ['Burnt. Like the last one.', 'こげた。前の子みたいに。']]
+};
+function sunnyOdd() { return GAME.min / SHIFT_LEN + (GAME.day - 1) * 0.3; } // 0 = bright ... 1+ = wrong
+function radioStage() { var s = sunnyOdd(); return s < 0.34 ? 0 : s < 0.67 ? 1 : 2; }
+function radioSay(kind) {
+  if (GAME.mode !== 'play' || TALK.busy || JS.on) return false;
+  if (ACTIVE.some(function (A) { return A.mini || A.id === 'sunny'; })) return false;
+  var st = radioStage(), pool = RADIO_LINES[kind + st]; if (!pool) return false;
+  var used = RADIO.used || (RADIO.used = {}), cand = pool.filter(function (l) { return !used[l[0]]; }); if (!cand.length) { pool.forEach(function (l) { used[l[0]] = 0; }); cand = pool; }
+  var L = pickL(cand); used[L[0]] = 1;
+  var nm = SAVE.name || 'friend', nmJa = SAVE.name || 'きみ';
+  var en = L[0].replace(/\{name\}/g, nm), ja = L[1].replace(/\{name\}/g, nmJa), s = Math.min(1.2, sunnyOdd());
+  if (!RADIO.pos) RADIO.pos = new THREE.Vector3(1.9, 1.75, -3.0);
+  sfx('static', RADIO.pos, { len: 0.35, vol: 0.35 + s * 0.2 });
+  if (st >= 1) { LSTATE.kitchenFlick = true; setTimeout(function () { LSTATE.kitchenFlick = false; }, 500 + st * 500); }
+  if (st >= 2) LSTATE.flick = Math.max(LSTATE.flick, 0.5);
+  setTimeout(function () {
+    if (GAME.mode !== 'play' || TALK.busy || ACTIVE.some(function (A) { return A.mini || A.id === 'sunny'; })) return;
+    say('SUNNY', en, ja, { voice: 'sunny', cls: 'sunny', picoDark: Math.min(1, s), rate: 1 - Math.min(0.32, s * 0.28), pitch: 1 - Math.min(0.42, s * 0.36), odd: st >= 2, hold: 0.7, tapSkip: false });
+    TALK.busy = false; // the radio never blocks the player
+  }, 380);
+  return true;
+}
+// ---- hooks called by the minigames --------------------------------------------------------------
+function cookWantsBad(type) {
+  if (GAME.mode !== 'play' || GAME.cookArmed !== 'badfood' || GAME.inAnomaly) return false;
+  if (['pancake', 'egg', 'burger', 'coffee'].indexOf(type) < 0) return false;
+  GAME.cookArmed = null;
+  var A = makeAnomaly('badfood', GAME.min); bindAnomaly(A); A.mini = MINI; startAnomaly(A); MINI.badA = A;
+  return true;
+}
+function cookHookStart(M) {
+  var now = performance.now() / 1000;
+  var id = GAME.cookArmed;
+  if (id && id !== 'badfood' && !GAME.inAnomaly && GAME.mode === 'play') {
+    GAME.cookArmed = null;
+    setTimeout(function () {
+      if (MINI !== M || !M.active || GAME.mode !== 'play' || GAME.inAnomaly) { if (!GAME.cookArmed) GAME.cookArmed = id; return; }
+      var A = makeAnomaly(id, GAME.min); bindAnomaly(A); A.mini = M; startAnomaly(A);
+    }, 900 + Math.random() * 900);
+    return;
+  }
+  if (M.bad) return;
+  if (now >= RADIO.next && Math.random() < (RADIO.first ? 0.7 : 1)) { RADIO.first = true; setTimeout(function () { if (MINI === M && M.active && radioSay('start')) RADIO.next = performance.now() / 1000 + 16 + Math.random() * 10; }, 700); }
+}
+function cookHookEnd(M, q) {
+  ACTIVE.slice().forEach(function (A) { if (A.mini === M && A.def.onMiniEnd) A.def.onMiniEnd(A, q); });
+  if (q < 0 || M.bad) return;
+  var now = performance.now() / 1000;
+  if (now >= RADIO.endNext && now >= RADIO.next - 12 && Math.random() < 0.6) { setTimeout(function () { if (radioSay(q > 0.35 ? 'ok' : 'bad')) { RADIO.endNext = performance.now() / 1000 + 14; RADIO.next = Math.max(RADIO.next, performance.now() / 1000 + 10); } }, 1500); }
+}
+// "plate it" or "throw it away" — the weird dish
+function badFoodChoice(M, q) {
+  var A = M.badA;
+  sfx('heart', null, { n: 2, gap: 0.7, vol: 0.5 });
+  showChoices('Something is wrong with this food.', [
+    { icon: 'serve', en: 'Plate it anyway', ja: 'そのままお皿にのせる', warn: true, fn: function () { if (A) A.plated = true; M.done && M.done(q, A); } },
+    { icon: 'tear', en: 'Throw it in the trash', ja: 'ゴミ箱に捨てる（作り直す）', fn: function () { sfx('bang', new THREE.Vector3(-0.2, 0.5, -4.4), { vol: 0.4 }); if (A) anomalyResolve(A, false); toast('Into the trash. It kept moving for a while.', 'ゴミ箱に捨てた。しばらく、中で動いていた。', 2.8); updateMainButton(); } }
+  ], { noCancel: true, table: 'KITCHEN' });
+}
+function burntFaceCanvas() { // Sunny's face, browned into the pancake
+  var c = mkCanvas(256, 256), g = c.getContext('2d');
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, 256, 256);
+  g.fillStyle = 'rgba(70,35,12,0.85)'; g.strokeStyle = 'rgba(70,35,12,0.85)'; g.lineCap = 'round';
+  g.beginPath(); g.ellipse(92, 104, 16, 22, 0, 0, TAU); g.fill(); g.beginPath(); g.ellipse(164, 104, 16, 22, 0, 0, TAU); g.fill();
+  g.lineWidth = 12; g.beginPath(); g.arc(128, 128, 62, 0.15 * PI, 0.85 * PI); g.stroke();
+  g.lineWidth = 5; for (var i = 0; i < 9; i++) { var a = 0.2 * PI + i * 0.075 * PI; g.beginPath(); g.moveTo(128 + Math.cos(a) * 54, 128 + Math.sin(a) * 54); g.lineTo(128 + Math.cos(a) * 72, 128 + Math.sin(a) * 72); g.stroke(); }
+  return c;
+}
+// a face sprite that sits in camera space (top edge of the view, or in the steel ahead)
+function camSprite(n, opac) {
+  var tex = toTex(horrorCanvas(n), { clamp: true });
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color: 0x9a9aa2, transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
+  sp.renderOrder = 9; sp.userData.tex = tex; sp.userData.op = opac || 0.7; RENDER.scene.add(sp); return sp;
+}
+function camSpriteAt(sp, fwd, up, side) {
+  var cam = RENDER.camera, e = cam.matrixWorld.elements;
+  var x = new THREE.Vector3(e[0], e[1], e[2]), y = new THREE.Vector3(e[4], e[5], e[6]), z = new THREE.Vector3(-e[8], -e[9], -e[10]);
+  sp.position.copy(cam.position).addScaledVector(z, fwd).addScaledVector(y, up).addScaledVector(x, side || 0);
+}
+// place it by screen position (nx, ny in -1..1) at distance d in front of the lens
+function camSpriteNDC(sp, d, nx, ny) { var cam = RENDER.camera, th = Math.tan(cam.fov * PI / 360) * d; camSpriteAt(sp, d, ny * th, nx * th * cam.aspect); }
+function camSpriteFree(sp) { if (!sp) return; RENDER.scene.remove(sp); sp.userData.tex.dispose(); sp.material.dispose(); }
+// ---- cooking-only anomalies ---------------------------------------------------------------------
+ANOM.passwin = {
+  hint: ['Something at the glass while you cook? Eyes on the griddle. Finish the plate.', '料理中にガラスに何か？ 鉄板から目を離すな。皿を仕上げろ。'],
+  start: function (A) {
+    A.face = pickFace(['crawler', 'human', 'glitch'], 'passwin');
+    anomalyOnset(A, { noZap: true, keepMusic: true });
+    A.spr = camSprite(A.face, 0.85); A.spr.material.color.set(0xb4b4bc); A.slide = 0;
+    A.glass = new THREE.Vector3(0.9, 1.75, -4.3);
+    sfx('knock', A.glass, { n: 3, vol: 0.45 });
+    A.trap = { icon: 'look', en: 'LOOK UP', ja: '顔を上げる', fn: function () { ANOM.passwin.look(A); } };
+    updateMainButton();
+    setTimeout(function () { if (!A.done && GAME.mode === 'play') { say('???', 'Psst. Up here.', 'ねえ。うえ、みて。', { voice: 'odd', odd: true, cls: 'odd', tapSkip: false, hold: 0.8 }); TALK.busy = false; } }, 1600);
+    A.kt = 3.5;
+  },
+  update: function (A, dt) {
+    if (A.done) return;
+    if (!A.mini.active) { if (!A.looking) { anomalyResolve(A); } return; }
+    A.slide = Math.min(1, A.slide + dt * 0.12);
+    if (A.spr && !A.looking) { camSpriteNDC(A.spr, 0.9, -1.0 + A.slide * 0.42, -0.1); A.spr.scale.set(0.22, 0.27, 1); A.spr.material.opacity = damp(A.spr.material.opacity, A.spr.userData.op, 3, dt); }
+    A.kt -= dt; if (A.kt <= 0) { A.kt = 2.6 + Math.random() * 2; sfx('knock', A.glass, { n: 2, vol: 0.35 + A.slide * 0.3 }); }
+  },
+  look: function (A) { // looking up: it is right there
+    if (A.done || A.looking) return; A.looking = true; A.trap = null; updateMainButton();
+    var cam = RENDER.camera; camSpriteAt(A.spr, 0.6, 0.18, 0); A.spr.scale.set(0.5, 0.6, 1); A.spr.material.opacity = 1;
+    CAM.override = { pos: cam.position.clone(), target: A.spr.position.clone(), k: 0, dur: 0.3 };
+    setTimeout(function () { anomalyFail(A, A.face, { rule: 'passwin' }); }, 380);
+  },
+  onMiniEnd: function (A, q) { if (!A.done && !A.looking) anomalyResolve(A, q >= 0 ? undefined : false); },
+  cleanup: function (A) { A.trap = null; camSpriteFree(A.spr); A.spr = null; updateMainButton(); }
+};
+ANOM.badfood = {
+  hint: ['Food come out wrong? Trash. Don\'t you dare put it on a plate.', '料理がおかしい？ 捨てろ。皿にのせるなんて考えるな。'],
+  start: function (A) { A.face = pickFace(['flesh', 'mouth'], 'badfood'); anomalyOnset(A, { noZap: true, keepMusic: true }); },
+  update: function (A, dt) {
+    if (A.done) return;
+    if (A.plated) { // waits on the pass. serving it is the mistake; if nobody gets it, it's over
+      var T = A.ticket; if (!T) { T = TICKETS.filter(function (t) { return t.items.some(function (it) { return it.bad === A; }); })[0]; A.ticket = T; if (T) T.bad = A; }
+      if (!T || (TICKETS.indexOf(T) < 0 && !T.served)) anomalyResolve(A, false);
+    } else if (!A.mini.active && (A.mini.aborted || (!SLIP.open && A.t > 4 && !A.mini.endPending))) anomalyResolve(A, false);
+  },
+  onMiniEnd: function (A, q) { if (q < 0) anomalyResolve(A, false); }
+};
+ANOM.behind = {
+  hint: ['Lights die while you cook? Keep cooking. Don\'t turn around. Ever.', '料理中に明かりが消えた？ 作り続けろ。ふりむくな。絶対に。'],
+  start: function (A) {
+    A.face = pickFace(['shadow', 'crawler', 'human'], 'behind');
+    anomalyOnset(A, { noZap: true });
+    sfx('zap', new THREE.Vector3(1.0, 2.9, -3.3), { vol: 0.7 });
+    LSTATE.kitchenOff = true; LSTATE.powerT = 0.1; A.expoWas = A.mini.expo; A.mini.expo = 0.32; // only the griddle glows
+    var F = WORLD.lights.fill; A.fillWas = [F.color.getHex(), F.intensity, F.distance]; F.color.set(0xff7a32); F.position.set(0.9, 1.05, -4.5); F.intensity = 1.8; F.distance = 3.0;
+    A.trap = { icon: 'back', en: 'TURN AROUND', ja: 'ふりむく', fn: function () { ANOM.behind.turn(A); } }; updateMainButton();
+    A.spr = camSprite(A.face, 0.22); A.step = 0; A.st = 2.2;
+    A.from = new THREE.Vector3(-2.9, 0.2, -3.25);
+  },
+  update: function (A, dt) {
+    if (A.done) return;
+    if (!A.mini.active) { if (!A.turned) anomalyResolve(A); return; }
+    // it walks in behind you, one step at a time
+    A.st -= dt; if (A.st <= 0 && A.step < 6) { A.step++; A.st = 1.6; var cam = RENDER.camera.position, p = A.from.clone().lerp(new THREE.Vector3(cam.x, 0.2, cam.z + 0.6), A.step / 6); sfx('step', p, { vol: 0.5 + A.step * 0.08 }); if (A.step === 6) sfx('breath', new THREE.Vector3(cam.x, cam.y, cam.z + 0.4), { len: 3, vol: 0.8 }); }
+    if (A.spr) { camSpriteNDC(A.spr, 1.1, 0.5, -0.12); A.spr.scale.set(0.24, 0.3, 1); var want = A.step >= 4 ? A.spr.userData.op : 0; A.spr.material.opacity = damp(A.spr.material.opacity, want * (0.7 + 0.3 * Math.sin(A.t * 9)), 2, dt); }
+    if (A.t > 40) { A.turned = true; anomalyFail(A, A.face, { rule: 'behind' }); }
+  },
+  turn: function (A) {
+    if (A.done || A.turned) return; A.turned = true; A.trap = null; updateMainButton();
+    var cam = RENDER.camera, back = cam.position.clone(); var dir = new THREE.Vector3(); cam.getWorldDirection(dir); dir.y = 0; dir.normalize();
+    CAM.override = { pos: cam.position.clone(), target: back.sub(dir.multiplyScalar(2)).setY(cam.position.y), k: 0, dur: 0.35 };
+    setTimeout(function () { anomalyFail(A, A.face, { rule: 'behind' }); }, 360);
+  },
+  onMiniEnd: function (A, q) { if (!A.done && !A.turned) anomalyResolve(A, false); },
+  cleanup: function (A) {
+    A.trap = null; camSpriteFree(A.spr); A.spr = null;
+    LSTATE.kitchenOff = false; LSTATE.powerT = 1; LSTATE.flick = 0.8; if (A.mini) A.mini.expo = A.expoWas;
+    var F = WORLD.lights.fill; if (A.fillWas) { F.color.setHex(A.fillWas[0]); F.intensity = 0; F.distance = A.fillWas[2]; }
+    if (!A.turned) setTimeout(function () { toast('The lights came back. Nobody is behind you.', '明かりがもどった。うしろには誰もいない。', 2.6); }, 900);
+    updateMainButton();
+  }
+};
+ANOM.youticket = {
+  hint: ['A ticket for YOU? That ain\'t an order. Tear it up.', '「YOU」の伝票？ そんな注文はない。破れ。'],
+  start: function (A) {
+    A.face = pickFace(['mouth', 'glitch', 'human'], 'youticket');
+    anomalyOnset(A, { noZap: true, keepMusic: true });
+    var P = new THREE.Vector3(1.4, 1.9, -2.85); sfx('print', P, { n: 26 });
+    var T = { no: 4444, cust: null, items: [{ odd: { en: 'YOU', ja: 'あなた', say: 'you', sayJa: 'あなた' }, done: false }], ready: false, done: false, table: 'TABLE 4: YOU', booth4: true, you: A };
+    T.onTear = function () { anomalyResolve(A); };
+    TICKETS.push(T); A.ticket = T; refreshTickets();
+    setTimeout(function () { toast('The printer spat out a ticket: TABLE 4 — YOU', 'プリンターから伝票が出てきた：「4番テーブル：YOU」', 3); }, 1200);
+  },
+  update: function (A, dt) {
+    if (A.done) return;
+    if (A.t > 30 && !A.whis) { A.whis = 1; sfx('whisper', new THREE.Vector3(1.4, 1.9, -2.85), { vol: 0.5 }); }
+    if (A.t > 120) { toast('Order up. Table four. You.', 'オーダーアップ。4番テーブル。あなた。', 2); anomalyFail(A, A.face, { rule: 'youticket' }); }
+  },
+  cook: function (A) { sfx('sizzle', new THREE.Vector3(0.9, 0.9, -4.7), { len: 2 }); say('SUNNY', 'Oh! You\'re the special tonight.', 'わあ！ 今夜のおすすめは、きみだ。', { voice: 'sunny', picoDark: 1, rate: 0.75, pitch: 0.6 }).then(function () { anomalyFail(A, A.face, { rule: 'youticket' }); }); },
+  cleanup: function (A) { if (A.ticket && TICKETS.indexOf(A.ticket) >= 0) removeTicket(A.ticket); }
+};
+
+
+// ===== 24_scares.js =====
+// ---- scares that happen even when you follow every rule -------------------------------------
+var SCARE = {};
+function scaresReset() { SCARE = {}; }
+var _sv = null;
+// the door chimes. nobody is there.
+function ghostBell() {
+  if (GAME.mode !== 'play') return;
+  var door = new THREE.Vector3(6, 2.3, 4.9);
+  sfx('doorbell', door); openDoorAnim();
+  LSTATE.coldT = Math.max(LSTATE.coldT, 0.3); setTimeout(function () { if (!GAME.inAnomaly) LSTATE.coldT = Math.min(LSTATE.coldT, 0.1 + GAME.day * 0.04); }, 4000);
+  setNeonEyes(1, null); setTimeout(function () { if (!ACTIVE.some(function (a) { return a.id === 'sunny'; })) setNeonEyes(0, null); }, 2600);
+  setTimeout(function () { if (GAME.mode === 'play' && !TALK.busy) { say('YOU', 'Welcome to Sunny Side! ...Hello?', 'いらっしゃいませ！ ……あれ？', { voice: 'you', cls: 'you', hold: 0.5 }); } }, 900);
+  setTimeout(function () { if (GAME.mode === 'play') { toast('Nobody came in.', '……誰も入ってこなかった。', 2.4); sfx('breath', door, { len: 1.4, vol: 0.35 }); } }, 4200);
+}
+// the lights go out one by one, coming toward you — then all come back
+function hallwayLights() {
+  if (GAME.mode !== 'play' || !WORLD.pendants) return;
+  var cam = RENDER.camera.position, wp = new THREE.Vector3();
+  var list = WORLD.pendants.map(function (b) { b.getWorldPosition(wp); return { b: b, p: wp.clone(), d: wp.distanceTo(cam) }; }).sort(function (a, b) { return b.d - a.d; });
+  var i = 0;
+  if (JUKE.key) { SCARE.hallJuke = [JUKE.key, JUKE.label]; jukeStop(0.4, 0.8); }
+  var step = function () {
+    if (GAME.mode !== 'play') return reset();
+    if (i < list.length) {
+      var it = list[i++]; it.b.userData.off = true; sfx('switch', it.p, { vol: 0.55 });
+      if (!LSTATE.kitchenOff) LSTATE.powerT = 1 - (i / list.length) * 0.75;
+      setTimeout(step, 380 - Math.min(160, i * 18));
+    } else {
+      sfx('breath', new THREE.Vector3(cam.x + 0.3, cam.y, cam.z + 0.3), { len: 1.6, vol: 0.6 });
+      setTimeout(function () { sfx('zap', new THREE.Vector3(1.5, 2.5, -2.6), { vol: 0.6 }); LSTATE.flick = 0.5; reset(); }, 1500);
+    }
+  };
+  var reset = function () {
+    WORLD.pendants.forEach(function (b) { b.userData.off = false; }); if (!LSTATE.kitchenOff) LSTATE.powerT = 1;
+    var j = SCARE.hallJuke; SCARE.hallJuke = null; if (j && GAME.mode === 'play' && !GAME.inAnomaly && !JUKE.key && LSTATE.lightsOn && !CAM.inFreezer) setTimeout(function () { if (!JUKE.key && !GAME.inAnomaly) jukePlay(j[0], { label: j[1] }); }, 1800);
+  };
+  step();
+}
+// fake-outs: something starts... and nothing happens (this time)
+function fakeOut() {
+  if (GAME.mode !== 'play') return;
+  var r = Math.random(), phoneBusy = ACTIVE.some(function (a) { return a.id === 'phone'; });
+  if (r < 0.4) { // the music dies, the room holds its breath... a bang from the freezer, and the song comes back
+    SCARE.hushT = 7; if (JUKE.key) { SCARE.fakeJuke = [JUKE.key, JUKE.label]; sfx('needle', WORLD.jukeboxPos); jukeStop(0.3, 0.7); }
+    setTimeout(function () { if (GAME.mode === 'play') sfx('freezerBang', new THREE.Vector3(6.5, 1.2, -4), { vol: 1 }); }, 6200);
+    setTimeout(function () { var j = SCARE.fakeJuke; SCARE.fakeJuke = null; if (j && GAME.mode === 'play' && !GAME.inAnomaly && !JUKE.key && LSTATE.lightsOn && !CAM.inFreezer) jukePlay(j[0], { label: j[1] }); }, 8600);
+  } else if (r < 0.7 && !phoneBusy && WORLD.phonePos) { // one ring. just one.
+    sfx('ring', WORLD.phonePos, { vol: 1 }); setTimeout(function () { if (GAME.mode === 'play') sfx('handset', WORLD.phonePos, { vol: 0.25 }); }, 2600);
+  } else { // the egg on the wall turns to you, and says one thing
+    setNeonEyes(1, 'red'); LSTATE.eyesExtra = 1.5; sfx('whisper', new THREE.Vector3(1.5, 2.5, -2.6), { vol: 0.5 });
+    setTimeout(function () { if (GAME.mode === 'play' && !TALK.busy && !MINI.active) { say('SUNNY', '...Not yet.', '……まだだよ。', { voice: 'sunny', picoDark: 0.8, rate: 0.7, pitch: 0.6, hold: 0.4 }); TALK.busy = false; } }, 700);
+    setTimeout(function () { if (!ACTIVE.some(function (a) { return a.id === 'sunny'; })) { setNeonEyes(0, null); LSTATE.eyesExtra = 1; } }, 3200);
+  }
+}
+// a face pressed on the glass of the front windows (only where you are looking)
+function windowFace(kinds) {
+  if (GAME.mode !== 'play' || CAM.inFreezer || CAM.outside || MINI.active) return false;
+  var cam = RENDER.camera, dir = new THREE.Vector3(); cam.getWorldDirection(dir);
+  if (cam.position.z < -2 || dir.z < 0.35) { sfx('knock', new THREE.Vector3(cam.position.x, 1.4, 5.1), { n: 2, vol: 0.6 }); return false; }
+  var t = (5.08 - cam.position.z) / dir.z, p = cam.position.clone().addScaledVector(dir, t);
+  p.x = clamp(p.x, -7.3, 4.6); p.y = clamp(p.y, 1.2, 1.7); p.z = 5.12;
+  var n = pickFace(kinds || ['human', 'flesh', 'mouth'], 'window'), tex = toTex(horrorCanvas(n), { clamp: true });
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color: 0x8c8c94, transparent: true, opacity: 0, depthWrite: false }));
+  sp.scale.set(0.5, 0.6, 1); sp.position.copy(p); RENDER.scene.add(sp);
+  sfx('thump', p, { vol: 0.8 }); sfx('breath', p, { len: 1.2, vol: 0.5, delay: 0.1 });
+  var t0 = performance.now(); var st = function () { var k = (performance.now() - t0) / 1100; sp.material.opacity = k < 0.12 ? k / 0.12 * 0.8 : 0.8 * (1 - clamp((k - 0.7) / 0.3, 0, 1)); if (k < 1) requestAnimationFrame(st); else { RENDER.scene.remove(sp); tex.dispose(); sp.material.dispose(); } };
+  requestAnimationFrame(st);
+  return true;
+}
+(function wrapAmbient() { // ambient scares get the window face too
+  var base = ambientScare;
+  ambientScare = function () { if (GAME.mode !== 'play' || JS.on) return; if (Math.random() < 0.22 && windowFace()) return; base(); };
+})();
+// after things go quiet again: a small aftershock
+function afterCalm(A) {
+  if (Math.random() > 0.55) return;
+  setTimeout(function () {
+    if (GAME.mode !== 'play' || GAME.inAnomaly || JS.on) return;
+    var r = Math.random();
+    if (r < 0.45) windowFace(A && A.face ? null : null);
+    else if (r < 0.75) sfx('whisper', new THREE.Vector3(RENDER.camera.position.x - 0.6, 1.6, RENDER.camera.position.z - 0.4), { vol: 0.45 });
+    else sfx('steps', new THREE.Vector3(-9.6, 0.2, 0.2), { n: 4, vol: 0.8 });
+  }, 14000 + Math.random() * 14000);
+}
+// the odd guest leaves... and has something to say on the way out
+var LEAVE_ODD = [['See you tomorrow night, {name}.', 'また明日の夜にね、{name}。'], ['I\'ll remember your face.', '顔、おぼえたよ。'], ['You followed the rules. This time.', 'ルール、守ったね。今回は。'], ['Leave the light on for me.', '明かり、つけといてね。']];
+var LEAVE_LATE = [['Don\'t stay till sunrise, kid.', '朝までいちゃだめだよ、きみ。'], ['That egg\'s been watching you all night.', 'あの卵、ひと晩じゅうきみを見てたよ。'], ['Same time tomorrow? ...If you\'re still here.', 'また明日？ ……まだいたらね。'], ['The last night kid said the same thing.', '前の夜勤の子も、同じこと言ってた。']];
+function leaveWhisper(C) {
+  if (GAME.mode !== 'play' || !C.P) return;
+  var nm = SAVE.name || 'friend', nmJa = SAVE.name || 'きみ';
+  if (C.anomaly && C.anomaly.done && C.anomaly.ok) {
+    setTimeout(function () {
+      if (GAME.mode !== 'play' || !C.P || TALK.busy) return;
+      var L = pickL(LEAVE_ODD); sfx('whisper', C.P.root.position, { vol: 0.6 });
+      say('???', L[0].replace('{name}', nm), L[1].replace('{name}', nmJa), { voice: 'odd', odd: true, cls: 'odd', hold: 0.5 }); TALK.busy = false;
+      if (Math.random() < 0.5) setTimeout(function () { if (!GAME.inAnomaly) windowFace(['human', 'mouth']); }, 5500);
+    }, 1300);
+  } else if (!C.anomaly && GAME.min > 200 && Math.random() < 0.18 + GAME.day * 0.04) {
+    setTimeout(function () { if (GAME.mode !== 'play' || TALK.busy || !C.P) return; var L = pickL(LEAVE_LATE); custSay(C, L[0], L[1]); TALK.busy = false; }, 1600);
+  }
+}
+// the hush before something happens: the jukebox and the room fall silent; only the griddle and footsteps
+function updateHush(nextA, dt) {
+  if (SCARE.hushT > 0) SCARE.hushT -= dt;
+  var soon = nextA && COOK_ANOM.indexOf(nextA.id) < 0 && nextA.id !== 'phone' && nextA.at - GAME.min < 9 && !GAME.inAnomaly;
+  var hush = !!soon || SCARE.hushT > 0;
+  if (hush && !GAME.hush) {
+    GAME.hush = true;
+    if (soon && JUKE.key) { GAME.hushJuke = [JUKE.key, JUKE.label]; jukeStop(2.5, 0.4); }
+    if (soon) setTimeout(function () { if (GAME.hush) sfx('steps', new THREE.Vector3(-6 + Math.random() * 10, 0.2, -6.5), { n: 3, vol: 0.45 }); }, 2500);
+  } else if (!hush && GAME.hush) {
+    GAME.hush = false; var j = GAME.hushJuke; GAME.hushJuke = null;
+    if (j && GAME.mode === 'play' && !GAME.inAnomaly && !JUKE.key && LSTATE.lightsOn && !CAM.inFreezer) setTimeout(function () { if (!JUKE.key && !GAME.inAnomaly && GAME.mode === 'play') jukePlay(j[0], { label: j[1] }); }, 1500);
+  }
+}
+// the Sunny suit in the parking lot: every time you look at it, it is closer (night 4+, after 1 AM)
+function updateNightScares(dt) {
+  var sp = WORLD.costume; if (!sp || GAME.day < 4 || GAME.min < 170 || GAME.mode !== 'play') return;
+  if (!_sv) _sv = new THREE.Vector3();
+  var c = SCARE.cos || (SCARE.cos = { step: 0, seen: 0, unseen: 9, home: sp.position.clone(), counted: false, pend: false });
+  var cam = RENDER.camera, fwd = new THREE.Vector3(); cam.getWorldDirection(fwd);
+  _sv.copy(sp.position).project(cam);
+  var toS = sp.position.clone().sub(cam.position);
+  var inView = !CAM.inFreezer && !CAM.outside && !MINI.active && !DOC.open && cam.position.z > -2.85 && fwd.dot(toS) > 0 && Math.abs(_sv.x) < 0.6 && Math.abs(_sv.y) < 0.75 && toS.length() < 26;
+  if (inView) {
+    c.seen += dt; c.unseen = 0;
+    if (c.seen > 0.8 && !c.counted) {
+      c.counted = true; c.step++; c.pend = true;
+      if (c.step === 1) sfx('whisper', sp.position, { vol: 0.3 });
+      if (c.step >= 5) { c.step = 99; costumeEnters(); }
+    }
+  } else {
+    c.seen = 0; c.unseen += dt;
+    if (c.unseen > 1.2) c.counted = false;
+    if (c.pend && c.unseen > 0.4) { c.pend = false; placeCostume(c); sfx('steps', sp.position, { n: 2, vol: 0.5 }); }
+    if (c.unseen > 45 && c.step > 0 && c.step < 99) { c.step--; c.unseen = 1.3; placeCostume(c); }
+  }
+}
+function placeCostume(c) { var sp = WORLD.costume, door = new THREE.Vector3(6.0, 1.0, 6.3); sp.position.copy(c.home).lerp(door, Math.min(1, c.step / 4.5)); var s = 1 + Math.min(1, c.step / 4.5) * 0.08; sp.scale.set(1.2 * s, 2.0 * s, 1); }
+function costumeEnters() {
+  var door = new THREE.Vector3(6, 2.3, 4.9);
+  sfx('doorbell', door); openDoorAnim(); jukeStop(0.05);
+  setTimeout(function () { if (GAME.mode !== 'play') return; if (WORLD.costume) WORLD.costume.visible = false; anomalyFail(null, pickFace(['costume', 'plush'], 'costume'), { rule: 'costume' }); }, 900);
+}
 
 
 // ===== 99_main.js =====

@@ -140,6 +140,20 @@ var UI_CSS = function () {
     '.sub .more{position:absolute;right:2px;bottom:-2px;width:18px;height:18px;color:rgba(243,230,200,.7);animation:bob 1s ease-in-out infinite;}',
     '@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}',
     '.subtap{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 16px + 76px + 6px);height:120px;pointer-events:auto;}',
+    // while cooking: taps belong to the griddle. Windows stack under the cooking panel (JS sets top): panel -> phone -> subtitle -> 2nd button
+    '#ssd-ui.cooking .subtap{display:none!important}',
+    '#ssd-ui.cooking .subband{bottom:auto;z-index:6;padding:8px 12px 10px;border-radius:12px;background:rgba(8,8,11,.78);border:1px solid rgba(216,221,226,.22);}',
+    '#ssd-ui.cooking .subband .sub .l1{font-size:17px}#ssd-ui.cooking .subband .sub .more{display:none}',
+    '#ssd-ui.cooking .callcard{z-index:7}',
+    '#ssd-ui.cooking .subband.hide{transition:none}#ssd-ui.cooking .speedbtn{opacity:0;pointer-events:none}',
+    '#ssd-ui.cooking.tight1 .subband{padding:5px 10px 6px;min-height:0}#ssd-ui.cooking.tight1 .subband .sub{padding:2px}#ssd-ui.cooking.tight1 .subband .sub .who{height:18px;line-height:18px;margin-bottom:3px}#ssd-ui.cooking.tight1 .subband .sub .l1{font-size:15px;line-height:1.25;min-height:0}#ssd-ui.cooking.tight1 .subband .sub .l2{font-size:11.5px;line-height:1.35;margin-top:2px}',
+    '#ssd-ui.cooking.tight1 .callcard{padding:8px 12px}#ssd-ui.cooking.tight1 .callcard .ct{font-size:15px}#ssd-ui.cooking.tight1 .callcard .cj{margin:0 0 6px 34px;font-size:10.5px}#ssd-ui.cooking.tight1 .callcard button{height:40px}',
+    '#ssd-ui.cooking.tight1 .mb2{height:48px}',
+    '#ssd-ui.cooking.tight2 .mini .tt{display:none}#ssd-ui.cooking.tight2 .mini .ins{margin-top:0}#ssd-ui.cooking.tight2 .subband .sub .l2{display:none}',
+    '.mb2{position:absolute;left:50%;transform:translateX(-50%);height:54px;min-width:200px;max-width:calc(100% - 40px);z-index:7;}',
+    '.mb2 .ic{width:24px;height:24px}.mb2 .en{font-size:16px}',
+    '.mb2:active,.mb2.down{transform:translateX(-50%) translateY(3px);}',
+    '.mb2.hidden{transform:translateX(-50%) translateY(8px) scale(.96);}',
     // ---- choice slip (guest check)
     '.slip{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 16px + 76px + 12px);width:min(340px,calc(100% - 40px));transform:translateX(-50%) rotate(-1.2deg);',
     ' padding:30px 18px 16px;color:#1f3b8a;background-color:#eef3e4;background-image:var(--slipbg);background-size:cover;border-radius:2px;',
@@ -186,7 +200,7 @@ function buildUI() {
   U.pause = el('button', 'sb dark pausebtn pe', icon('pause', 24), UI); U.pause.setAttribute('aria-label', 'Pause');
   U.speed = el('button', 'sb dark speedbtn pe', icon('skip', 18) + '<b>×1</b>', UI); U.speed.setAttribute('aria-label', 'Game speed');
   pressFX(U.speed);
-  onTap(U.speed, function () { GAME.spd = (GAME.spd || 1) >= 3 ? 1 : (GAME.spd || 1) + 1; sfx('click'); refreshSpeed(); toast('Speed ×' + GAME.spd, GAME.spd > 1 ? '時間を早送り（異変・料理・冷凍庫のあいだは等速）' : 'ふつうの速さ', 1.8); });
+  onTap(U.speed, function () { GAME.spd = (GAME.spd || 1) >= 3 ? 1 : (GAME.spd || 1) + 1; sfx('click'); refreshSpeed(); toast('Speed ×' + GAME.spd, GAME.spd > 1 ? '時間を早送り（異変の気配・料理・冷凍庫のあいだは等速）' : 'ふつうの速さ', 1.8); });
   // subtitles
   U.sub = el('div', 'subband hide', '<div class="sub"><div class="who"></div><div class="l1"></div><div class="l2"></div><svg class="more" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div>', UI);
   U.subTap = el('div', 'subtap', null, UI); U.subTap.style.display = 'none';
@@ -197,6 +211,8 @@ function buildUI() {
   U.rulesBtn = el('button', 'sb left pe', icon('rules', 24) + '<span class="lbl">RULES</span>', U.band);
   U.mapBtn = el('button', 'sb mint right pe', icon('map', 24) + '<span class="lbl">MAP</span>', U.band);
   U.main = el('button', 'mb pe hidden', '', U.band);
+  U.main2 = el('button', 'mb mb2 danger pe hidden', '', UI); pressFX(U.main2);
+  onTap(U.main2, function () { if (U.main2Act && U.main2Act.fn) { sfx('click'); U.main2Act.fn(); } });
   U.toast = el('div', 'toast hide', '', UI);
   U.flash = el('div', 'flash', null, UI);
   U.layer = el('div', null, null, UI); U.layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
@@ -209,7 +225,7 @@ function pressFX(b) {
   b.addEventListener('pointerdown', function () { b.classList.add('down'); });
   ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { b.addEventListener(n, function () { b.classList.remove('down'); }); });
 }
-function refreshSpeed() { if (!U.speed) return; var s = GAME.spd || 1; U.speed.querySelector('b').textContent = '×' + s; U.speed.classList.toggle('on', s > 1); U.speed.classList.toggle('hold', s > 1 && !!(GAME.inAnomaly || MINI.active || CAM.inFreezer)); }
+function refreshSpeed() { if (!U.speed) return; var s = GAME.spd || 1; U.speed.querySelector('b').textContent = '×' + s; U.speed.classList.toggle('on', s > 1); U.speed.classList.toggle('hold', s > 1 && !!(GAME.inAnomaly || MINI.active || CAM.inFreezer || GAME.soon)); }
 function setGameHUD(on) {
   [U.hud, U.pause, U.speed, U.band, U.shade].forEach(function (e) { e.style.display = on ? '' : 'none'; });
 }
@@ -221,6 +237,30 @@ function setMain(act) {
   if (U.main._key !== key) { U.main.innerHTML = icon(act.icon || 'ok', 30) + '<span class="tx"><span class="en">' + act.en + '</span><span class="ja">' + act.ja + '</span></span>'; U.main._key = key; }
   U.main.classList.remove('hidden');
   U.main.classList.toggle('danger', !!act.danger); U.main.classList.toggle('glow', !!act.glow);
+}
+function setMain2(act) {
+  U.main2Act = act;
+  if (!act) { U.main2.classList.add('hidden'); return; }
+  var key = act.icon + act.en + act.ja;
+  if (U.main2._key !== key) { U.main2.innerHTML = icon(act.icon || 'ok', 24) + '<span class="tx"><span class="en">' + act.en + '</span><span class="ja">' + act.ja + '</span></span>'; U.main2._key = key; }
+  U.main2.classList.remove('hidden'); U.main2.classList.toggle('glow', !!act.glow);
+}
+// cooking layout: stack the windows top-to-bottom under the cooking panel so nothing overlaps
+function stackCooking() {
+  var on = !!(MINI.active && GAME.mode === 'play');
+  if (UI.classList.contains('cooking') !== on) UI.classList.toggle('cooking', on);
+  var list = [U.call, SUBQ.cur ? U.sub : null, U.main2Act ? U.main2 : null, U.toast.classList.contains('hide') ? null : U.toast];
+  if (!on) { if (U._stacked) { U._stacked = false; [U.call, U.sub, U.main2, U.toast].forEach(function (e) { if (e) e.style.top = ''; }); } return; }
+  U._stacked = true;
+  var base = UI.getBoundingClientRect().top, r = U.mini.getBoundingClientRect(), y = (U.mini.classList.contains('hide') ? r.top + 8 : r.bottom) - base + 8;
+  // keep clear of the cooking chips / main button at the bottom: tighten the subtitle if needed
+  var chipsOn = !!U.chips.firstChild, lim = (chipsOn ? U.chips.getBoundingClientRect().top : (U.mainAct ? U.main.getBoundingClientRect().top : U.band.getBoundingClientRect().top + 8)) - base - 6;
+  var measure = function () { var n = (U.mini.classList.contains('hide') ? r.top + 8 : U.mini.getBoundingClientRect().bottom) - base + 8; list.forEach(function (e) { if (e) n += e.offsetHeight + 6; }); return n; };
+  // tighten step by step until everything fits above the cooking controls
+  UI.classList.remove('tight1', 'tight2');
+  if (measure() > lim) { UI.classList.add('tight1'); if (measure() > lim) UI.classList.add('tight2'); }
+  y = (U.mini.classList.contains('hide') ? r.top + 8 : U.mini.getBoundingClientRect().bottom) - base + (UI.classList.contains('tight2') ? 6 : 8);
+  list.forEach(function (e) { if (!e) return; e.style.top = Math.round(y) + 'px'; y += e.offsetHeight + 6; });
 }
 function setClock(min, night) { // min since 22:00
   var tot = (22 * 60 + Math.floor(min)) % 1440, h = Math.floor(tot / 60), m = tot % 60, ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
@@ -262,7 +302,7 @@ function hideChoices() { U.slip.classList.add('hide'); SLIP.open = false; U.sub.
 function showCall(title, ja, onPick, onLet) {
   hideCall();
   var c = el('div', 'callcard', '<div class="ct">' + icon('phone', 24) + '<span>' + title + '</span></div><div class="cj">' + ja + '</div><div class="cb"><button class="pick">PICK UP<small>電話に出る</small></button><button class="let">LET IT RING<small>出ない</small></button></div>', UI);
-  U.call = c; UI.classList.add('calling');
+  U.call = c; UI.classList.add('calling'); if (MINI.active) stackCooking();
   onTap(c.querySelector('.pick'), function () { sfx('click'); hideCall(); onPick && onPick(); });
   onTap(c.querySelector('.let'), function () { sfx('click'); hideCall(); onLet && onLet(); });
 }
@@ -276,7 +316,7 @@ function subShow(line) {
   who.className = 'who ' + (line.cls || WHO_CLASS[line.who] || '');
   U.sub.querySelector('.l1').textContent = ''; U.sub.querySelector('.l2').textContent = line.ja || '';
   U.sub.querySelector('.more').style.opacity = 0;
-  U.sub.classList.remove('hide'); U.subTap.style.display = '';
+  U.sub.classList.remove('hide'); U.subTap.style.display = MINI.active ? 'none' : '';
   U.sub.classList.toggle('top', SLIP.open); U.subTap.classList.toggle('top', SLIP.open);
 }
 function subUpdate(dt) {

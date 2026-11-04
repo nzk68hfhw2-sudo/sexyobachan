@@ -336,11 +336,12 @@ function startAmbience() {
 function updateAmbience(dt) {
   if (!AMB.hum) return; var t = AUDIO.ctx.currentTime, sp = AUDIO.space;
   var inside = sp !== 'outside', fz = sp === 'freezer';
-  AMB.hum.g.gain.setTargetAtTime((fz ? 0.09 : AMB.hum.base) * (typeof GAME !== 'undefined' && GAME && GAME.blackout ? 0 : 1), t, 0.5);
-  AMB.neon.g.gain.setTargetAtTime(AMB.neon.base * LSTATE.neon * (inside ? 1 : 0.3), t, 0.2);
-  AMB.room.g.gain.setTargetAtTime(0.02, t, 0.5);
+  var hush = typeof GAME !== 'undefined' && GAME && GAME.hush ? 0.08 : 1; // the hush before something happens
+  AMB.hum.g.gain.setTargetAtTime((fz ? 0.09 : AMB.hum.base) * (typeof GAME !== 'undefined' && GAME && GAME.blackout ? 0 : 1) * hush, t, hush < 1 ? 1.2 : 0.5);
+  AMB.neon.g.gain.setTargetAtTime(AMB.neon.base * LSTATE.neon * (inside ? 1 : 0.3) * hush, t, hush < 1 ? 1.2 : 0.2);
+  AMB.room.g.gain.setTargetAtTime(0.02 * hush, t, 0.5);
   var r = FX.rain || 0, muff = fz ? 0.15 : (inside ? 0.45 : 1);
-  AMB.rain.g.gain.setTargetAtTime(r * 0.09 * muff, t, 0.6); AMB.rain.b.frequency.setTargetAtTime(inside ? 1100 : 2400, t, 0.5);
+  AMB.rain.g.gain.setTargetAtTime(r * 0.09 * muff * (hush < 1 ? 0.3 : 1), t, 0.6); AMB.rain.b.frequency.setTargetAtTime(inside ? 1100 : 2400, t, 0.5);
   AMB.rainLow.g.gain.setTargetAtTime(r * 0.12 * muff, t, 0.6);
   AMB.wind.g.gain.setTargetAtTime((0.02 + r * 0.04) * (inside ? 0.4 : 1) * (0.7 + 0.3 * Math.sin(t * 0.3)), t, 1);
   AMB.wind.b.frequency.setTargetAtTime(300 + 200 * Math.sin(t * 0.13), t, 1);
