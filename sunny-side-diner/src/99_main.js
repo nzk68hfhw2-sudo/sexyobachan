@@ -11,6 +11,9 @@ function mainLoop() {
   var n = performance.now() / 1000, dt = Math.min(DEV ? 0.25 : 0.05, n - (CLOCK.last || n)); CLOCK.last = n;
   CLOCK.dt = dt; CLOCK.t += dt;
   var t = CLOCK.t;
+  // follow the real size of the page (embedded frames can grow after start without a resize event)
+  var cw = ROOT.clientWidth || window.innerWidth, ch = ROOT.clientHeight || window.innerHeight;
+  if (cw !== RENDER.w || ch !== RENDER.h) onResize();
   try {
     for (var i = 0; i < HOOKS.length; i++) HOOKS[i](dt, t);
     updateLights(dt, t);
@@ -41,6 +44,7 @@ function boot() {
         RENDER.shadowDirty = true;
         if (typeof initGame === 'function') initGame();
         window.__ssdReady = true;
+        try { if (window.ResizeObserver) new ResizeObserver(function () { onResize(); }).observe(ROOT); } catch (e) {}
         mainLoop();
       } catch (e) { console.error(e); showFatal('起動中にエラーが起きました', (e && e.stack) || String(e)); }
     });

@@ -5149,7 +5149,7 @@ var SCR_CSS = [
   '.cm .tvframe{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 120px rgba(40,20,0,.75),inset 0 0 30px rgba(0,0,0,.5);background:repeating-linear-gradient(0deg,rgba(0,0,0,.08) 0 1px,transparent 1px 3px)}',
   '.logo{position:absolute;left:0;right:0;top:calc(var(--top-safe) + 18px);text-align:center;pointer-events:none}',
   '.logo .l1{font:400 min(46px,11.5vw)/1.05 Pacifico,cursive;color:#c8282e;text-shadow:0 3px 0 #fff4d8,0 6px 0 #7e1418,0 12px 18px rgba(0,0,0,.35);transform:rotate(-4deg);display:inline-block;padding:0 8px}',
-  '.logo .l2{margin-top:12px;font:400 17px/1 "Alfa Slab One",serif;color:#7e1418;letter-spacing:.2em}',
+  '.logo .l2{margin-top:22px;font:400 17px/1 "Alfa Slab One",serif;color:#7e1418;letter-spacing:.2em}',
   '.logo .l3{display:inline-block;margin-top:10px;padding:6px 14px;border-radius:999px;background:#c8282e;color:#fff4d8;font:600 13px/1 Oswald,sans-serif;letter-spacing:.24em;box-shadow:0 3px 0 #7e1418}',
   '.titlemenu{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);transform:translateX(-50%);width:min(320px,calc(100% - 40px));display:flex;flex-direction:column;gap:14px}',
   '.titlemenu .mb{position:relative;left:auto;transform:none;max-width:none;width:100%}',
@@ -5225,7 +5225,7 @@ function drawCMFrame(dt) {
   CM.next -= dt;
   if (CM.next <= 0 && !CM.gl) { CM.gl = 0.25 + Math.random() * 0.45; sfx('static', null, { len: CM.gl, vol: 0.5 }); }
   if (CM.gl > 0) { CM.gl -= dt; CM.el.style.opacity = Math.random() < 0.8 ? 0 : 0.5; PU.uGlitch.value = 0.6; PU.uVHS.value = 1; if (CM.gl <= 0) { CM.gl = 0; CM.next = 5 + Math.random() * 5; CM.el.style.opacity = 1; PU.uGlitch.value = 0; PU.uVHS.value = 0; } }
-  var cv = CM.cv, w = Math.round(RENDER.w * 0.75), h = Math.round(RENDER.h * 0.75); if (cv.width !== w) { cv.width = w; cv.height = h; }
+  var cv = CM.cv, w = Math.round((cv.clientWidth || RENDER.w) * 0.75), h = Math.round((cv.clientHeight || RENDER.h) * 0.75); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
   if (RENDER.frame % 2) return;
   var g = cv.getContext('2d');
   var gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#ffe7a0'); gr.addColorStop(1, '#f2a24e'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
@@ -5321,7 +5321,7 @@ function showSunnyCard(en, ja, cb) {
   var s = scr('sunnycard', '<canvas></canvas><div class="bubble"><div class="e">' + en + '</div><div class="j">' + ja + '</div></div>');
   var cv = s.querySelector('canvas'), t0 = performance.now();
   var draw = function () {
-    if (!s.parentNode) return; var t = (performance.now() - t0) / 1000, w = cv.width = Math.round(RENDER.w * 0.8), h = cv.height = Math.round(RENDER.h * 0.8), g = cv.getContext('2d');
+    if (!s.parentNode) return; var t = (performance.now() - t0) / 1000, w = cv.width = Math.round((cv.clientWidth || RENDER.w) * 0.8), h = cv.height = Math.round((cv.clientHeight || RENDER.h) * 0.8), g = cv.getContext('2d');
     var gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#ffe7a0'); gr.addColorStop(1, '#f2a24e'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
     g.save(); g.translate(w / 2, h * 0.6); g.rotate(t * 0.2); for (var i = 0; i < 16; i++) { g.fillStyle = i % 2 ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0)'; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, h, i / 16 * TAU, (i + 0.5) / 16 * TAU); g.fill(); } g.restore();
     drawSunny(g, w / 2, h * 0.6 + Math.sin(t * 5) * 6, Math.min(w, h) * 0.2, { wave: 0.4 + Math.sin(t * 8) * 0.7 });
@@ -5516,6 +5516,9 @@ function mainLoop() {
   var n = performance.now() / 1000, dt = Math.min(DEV ? 0.25 : 0.05, n - (CLOCK.last || n)); CLOCK.last = n;
   CLOCK.dt = dt; CLOCK.t += dt;
   var t = CLOCK.t;
+  // follow the real size of the page (embedded frames can grow after start without a resize event)
+  var cw = ROOT.clientWidth || window.innerWidth, ch = ROOT.clientHeight || window.innerHeight;
+  if (cw !== RENDER.w || ch !== RENDER.h) onResize();
   try {
     for (var i = 0; i < HOOKS.length; i++) HOOKS[i](dt, t);
     updateLights(dt, t);
@@ -5546,6 +5549,7 @@ function boot() {
         RENDER.shadowDirty = true;
         if (typeof initGame === 'function') initGame();
         window.__ssdReady = true;
+        try { if (window.ResizeObserver) new ResizeObserver(function () { onResize(); }).observe(ROOT); } catch (e) {}
         mainLoop();
       } catch (e) { console.error(e); showFatal('起動中にエラーが起きました', (e && e.stack) || String(e)); }
     });
