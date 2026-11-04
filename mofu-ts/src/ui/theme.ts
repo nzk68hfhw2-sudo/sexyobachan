@@ -6,10 +6,22 @@
 
 import type { Settings } from "../types";
 
+/**
+ * ゲームを開いた時点でついていた印。
+ * Claude の上などで動かすと、外側（ページを表示している側）が
+ * 最初から data-theme をつけてくれていることがあります。
+ * 「自動」のときは、その印をそのまま使います。
+ */
+const hostTheme: string | undefined = document.documentElement.dataset.theme;
+
 export function applySettings(s: Settings): void {
   const root = document.documentElement;
-  // "auto" のときは印をつけず、パソコンやスマホの設定にまかせる
-  if (s.theme === "auto") delete root.dataset.theme;
-  else root.dataset.theme = s.theme;
+  if (s.theme === "auto") {
+    // 「自動」は、外側の印か、パソコンやスマホの設定にまかせる
+    if (hostTheme === undefined) delete root.dataset.theme;
+    else root.dataset.theme = hostTheme;
+  } else {
+    root.dataset.theme = s.theme;
+  }
   root.dataset.font = s.fontSize;
 }
