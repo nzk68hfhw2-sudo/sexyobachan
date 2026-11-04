@@ -2500,7 +2500,7 @@ var UI_CSS = function () {
     // ---- choice slip (guest check)
     '.slip{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 16px + 76px + 12px);width:min(340px,calc(100% - 40px));transform:translateX(-50%) rotate(-1.2deg);',
     ' padding:30px 18px 16px;color:#1f3b8a;background-color:#eef3e4;background-image:var(--slipbg);background-size:cover;border-radius:2px;',
-    ' box-shadow:0 14px 28px rgba(0,0,0,.55),0 2px 3px rgba(0,0,0,.35);pointer-events:auto;transition:transform .26s cubic-bezier(.2,.9,.3,1.2),opacity .2s;opacity:1;}',
+    ' box-shadow:0 14px 28px rgba(0,0,0,.55),0 2px 3px rgba(0,0,0,.35);pointer-events:auto;transition:transform .26s cubic-bezier(.2,.9,.3,1.2),opacity .2s;opacity:1;z-index:30;}',
     '.slip.hide{opacity:0;transform:translateX(-50%) translateY(40px) rotate(4deg);pointer-events:none;}',
     '.slip::before{content:"";position:absolute;left:0;right:0;top:-7px;height:8px;background:radial-gradient(circle at 5px -1px,transparent 5px,#eef3e4 5.5px) -1px 0/10px 8px repeat-x;}',
     '.slip .hd{position:absolute;left:18px;right:18px;top:9px;display:flex;justify-content:space-between;font:600 10px/1 Oswald,sans-serif;letter-spacing:.2em;color:#2f7e6e;}',
