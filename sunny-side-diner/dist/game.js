@@ -2473,6 +2473,22 @@ var UI_CSS = function () {
     '.btnband .mb.hidden{transform:translateX(-50%) translateY(12px) scale(.96);}',
     '.subband{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px + 76px + 14px);min-height:84px;pointer-events:none;transition:opacity .25s,transform .25s;}',
     '.subband.hide{opacity:0;transform:translateY(8px);}',
+    // while a guest check (choices) is open, the subtitle moves to the top instead of disappearing
+    '.subband.top{bottom:auto;top:calc(var(--top-safe) + 64px);z-index:6;padding:8px 12px 10px;border-radius:12px;background:rgba(8,8,11,.78);border:1px solid rgba(216,221,226,.22);}',
+    '#ssd-ui.calling .subband.top{top:calc(var(--top-safe) + 196px)}',
+    '.subtap.top{bottom:auto;top:calc(var(--top-safe) + 60px);height:110px;z-index:6}',
+    '#ssd-ui.calling .subtap.top{top:calc(var(--top-safe) + 192px)}',
+    // the ringing phone: its own card, never replaced by other windows
+    '.callcard{position:absolute;left:20px;right:84px;top:calc(var(--top-safe) + 64px);max-width:330px;padding:12px 14px;border-radius:14px;z-index:7;pointer-events:auto;',
+    ' background:linear-gradient(180deg,#f7a9c6,#e97fa8) padding-box,linear-gradient(160deg,#fff,#8e979f 35%,#eef1f3 55%,#5a6168) border-box;border:2px solid transparent;box-shadow:0 10px 22px rgba(0,0,0,.55);color:#3a0a1c;animation:callin .3s cubic-bezier(.2,.9,.3,1.2) both}',
+    '@keyframes callin{0%{opacity:0;transform:translateY(-10px) rotate(-1deg)}100%{opacity:1;transform:none}}',
+    '.callcard .ct{display:flex;align-items:center;gap:10px;font:400 17px/1.1 "Alfa Slab One",serif;letter-spacing:.03em}.callcard .ct .ic{width:24px;height:24px;animation:ring .5s ease-in-out infinite}',
+    '@keyframes ring{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}',
+    '.callcard .cj{font:600 11.5px/1.4 "Zen Kaku Gothic New",sans-serif;margin:2px 0 10px 34px;color:#5a1430}',
+    '#ssd-ui.calling .rail{opacity:0;pointer-events:none}',
+    '.callcard .cb{display:flex;gap:10px}.callcard button{flex:1;height:46px;border-radius:999px;border:2px solid #fff3f7;font:600 14px/1.1 Oswald,sans-serif;letter-spacing:.06em;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 3px 0 rgba(90,10,40,.5)}',
+    '.callcard button small{font:600 10px/1.2 "Zen Kaku Gothic New";letter-spacing:0}.callcard .pick{background:#c8282e;color:#fff4dc}.callcard .let{background:#fbf3e0;color:#3a0a1c}',
+    '.callcard button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(90,10,40,.5)}',
     '.sub{position:relative;padding:4px 4px 2px;}',
     '.sub .who{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 10px;border-radius:999px;background:rgba(200,40,46,.9);color:#fff4dc;font:600 11px/22px Oswald,sans-serif;letter-spacing:.16em;margin-bottom:8px;box-shadow:0 2px 6px rgba(0,0,0,.5);}',
     '.sub .who.sunny{background:linear-gradient(90deg,#ffb21c,#ff7a2e);color:#3a1600}.sub .who.mgr{background:#2f7e6e}.sub .who.odd{background:#3a3d44;color:#cfd6dd}.sub .who.you{background:#5a6c8a}',
@@ -2502,7 +2518,7 @@ var UI_CSS = function () {
     '.slip .opt.o-minor .ic{width:20px;height:20px;color:#6a7480}',
     '.slip .opt.o-minor .en{font-size:16px;color:#5a6478}.slip .opt.o-minor .ja{font-size:10.5px;color:#7a8290}',
     // toast / big title
-    '.toast{position:absolute;left:50%;top:calc(var(--top-safe) + 70px);transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(12,13,16,.88);border:1.5px solid rgba(216,221,226,.35);text-align:center;font-size:13px;color:var(--cream);box-shadow:0 8px 18px rgba(0,0,0,.5);transition:opacity .3s,transform .3s;max-width:calc(100% - 40px);}',
+    '.toast{position:absolute;left:50%;top:38%;z-index:8;transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(12,13,16,.88);border:1.5px solid rgba(216,221,226,.35);text-align:center;font-size:13px;color:var(--cream);box-shadow:0 8px 18px rgba(0,0,0,.5);transition:opacity .3s,transform .3s;max-width:calc(100% - 40px);}',
     '.toast .en{font-size:16px;color:#fff3d6}.toast.hide{opacity:0;transform:translateX(-50%) translateY(-6px)}',
     // hotspot labels (3D markers) — drawn in 3D, label in DOM
     '.hint{position:absolute;transform:translate(-50%,-100%);font:600 11px/1 Oswald,sans-serif;letter-spacing:.14em;color:#e8fbff;text-shadow:0 0 8px #5be8ff,0 1px 2px #000;white-space:nowrap;pointer-events:none;transition:opacity .3s;}',
@@ -2573,7 +2589,10 @@ function setClock(min, night) { // min since 22:00
 function setTips(v, show) { U.tips.querySelector('span').textContent = fmtMoney(v); U.tips.classList.toggle('hide', !show); }
 function setCold(v, show) { U.cold.querySelector('b').style.width = Math.round(clamp(v, 0, 1) * 100) + '%'; U.cold.classList.toggle('hide', !show); }
 var TOAST_T = 0;
-function toast(en, ja, sec) {
+function toast(en, ja, sec, tries) {
+  // wait while a guest check / phone card / top subtitle is on screen (so nothing overlaps), up to ~6s
+  tries = tries || 0;
+  if (tries < 10 && (SLIP.open || U.call || (SUBQ.cur && U.sub.classList.contains('top')))) { setTimeout(function () { toast(en, ja, sec, tries + 1); }, 600); return; }
   U.toast.innerHTML = '<span class="en">' + en + '</span>' + (ja ? '<span class="ja">' + ja + '</span>' : '');
   U.toast.classList.remove('hide'); clearTimeout(TOAST_T); TOAST_T = setTimeout(function () { U.toast.classList.add('hide'); }, (sec || 2.4) * 1000);
 }
@@ -2588,14 +2607,23 @@ function showChoices(title, opts, meta) {
   U.slip.innerHTML = h;
   U.slip.style.setProperty('--slipbg', PAPER.slip ? 'url(' + PAPER.slip + ')' : 'none');
   U.slip.style.transform = ''; U.slip.classList.remove('hide'); SLIP.open = true;
-  U.sub.classList.add('hide');
+  U.sub.classList.add('top'); U.subTap.classList.add('top');
   sfx('paper');
   U.slip.querySelectorAll('.opt').forEach(function (n) {
     pressFX(n);
     onTap(n, function () { var i = +n.getAttribute('data-i'); hideChoices(); sfx('pen'); if (i >= 0 && opts[i].fn) opts[i].fn(); else if (meta.onCancel) meta.onCancel(); });
   });
 }
-function hideChoices() { U.slip.classList.add('hide'); SLIP.open = false; }
+function hideChoices() { U.slip.classList.add('hide'); SLIP.open = false; U.sub.classList.remove('top'); U.subTap.classList.remove('top'); }
+// the ringing phone card (independent of the guest check)
+function showCall(title, ja, onPick, onLet) {
+  hideCall();
+  var c = el('div', 'callcard', '<div class="ct">' + icon('phone', 24) + '<span>' + title + '</span></div><div class="cj">' + ja + '</div><div class="cb"><button class="pick">PICK UP<small>電話に出る</small></button><button class="let">LET IT RING<small>出ない</small></button></div>', UI);
+  U.call = c; UI.classList.add('calling');
+  onTap(c.querySelector('.pick'), function () { sfx('click'); hideCall(); onPick && onPick(); });
+  onTap(c.querySelector('.let'), function () { sfx('click'); hideCall(); onLet && onLet(); });
+}
+function hideCall() { if (U.call && U.call.parentNode) U.call.parentNode.removeChild(U.call); U.call = null; UI.classList.remove('calling'); }
 // ---- subtitles --------------------------------------------------------------------------
 var SUBQ = { cur: null, queue: [], typing: 0, timer: 0 };
 var WHO_CLASS = { SUNNY: 'sunny', MANAGER: 'mgr', DALE: 'mgr', YOU: 'you', '???': 'odd' };
@@ -2606,7 +2634,7 @@ function subShow(line) {
   U.sub.querySelector('.l1').textContent = ''; U.sub.querySelector('.l2').textContent = line.ja || '';
   U.sub.querySelector('.more').style.opacity = 0;
   U.sub.classList.remove('hide'); U.subTap.style.display = '';
-  if (SLIP.open) U.sub.classList.add('hide');
+  U.sub.classList.toggle('top', SLIP.open); U.subTap.classList.toggle('top', SLIP.open);
 }
 function subUpdate(dt) {
   var L = SUBQ.cur; if (!L) return;
@@ -3944,7 +3972,9 @@ function makeOrder(C) {
   return items;
 }
 function takeOrder(C) {
+  if (C.state !== 'ready') return; // one order per guest, even if the button is tapped twice
   if (C.anomaly && C.anomaly.onServe && C.anomaly.onServe(C, 'order') === true) return;
+  C.state = 'ordering';
   hideMenuProp(C); setPose(C.P, 'sit'); C.P.lookAtCam = true;
   C.items = C.forcedItems || makeOrder(C);
   var odd = C.items.filter(function (it) { return it.odd; })[0];
@@ -3960,11 +3990,16 @@ function takeOrder(C) {
   });
 }
 function writeTicket(C) {
+  if ((C.ticket && !C.ticket.done) || C.state === 'leaving' || C.state === 'gone') return;
   var T = { no: ++TICKET_NO, cust: C, items: C.items, ready: false, done: false, table: C.seat ? (C.seat.kind === 'stool' ? 'CTR ' + C.seat.id.slice(1) : 'BOOTH ' + C.seat.booth) : '?', t: 0 };
   C.ticket = T; TICKETS.push(T); C.state = 'ordered'; C.pat = C.patMax = PATIENCE.ordered + C.items.length * 25; C.P.lookAtCam = false;
   sfx('pen'); sfx('paper', null, { delay: 0.3 });
   toast('Ticket No.' + T.no + ' → kitchen', '注文票が厨房に入った', 2);
   refreshTickets();
+}
+// drop tickets nobody is waiting for any more (guest left, or replaced) — Booth 4's ghost ticket stays
+function pruneTickets() {
+  for (var i = TICKETS.length - 1; i >= 0; i--) { var T = TICKETS[i]; if (T.booth4) continue; var C = T.cust; if (!C || C.ticket !== T || C.state === 'leaving' || C.state === 'gone' || CUSTS.indexOf(C) < 0) { TICKETS.splice(i, 1); if (T.plates) { T.plates.forEach(function (p) { RENDER.scene.remove(p); freeGeo(p); }); T.plates = null; } } }
 }
 function removeTicket(T) { var i = TICKETS.indexOf(T); if (i >= 0) TICKETS.splice(i, 1); if (T.plates) { T.plates.forEach(function (p) { RENDER.scene.remove(p); freeGeo(p); }); T.plates = null; } refreshTickets(); }
 function refuseOdd(C) {
@@ -4092,6 +4127,7 @@ function buildRail() {
   U.rail = el('div', 'rail', '', UI); U.rail.style.display = 'none';
 }
 function refreshTickets() {
+  pruneTickets();
   if (!U.rail) return;
   U.rail.innerHTML = '';
   TICKETS.forEach(function (T, i) {
@@ -4530,11 +4566,11 @@ var ANOM = {
     hint: ['That phone? Let it ring. Twice. Third time you can pick up.', 'あの電話か？ 2回は鳴らしとけ。3回目なら出ていい。'],
     start: function (A) { A.bg = true; A.ring = 0; A.next = 1; A.face = pickFace(['shadow', 'glitch'], 'phone'); ringSession(A); },
     update: function (A, dt) {
-      if (A.ringing) { A.rt -= dt; A.rr -= dt; if (A.rr <= 0) { A.rr = 2.4; sfx('ring', WORLD.phonePos, { distort: (A.ring - 1) * 0.35, vol: 1.1 }); WORLD.handset.position.x = -0.17 + (Math.random() - 0.5) * 0.004; } if (A.rt <= 0) { A.ringing = false; if (A.ring >= 3) anomalyResolve(A, false); else A.wait = 70 + Math.random() * 90; } }
+      if (A.ringing) { A.rt -= dt; A.rr -= dt; if (A.rr <= 0) { A.rr = 2.4; sfx('ring', WORLD.phonePos, { distort: (A.ring - 1) * 0.35, vol: 1.1 }); WORLD.handset.position.x = -0.17 + (Math.random() - 0.5) * 0.004; } if (A.rt <= 0) { A.ringing = false; hideCall(); if (A.ring >= 3) anomalyResolve(A, false); else A.wait = 70 + Math.random() * 90; } }
       else if (A.wait != null && !A.done) { A.wait -= dt; if (A.wait <= 0) { A.wait = null; ringSession(A); } }
     },
     answer: function (A) {
-      if (!A.ringing) return; A.ringing = false; sfx('handset', WORLD.phonePos);
+      if (!A.ringing) return; A.ringing = false; hideCall(); sfx('handset', WORLD.phonePos);
       if (A.ring < 3) { // wrong
         setTimeout(function () { sfx('whisper', null, { vol: 1 }); say('???', '...' + (SAVE.name || 'friend') + '... come outside...', '……' + (SAVE.name || 'ともだち') + '……そとに おいで……', { voice: 'odd', odd: true, cls: 'odd' }).then(function () { anomalyFail(A, A.face, { rule: 'phone' }); }); }, 500);
       } else { // third time: it's fine — lore + hint
@@ -4696,16 +4732,13 @@ function ringSession(A) { A.ring++; A.ringing = true; A.rt = 14; A.rr = 0; setTi
 // wherever you are, the ringing phone asks you: pick up, or let it ring
 function phonePrompt(A, ring) {
   if (!A.ringing || A.ring !== ring || A.done || GAME.mode !== 'play') return;
-  if (SLIP.open || MINI.active || DOC.open || TALK.busy || CAM.inFreezer || CAM.outside || JS.on) { setTimeout(function () { phonePrompt(A, ring); }, 1500); return; }
+  if (MINI.active || DOC.open || CAM.inFreezer || CAM.outside || JS.on || PAUSE.el) { setTimeout(function () { phonePrompt(A, ring); }, 1200); return; }
   var nth = ['', '1st ring', '2nd time', '3rd time'][Math.min(3, ring)], nthJa = ['', '1回目', '2回目', '3回目'][Math.min(3, ring)];
-  showChoices('The pink phone (' + nth + ')', [
-    { icon: 'phone', en: 'Pick up', ja: '電話に出る（' + nthJa + '）', fn: function () {
-      if (!A.ringing) { toast('It stopped ringing.', '電話は鳴りやんだ。', 1.6); return; }
-      var answer = function () { if (A.ringing) ANOM.phone.answer(A); };
-      if (CAM.station === 'JUKEBOX') answer(); else { CAM.afterArrive = function () { turnToward(WORLD.phonePos); setTimeout(answer, 350); }; goStation('JUKEBOX'); }
-    } },
-    { icon: 'silent', en: 'Let it ring', ja: '出ない（鳴らしておく）', fn: function () { toast('You let it ring.', '電話は鳴らしておいた。', 1.4); } }
-  ], { noCancel: true, table: 'PHONE' });
+  showCall('The pink phone — ' + nth, 'ピンクの電話が鳴っている（' + nthJa + '）', function () {
+    if (!A.ringing) { toast('It stopped ringing.', '電話は鳴りやんだ。', 1.6); return; }
+    var answer = function () { if (A.ringing) ANOM.phone.answer(A); };
+    if (CAM.station === 'JUKEBOX') answer(); else { CAM.afterArrive = function () { turnToward(WORLD.phonePos); setTimeout(answer, 350); }; goStation('JUKEBOX'); }
+  }, function () { toast('You let it ring.', '電話は鳴らしておいた。', 1.4); });
 }
 function boothGhost(A) {
   if (A.done) return;
@@ -4725,7 +4758,7 @@ function jumpscare(n, opt) {
   if (JS.on || GAME.mode === 'dead') return;
   opt = opt || {}; JS = { on: true, t: 0, n: n || 1, P: opt.person || null, mild: SAVE.settings.scare === 'MILD' };
   GAME.mode = 'dead'; GAME.deathAt = GAME.min;
-  stopVoice(); talkCancel(); hideChoices(); closeDocs(true); if (MINI.active) { MINI.active = false; U.mini.classList.add('hide'); }
+  stopVoice(); talkCancel(); hideChoices(); hideCall(); closeDocs(true); if (MINI.active) { MINI.active = false; U.mini.classList.add('hide'); }
   jukeStop(0.05); stopMusic(0.05);
   setMain(null); setGameHUD(false);
   LSTATE.flick = 3; LSTATE.coldT = 1;
@@ -4857,6 +4890,7 @@ function clearWorld() {
   ACTIVE.slice().forEach(function (A) { if (A.cleanup) try { A.cleanup(A); } catch (e) {} if (A.def && A.def.cleanup) try { A.def.cleanup(A); } catch (e) {} }); ACTIVE.length = 0;
   SEATS.forEach(function (s) { s.taken = null; });
   if (FX.visitor) { FX.visitor.state = 'idle'; FX.visitor.obj.visible = false; }
+  hideCall(); hideChoices();
   LSTATE.lightsOn = true; LSTATE.neonOn = true; LSTATE.coldT = 0; LSTATE.cold = 0; LSTATE.flick = 0; LSTATE.eyesExtra = 1; LSTATE.kitchenFlick = false;
   setNeonEyes(0, null); jukeGlass(0, false);
   WORLD.backDoor.rotation.y = 0; CAM.inFreezer = false; CAM.outside = false; WORLD.freezerDoor.rotation.y = 0;
@@ -5254,7 +5288,7 @@ function updateGame(dt, t) {
   // pre-anomaly tape wobble on the jukebox
   var nextA = GAME.sched.filter(function (e) { return e.type === 'anom'; })[0], wob = 0;
   if (nextA) wob = clamp(1 - (nextA.at - GAME.min) / 25, 0, 1); JUKE.wobble = wob; JUKE.drift = wob * 0.6;
-  HUD_T -= dt; if (HUD_T <= 0) { HUD_T = 0.5; setClock(GAME.min, GAME.day); updateMainButton(); refreshSpeed(); }
+  HUD_T -= dt; if (HUD_T <= 0) { HUD_T = 0.5; setClock(GAME.min, GAME.day); var nT = TICKETS.length; pruneTickets(); if (TICKETS.length !== nT) refreshTickets(); updateMainButton(); refreshSpeed(); }
   UI.classList.toggle('flick', GAME.day >= 3 && GAME.min > 200);
   UI.style.setProperty('--wear', clamp((GAME.day - 1) * 0.12 + (GAME.min / SHIFT_LEN) * 0.12, 0, 0.6).toFixed(2));
   PU.uCold.value = LSTATE.cold * 0.85; PU.uGrain.value = 0.035 + LSTATE.cold * 0.025; PU.uVig.value = 0.55 + LSTATE.cold * 0.15;
@@ -5542,6 +5576,8 @@ function openSettings() {
   slider('sens', 'LOOK SENSITIVITY', '視点の感度', 0.4, 2, 0.1);
   seg('quality', 'QUALITY', '画質', ['AUTO', 'LOW', 'MEDIUM', 'HIGH'], ['AUTO', 'LOW', 'MED', 'HIGH'], function (v) { setQuality(v); });
   seg('scare', 'JUMP SCARES', 'ジャンプスケアの強さ', ['NORMAL', 'MILD'], ['NORMAL', 'MILD']);
+  var sr = el('div', 'row', '<div class="lb"><span>SAVE CODE</span><span class="ja">別の端末で続きから遊ぶ</span></div><div class="seg"><button>SHOW / LOAD CODE　コードを出す・入れる</button></div>', p);
+  onTap(sr.querySelector('button'), function () { sfx('paper'); openSaveCode(); });
   var cb = el('button', 'mb pe docclose', icon('ok', 30) + '<span class="tx"><span class="en">DONE</span><span class="ja">とじる</span></span>', ov); pressFX(cb);
   onTap(cb, function () { sfx('paper'); ov.parentNode.removeChild(ov); });
 }
@@ -5678,7 +5714,7 @@ function drawCM(g, w, h, t, faces) {
 // ---- init ------------------------------------------------------------------------------------------------
 function initGame() {
   buildUI(); buildPapers(); buildRail(); buildMiniUI();
-  var st = document.createElement('style'); st.textContent = MAP_CSS + '\n' + SCR_CSS; (document.head || document.documentElement).appendChild(st);
+  var st = document.createElement('style'); st.textContent = MAP_CSS + '\n' + SCR_CSS + '\n' + CODE_CSS; (document.head || document.documentElement).appendChild(st);
   buildHotspots(); initMove(); initVoices(); preloadFaces();
   onTap(U.pause, function () { sfx('click'); pauseGame(); });
   onTap(U.rulesBtn, function () { sfx('click'); if (GAME.mode === 'play') showRules(); });
@@ -5689,6 +5725,78 @@ function initGame() {
   FX.rainT = 1;
   if (DEV && /[?&]skipwarn/.test(location.search)) { audioUnlock(); showTitle(); } else showWarning();
 }
+
+
+// ===== 22_savecode.js =====
+// ---- save codes: carry your progress to another device by writing down a short code ----
+// Layout (bytes): version, night, flags(clears|true|normal|intro), lore x2, anomalies x3, best tips x2 (cents),
+// total tips x3 (cents), times caught x2, name length + name (ASCII), checksum.
+var B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'; // Crockford base32: no I, L, O, U
+function crc8(bytes) { var c = 0; for (var i = 0; i < bytes.length; i++) { c ^= bytes[i]; for (var k = 0; k < 8; k++) c = c & 0x80 ? ((c << 1) ^ 0x07) & 0xff : (c << 1) & 0xff; } return c; }
+function b32enc(bytes) { var out = '', bits = 0, val = 0; for (var i = 0; i < bytes.length; i++) { val = (val << 8) | bytes[i]; bits += 8; while (bits >= 5) { out += B32[(val >>> (bits - 5)) & 31]; bits -= 5; } } if (bits > 0) out += B32[(val << (5 - bits)) & 31]; return out; }
+function b32dec(str) { var out = [], bits = 0, val = 0; for (var i = 0; i < str.length; i++) { var v = B32.indexOf(str[i]); if (v < 0) return null; val = ((val << 5) | v) & 0xffffff; bits += 5; if (bits >= 8) { out.push((val >>> (bits - 8)) & 255); bits -= 8; } } return out; }
+function makeSaveCode() {
+  var b = [1, clamp(SAVE.day || 1, 1, 5)];
+  b.push((clamp(SAVE.clears || 0, 0, 5)) | (SAVE.trueEnd ? 16 : 0) | (SAVE.normalEnd ? 32 : 0) | (SAVE.seenIntro ? 64 : 0));
+  var lore = 0; LORE.forEach(function (L, i) { if (SAVE.lore && SAVE.lore[L.id]) lore |= 1 << i; }); b.push(lore & 255, (lore >> 8) & 255);
+  var an = 0; RULES.forEach(function (r, i) { an |= (clamp((SAVE.anomalies && SAVE.anomalies[r.id]) || 0, 0, 2)) << (i * 2); }); b.push(an & 255, (an >> 8) & 255, (an >> 16) & 255);
+  var bt = clamp(Math.round((SAVE.bestTips || 0) * 100), 0, 65535), tt = clamp(Math.round((SAVE.totalTips || 0) * 100), 0, 16777215), dd = clamp(SAVE.deaths || 0, 0, 65535);
+  b.push(bt & 255, bt >> 8, tt & 255, (tt >> 8) & 255, (tt >> 16) & 255, dd & 255, dd >> 8);
+  var nm = String(SAVE.name || '').replace(/[^A-Za-z .'-]/g, '').slice(0, 12); b.push(nm.length); for (var i = 0; i < nm.length; i++) b.push(nm.charCodeAt(i));
+  b.push(crc8(b));
+  var s = b32enc(b), g = [];
+  for (var k = 0; k < s.length; k += 4) g.push(s.slice(k, k + 4));
+  return 'SSD-' + g.join('-');
+}
+function readSaveCode(code) {
+  var s = String(code || '').toUpperCase().replace(/^SSD/, '').replace(/[\s\-_]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1');
+  var b = b32dec(s); if (!b || b.length < 17) return null;
+  var n = b[15]; if (b.length < 17 + n) return null;
+  var body = b.slice(0, 16 + n); if (crc8(body) !== b[16 + n] || body[0] !== 1) return null;
+  var o = { day: clamp(body[1], 1, 5), clears: body[2] & 15, trueEnd: body[2] & 16 ? 1 : 0, normalEnd: body[2] & 32 ? 1 : 0, seenIntro: body[2] & 64 ? 1 : 0, lore: {}, anomalies: {} };
+  var lore = body[3] | (body[4] << 8); LORE.forEach(function (L, i) { if (lore & (1 << i)) o.lore[L.id] = 1; });
+  var an = body[5] | (body[6] << 8) | (body[7] << 16); RULES.forEach(function (r, i) { var v = (an >> (i * 2)) & 3; if (v) o.anomalies[r.id] = v; });
+  o.bestTips = (body[8] | (body[9] << 8)) / 100; o.totalTips = (body[10] | (body[11] << 8) | (body[12] << 16)) / 100; o.deaths = body[13] | (body[14] << 8);
+  o.name = ''; for (var i = 0; i < n; i++) o.name += String.fromCharCode(body[16 + i]);
+  return o;
+}
+function applySaveCode(o) {
+  ['day', 'clears', 'trueEnd', 'normalEnd', 'seenIntro', 'lore', 'anomalies', 'bestTips', 'totalTips', 'deaths', 'name'].forEach(function (k) { SAVE[k] = o[k]; });
+  SAVE.bestDay = Math.max(SAVE.bestDay || 0, o.clears);
+  writeSave();
+}
+function openSaveCode() {
+  var ov = el('div', 'ov dim pe', '', UI);
+  var p = el('div', 'panel ssd-scroll', '<h2>Save Code</h2>' +
+    '<div class="row"><div class="lb"><span>YOUR CODE</span><span class="ja">いまの記録のコード（メモしておく）</span></div>' +
+    '<div id="ssd-code" class="codebox">' + makeSaveCode() + '</div><div class="seg"><button id="ssd-copy">COPY / コピー</button></div></div>' +
+    '<div class="row"><div class="lb"><span>LOAD A CODE</span><span class="ja">コードを入れて続きから</span></div>' +
+    '<input id="ssd-codein" class="codein" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="SSD-XXXX-XXXX-..."><div class="seg"><button id="ssd-load">LOAD / 読み込む</button></div><div id="ssd-codemsg" class="codemsg"></div></div>' +
+    '<div class="row"><div class="lb"><span class="ja" style="font-size:12px">名前・何日目まで進んだか・記録（チップ、つかまった回数、異変の図鑑、集めたロア、見たエンディング）が入ります。設定は入りません。</span></div></div>', ov);
+  p.style.backgroundImage = 'url(' + PAPER.rules + ')';
+  var inp = p.querySelector('#ssd-codein');
+  ['pointerdown', 'keydown', 'touchstart'].forEach(function (n) { inp.addEventListener(n, function (e) { e.stopPropagation(); }); });
+  onTap(p.querySelector('#ssd-copy'), function () {
+    var t = p.querySelector('#ssd-code').textContent, done = function () { toast('Code copied.', 'コードをコピーしました', 1.6); };
+    try { navigator.clipboard.writeText(t).then(done, selectCode); } catch (e) { selectCode(); }
+    function selectCode() { try { var r = document.createRange(); r.selectNodeContents(p.querySelector('#ssd-code')); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e2) {} toast('Select the code and copy it.', 'コードを選んでコピーしてください', 2); }
+  });
+  onTap(p.querySelector('#ssd-load'), function () {
+    var o = readSaveCode(inp.value), msg = p.querySelector('#ssd-codemsg');
+    if (!o) { msg.textContent = 'That code doesn\'t work. Check each letter. / コードがちがいます。1文字ずつ確かめてください。'; msg.className = 'codemsg bad'; sfx('thump'); return; }
+    applySaveCode(o); sfx('register');
+    msg.textContent = 'Loaded: ' + (o.name || '—') + ', Night ' + o.day + '. / 読み込みました（' + (o.name || '名前なし') + '・' + o.day + '日目）'; msg.className = 'codemsg ok';
+    p.querySelector('#ssd-code').textContent = makeSaveCode();
+    if (SCR.title) { hideTitle(); showTitle(); }
+  });
+  var cb = el('button', 'mb pe docclose', icon('ok', 30) + '<span class="tx"><span class="en">DONE</span><span class="ja">とじる</span></span>', ov); pressFX(cb);
+  onTap(cb, function () { sfx('paper'); ov.parentNode.removeChild(ov); });
+}
+var CODE_CSS = [
+  '.codebox{margin-top:8px;padding:10px 12px;border:2px dashed #22201c;border-radius:8px;background:rgba(255,255,255,.45);font:400 17px/1.5 "Special Elite",monospace;letter-spacing:.06em;word-break:normal;overflow-wrap:break-word;-webkit-user-select:text;user-select:text;color:#1d2f6f}',
+  '.codein{width:100%;height:46px;margin-top:8px;padding:0 10px;border:2px solid #22201c;border-radius:8px;background:#fffaf0;font:400 16px/46px "Special Elite",monospace;letter-spacing:.05em;color:#1d2f6f;outline:none;-webkit-user-select:text;user-select:text;text-transform:uppercase}',
+  '.codemsg{margin-top:8px;font:600 12px/1.5 "Zen Kaku Gothic New",sans-serif}.codemsg.bad{color:#a01018}.codemsg.ok{color:#2f7e6e}'
+].join('\n');
 
 
 // ===== 99_main.js =====

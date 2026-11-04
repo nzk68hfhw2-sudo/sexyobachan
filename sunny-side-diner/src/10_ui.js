@@ -116,6 +116,22 @@ var UI_CSS = function () {
     '.btnband .mb.hidden{transform:translateX(-50%) translateY(12px) scale(.96);}',
     '.subband{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px + 76px + 14px);min-height:84px;pointer-events:none;transition:opacity .25s,transform .25s;}',
     '.subband.hide{opacity:0;transform:translateY(8px);}',
+    // while a guest check (choices) is open, the subtitle moves to the top instead of disappearing
+    '.subband.top{bottom:auto;top:calc(var(--top-safe) + 64px);z-index:6;padding:8px 12px 10px;border-radius:12px;background:rgba(8,8,11,.78);border:1px solid rgba(216,221,226,.22);}',
+    '#ssd-ui.calling .subband.top{top:calc(var(--top-safe) + 196px)}',
+    '.subtap.top{bottom:auto;top:calc(var(--top-safe) + 60px);height:110px;z-index:6}',
+    '#ssd-ui.calling .subtap.top{top:calc(var(--top-safe) + 192px)}',
+    // the ringing phone: its own card, never replaced by other windows
+    '.callcard{position:absolute;left:20px;right:84px;top:calc(var(--top-safe) + 64px);max-width:330px;padding:12px 14px;border-radius:14px;z-index:7;pointer-events:auto;',
+    ' background:linear-gradient(180deg,#f7a9c6,#e97fa8) padding-box,linear-gradient(160deg,#fff,#8e979f 35%,#eef1f3 55%,#5a6168) border-box;border:2px solid transparent;box-shadow:0 10px 22px rgba(0,0,0,.55);color:#3a0a1c;animation:callin .3s cubic-bezier(.2,.9,.3,1.2) both}',
+    '@keyframes callin{0%{opacity:0;transform:translateY(-10px) rotate(-1deg)}100%{opacity:1;transform:none}}',
+    '.callcard .ct{display:flex;align-items:center;gap:10px;font:400 17px/1.1 "Alfa Slab One",serif;letter-spacing:.03em}.callcard .ct .ic{width:24px;height:24px;animation:ring .5s ease-in-out infinite}',
+    '@keyframes ring{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}',
+    '.callcard .cj{font:600 11.5px/1.4 "Zen Kaku Gothic New",sans-serif;margin:2px 0 10px 34px;color:#5a1430}',
+    '#ssd-ui.calling .rail{opacity:0;pointer-events:none}',
+    '.callcard .cb{display:flex;gap:10px}.callcard button{flex:1;height:46px;border-radius:999px;border:2px solid #fff3f7;font:600 14px/1.1 Oswald,sans-serif;letter-spacing:.06em;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 3px 0 rgba(90,10,40,.5)}',
+    '.callcard button small{font:600 10px/1.2 "Zen Kaku Gothic New";letter-spacing:0}.callcard .pick{background:#c8282e;color:#fff4dc}.callcard .let{background:#fbf3e0;color:#3a0a1c}',
+    '.callcard button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(90,10,40,.5)}',
     '.sub{position:relative;padding:4px 4px 2px;}',
     '.sub .who{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 10px;border-radius:999px;background:rgba(200,40,46,.9);color:#fff4dc;font:600 11px/22px Oswald,sans-serif;letter-spacing:.16em;margin-bottom:8px;box-shadow:0 2px 6px rgba(0,0,0,.5);}',
     '.sub .who.sunny{background:linear-gradient(90deg,#ffb21c,#ff7a2e);color:#3a1600}.sub .who.mgr{background:#2f7e6e}.sub .who.odd{background:#3a3d44;color:#cfd6dd}.sub .who.you{background:#5a6c8a}',
@@ -145,7 +161,7 @@ var UI_CSS = function () {
     '.slip .opt.o-minor .ic{width:20px;height:20px;color:#6a7480}',
     '.slip .opt.o-minor .en{font-size:16px;color:#5a6478}.slip .opt.o-minor .ja{font-size:10.5px;color:#7a8290}',
     // toast / big title
-    '.toast{position:absolute;left:50%;top:calc(var(--top-safe) + 70px);transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(12,13,16,.88);border:1.5px solid rgba(216,221,226,.35);text-align:center;font-size:13px;color:var(--cream);box-shadow:0 8px 18px rgba(0,0,0,.5);transition:opacity .3s,transform .3s;max-width:calc(100% - 40px);}',
+    '.toast{position:absolute;left:50%;top:38%;z-index:8;transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(12,13,16,.88);border:1.5px solid rgba(216,221,226,.35);text-align:center;font-size:13px;color:var(--cream);box-shadow:0 8px 18px rgba(0,0,0,.5);transition:opacity .3s,transform .3s;max-width:calc(100% - 40px);}',
     '.toast .en{font-size:16px;color:#fff3d6}.toast.hide{opacity:0;transform:translateX(-50%) translateY(-6px)}',
     // hotspot labels (3D markers) — drawn in 3D, label in DOM
     '.hint{position:absolute;transform:translate(-50%,-100%);font:600 11px/1 Oswald,sans-serif;letter-spacing:.14em;color:#e8fbff;text-shadow:0 0 8px #5be8ff,0 1px 2px #000;white-space:nowrap;pointer-events:none;transition:opacity .3s;}',
@@ -216,7 +232,10 @@ function setClock(min, night) { // min since 22:00
 function setTips(v, show) { U.tips.querySelector('span').textContent = fmtMoney(v); U.tips.classList.toggle('hide', !show); }
 function setCold(v, show) { U.cold.querySelector('b').style.width = Math.round(clamp(v, 0, 1) * 100) + '%'; U.cold.classList.toggle('hide', !show); }
 var TOAST_T = 0;
-function toast(en, ja, sec) {
+function toast(en, ja, sec, tries) {
+  // wait while a guest check / phone card / top subtitle is on screen (so nothing overlaps), up to ~6s
+  tries = tries || 0;
+  if (tries < 10 && (SLIP.open || U.call || (SUBQ.cur && U.sub.classList.contains('top')))) { setTimeout(function () { toast(en, ja, sec, tries + 1); }, 600); return; }
   U.toast.innerHTML = '<span class="en">' + en + '</span>' + (ja ? '<span class="ja">' + ja + '</span>' : '');
   U.toast.classList.remove('hide'); clearTimeout(TOAST_T); TOAST_T = setTimeout(function () { U.toast.classList.add('hide'); }, (sec || 2.4) * 1000);
 }
@@ -231,14 +250,23 @@ function showChoices(title, opts, meta) {
   U.slip.innerHTML = h;
   U.slip.style.setProperty('--slipbg', PAPER.slip ? 'url(' + PAPER.slip + ')' : 'none');
   U.slip.style.transform = ''; U.slip.classList.remove('hide'); SLIP.open = true;
-  U.sub.classList.add('hide');
+  U.sub.classList.add('top'); U.subTap.classList.add('top');
   sfx('paper');
   U.slip.querySelectorAll('.opt').forEach(function (n) {
     pressFX(n);
     onTap(n, function () { var i = +n.getAttribute('data-i'); hideChoices(); sfx('pen'); if (i >= 0 && opts[i].fn) opts[i].fn(); else if (meta.onCancel) meta.onCancel(); });
   });
 }
-function hideChoices() { U.slip.classList.add('hide'); SLIP.open = false; }
+function hideChoices() { U.slip.classList.add('hide'); SLIP.open = false; U.sub.classList.remove('top'); U.subTap.classList.remove('top'); }
+// the ringing phone card (independent of the guest check)
+function showCall(title, ja, onPick, onLet) {
+  hideCall();
+  var c = el('div', 'callcard', '<div class="ct">' + icon('phone', 24) + '<span>' + title + '</span></div><div class="cj">' + ja + '</div><div class="cb"><button class="pick">PICK UP<small>電話に出る</small></button><button class="let">LET IT RING<small>出ない</small></button></div>', UI);
+  U.call = c; UI.classList.add('calling');
+  onTap(c.querySelector('.pick'), function () { sfx('click'); hideCall(); onPick && onPick(); });
+  onTap(c.querySelector('.let'), function () { sfx('click'); hideCall(); onLet && onLet(); });
+}
+function hideCall() { if (U.call && U.call.parentNode) U.call.parentNode.removeChild(U.call); U.call = null; UI.classList.remove('calling'); }
 // ---- subtitles --------------------------------------------------------------------------
 var SUBQ = { cur: null, queue: [], typing: 0, timer: 0 };
 var WHO_CLASS = { SUNNY: 'sunny', MANAGER: 'mgr', DALE: 'mgr', YOU: 'you', '???': 'odd' };
@@ -249,7 +277,7 @@ function subShow(line) {
   U.sub.querySelector('.l1').textContent = ''; U.sub.querySelector('.l2').textContent = line.ja || '';
   U.sub.querySelector('.more').style.opacity = 0;
   U.sub.classList.remove('hide'); U.subTap.style.display = '';
-  if (SLIP.open) U.sub.classList.add('hide');
+  U.sub.classList.toggle('top', SLIP.open); U.subTap.classList.toggle('top', SLIP.open);
 }
 function subUpdate(dt) {
   var L = SUBQ.cur; if (!L) return;

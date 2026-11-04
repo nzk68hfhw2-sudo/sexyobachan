@@ -152,11 +152,11 @@ var ANOM = {
     hint: ['That phone? Let it ring. Twice. Third time you can pick up.', 'あの電話か？ 2回は鳴らしとけ。3回目なら出ていい。'],
     start: function (A) { A.bg = true; A.ring = 0; A.next = 1; A.face = pickFace(['shadow', 'glitch'], 'phone'); ringSession(A); },
     update: function (A, dt) {
-      if (A.ringing) { A.rt -= dt; A.rr -= dt; if (A.rr <= 0) { A.rr = 2.4; sfx('ring', WORLD.phonePos, { distort: (A.ring - 1) * 0.35, vol: 1.1 }); WORLD.handset.position.x = -0.17 + (Math.random() - 0.5) * 0.004; } if (A.rt <= 0) { A.ringing = false; if (A.ring >= 3) anomalyResolve(A, false); else A.wait = 70 + Math.random() * 90; } }
+      if (A.ringing) { A.rt -= dt; A.rr -= dt; if (A.rr <= 0) { A.rr = 2.4; sfx('ring', WORLD.phonePos, { distort: (A.ring - 1) * 0.35, vol: 1.1 }); WORLD.handset.position.x = -0.17 + (Math.random() - 0.5) * 0.004; } if (A.rt <= 0) { A.ringing = false; hideCall(); if (A.ring >= 3) anomalyResolve(A, false); else A.wait = 70 + Math.random() * 90; } }
       else if (A.wait != null && !A.done) { A.wait -= dt; if (A.wait <= 0) { A.wait = null; ringSession(A); } }
     },
     answer: function (A) {
-      if (!A.ringing) return; A.ringing = false; sfx('handset', WORLD.phonePos);
+      if (!A.ringing) return; A.ringing = false; hideCall(); sfx('handset', WORLD.phonePos);
       if (A.ring < 3) { // wrong
         setTimeout(function () { sfx('whisper', null, { vol: 1 }); say('???', '...' + (SAVE.name || 'friend') + '... come outside...', '……' + (SAVE.name || 'ともだち') + '……そとに おいで……', { voice: 'odd', odd: true, cls: 'odd' }).then(function () { anomalyFail(A, A.face, { rule: 'phone' }); }); }, 500);
       } else { // third time: it's fine — lore + hint
@@ -318,16 +318,13 @@ function ringSession(A) { A.ring++; A.ringing = true; A.rt = 14; A.rr = 0; setTi
 // wherever you are, the ringing phone asks you: pick up, or let it ring
 function phonePrompt(A, ring) {
   if (!A.ringing || A.ring !== ring || A.done || GAME.mode !== 'play') return;
-  if (SLIP.open || MINI.active || DOC.open || TALK.busy || CAM.inFreezer || CAM.outside || JS.on) { setTimeout(function () { phonePrompt(A, ring); }, 1500); return; }
+  if (MINI.active || DOC.open || CAM.inFreezer || CAM.outside || JS.on || PAUSE.el) { setTimeout(function () { phonePrompt(A, ring); }, 1200); return; }
   var nth = ['', '1st ring', '2nd time', '3rd time'][Math.min(3, ring)], nthJa = ['', '1回目', '2回目', '3回目'][Math.min(3, ring)];
-  showChoices('The pink phone (' + nth + ')', [
-    { icon: 'phone', en: 'Pick up', ja: '電話に出る（' + nthJa + '）', fn: function () {
-      if (!A.ringing) { toast('It stopped ringing.', '電話は鳴りやんだ。', 1.6); return; }
-      var answer = function () { if (A.ringing) ANOM.phone.answer(A); };
-      if (CAM.station === 'JUKEBOX') answer(); else { CAM.afterArrive = function () { turnToward(WORLD.phonePos); setTimeout(answer, 350); }; goStation('JUKEBOX'); }
-    } },
-    { icon: 'silent', en: 'Let it ring', ja: '出ない（鳴らしておく）', fn: function () { toast('You let it ring.', '電話は鳴らしておいた。', 1.4); } }
-  ], { noCancel: true, table: 'PHONE' });
+  showCall('The pink phone — ' + nth, 'ピンクの電話が鳴っている（' + nthJa + '）', function () {
+    if (!A.ringing) { toast('It stopped ringing.', '電話は鳴りやんだ。', 1.6); return; }
+    var answer = function () { if (A.ringing) ANOM.phone.answer(A); };
+    if (CAM.station === 'JUKEBOX') answer(); else { CAM.afterArrive = function () { turnToward(WORLD.phonePos); setTimeout(answer, 350); }; goStation('JUKEBOX'); }
+  }, function () { toast('You let it ring.', '電話は鳴らしておいた。', 1.4); });
 }
 function boothGhost(A) {
   if (A.done) return;
@@ -347,7 +344,7 @@ function jumpscare(n, opt) {
   if (JS.on || GAME.mode === 'dead') return;
   opt = opt || {}; JS = { on: true, t: 0, n: n || 1, P: opt.person || null, mild: SAVE.settings.scare === 'MILD' };
   GAME.mode = 'dead'; GAME.deathAt = GAME.min;
-  stopVoice(); talkCancel(); hideChoices(); closeDocs(true); if (MINI.active) { MINI.active = false; U.mini.classList.add('hide'); }
+  stopVoice(); talkCancel(); hideChoices(); hideCall(); closeDocs(true); if (MINI.active) { MINI.active = false; U.mini.classList.add('hide'); }
   jukeStop(0.05); stopMusic(0.05);
   setMain(null); setGameHUD(false);
   LSTATE.flick = 3; LSTATE.coldT = 1;

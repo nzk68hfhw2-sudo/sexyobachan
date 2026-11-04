@@ -25,11 +25,11 @@ window.__bot = setInterval(function () {
   ACTIVE.slice().forEach(function (A) {
     if (A.id === 'jukebox' && A.t > 14) ANOM.jukebox.choose(A, A.orig);
     if (A.id === 'phone' && A.ringing && A.ring === 3) ANOM.phone.answer(A);
-    if (A.id === 'reflection' && !CAM.inFreezer && !window.__fz) { window.__fz = 1; enterFreezer(); setTimeout(function () { window.__ssdEval('leaveFreezer(); 1'); window.__fz = 0; }, 12000); }
+    if (A.id === 'reflection' && !CAM.inFreezer) enterFreezer();
     if (A.id === 'headlights' && A.parked && LSTATE.lightsOn) { toggleLights(); toggleNeon(); }
-    if (A.id === 'dayshift') { if (A.stage === 1 && !CAM.inFreezer && !window.__fz) { window.__fz = 1; enterFreezer(); setTimeout(function () { window.__ssdEval('leaveFreezer(); 1'); window.__fz = 0; }, 12000); } if (A.stage === 2) ANOM.dayshift.openFront(A); }
+    if (A.id === 'dayshift') { if (A.stage === 1 && !CAM.inFreezer) enterFreezer(); if (A.stage === 2) ANOM.dayshift.openFront(A); }
   });
   if (!ACTIVE.some(function (a) { return a.id === 'headlights'; }) && !LSTATE.lightsOn) { toggleLights(); toggleNeon(); }
-  if (GAME.cold > 0.8 && CAM.inFreezer) leaveFreezer();
+  if (CAM.inFreezer && (GAME.freezeCount >= 10 || GAME.cold > 0.8)) leaveFreezer();
   })(); 1`);
 }, 400);

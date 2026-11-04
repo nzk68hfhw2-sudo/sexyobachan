@@ -13,6 +13,7 @@ function clearWorld() {
   ACTIVE.slice().forEach(function (A) { if (A.cleanup) try { A.cleanup(A); } catch (e) {} if (A.def && A.def.cleanup) try { A.def.cleanup(A); } catch (e) {} }); ACTIVE.length = 0;
   SEATS.forEach(function (s) { s.taken = null; });
   if (FX.visitor) { FX.visitor.state = 'idle'; FX.visitor.obj.visible = false; }
+  hideCall(); hideChoices();
   LSTATE.lightsOn = true; LSTATE.neonOn = true; LSTATE.coldT = 0; LSTATE.cold = 0; LSTATE.flick = 0; LSTATE.eyesExtra = 1; LSTATE.kitchenFlick = false;
   setNeonEyes(0, null); jukeGlass(0, false);
   WORLD.backDoor.rotation.y = 0; CAM.inFreezer = false; CAM.outside = false; WORLD.freezerDoor.rotation.y = 0;
@@ -410,7 +411,7 @@ function updateGame(dt, t) {
   // pre-anomaly tape wobble on the jukebox
   var nextA = GAME.sched.filter(function (e) { return e.type === 'anom'; })[0], wob = 0;
   if (nextA) wob = clamp(1 - (nextA.at - GAME.min) / 25, 0, 1); JUKE.wobble = wob; JUKE.drift = wob * 0.6;
-  HUD_T -= dt; if (HUD_T <= 0) { HUD_T = 0.5; setClock(GAME.min, GAME.day); updateMainButton(); refreshSpeed(); }
+  HUD_T -= dt; if (HUD_T <= 0) { HUD_T = 0.5; setClock(GAME.min, GAME.day); var nT = TICKETS.length; pruneTickets(); if (TICKETS.length !== nT) refreshTickets(); updateMainButton(); refreshSpeed(); }
   UI.classList.toggle('flick', GAME.day >= 3 && GAME.min > 200);
   UI.style.setProperty('--wear', clamp((GAME.day - 1) * 0.12 + (GAME.min / SHIFT_LEN) * 0.12, 0, 0.6).toFixed(2));
   PU.uCold.value = LSTATE.cold * 0.85; PU.uGrain.value = 0.035 + LSTATE.cold * 0.025; PU.uVig.value = 0.55 + LSTATE.cold * 0.15;

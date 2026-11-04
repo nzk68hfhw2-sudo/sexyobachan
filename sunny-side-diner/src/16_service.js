@@ -179,7 +179,9 @@ function makeOrder(C) {
   return items;
 }
 function takeOrder(C) {
+  if (C.state !== 'ready') return; // one order per guest, even if the button is tapped twice
   if (C.anomaly && C.anomaly.onServe && C.anomaly.onServe(C, 'order') === true) return;
+  C.state = 'ordering';
   hideMenuProp(C); setPose(C.P, 'sit'); C.P.lookAtCam = true;
   C.items = C.forcedItems || makeOrder(C);
   var odd = C.items.filter(function (it) { return it.odd; })[0];
@@ -195,11 +197,16 @@ function takeOrder(C) {
   });
 }
 function writeTicket(C) {
+  if ((C.ticket && !C.ticket.done) || C.state === 'leaving' || C.state === 'gone') return;
   var T = { no: ++TICKET_NO, cust: C, items: C.items, ready: false, done: false, table: C.seat ? (C.seat.kind === 'stool' ? 'CTR ' + C.seat.id.slice(1) : 'BOOTH ' + C.seat.booth) : '?', t: 0 };
   C.ticket = T; TICKETS.push(T); C.state = 'ordered'; C.pat = C.patMax = PATIENCE.ordered + C.items.length * 25; C.P.lookAtCam = false;
   sfx('pen'); sfx('paper', null, { delay: 0.3 });
   toast('Ticket No.' + T.no + ' → kitchen', '注文票が厨房に入った', 2);
   refreshTickets();
+}
+// drop tickets nobody is waiting for any more (guest left, or replaced) — Booth 4's ghost ticket stays
+function pruneTickets() {
+  for (var i = TICKETS.length - 1; i >= 0; i--) { var T = TICKETS[i]; if (T.booth4) continue; var C = T.cust; if (!C || C.ticket !== T || C.state === 'leaving' || C.state === 'gone' || CUSTS.indexOf(C) < 0) { TICKETS.splice(i, 1); if (T.plates) { T.plates.forEach(function (p) { RENDER.scene.remove(p); freeGeo(p); }); T.plates = null; } } }
 }
 function removeTicket(T) { var i = TICKETS.indexOf(T); if (i >= 0) TICKETS.splice(i, 1); if (T.plates) { T.plates.forEach(function (p) { RENDER.scene.remove(p); freeGeo(p); }); T.plates = null; } refreshTickets(); }
 function refuseOdd(C) {
@@ -327,6 +334,7 @@ function buildRail() {
   U.rail = el('div', 'rail', '', UI); U.rail.style.display = 'none';
 }
 function refreshTickets() {
+  pruneTickets();
   if (!U.rail) return;
   U.rail.innerHTML = '';
   TICKETS.forEach(function (T, i) {

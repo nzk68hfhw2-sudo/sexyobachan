@@ -219,6 +219,8 @@ function openSettings() {
   slider('sens', 'LOOK SENSITIVITY', '視点の感度', 0.4, 2, 0.1);
   seg('quality', 'QUALITY', '画質', ['AUTO', 'LOW', 'MEDIUM', 'HIGH'], ['AUTO', 'LOW', 'MED', 'HIGH'], function (v) { setQuality(v); });
   seg('scare', 'JUMP SCARES', 'ジャンプスケアの強さ', ['NORMAL', 'MILD'], ['NORMAL', 'MILD']);
+  var sr = el('div', 'row', '<div class="lb"><span>SAVE CODE</span><span class="ja">別の端末で続きから遊ぶ</span></div><div class="seg"><button>SHOW / LOAD CODE　コードを出す・入れる</button></div>', p);
+  onTap(sr.querySelector('button'), function () { sfx('paper'); openSaveCode(); });
   var cb = el('button', 'mb pe docclose', icon('ok', 30) + '<span class="tx"><span class="en">DONE</span><span class="ja">とじる</span></span>', ov); pressFX(cb);
   onTap(cb, function () { sfx('paper'); ov.parentNode.removeChild(ov); });
 }
@@ -355,7 +357,7 @@ function drawCM(g, w, h, t, faces) {
 // ---- init ------------------------------------------------------------------------------------------------
 function initGame() {
   buildUI(); buildPapers(); buildRail(); buildMiniUI();
-  var st = document.createElement('style'); st.textContent = MAP_CSS + '\n' + SCR_CSS; (document.head || document.documentElement).appendChild(st);
+  var st = document.createElement('style'); st.textContent = MAP_CSS + '\n' + SCR_CSS + '\n' + CODE_CSS; (document.head || document.documentElement).appendChild(st);
   buildHotspots(); initMove(); initVoices(); preloadFaces();
   onTap(U.pause, function () { sfx('click'); pauseGame(); });
   onTap(U.rulesBtn, function () { sfx('click'); if (GAME.mode === 'play') showRules(); });
