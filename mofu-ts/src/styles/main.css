@@ -349,12 +349,12 @@ p {
 }
 
 /* ---- エディタ ---- */
+/* 長い行は折り返す（横スクロールしないと読めない、を防ぐ） */
 .editor {
   display: flex;
   background: var(--code-bg);
   border: 2px solid var(--line);
   border-radius: 12px;
-  overflow-x: auto;
 }
 .editor:focus-within {
   border-color: var(--accent);
@@ -364,7 +364,6 @@ p {
   padding: 14px 10px 14px 14px;
   text-align: right;
   color: var(--text-soft);
-  white-space: pre;
   user-select: none;
   border-right: 1px solid var(--line);
   font-family: "BIZ UDGothic", "Consolas", "Menlo", ui-monospace, monospace;
@@ -372,9 +371,14 @@ p {
   line-height: 1.7;
   opacity: 0.7;
 }
-.editor-area {
+.editor-body {
+  position: relative;
   flex: 1;
   min-width: 0;
+}
+.editor-area {
+  display: block;
+  width: 100%;
   min-height: 8em;
   border: none;
   outline: none;
@@ -382,11 +386,23 @@ p {
   background: transparent;
   color: var(--text);
   padding: 14px;
+  margin: 0;
   font-size: 1rem;
   line-height: 1.7;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   overflow: hidden;
   tab-size: 2;
+}
+/* 行の高さを測るための、見えない写し */
+.editor-mirror {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-height: 0;
+  height: auto;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 code {
@@ -525,6 +541,19 @@ details summary {
 }
 
 @media (max-width: 520px) {
+  /* スマホでは、コードの文字を少しだけ小さくして、1行に入る量を増やす */
+  .editor-area,
+  .editor-gutter {
+    font-size: 0.85rem;
+  }
+  .editor-gutter {
+    padding-left: 8px;
+    padding-right: 6px;
+  }
+  .editor-area {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
   .talk {
     flex-direction: column;
     align-items: center;
