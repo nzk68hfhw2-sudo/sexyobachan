@@ -3830,18 +3830,21 @@ function walkTo(C, pts, then) { C.path = pts.slice(); C.onPath = then; setPose(C
 function routeToSeat(seat) {
   var V = function (x, z) { return new THREE.Vector3(x, 0, z); };
   if (seat.kind === 'stool') return [V(4.6, 2.7), V(seat.pos.x, 0.25), V(seat.pos.x, -0.2)];
-  var bx = seat.pos.x + 0.62 * (seat.side > 0 ? -1 : 1);
-  return [V(4.6, 2.7), V(seat.pos.x + (seat.side < 0 ? 0.35 : -0.35), 2.9), V(seat.pos.x + (seat.side < 0 ? 0.35 : -0.35), 3.3)];
+  // booths: walk to the end of the bench in the aisle, then slide in along the bench while seated
+  return [V(4.6, 2.7), V(seat.pos.x, 2.95), V(seat.pos.x, 3.15), SLIDE(seat, 3.42), SLIDE(seat, seat.pos.z)];
 }
-function routeOut(C) { var p = C.P.root.position, V = function (x, z) { return new THREE.Vector3(x, 0, z); }; var pts = []; if (C.seat && C.seat.kind === 'stool') pts.push(V(p.x, 0.3)); else if (C.seat) pts.push(V(p.x + 0.4, 3.1)); pts.push(V(4.6, 2.7), V(6.0, 4.4), V(6.0, 7.6)); return pts; }
+function SLIDE(seat, z) { var v = new THREE.Vector3(seat.pos.x, 0, z); v.sitY = seat.pos.y; v.face = seat.face; return v; }
+function routeOut(C) { var p = C.P.root.position, V = function (x, z) { return new THREE.Vector3(x, 0, z); }; var pts = []; if (C.seat && C.seat.kind === 'stool') pts.push(V(p.x, 0.3)); else if (C.seat) pts.push(SLIDE(C.seat, 3.42), V(p.x, 3.12), V(p.x, 2.95)); pts.push(V(4.6, 2.7), V(6.0, 4.4), V(6.0, 7.6)); return pts; }
 function moveCustomer(C, dt) {
   var P = C.P, R = P.root;
   if (C.path && C.path.length) {
     var tgt = C.path[0], d = new THREE.Vector3(tgt.x - R.position.x, 0, tgt.z - R.position.z), L = d.length(), sp = (C.speed || 1.15) * dt;
-    R.position.y = 0;
+    var sliding = tgt.sitY != null;
+    if (sliding) { R.position.y = tgt.sitY; R.rotation.y = tgt.face; if (P.anim !== 'sit') setPose(P, 'sit'); sp *= 0.55; }
+    else { R.position.y = 0; if (P.anim !== 'walk' && L >= 0.06) setPose(P, 'walk'); }
     if (L < 0.06) { C.path.shift(); if (R.position.z > 4.6 && tgt.z < 4.6 && !C.inDoor) { C.inDoor = 1; openDoorAnim(); } if (!C.path.length) { var f = C.onPath; C.onPath = null; setPose(P, 'stand'); if (f) f(); } }
-    else { d.multiplyScalar(Math.min(1, sp / L)); R.position.add(d); var yaw = Math.atan2(d.x, d.z); R.rotation.y = R.rotation.y + angDiff(R.rotation.y, yaw) * Math.min(1, dt * 8); }
-    if (C.kid) { var kr = C.kid.root, kd = new THREE.Vector3(R.position.x + 0.45 - kr.position.x, 0, R.position.z + 0.35 - kr.position.z); var kl = kd.length(); if (kl > 0.05) { kd.multiplyScalar(Math.min(1, 1.4 * dt / kl)); kr.position.add(kd); kr.rotation.y = Math.atan2(kd.x, kd.z); setPose(C.kid, 'walk'); } else setPose(C.kid, 'stand'); }
+    else { d.multiplyScalar(Math.min(1, sp / L)); R.position.add(d); if (!sliding) { var yaw = Math.atan2(d.x, d.z); R.rotation.y = R.rotation.y + angDiff(R.rotation.y, yaw) * Math.min(1, dt * 8); } }
+    if (C.kid && !sliding) { var kr = C.kid.root, fwd = new THREE.Vector3(Math.sin(R.rotation.y), 0, Math.cos(R.rotation.y)), kd = new THREE.Vector3(R.position.x - fwd.x * 0.6 - kr.position.x, 0, R.position.z - fwd.z * 0.6 - kr.position.z); kr.position.y = 0; var kl = kd.length(); if (kl > 0.05) { kd.multiplyScalar(Math.min(1, 1.4 * dt / kl)); kr.position.add(kd); kr.rotation.y = Math.atan2(kd.x, kd.z); setPose(C.kid, 'walk'); } else setPose(C.kid, 'stand'); }
   }
 }
 function sitDown(C, seat) {
@@ -3852,13 +3855,15 @@ function sitDown(C, seat) {
   if (C.kid) { var opp = SEATS.filter(function (s) { return s.booth === seat.booth && s.side > 0; })[0]; if (opp) { C.kid.root.position.copy(opp.pos); C.kid.root.position.y += 0.08; C.kid.root.rotation.y = opp.face; setPose(C.kid, 'sit'); opp.taken = C; C.kidSeat = opp; } }
   RENDER.shadowDirty = true;
 }
-function standUp(C) { if (C.seat) { C.seat.taken = null; C.seat = null; } if (C.kidSeat) { C.kidSeat.taken = null; C.kidSeat = null; } C.P.root.position.y = 0; }
+function standUp(C) { var bs = C.seat; if (C.seat) { C.seat.taken = null; C.seat = null; } if (C.kidSeat) { C.kidSeat.taken = null; C.kidSeat = null; } if (bs && bs.kind === 'booth') { C.P.root.position.y = bs.pos.y; C.seat = bs; C.leavingSeat = true; } else C.P.root.position.y = 0;
+  if (C.kid && bs) { C.kid.root.position.set(bs.pos.x + 0.5, 0, 3.05); setPose(C.kid, 'stand'); } }
 function customerLeave(C, angry) {
   if (C.state === 'leaving' || C.state === 'gone') return;
   clearDishes(C); hideMenuProp(C);
   if (C.ticket && !C.ticket.done) { C.ticket.cancel = true; removeTicket(C.ticket); }
   standUp(C); C.state = 'leaving'; C.marker && (C.marker.style.display = 'none');
   walkTo(C, routeOut(C), function () { C.state = 'gone'; removeCustomer(C); });
+  if (C.leavingSeat) { C.leavingSeat = false; C.seat = null; }
   if (angry) { GAME.angry++; }
 }
 function removeCustomer(C) { removePick(C.P.root); disposePerson(C.P); if (C.kid) disposePerson(C.kid); if (C.refl) { disposePerson(C.refl); C.refl = null; } if (C.marker && C.marker.parentNode) C.marker.parentNode.removeChild(C.marker); var i = CUSTS.indexOf(C); if (i >= 0) CUSTS.splice(i, 1); }
@@ -4687,7 +4692,21 @@ function knockFront(A, fake) {
     else { A.stage = 2; A.t = 0; say('JUNE', 'Rise and shine! Day shift, hon. Unlock the door.', 'おはよう（Rise and shine）！ 日勤だよ。鍵をあけておくれ。', { voice: 'june' }); }
   }, 1200);
 }
-function ringSession(A) { A.ring++; A.ringing = true; A.rt = 14; A.rr = 0; if (A.ring === 1) anomalyOnset(A, { noZap: true, keepMusic: true }); toast(A.ring === 1 ? 'The pink phone is ringing.' : (A.ring === 2 ? 'The pink phone again. (2nd time)' : 'The pink phone. (3rd time)'), A.ring === 1 ? 'ピンクの電話が鳴っている。' : (A.ring === 2 ? 'また鳴っている（2回目）' : 'また鳴っている（3回目）'), 2.6); }
+function ringSession(A) { A.ring++; A.ringing = true; A.rt = 14; A.rr = 0; setTimeout(function () { phonePrompt(A, A.ring); }, 1400); if (A.ring === 1) anomalyOnset(A, { noZap: true, keepMusic: true }); toast(A.ring === 1 ? 'The pink phone is ringing.' : (A.ring === 2 ? 'The pink phone again. (2nd time)' : 'The pink phone. (3rd time)'), A.ring === 1 ? 'ピンクの電話が鳴っている。' : (A.ring === 2 ? 'また鳴っている（2回目）' : 'また鳴っている（3回目）'), 2.6); }
+// wherever you are, the ringing phone asks you: pick up, or let it ring
+function phonePrompt(A, ring) {
+  if (!A.ringing || A.ring !== ring || A.done || GAME.mode !== 'play') return;
+  if (SLIP.open || MINI.active || DOC.open || TALK.busy || CAM.inFreezer || CAM.outside || JS.on) { setTimeout(function () { phonePrompt(A, ring); }, 1500); return; }
+  var nth = ['', '1st ring', '2nd time', '3rd time'][Math.min(3, ring)], nthJa = ['', '1回目', '2回目', '3回目'][Math.min(3, ring)];
+  showChoices('The pink phone (' + nth + ')', [
+    { icon: 'phone', en: 'Pick up', ja: '電話に出る（' + nthJa + '）', fn: function () {
+      if (!A.ringing) { toast('It stopped ringing.', '電話は鳴りやんだ。', 1.6); return; }
+      var answer = function () { if (A.ringing) ANOM.phone.answer(A); };
+      if (CAM.station === 'JUKEBOX') answer(); else { CAM.afterArrive = function () { turnToward(WORLD.phonePos); setTimeout(answer, 350); }; goStation('JUKEBOX'); }
+    } },
+    { icon: 'silent', en: 'Let it ring', ja: '出ない（鳴らしておく）', fn: function () { toast('You let it ring.', '電話は鳴らしておいた。', 1.4); } }
+  ], { noCancel: true, table: 'PHONE' });
+}
 function boothGhost(A) {
   if (A.done) return;
   var P = personFrom(ARCH[Math.floor(Math.random() * ARCH.length)]); P.odd = 1; P.lookAtCam = true;

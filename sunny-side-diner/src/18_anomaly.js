@@ -314,7 +314,21 @@ function knockFront(A, fake) {
     else { A.stage = 2; A.t = 0; say('JUNE', 'Rise and shine! Day shift, hon. Unlock the door.', 'おはよう（Rise and shine）！ 日勤だよ。鍵をあけておくれ。', { voice: 'june' }); }
   }, 1200);
 }
-function ringSession(A) { A.ring++; A.ringing = true; A.rt = 14; A.rr = 0; if (A.ring === 1) anomalyOnset(A, { noZap: true, keepMusic: true }); toast(A.ring === 1 ? 'The pink phone is ringing.' : (A.ring === 2 ? 'The pink phone again. (2nd time)' : 'The pink phone. (3rd time)'), A.ring === 1 ? 'ピンクの電話が鳴っている。' : (A.ring === 2 ? 'また鳴っている（2回目）' : 'また鳴っている（3回目）'), 2.6); }
+function ringSession(A) { A.ring++; A.ringing = true; A.rt = 14; A.rr = 0; setTimeout(function () { phonePrompt(A, A.ring); }, 1400); if (A.ring === 1) anomalyOnset(A, { noZap: true, keepMusic: true }); toast(A.ring === 1 ? 'The pink phone is ringing.' : (A.ring === 2 ? 'The pink phone again. (2nd time)' : 'The pink phone. (3rd time)'), A.ring === 1 ? 'ピンクの電話が鳴っている。' : (A.ring === 2 ? 'また鳴っている（2回目）' : 'また鳴っている（3回目）'), 2.6); }
+// wherever you are, the ringing phone asks you: pick up, or let it ring
+function phonePrompt(A, ring) {
+  if (!A.ringing || A.ring !== ring || A.done || GAME.mode !== 'play') return;
+  if (SLIP.open || MINI.active || DOC.open || TALK.busy || CAM.inFreezer || CAM.outside || JS.on) { setTimeout(function () { phonePrompt(A, ring); }, 1500); return; }
+  var nth = ['', '1st ring', '2nd time', '3rd time'][Math.min(3, ring)], nthJa = ['', '1回目', '2回目', '3回目'][Math.min(3, ring)];
+  showChoices('The pink phone (' + nth + ')', [
+    { icon: 'phone', en: 'Pick up', ja: '電話に出る（' + nthJa + '）', fn: function () {
+      if (!A.ringing) { toast('It stopped ringing.', '電話は鳴りやんだ。', 1.6); return; }
+      var answer = function () { if (A.ringing) ANOM.phone.answer(A); };
+      if (CAM.station === 'JUKEBOX') answer(); else { CAM.afterArrive = function () { turnToward(WORLD.phonePos); setTimeout(answer, 350); }; goStation('JUKEBOX'); }
+    } },
+    { icon: 'silent', en: 'Let it ring', ja: '出ない（鳴らしておく）', fn: function () { toast('You let it ring.', '電話は鳴らしておいた。', 1.4); } }
+  ], { noCancel: true, table: 'PHONE' });
+}
 function boothGhost(A) {
   if (A.done) return;
   var P = personFrom(ARCH[Math.floor(Math.random() * ARCH.length)]); P.odd = 1; P.lookAtCam = true;
