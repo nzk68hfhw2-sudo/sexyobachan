@@ -46,6 +46,8 @@ export interface FoundError {
   line: number | null;
   /** その行に書かれているコード */
   lineText: string;
+  /** 見張り番が指さしている部分（例: "number"）。わからなければ "" */
+  near: string;
   /** 英語の原文 */
   message: string;
 }
@@ -145,6 +147,7 @@ export function analyze(code: string): Analysis {
       code: d.code,
       line,
       lineText: line !== null ? (lines[line - 1] ?? "").trim() : "",
+      near: d.start !== undefined ? code.slice(d.start, d.start + (d.length ?? 0)).trim() : "",
       // メッセージは入れ子になっていることがあるので、平らにする
       message: t.flattenDiagnosticMessageText(d.messageText, "\n"),
     };

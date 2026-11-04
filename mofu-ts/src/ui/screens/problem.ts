@@ -213,9 +213,16 @@ function errorView(errors: ReturnType<typeof analyze>["errors"], code: string): 
       "div",
       { class: "error-item" },
       e.line !== null
-        ? h("p", { class: "error-where" }, `${e.line}行目`, e.lineText ? h("code", {}, e.lineText) : null)
+        ? h(
+            "p",
+            { class: "error-where" },
+            `${e.line}行目`,
+            e.lineText ? h("code", {}, e.lineText) : null,
+            // 行の中のどこを指しているかも、ことばで伝える
+            e.near && e.near !== e.lineText ? `の「${e.near}」のあたり` : null,
+          )
         : null,
-      h("p", { class: "error-easy" }, explainError(e.code, e.message)),
+      h("p", { class: "error-easy" }, explainError(e.code, e.message, e.lineText)),
       h("p", { class: "error-raw" }, `原文（TS${e.code}）: ${e.message.split("\n")[0] ?? ""}`),
     );
 

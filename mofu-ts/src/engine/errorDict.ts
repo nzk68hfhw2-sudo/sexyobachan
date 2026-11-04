@@ -136,7 +136,14 @@ const dict: Record<number, Explainer> = {
  * エラー1件を、やさしい日本語にする。
  * 辞書にない番号のときは、ゆっくり読むようすすめる一言を返します。
  */
-export function explainError(code: number, message: string): string {
+export function explainError(code: number, message: string, lineText = ""): string {
+  // よくある「: の書き忘れ」。let age number = 3; のように名前と型が並んでいると、
+  // 見張り番は「let age, number（箱を2つ作る）の , が抜けている」と読んでしまう。
+  // 原文は「, がない」と言うけれど、本当に足りないのはたいてい : のほう。
+  const missingColon = /^(let|const|var)\s+[A-Za-z_$][\w$]*\s+[A-Za-z_$][\w$]*/.test(lineText);
+  if (code === 1005 && missingColon && /^',' expected/.test(message)) {
+    return "名前と型のあいだに「:」（コロン）が抜けているみたい。「let 名前: 型 = 中身;」の形にしてみよう。（見張り番は「箱を2つ作るつもりで , を忘れた」と読みちがえて「, がない」と言っているんだ）";
+  }
   const fn = dict[code];
   if (fn) {
     try {
