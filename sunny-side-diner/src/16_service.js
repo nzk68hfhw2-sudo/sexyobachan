@@ -119,7 +119,8 @@ function placeDishes(C) {
     if (d.userData.steam) d.userData.em = steamEmit(d.position.x, d.position.y + 0.08, d.position.z, 2.5, 0.05);
   });
 }
-function clearDishes(C) { C.dishes.forEach(function (d) { if (d.userData.em) steamStop(d.userData.em); RENDER.scene.remove(d); }); C.dishes = []; }
+function freeGeo(o) { o.traverse(function (m) { if (m.geometry) m.geometry.dispose(); }); } // geometry is never shared by dishes
+function clearDishes(C) { C.dishes.forEach(function (d) { if (d.userData.em) steamStop(d.userData.em); RENDER.scene.remove(d); freeGeo(d); }); C.dishes = []; }
 // ---- tapping a customer ---------------------------------------------------------------------
 function custSay(C, en, ja, opt) { opt = opt || {}; opt.voice = C.voice; if (C.anomaly && C.oddVoice) opt.odd = true; return say(C.name, en, ja, opt); }
 function tapCustomer(C) {
@@ -195,7 +196,7 @@ function writeTicket(C) {
   toast('Ticket No.' + T.no + ' → kitchen', '注文票が厨房に入った', 2);
   refreshTickets();
 }
-function removeTicket(T) { var i = TICKETS.indexOf(T); if (i >= 0) TICKETS.splice(i, 1); if (T.plates) { T.plates.forEach(function (p) { RENDER.scene.remove(p); }); T.plates = null; } refreshTickets(); }
+function removeTicket(T) { var i = TICKETS.indexOf(T); if (i >= 0) TICKETS.splice(i, 1); if (T.plates) { T.plates.forEach(function (p) { RENDER.scene.remove(p); freeGeo(p); }); T.plates = null; } refreshTickets(); }
 function refuseOdd(C) {
   C.items = C.items.filter(function (it) { return !it.odd; });
   if (C.anomaly && C.anomaly.onRefuse) C.anomaly.onRefuse(C, 'odd');

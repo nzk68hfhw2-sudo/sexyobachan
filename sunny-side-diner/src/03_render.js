@@ -125,6 +125,7 @@ function initRenderer() {
   r.setClearColor(0x000000, 1);
   r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; r.shadowMap.autoUpdate = false;
   r.domElement.style.touchAction = 'none';
+  r.domElement.addEventListener('webglcontextlost', function (e) { e.preventDefault(); contextLost(); }, false);
   CANVAS_HOST.appendChild(r.domElement);
   RENDER.renderer = r;
   MAX_ANISO = r.capabilities.getMaxAnisotropy ? r.capabilities.getMaxAnisotropy() : 1;
@@ -153,6 +154,15 @@ function initRenderer() {
   window.addEventListener('resize', onResize);
   window.addEventListener('orientationchange', function () { setTimeout(onResize, 250); });
   setQuality(SAVE.settings.quality, true);
+}
+function contextLost() { // the GPU dropped us (memory pressure on phones): offer a clean reload, keep the save
+  if (document.getElementById('ssd-lost')) return;
+  try { if (typeof GAME !== 'undefined' && GAME.mode === 'play') { SAVE.day = GAME.day; writeSave(); } } catch (e) {}
+  var d = document.createElement('div'); d.id = 'ssd-lost';
+  d.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:#050506;color:#f3e6c8;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 24px;font:600 16px/1.6 Oswald,sans-serif;letter-spacing:.06em';
+  d.innerHTML = 'The picture was lost (low memory).<br>TAP TO RELOAD<br><span style="font:500 13px/1.6 sans-serif;letter-spacing:0;color:#b8ab95">メモリ不足で画面が止まりました。タップで再読み込み（この夜の最初から）</span>';
+  d.addEventListener('click', function () { location.reload(); });
+  (document.body || document.documentElement).appendChild(d);
 }
 function setQuality(name, first) {
   RENDER.qname = name; RENDER.quality = pickQuality(name); Q = QUAL[RENDER.quality];

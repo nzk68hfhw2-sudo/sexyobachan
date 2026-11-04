@@ -210,8 +210,12 @@ function filt(type, f, q) { var b = AUDIO.ctx.createBiquadFilter(); b.type = typ
 function chain() { for (var i = 0; i < arguments.length - 1; i++) arguments[i].connect(arguments[i + 1]); return arguments[arguments.length - 1]; }
 function outFor(pos) {
   if (!pos) return AUDIO.sfx;
-  var p = AUDIO.ctx.createPanner(); p.panningModel = Q === QUAL.LOW ? 'equalpower' : 'HRTF'; p.distanceModel = 'inverse'; p.refDistance = 1.5; p.rolloffFactor = 1.1; p.maxDistance = 60;
-  setPannerPos(p, pos.x, pos.y, pos.z); p.connect(AUDIO.sfx); return p;
+  // HRTF is heavy on phones: only on desktop HIGH. One-shot panners are unplugged when their sound is over,
+  // otherwise they pile up and the audio thread (and on iPhone the whole page) chokes.
+  var p = AUDIO.ctx.createPanner(); p.panningModel = (Q === QUAL.HIGH && !isMobile()) ? 'HRTF' : 'equalpower'; p.distanceModel = 'inverse'; p.refDistance = 1.5; p.rolloffFactor = 1.1; p.maxDistance = 60;
+  setPannerPos(p, pos.x, pos.y, pos.z); p.connect(AUDIO.sfx);
+  if (!outFor.keep) setTimeout(function () { try { p.disconnect(); } catch (e) {} }, 14000);
+  return p;
 }
 function tone(t, type, f, a, peak, d, r, out, f2, glide) {
   var o = AUDIO.ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + (glide || d));
@@ -316,10 +320,10 @@ function startAmbience() {
   // fridge/hvac hum (60Hz + harmonics) near kitchen
   var hum = c.createGain(); hum.gain.value = 0;
   [60, 120, 180, 240].forEach(function (f, i) { var o = c.createOscillator(); o.frequency.value = f; var g = c.createGain(); g.gain.value = [0.5, 0.25, 0.12, 0.06][i]; o.connect(g); g.connect(hum); o.start(); });
-  var hp = filt('lowpass', 500, 0.7); hum.connect(hp); hp.connect(outFor(new THREE.Vector3(5.5, 1.2, -3.6)));
+  var hp = filt('lowpass', 500, 0.7); hum.connect(hp); outFor.keep = true; hp.connect(outFor(new THREE.Vector3(5.5, 1.2, -3.6)));
   AMB.hum = { g: hum, base: 0.035 };
   // neon buzz (120Hz sawtooth band-limited) near the neon
-  var bz = c.createOscillator(); bz.type = 'sawtooth'; bz.frequency.value = 120; var bzf = filt('bandpass', 2400, 2.5); var bzg = c.createGain(); bzg.gain.value = 0; bz.connect(bzf); bzf.connect(bzg); bzg.connect(outFor(new THREE.Vector3(1.5, 2.5, -2.6))); bz.start();
+  var bz = c.createOscillator(); bz.type = 'sawtooth'; bz.frequency.value = 120; var bzf = filt('bandpass', 2400, 2.5); var bzg = c.createGain(); bzg.gain.value = 0; bz.connect(bzf); bzf.connect(bzg); bzg.connect(outFor(new THREE.Vector3(1.5, 2.5, -2.6))); outFor.keep = false; bz.start();
   AMB.neon = { g: bzg, base: 0.012 };
   AMB.room = loopNoise('pink', 'lowpass', 400, 0.5, 0.02);
   AMB.rain = loopNoise('pink', 'bandpass', 1800, 0.35, 0.0);

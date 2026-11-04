@@ -1,20 +1,21 @@
 // ---- cooking minigames on the real 3D props -------------------------------------------
-var MINI = { active: false };
+var MINI = { active: false }, EXPO_USED = false;
+var RUBBER_M = null; function M_rubber() { if (!RUBBER_M) RUBBER_M = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.9 }); return RUBBER_M; }
 function glassMat() { return M.glass; }
-var SHOTS = {
-  griddle: { pos: [0.9, 1.42, -4.02], tgt: [0.75, 0.88, -4.75] },
-  prep: { pos: [-1.3, 1.5, -2.95], tgt: [-1.3, 0.93, -3.62] },
-  coffee: { pos: [-1.5, 1.34, -2.0], tgt: [-1.66, 1.0, -2.44] },
-  pie: { pos: [3.85, 1.52, -2.3], tgt: [3.85, 1.12, -1.62] },
-  shake: { pos: [-0.5, 1.52, -2.02], tgt: [-0.78, 1.1, -2.5] }
+var SHOTS = { // at = what we look at, d = distance, side = which side of it the cook stands (+z / -z)
+  griddle: { at: [0.72, 0.9, -4.74], d: 0.52, side: 1 },
+  prep: { at: [-1.3, 0.97, -3.6], d: 0.62, side: 1 },
+  coffee: { at: [-1.92, 1.1, -1.62], d: 0.7, side: -1 },
+  pie: { at: [3.85, 1.14, -1.62], d: 0.6, side: -1 },
+  shake: { at: [-0.8, 1.13, -2.49], d: 0.75, side: 1, dir: [0.1, 0.42, 0.9] }
 };
 var MINI_CSS = [
-  '.mini{position:absolute;left:50%;top:calc(var(--top-safe) + 64px);transform:translateX(-50%);width:min(340px,calc(100% - 40px));padding:12px 16px 14px;border-radius:14px;',
+  '.mini{position:absolute;left:50%;top:calc(var(--top-safe) + 62px);transform:translateX(-50%);width:min(330px,calc(100% - 40px));padding:9px 14px 11px;border-radius:14px;',
   ' background:linear-gradient(180deg,rgba(28,30,35,.94),rgba(14,15,18,.94)) padding-box,linear-gradient(160deg,#fff,#8e979f 35%,#eef1f3 55%,#5a6168) border-box;border:2px solid transparent;box-shadow:0 10px 24px rgba(0,0,0,.55);pointer-events:none;transition:opacity .25s,transform .25s;}',
   '.mini.hide{opacity:0;transform:translateX(-50%) translateY(-8px)}',
-  '.mini .tt{display:flex;align-items:center;gap:10px}.mini .tt .ic{width:28px;height:28px;color:#ffd36a;flex:0 0 auto}',
+  '.mini .tt{display:flex;align-items:center;gap:8px}.mini .tt .ic{width:22px;height:22px;color:#ffd36a;flex:0 0 auto}.mini .tt .en{font-size:16px}.mini .tt .ja{font-size:11px}',
   '.mini .en{font:400 18px/1.1 "Alfa Slab One",serif;color:#fff3d6;letter-spacing:.03em}.mini .ja{font:500 12px/1.4 "Zen Kaku Gothic New",sans-serif;color:rgba(243,230,200,.8)}',
-  '.mini .ins{margin-top:8px;font:600 14px/1.3 Oswald,sans-serif;letter-spacing:.06em;color:#8fd3c1}.mini .ins .ja{color:rgba(143,211,193,.8);letter-spacing:0}',
+  '.mini .ins{margin-top:5px;font:600 15px/1.3 Oswald,sans-serif;letter-spacing:.06em;color:#8fd3c1}.mini .ins .ja{color:rgba(143,211,193,.8);letter-spacing:0}',
   '.gauge{position:relative;height:14px;margin-top:10px;border-radius:7px;background:linear-gradient(90deg,#f1dca8,#e7b25e 40%,#b86a24 70%,#3a2010);box-shadow:inset 0 2px 3px rgba(0,0,0,.5)}',
   '.gauge.fill{background:rgba(255,255,255,.1)}.gauge .zone{position:absolute;top:-3px;bottom:-3px;border:2px solid #5be8ff;border-radius:6px;box-shadow:0 0 8px #5be8ff}',
   '.gauge .bar{position:absolute;left:0;top:0;bottom:0;border-radius:7px;background:linear-gradient(90deg,#8fd3c1,#e8fbff);width:0}',
@@ -32,7 +33,7 @@ function buildMiniUI() {
   U.mini = el('div', 'mini hide', '', UI); U.chips = el('div', 'chips', '', UI);
 }
 function miniPanel(iconN, en, ja, insEn, insJa, gauge) {
-  U.mini.innerHTML = '<div class="tt">' + icon(iconN, 28) + '<div><span class="en">' + en + '</span><span class="ja">' + ja + '</span></div></div><div class="ins"><span class="en ie">' + insEn + '</span><span class="ja ij">' + insJa + '</span></div>' + (gauge ? '<div class="gauge' + (gauge.fill ? ' fill' : '') + '">' + (gauge.zone ? '<div class="zone" style="left:' + gauge.zone[0] * 100 + '%;width:' + (gauge.zone[1] - gauge.zone[0]) * 100 + '%"></div>' : '') + (gauge.fill ? '<div class="bar"></div>' : '<div class="nd"></div>') + '</div>' : '') + (gauge && gauge.seq ? '<div class="seq">' + gauge.seq + '</div>' : '');
+  U.mini.innerHTML = '<div class="tt">' + icon(iconN, 28) + '<div><span class="en">' + en + '</span><span class="ja">' + ja + '</span></div></div><div class="ins"><span class="en ie">' + insEn + '</span><span class="ja ij">' + insJa + '</span></div>' + (gauge && (gauge.fill || gauge.zone) ? '<div class="gauge' + (gauge.fill ? ' fill' : '') + '">' + (gauge.zone ? '<div class="zone" style="left:' + gauge.zone[0] * 100 + '%;width:' + (gauge.zone[1] - gauge.zone[0]) * 100 + '%"></div>' : '') + (gauge.fill ? '<div class="bar"></div>' : '<div class="nd"></div>') + '</div>' : '') + (gauge && gauge.seq ? '<div class="seq">' + gauge.seq + '</div>' : '');
   U.mini.classList.remove('hide');
 }
 function miniIns(en, ja) { var e = U.mini.querySelector('.ie'), j = U.mini.querySelector('.ij'); if (e) e.textContent = en; if (j) j.textContent = ja; }
@@ -43,13 +44,17 @@ function stamp(q) {
   setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 1200);
 }
 function shotTo(name, instant, at) {
-  var s = SHOTS[name], pos = new THREE.Vector3(s.pos[0], s.pos[1], s.pos[2]), tgt = new THREE.Vector3(s.tgt[0], s.tgt[1], s.tgt[2]);
-  if (at) { tgt.set(at[0], at[1], at[2]); pos.set(at[0] + 0.04, at[1] + 0.42, at[2] + 0.36); }
-  CAM.focusLock = pos.distanceTo(tgt);
+  var s = SHOTS[name], A = at || s.at, d = s.d || 0.6;
+  var dir = s.dir ? new THREE.Vector3(s.dir[0], s.dir[1], s.dir[2]).normalize() : new THREE.Vector3(0.06, 0.78, 0.62 * (s.side || 1)).normalize();
+  var tgt0 = new THREE.Vector3(A[0], A[1], A[2]);
+  var pos = tgt0.clone().add(dir.multiplyScalar(d));
+  // aim a little above the dish so it sits in the clear area under the instruction panel
+  var tgt = tgt0.clone(); tgt.y += d * 0.2;
+  CAM.focusLock = pos.distanceTo(tgt0);
   if (instant || name === 'coffee' || name === 'pie' || name === 'shake') { // cut through black
     fadeBlack(0.18, function () { CAM.override = { pos: pos, target: tgt, k: 1, dur: 0.1 }; });
   } else closeShot(pos, tgt, 0.7);
-  PU.uDof.value = 0.5; PU.uFocusRange.value = 0.45; PU.uFocus.value = CAM.focusLock;
+  PU.uDof.value = 0.18; PU.uFocusRange.value = 0.8; PU.uFocus.value = CAM.focusLock; PU.uBloom.value = 0.45;
 }
 function fadeBlack(sec, mid) { var t0 = performance.now(); MINI.fadeT = 0; var step = function () { var k = (performance.now() - t0) / 1000 / sec; if (k < 1) { PU.uBlack.value = k; requestAnimationFrame(step); } else { PU.uBlack.value = 1; if (mid) mid(); var t1 = performance.now(); var s2 = function () { var k2 = (performance.now() - t1) / 1000 / sec; PU.uBlack.value = 1 - Math.min(1, k2); if (k2 < 1) requestAnimationFrame(s2); }; requestAnimationFrame(s2); } }; requestAnimationFrame(step); }
 function startMini(type, done) {
@@ -66,9 +71,9 @@ function endMini(q) {
   stamp(q); if (q > 0.85) sfx('orderBell', null, { vol: 0.35 });
   setTimeout(function () {
     if (M.emit) steamStop(M.emit);
-    RENDER.scene.remove(M.objs);
+    RENDER.scene.remove(M.objs); freeGeo(M.objs);
     if (M.cut) fadeBlack(0.18, function () { CAM.override = null; }); else releaseShot(0.6);
-    PU.uDof.value = 0; CAM.focusLock = 0;
+    PU.uDof.value = 0; CAM.focusLock = 0; PU.uBloom.value = 0.9;
     M.done && M.done(q);
     updateMainButton(); refreshTickets();
   }, 900);
@@ -116,7 +121,7 @@ function miniEgg() {
   M.onMove = function (x, y, dx, dy) { if (M.phase === 2 && !swiped && INPUT.y0 - y > 60) { swiped = true; slide(); } };
   function slide() { if (M.phase !== 2) return; M.phase = 3; sfx('scrape', base); var q = zoneScore(setK, 0.62, 0.8, 0.22); endMini(q); miniMain(null); }
   M.update = function (dt) {
-    if (M.phase === 1) { dropT += dt / 0.35; shell.position.y = base.y + 0.25 - Math.min(1, dropT) * 0.2; if (dropT >= 1) { shell.visible = false; white.visible = yolk.visible = true; M.phase = 2; sfx('sizzle', base, { len: 5 }); miniPanel('cook', 'SUNNY SIDE UP', '目玉焼き', 'Whites set? SWIPE UP to plate (don\'t flip!)', '白身が固まったら上にスワイプでお皿へ（返さない）', { zone: [0.62, 0.8] }); miniMain({ icon: 'serve', en: 'SLIDE ONTO PLATE', ja: 'お皿にすべらせる', fn: slide }); } }
+    if (M.phase === 1) { dropT += dt / 0.35; shell.position.y = base.y + 0.25 - Math.min(1, dropT) * 0.2; if (dropT >= 1) { shell.visible = false; white.visible = yolk.visible = true; M.phase = 2; sfx('sizzle', base, { len: 5 }); miniPanel('cook', 'SUNNY SIDE UP', '目玉焼き', 'Whites set? SWIPE UP to plate (don\'t flip!)', '白身が固まったら上にスワイプでお皿へ（返さない）', { zone: [0.62, 0.8] }); miniMain({ icon: 'serve', en: 'TO PLATE', ja: 'お皿にすべらせる', fn: slide }); } }
     if (M.phase >= 2) { white.scale.setScalar(damp(white.scale.x, 1, 6, dt)); }
     if (M.phase === 2) { setK += dt * 0.11; miniGauge(setK); wm.opacity = clamp(0.35 + setK * 0.9, 0, 1); cookCol(Math.max(0, setK - 0.8) * 1.5, wm.color.set(0xf6f0e2)); if (setK < 0.8) wm.color.set(0xf6f0e2); if (setK > 1.1) { M.phase = 4; sfx('zap', base, { vol: 0.3 }); miniMain(null); endMini(0.1); } }
   };
@@ -157,13 +162,15 @@ function miniBurger() {
 // ---------------- COFFEE ---------------------------------------------------------------
 function miniCoffee() {
   var M = MINI; M.cut = true; shotTo('coffee');
-  var cup = makeCup(true); cup.position.set(-1.62, 0.962, -2.42); cup.scale.setScalar(1.25); M.objs.add(cup); var cf = cup.userData.coffee; cf.position.y = 0.02;
-  var pot = makeCoffeePot(); pot.position.set(-1.78, 1.16, -2.44); pot.rotation.z = 0; M.objs.add(pot); WORLD.coffeePot.visible = false;
-  var lineM = mesh(new THREE.TorusGeometry(0.044 * 1.25, 0.0015, 4, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.4, 2.4, 3) }), -1.62, 0.962 + 0.067 * 1.25, -2.42, M.objs, false); lineM.rotation.x = PI / 2;
+  var mat = mesh(new THREE.BoxGeometry(0.34, 0.006, 0.26), M_rubber(), -1.92, 1.053, -1.62, M.objs, false); mat.receiveShadow = true;
+  var cup = makeCup(true); cup.position.set(-1.88, 1.056, -1.62); cup.scale.setScalar(1.25); M.objs.add(cup); var cf = cup.userData.coffee; cf.position.y = 0.02;
+  M.expo = 0.82;
+  var pot = makeCoffeePot(); pot.position.set(-2.05, 1.25, -1.62); pot.rotation.z = 0; M.objs.add(pot); WORLD.coffeePot.visible = false;
+  var lineM = mesh(new THREE.TorusGeometry(0.044 * 1.25, 0.0015, 4, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.4, 2.4, 3) }), -1.88, 1.056 + 0.067 * 1.25, -1.62, M.objs, false); lineM.rotation.x = PI / 2;
   var level = 0, holding = false, pourSnd = 0;
   miniPanel('coffee', 'COFFEE', 'コーヒー', 'HOLD to pour — release at the glowing line', '長押しで注ぐ（光る線で離す）', { fill: 1, zone: [0.82, 0.93] });
   M.onDown = function () { if (M.phase) return; holding = true; sfx('pour', cup.position, { len: 2.6 }); };
-  M.onUp = function () { if (M.phase || !holding) return; holding = false; M.phase = 1; var q = level > 1.0 ? 0.15 : zoneScore(level, 0.82, 0.93, 0.3); WORLD.coffeePot.visible = true; if (level > 1.0) { toast('Spilled!', 'こぼれた！', 1.4); } sfx('cup', cup.position); steamEmit(cup.position.x, cup.position.y + 0.1, cup.position.z, 3, 0.03); if (GAME.day >= 2 && Math.random() < 0.25) coffeeFace(cf); endMini(q); };
+  M.onUp = function () { if (M.phase || !holding) return; holding = false; M.phase = 1; var q = level > 1.0 ? 0.15 : zoneScore(level, 0.82, 0.93, 0.3); WORLD.coffeePot.visible = true; if (level > 1.0) { toast('Spilled!', 'こぼれた！', 1.4); } sfx('cup', cup.position); M.emit = steamEmit(cup.position.x, cup.position.y + 0.1, cup.position.z, 3, 0.03); if (GAME.day >= 2 && Math.random() < 0.25) coffeeFace(cf); endMini(q); };
   M.update = function (dt) {
     pot.rotation.z = damp(pot.rotation.z, holding ? -1.1 : 0, 8, dt);
     if (holding) level += dt * 0.32;
@@ -202,13 +209,17 @@ function miniPie() {
 // ---------------- MILKSHAKE ---------------------------------------------------------------
 function miniShake() {
   var M = MINI; M.cut = true; shotTo('shake');
-  var v = 0, dir = 1, holding = false, whirT = 0;
+  var v = 0, dir = 1, holding = false, whirT = 0; M.expo = 0.82;
+  mesh(new THREE.BoxGeometry(0.3, 0.006, 0.26), M_rubber(), -0.8, 0.963, -2.49, M.objs, false);
+  var sc = WORLD.shakeCup, wp = new THREE.Vector3(); sc.getWorldPosition(wp);
+  var liq = mesh(new THREE.CylinderGeometry(0.055, 0.042, 1, 18), foodMats().shake, wp.x, wp.y - 0.09, wp.z, M.objs, false); liq.scale.y = 0.001;
   miniPanel('coffee', 'MILKSHAKE', 'ミルクシェイク', 'HOLD to blend — release in the blue zone', '長押しでミキサー（青いところで離す）', { fill: 1, zone: [0.7, 0.84] });
   M.onDown = function () { if (M.phase) return; holding = true; sfx('whir', WORLD.shakeMixer.position, { len: 3.5 }); };
   M.onUp = function () { if (M.phase || !holding) return; holding = false; M.phase = 1; var q = zoneScore(v, 0.7, 0.84, 0.25); sfx('pour', WORLD.shakeMixer.position, { len: 0.6 }); endMini(q); };
   M.update = function (dt, t) {
     if (holding) { v += dt * 0.3; if (v > 1) v = 1; WORLD.shakeCup.position.x = Math.sin(t * 60) * 0.002; }
+    liq.scale.y = Math.max(0.001, v * 0.17); liq.position.y = wp.y - 0.095 + v * 0.085;
     miniGauge(v);
   };
 }
-function updateMini(dt, t) { if (!MINI.active) return; MINI.t += dt; if (MINI.update) MINI.update(dt, t); }
+function updateMini(dt, t) { if (MINI.active && MINI.expo) { EXPO_USED = true; PU.uExposure.value = damp(PU.uExposure.value, MINI.expo, 6, dt); } else if (EXPO_USED) { PU.uExposure.value = damp(PU.uExposure.value, 1, 6, dt); if (Math.abs(PU.uExposure.value - 1) < 0.005) { PU.uExposure.value = 1; EXPO_USED = false; } } if (!MINI.active) return; MINI.t += dt; if (MINI.update) MINI.update(dt, t); }
