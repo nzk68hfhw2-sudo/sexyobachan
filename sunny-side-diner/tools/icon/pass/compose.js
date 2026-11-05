@@ -23,22 +23,21 @@ const D = '/tmp/claude-0/-home-user-sexyobachan/3e557370-2a49-54b8-ba77-e910b93b
         // dark top band so the words read
         const tb = g.createLinearGradient(0, 0, 0, 300); tb.addColorStop(0, 'rgba(4,4,8,0.92)'); tb.addColorStop(0.75, 'rgba(4,4,8,0.7)'); tb.addColorStop(1, 'rgba(4,4,8,0)'); g.fillStyle = tb; g.fillRect(0, 0, 1024, 300);
         // neon title with a dying letter
-        g.textAlign = 'left'; g.font = '118px ' + F.logo; const t = 'Sunny Side Diner', tw = g.measureText(t).width; let x = 512 - tw / 2;
-        for (let i = 0; i < t.length; i++) { const ch = t[i], w = g.measureText(ch).width, dim = i === 12;
-          g.shadowColor = '#ff2f6a'; g.shadowBlur = dim ? 10 : 46; g.lineWidth = 10; g.strokeStyle = dim ? '#5a1020' : '#ff2f6a'; g.strokeText(ch, x, 128);
-          g.shadowBlur = dim ? 0 : 16; g.fillStyle = dim ? '#3a1018' : '#ffe0e8'; g.fillText(ch, x, 128); x += w; }
+        g.textAlign = 'center'; g.font = '104px ' + F.logo; const t = 'Sunny Side Diner';
+        g.shadowColor = '#ff2f6a'; g.shadowBlur = 46; g.lineWidth = 10; g.lineJoin = 'round'; g.strokeStyle = '#ff2f6a'; g.strokeText(t, 512, 132);
+        g.shadowBlur = 16; g.fillStyle = '#ffe0e8'; g.fillText(t, 512, 132);
         g.shadowBlur = 0;
         // genre band
-        const y0 = 168, h = 74; g.fillStyle = 'rgba(10,6,8,0.88)'; g.fillRect(40, y0, 944, h);
-        g.fillStyle = '#c8101c'; g.fillRect(40, y0, 944, 4); g.fillRect(40, y0 + h - 4, 944, 4);
-        g.textAlign = 'center'; g.textBaseline = 'middle'; const a = '海外風経営シミュレーション', bx = 'インディーホラー', sep = ' × '; let fs = 46; do { g.font = '900 ' + fs + 'px "Zen Kaku Gothic New", sans-serif'; fs--; } while (g.measureText(a + sep + bx).width > 880);
+        const y0 = 172, h = 68, bw = 840, bx0 = 512 - bw / 2; g.fillStyle = 'rgba(10,6,8,0.88)'; g.fillRect(bx0, y0, bw, h);
+        g.fillStyle = '#c8101c'; g.fillRect(bx0, y0, bw, 4); g.fillRect(bx0, y0 + h - 4, bw, 4);
+        g.textAlign = 'center'; g.textBaseline = 'middle'; const a = '海外風経営シミュレーション', bx = 'インディーホラー', sep = ' × '; let fs = 46; do { g.font = '900 ' + fs + 'px "Zen Kaku Gothic New", sans-serif'; fs--; } while (g.measureText(a + sep + bx).width > 780);
         const wa = g.measureText(a).width, ws = g.measureText(sep).width, wb = g.measureText(bx).width, x0 = 512 - (wa + ws + wb) / 2;
         g.textAlign = 'left'; g.fillStyle = '#f3e6c8'; g.fillText(a, x0, y0 + h / 2 + 2);
         g.fillStyle = '#ff3040'; g.shadowColor = '#ff0010'; g.shadowBlur = 14; g.fillText(sep, x0 + wa, y0 + h / 2 + 2); g.shadowBlur = 0;
         g.fillStyle = '#ff5a5a'; g.shadowColor = 'rgba(255,0,20,0.7)'; g.shadowBlur = 18; g.fillText(bx, x0 + wa + ws, y0 + h / 2 + 2); g.shadowBlur = 0;
         g.textBaseline = 'alphabetic';
         // red scrawl on the counter
-        g.save(); g.translate(735, 985); g.rotate(-0.06); g.textAlign = 'center'; g.font = '64px ' + F.fake; g.fillStyle = 'rgba(190,12,22,0.92)'; g.shadowColor = 'rgba(0,0,0,0.8)'; g.shadowBlur = 6; g.fillText("DON'T LOOK UP", 0, 0); g.restore();
+        g.save(); g.translate(512, 1000); g.rotate(-0.03); g.textAlign = 'center'; g.font = '64px ' + F.fake; g.fillStyle = 'rgba(190,12,22,0.92)'; g.shadowColor = 'rgba(0,0,0,0.8)'; g.shadowBlur = 6; g.fillText("DON'T LOOK UP", 0, 0); g.restore();
       }
       // vignette, grain, scratches
       const vg = g.createRadialGradient(512, 560, 280, 512, 560, 760); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(30,0,4,0.78)'); g.fillStyle = vg; g.fillRect(0, 0, 1024, 1024);
