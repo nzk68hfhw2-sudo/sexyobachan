@@ -2942,10 +2942,14 @@ function audioUnlock() {
   if (AUDIO.ctx) { if (AUDIO.ctx.state !== 'running') try { AUDIO.ctx.resume(); } catch (e) {} return; }
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {} // iOS: play even with the silent switch on
   var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-  try { AUDIO.ctx = new AC({ latencyHint: 'interactive' }); } catch (e) { try { AUDIO.ctx = new AC(); } catch (e2) { return; } }
+  // phones: a bigger audio buffer so the sound never drops out when the page is busy drawing
+  try { AUDIO.ctx = new AC({ latencyHint: isMobile() ? 'playback' : 'interactive' }); } catch (e) { try { AUDIO.ctx = new AC(); } catch (e2) { return; } }
   var c = AUDIO.ctx;
   try { var b = c.createBuffer(1, 1, 22050), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); } catch (e) {}
   try { c.resume(); } catch (e) {}
+  // iOS stops the audio when TTS / a call / Siri takes the speaker ("interrupted"): start it again
+  c.onstatechange = function () { if (c.state !== 'running' && !document.hidden && !(typeof PAUSE !== 'undefined' && PAUSE.el)) setTimeout(function () { try { if (c.state !== 'running' && !document.hidden) c.resume(); } catch (e) {} }, 250); };
+  setInterval(function () { if (c.state !== 'running' && !document.hidden && !(typeof PAUSE !== 'undefined' && PAUSE.el)) try { c.resume(); } catch (e) {} }, 2000);
   buildMix(); AUDIO.ok = true;
   loadSongs();
   document.addEventListener('visibilitychange', function () { if (!AUDIO.ctx) return; if (document.hidden) AUDIO.ctx.suspend && AUDIO.ctx.suspend(); else AUDIO.ctx.resume && AUDIO.ctx.resume(); });
@@ -2969,14 +2973,15 @@ function buildMix() {
   });
   // reverbs (procedural impulse responses)
   AUDIO.rev = {};
-  var spaces = { diner: [1.5, 2600, 0.32], kitchen: [1.05, 6200, 0.38], freezer: [0.35, 1600, 0.26], hall: [2.1, 3000, 0.4], outside: [0.7, 4200, 0.16], tv: [0.25, 3000, 0.1] };
+  var spaces = { diner: [1.5, 2600, 0.32], kitchen: [1.05, 6200, 0.38], freezer: [0.35, 1600, 0.26], hall: [2.1, 3000, 0.4], outside: [0.7, 4200, 0.16], tv: [0.25, 3000, 0.1] }, irMul = isMobile() ? 0.55 : 1;
   for (var k in spaces) {
-    var sp = spaces[k], conv = c.createConvolver(); conv.buffer = makeIR(sp[0], sp[1], k === 'outside');
+    var sp = spaces[k], conv = c.createConvolver(); conv.buffer = makeIR(sp[0] * irMul, sp[1], k === 'outside');
     var g = c.createGain(); g.gain.value = k === 'diner' ? sp[2] : 0; conv.connect(g); g.connect(master);
     AUDIO.rev[k] = { conv: conv, out: g, wet: sp[2] };
   }
   AUDIO.revSend = c.createGain(); AUDIO.revSend.gain.value = 1;
-  for (var k2 in AUDIO.rev) AUDIO.revSend.connect(AUDIO.rev[k2].conv);
+  // only the room you are in gets fed (six convolvers running at once made the iPhone audio thread drop out)
+  AUDIO.revSend.connect(AUDIO.rev.diner.conv); AUDIO.revOn = 'diner';
   AUDIO.sfx.connect(AUDIO.revSend);
   // space-specific damping for everything (freezer muffles)
   applyVolumes();
@@ -3005,6 +3010,7 @@ function applyVolumes() {
 function setSpace(k) {
   if (!AUDIO.ok || AUDIO.space === k) return; AUDIO.space = k; var t = AUDIO.ctx.currentTime;
   for (var r in AUDIO.rev) AUDIO.rev[r].out.gain.setTargetAtTime(r === k ? AUDIO.rev[r].wet : 0, t, 0.25);
+  if (AUDIO.rev[k] && AUDIO.revOn !== k) { var old = AUDIO.rev[AUDIO.revOn]; try { AUDIO.revSend.connect(AUDIO.rev[k].conv); if (old) AUDIO.revSend.disconnect(old.conv); } catch (e) {} AUDIO.revOn = k; }
   if (AUDIO.juke) AUDIO.juke.space = k;
 }
 function duckMusic(on) { if (!AUDIO.ok) return; AUDIO.musicDuck.gain.setTargetAtTime(on ? 0.42 : 1, AUDIO.ctx.currentTime, on ? 0.12 : 0.6); }
