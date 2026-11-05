@@ -19,7 +19,7 @@ html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden}
 <script>
 (function(){
 var BASE='https://sensational-klepon-d5f6ea.netlify.app/';
-var URL_JS=BASE+'game.js';
+var URL_JS=BASE+'game.js?v='+Date.now();
 var done=false;
 function show(t,d){
 var e=document.getElementById('sse');
