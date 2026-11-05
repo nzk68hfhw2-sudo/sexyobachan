@@ -21,14 +21,14 @@ const D = '/tmp/claude-0/-home-user-sexyobachan/3e557370-2a49-54b8-ba77-e910b93b
       g.save(); g.translate(250, 655); g.rotate(-0.5); g.fillStyle = 'rgba(110,4,10,0.45)'; g.beginPath(); g.ellipse(0, 0, 30, 34, 0, 0, 7); g.fill(); [[-24, -46, 8, 24], [-8, -58, 8, 28], [8, -56, 8, 27], [23, -44, 7, 22], [34, -6, 7, 18]].forEach(([x, y, rx, ry]) => { g.beginPath(); g.ellipse(x, y, rx, ry, x > 30 ? -0.9 : 0, 0, 7); g.fill(); }); g.fillRect(-10, 26, 20, 26); g.restore();
       if (variant === 'text') {
         // dark top band so the words read
-        const tb = g.createLinearGradient(0, 0, 0, 300); tb.addColorStop(0, 'rgba(4,4,8,0.92)'); tb.addColorStop(0.75, 'rgba(4,4,8,0.7)'); tb.addColorStop(1, 'rgba(4,4,8,0)'); g.fillStyle = tb; g.fillRect(0, 0, 1024, 300);
+        const tb = g.createLinearGradient(0, 360, 0, 660); tb.addColorStop(0, 'rgba(4,4,8,0)'); tb.addColorStop(0.3, 'rgba(4,4,8,0.78)'); tb.addColorStop(0.7, 'rgba(4,4,8,0.78)'); tb.addColorStop(1, 'rgba(4,4,8,0)'); g.fillStyle = tb; g.fillRect(0, 360, 1024, 300);
         // neon title with a dying letter
         g.textAlign = 'center'; g.font = '104px ' + F.logo; const t = 'Sunny Side Diner';
-        g.shadowColor = '#ff2f6a'; g.shadowBlur = 46; g.lineWidth = 10; g.lineJoin = 'round'; g.strokeStyle = '#ff2f6a'; g.strokeText(t, 512, 132);
-        g.shadowBlur = 16; g.fillStyle = '#ffe0e8'; g.fillText(t, 512, 132);
+        g.shadowColor = '#ff2f6a'; g.shadowBlur = 46; g.lineWidth = 10; g.lineJoin = 'round'; g.strokeStyle = '#ff2f6a'; g.strokeText(t, 512, 492);
+        g.shadowBlur = 16; g.fillStyle = '#ffe0e8'; g.fillText(t, 512, 492);
         g.shadowBlur = 0;
         // genre band
-        const y0 = 172, h = 68, bw = 840, bx0 = 512 - bw / 2; g.fillStyle = 'rgba(10,6,8,0.88)'; g.fillRect(bx0, y0, bw, h);
+        const y0 = 532, h = 68, bw = 840, bx0 = 512 - bw / 2; g.fillStyle = 'rgba(10,6,8,0.88)'; g.fillRect(bx0, y0, bw, h);
         g.fillStyle = '#c8101c'; g.fillRect(bx0, y0, bw, 4); g.fillRect(bx0, y0 + h - 4, bw, 4);
         g.textAlign = 'center'; g.textBaseline = 'middle'; const a = '海外風経営シミュレーション', bx = 'インディーホラー', sep = ' × '; let fs = 46; do { g.font = '900 ' + fs + 'px "Zen Kaku Gothic New", sans-serif'; fs--; } while (g.measureText(a + sep + bx).width > 780);
         const wa = g.measureText(a).width, ws = g.measureText(sep).width, wb = g.measureText(bx).width, x0 = 512 - (wa + ws + wb) / 2;
