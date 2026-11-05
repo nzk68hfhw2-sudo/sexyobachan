@@ -5503,7 +5503,8 @@ var SCR_CSS = [
   '.warnscr .w2{margin-top:14px;font:600 16px/1.5 Oswald,sans-serif;color:#e8e0d0;letter-spacing:.04em;max-width:330px}',
   '.warnscr .w3{margin-top:8px;font:500 13px/1.6 "Zen Kaku Gothic New",sans-serif;color:#b8ab95;max-width:330px}',
   '.warnscr .hp{margin-top:30px;display:flex;align-items:center;gap:12px;color:#8fd3c1;font:600 13px/1.3 Oswald,sans-serif;letter-spacing:.12em;text-align:left}.warnscr .hp .ic{width:34px;height:34px}',
-  '.warnscr .tap{margin-top:46px;font:400 22px/1 "Alfa Slab One",serif;color:#fff3d6;letter-spacing:.18em;animation:blink 1.4s ease-in-out infinite}.warnscr .tap small{display:block;font:600 12px/1.6 "Zen Kaku Gothic New";letter-spacing:.1em;color:#b8ab95;margin-top:8px}',
+  '.warnscr .mute{margin-top:16px;display:flex;align-items:center;gap:10px;max-width:330px;padding:10px 14px;border-radius:12px;border:1.5px solid rgba(255,211,106,.55);background:rgba(255,211,106,.08);text-align:left}.warnscr .mute .ic{flex:0 0 auto;width:22px;height:22px;color:#ffd36a}.warnscr .mute b{display:block;font:700 13px/1.45 "Zen Kaku Gothic New",sans-serif;color:#ffe9b0}.warnscr .mute span{display:block;margin-top:2px;font:500 11px/1.35 Oswald,sans-serif;letter-spacing:.04em;color:#b8ab95}',
+  '.warnscr .tap{margin-top:40px;font:400 22px/1 "Alfa Slab One",serif;color:#fff3d6;letter-spacing:.18em;animation:blink 1.4s ease-in-out infinite}.warnscr .tap small{display:block;font:600 12px/1.6 "Zen Kaku Gothic New";letter-spacing:.1em;color:#b8ab95;margin-top:8px}',
   '@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}',
   // title CM
   '.cm{position:absolute;inset:0;overflow:hidden;background:#f4c870;transition:opacity .08s}',
@@ -5558,7 +5559,7 @@ function killScr(d, fade) { if (!d) return; if (fade) { d.classList.add('hide');
 function showWarning() {
   GAME.mode = 'warn';
   var w = scr('warnscr', '<div class="w1">WARNING</div><div class="w2">This game contains jump scares, loud sounds, and blood.</div><div class="w3">※ホラー演出・急な大きい音・流血表現があります</div>' +
-    '<div class="hp">' + icon('headphones', 34) + '<div>HEADPHONES RECOMMENDED<br><span style="font:500 12px \'Zen Kaku Gothic New\';letter-spacing:0;color:#b8ab95">イヤホン推奨</span></div></div><div class="tap">TAP TO START<small>タップしてはじめる</small></div>');
+    '<div class="hp">' + icon('headphones', 34) + '<div>HEADPHONES RECOMMENDED<br><span style="font:500 12px \'Zen Kaku Gothic New\';letter-spacing:0;color:#b8ab95">イヤホン推奨</span></div></div><div class="mute">' + icon('speaker', 22) + '<div><b>消音モード（マナーモード）を解除すると BGM が流れます</b><span>Turn off silent mode on your iPhone to hear the music.</span></div></div><div class="tap">TAP TO START<small>タップしてはじめる</small></div>');
   SCR.warn = w;
   onTap(w, function () {
     audioUnlock(); try { var u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) {}
