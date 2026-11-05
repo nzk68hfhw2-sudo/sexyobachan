@@ -4328,13 +4328,16 @@ function endMini(q) {
   M.active = false; M.endPending = true; U.mini.classList.add('hide'); U.chips.innerHTML = ''; setMain2(null); stackCooking();
   cookHookEnd(M, q);
   stamp(q); if (q > 0.85) sfx('orderBell', null, { vol: 0.35 });
+  // the dish counts as done right away (SERVE / next dish show at once); only the camera & props wait
+  if (!M.bad && GAME.mode === 'play') { M.done && M.done(q); M.done = null; }
+  updateMainButton(); refreshTickets();
   setTimeout(function () {
     if (M.emit) steamStop(M.emit);
     RENDER.scene.remove(M.objs); freeGeo(M.objs);
     if (M.cut) fadeBlack(0.18, function () { CAM.override = null; }); else releaseShot(0.6);
     PU.uDof.value = 0; CAM.focusLock = 0; PU.uBloom.value = 0.9;
     M.endPending = false;
-    if (M.bad && GAME.mode === 'play') badFoodChoice(M, q); else if (GAME.mode === 'play') M.done && M.done(q);
+    if (M.bad && GAME.mode === 'play') badFoodChoice(M, q);
     updateMainButton(); refreshTickets();
   }, 900);
 }
@@ -5196,10 +5199,12 @@ function updateMainButton() {
   else if (st !== 'KITCHEN' && st !== 'REGISTER' && st !== 'FREEZER' && st !== 'BACKDOOR' && TICKETS.some(function (T) { return !T.ready && !T.booth4; }) && !(st === 'JUKEBOX' && ACTIVE.some(function (A) { return A.id === 'phone' && A.ringing || A.id === 'jukebox'; })) && !(st === 'DOOR' && ACTIVE.some(function (A) { return A.id === 'dayshift'; })))
     a = { icon: 'cook', en: 'TO KITCHEN', ja: '厨房へ行って料理を作る', glow: true, fn: function () { goStation('KITCHEN'); } };
   else if (st === 'KITCHEN') {
-    var t = TICKETS.filter(function (T) { return !T.ready; })[0];
+    // a dish you can actually cook (not Booth 4's / YOU tickets — those are torn from the rail)
+    var t = TICKETS.filter(function (T) { return !T.ready && !T.booth4 && T.items.some(function (i) { return !i.done; }); })[0];
     var rc = CUSTS.filter(function (C) { return C.state === 'ordered' && C.ticket && C.ticket.ready && C.seat; })[0];
     var wc = CUSTS.filter(function (C) { return ['wait', 'seated', 'ready', 'check'].indexOf(C.state) >= 0 && !C.anomaly; })[0];
-    if (t) a = { icon: 'ticket', en: 'NEXT TICKET', ja: '次の伝票を作る', glow: true, fn: function () { quickCook(t); } };
+    if (rc && !(t && t.cust === rc)) a = { icon: 'serve', en: 'SERVE', ja: '料理を運ぶ（' + (rc.seat.kind === 'stool' ? 'カウンター' : rc.seat.booth + '番席') + 'へ戻る）', glow: true, fn: function () { returnTo(rc); } };
+    else if (t) a = { icon: 'ticket', en: 'NEXT TICKET', ja: '次の伝票を作る', glow: true, fn: function () { quickCook(t); } };
     else if (rc) a = { icon: 'serve', en: 'SERVE', ja: '料理を運ぶ（' + (rc.seat.kind === 'stool' ? 'カウンター' : rc.seat.booth + '番席') + 'へ戻る）', glow: true, fn: function () { returnTo(rc); } };
     else if (wc) a = { icon: 'back', en: 'TO FLOOR', ja: '客席へ戻る', glow: true, fn: function () { returnTo(wc); } };
   }

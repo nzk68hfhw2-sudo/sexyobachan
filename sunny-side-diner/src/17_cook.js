@@ -72,13 +72,16 @@ function endMini(q) {
   M.active = false; M.endPending = true; U.mini.classList.add('hide'); U.chips.innerHTML = ''; setMain2(null); stackCooking();
   cookHookEnd(M, q);
   stamp(q); if (q > 0.85) sfx('orderBell', null, { vol: 0.35 });
+  // the dish counts as done right away (SERVE / next dish show at once); only the camera & props wait
+  if (!M.bad && GAME.mode === 'play') { M.done && M.done(q); M.done = null; }
+  updateMainButton(); refreshTickets();
   setTimeout(function () {
     if (M.emit) steamStop(M.emit);
     RENDER.scene.remove(M.objs); freeGeo(M.objs);
     if (M.cut) fadeBlack(0.18, function () { CAM.override = null; }); else releaseShot(0.6);
     PU.uDof.value = 0; CAM.focusLock = 0; PU.uBloom.value = 0.9;
     M.endPending = false;
-    if (M.bad && GAME.mode === 'play') badFoodChoice(M, q); else if (GAME.mode === 'play') M.done && M.done(q);
+    if (M.bad && GAME.mode === 'play') badFoodChoice(M, q);
     updateMainButton(); refreshTickets();
   }, 900);
 }
