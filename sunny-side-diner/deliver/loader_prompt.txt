@@ -18,7 +18,7 @@ html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden}
 <div id="sse"></div>
 <script>
 (function(){
-var BASE='https://sunny-side-diner.netlify.app/';
+var BASE='https://sensational-klepon-d5f6ea.netlify.app/';
 var URL_JS=BASE+'game.js';
 var done=false;
 function show(t,d){

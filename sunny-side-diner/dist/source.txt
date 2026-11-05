@@ -15,7 +15,7 @@ _headers                   … CORS（Access-Control-Allow-Origin: *）とキャ
 source.txt                 … このファイル
 
 ■ BASE_URL
-  game.js 先頭の  var BASE_URL = 'https://sunny-side-diner.netlify.app/';
+  game.js 先頭の  var BASE_URL = 'https://sensational-klepon-d5f6ea.netlify.app/';
   を公開した Netlify のURL（最後は /）に書き換える。
   ※ game.js が <script src=".../game.js"> で読まれた場合は、そのフォルダを自動で使う（書き換え忘れの保険）。
 ■ 外部ライブラリ: cdnjs の three.js r128 のみ。ポストエフェクト（ブルーム・被写界深度・ACES・グレイン・
