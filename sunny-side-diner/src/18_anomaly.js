@@ -179,14 +179,15 @@ var ANOM = {
       setTimeout(function () {
         if (A.done) return;
         say('SUNNY', 'Rise and shine, ' + nm + '! Hey! ' + nm + '! Over here!', 'おはよう、' + nm + '！ ねえ！ ' + nm + '！ こっちだよ！', { voice: 'sunny', picoDark: Math.min(1, GAME.day * 0.18), hold: 2 });
-        A.trap = { icon: 'reply', en: 'REPLY "Yes?"', ja: '返事をする「はい？」', glow: true, fn: function () { A.replied = true; say('YOU', 'Yes...?', 'はい……？', { voice: 'you', cls: 'you' }).then(function () { setNeonEyes(0, 'red'); say('SUNNY', 'There you are.', 'みーつけた。', { voice: 'sunny', picoDark: 1, rate: 0.7, pitch: 0.6 }).then(function () { anomalyFail(A, A.face, { rule: 'sunny' }); }); }); } };
-        A.phase = 1; A.t = 0; updateMainButton();
+        // the moment the voice is heard: answer, or ignore
+        showAsk('Sunny is calling your name', 'Sunny があなたの名前を呼んでいる', { en: 'ANSWER', ja: '答える「はい？」', fn: function () { A.replied = true; say('YOU', 'Yes...?', 'はい……？', { voice: 'you', cls: 'you' }).then(function () { setNeonEyes(0, 'red'); say('SUNNY', 'There you are.', 'みーつけた。', { voice: 'sunny', picoDark: 1, rate: 0.7, pitch: 0.6 }).then(function () { anomalyFail(A, A.face, { rule: 'sunny' }); }); }); } }, { en: 'IGNORE', ja: '無視する', fn: function () { A.ignored = true; } });
+        A.phase = 1; A.t = 0;
       }, 2500);
     },
     update: function (A, dt) {
-      if (A.phase === 1 && A.t > 9 && !A.replied) { A.phase = 2; A.trap = null; updateMainButton(); say('SUNNY', '...' + (SAVE.name || 'friend') + '? ...Aw. Maybe later!', '……' + (SAVE.name || 'ともだち') + '？ ……ちぇっ。またあとでね！', { voice: 'sunny', picoDark: 0.4 }).then(function () { if (!A.done) { setNeonEyes(0, null); LSTATE.eyesExtra = 1; anomalyResolve(A); } }); }
+      if (A.phase === 1 && !A.replied && (A.t > 9 || (A.ignored && (!SUBQ.cur || SUBQ.cur.who !== 'SUNNY')))) { A.phase = 2; hideAsk(); say('SUNNY', '...' + (SAVE.name || 'friend') + '? ...Aw. Maybe later!', '……' + (SAVE.name || 'ともだち') + '？ ……ちぇっ。またあとでね！', { voice: 'sunny', picoDark: 0.4 }).then(function () { if (!A.done) { setNeonEyes(0, null); LSTATE.eyesExtra = 1; anomalyResolve(A); } }); }
     },
-    cleanup: function (A) { A.trap = null; updateMainButton(); }
+    cleanup: function (A) { hideAsk(); }
   },
   // R5 — 3 AM ticket from booth 4
   booth4: {
@@ -347,7 +348,7 @@ function jumpscare(n, opt) {
   if (JS.on || GAME.mode === 'dead') return;
   opt = opt || {}; JS = { on: true, t: 0, n: n || 1, P: opt.person || null, mild: SAVE.settings.scare === 'MILD' };
   GAME.mode = 'dead'; GAME.deathAt = GAME.min;
-  stopVoice(); talkCancel(); hideChoices(); hideCall(); closeDocs(true); if (MINI.active) { MINI.active = false; U.mini.classList.add('hide'); U.chips.innerHTML = ''; } setMain2(null); stackCooking();
+  stopVoice(); talkCancel(); hideChoices(); hideCall(); closeDocs(true); hideAsk(); if (MINI.active) { MINI.active = false; U.mini.classList.add('hide'); U.chips.innerHTML = ''; } setMain2(null); stackCooking();
   jukeStop(0.05); stopMusic(0.05);
   setMain(null); setGameHUD(false);
   LSTATE.flick = 3; LSTATE.coldT = 1;

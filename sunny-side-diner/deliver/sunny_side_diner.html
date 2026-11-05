@@ -2506,6 +2506,7 @@ var UI_CSS = function () {
     '@keyframes ring{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}',
     '.callcard .cj{font:600 11.5px/1.4 "Zen Kaku Gothic New",sans-serif;margin:2px 0 10px 34px;color:#5a1430}',
     '#ssd-ui.calling .rail{opacity:0;pointer-events:none}',
+    '.askcard{background:linear-gradient(180deg,#ffd77a,#ffae3c) padding-box,linear-gradient(160deg,#fff,#8e979f 35%,#eef1f3 55%,#5a6168) border-box;color:#3a1600}.askcard .ct .ic{animation:none}.askcard .cj{color:#5a2a00}',
     '.callcard .cb{display:flex;gap:10px}.callcard button{flex:1;height:46px;border-radius:999px;border:2px solid #fff3f7;font:600 14px/1.1 Oswald,sans-serif;letter-spacing:.06em;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 3px 0 rgba(90,10,40,.5)}',
     '.callcard button small{font:600 10px/1.2 "Zen Kaku Gothic New";letter-spacing:0}.callcard .pick{background:#c8282e;color:#fff4dc}.callcard .let{background:#fbf3e0;color:#3a0a1c}',
     '.callcard button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(90,10,40,.5)}',
@@ -2526,6 +2527,7 @@ var UI_CSS = function () {
     '#ssd-ui.cooking.tight1 .subband{padding:5px 10px 6px;min-height:0}#ssd-ui.cooking.tight1 .subband .sub{padding:2px}#ssd-ui.cooking.tight1 .subband .sub .who{height:18px;line-height:18px;margin-bottom:3px}#ssd-ui.cooking.tight1 .subband .sub .l1{font-size:15px;line-height:1.25;min-height:0}#ssd-ui.cooking.tight1 .subband .sub .l2{font-size:11.5px;line-height:1.35;margin-top:2px}',
     '#ssd-ui.cooking.tight1 .callcard{padding:8px 12px}#ssd-ui.cooking.tight1 .callcard .ct{font-size:15px}#ssd-ui.cooking.tight1 .callcard .cj{margin:0 0 6px 34px;font-size:10.5px}#ssd-ui.cooking.tight1 .callcard button{height:40px}',
     '#ssd-ui.cooking.tight1 .mb2{height:48px}',
+    '#ssd-ui.cooking.tight3 .callcard{padding:6px 10px}#ssd-ui.cooking.tight3 .callcard .cj{display:none}#ssd-ui.cooking.tight3 .callcard .ct{font-size:13px;margin-bottom:5px}#ssd-ui.cooking.tight3 .callcard button{height:36px}',
     '#ssd-ui.cooking.tight2 .mini .tt{display:none}#ssd-ui.cooking.tight2 .mini .ins{margin-top:0}#ssd-ui.cooking.tight2 .subband .sub .l2{display:none}',
     '.mb2{position:absolute;left:50%;transform:translateX(-50%);height:54px;min-width:200px;max-width:calc(100% - 40px);z-index:7;}',
     '.mb2 .ic{width:24px;height:24px}.mb2 .en{font-size:16px}',
@@ -2626,8 +2628,14 @@ function setMain2(act) {
 function stackCooking() {
   var on = !!(MINI.active && GAME.mode === 'play');
   if (UI.classList.contains('cooking') !== on) UI.classList.toggle('cooking', on);
-  var list = [U.call, SUBQ.cur ? U.sub : null, U.main2Act ? U.main2 : null, U.toast.classList.contains('hide') ? null : U.toast];
-  if (!on) { if (U._stacked) { U._stacked = false; [U.call, U.sub, U.main2, U.toast].forEach(function (e) { if (e) e.style.top = ''; }); } return; }
+  var list = [U.call, U.ask, SUBQ.cur ? U.sub : null, U.main2Act ? U.main2 : null, U.toast.classList.contains('hide') ? null : U.toast];
+  if (!on) { if (U._stacked) { U._stacked = false; [U.call, U.sub, U.main2, U.toast].forEach(function (e) { if (e) e.style.top = ''; }); }
+    if (U.ask) { // outside cooking: under the phone card; a top subtitle goes under it
+      var b0 = UI.getBoundingClientRect().top, yy = U.call ? U.call.getBoundingClientRect().bottom - b0 + 8 : null;
+      U.ask.style.top = yy == null ? '' : Math.round(yy) + 'px';
+      if (SUBQ.cur && U.sub.classList.contains('top')) U.sub.style.top = Math.round(U.ask.getBoundingClientRect().bottom - b0 + 8) + 'px';
+    }
+    return; }
   U._stacked = true;
   var base = UI.getBoundingClientRect().top, r = U.mini.getBoundingClientRect(), y = (U.mini.classList.contains('hide') ? r.top + 8 : r.bottom) - base + 8;
   // keep clear of the cooking chips / main button at the bottom: tighten the subtitle if needed
@@ -2635,7 +2643,8 @@ function stackCooking() {
   var measure = function () { var n = (U.mini.classList.contains('hide') ? r.top + 8 : U.mini.getBoundingClientRect().bottom) - base + 8; list.forEach(function (e) { if (e) n += e.offsetHeight + 6; }); return n; };
   // tighten step by step until everything fits above the cooking controls
   UI.classList.remove('tight1', 'tight2');
-  if (measure() > lim) { UI.classList.add('tight1'); if (measure() > lim) UI.classList.add('tight2'); }
+  UI.classList.remove('tight3');
+  if (measure() > lim) { UI.classList.add('tight1'); if (measure() > lim) { UI.classList.add('tight2'); if (measure() > lim) UI.classList.add('tight3'); } }
   y = (U.mini.classList.contains('hide') ? r.top + 8 : U.mini.getBoundingClientRect().bottom) - base + (UI.classList.contains('tight2') ? 6 : 8);
   list.forEach(function (e) { if (!e) return; e.style.top = Math.round(y) + 'px'; y += e.offsetHeight + 6; });
 }
@@ -2652,7 +2661,7 @@ var TOAST_T = 0;
 function toast(en, ja, sec, tries) {
   // wait while a guest check / phone card / top subtitle is on screen (so nothing overlaps), up to ~6s
   tries = tries || 0;
-  if (tries < 10 && (SLIP.open || U.call || (SUBQ.cur && U.sub.classList.contains('top')))) { setTimeout(function () { toast(en, ja, sec, tries + 1); }, 600); return; }
+  if (tries < 10 && (SLIP.open || U.call || U.ask || (SUBQ.cur && U.sub.classList.contains('top')))) { setTimeout(function () { toast(en, ja, sec, tries + 1); }, 600); return; }
   U.toast.innerHTML = '<span class="en">' + en + '</span>' + (ja ? '<span class="ja">' + ja + '</span>' : '');
   U.toast.classList.remove('hide'); clearTimeout(TOAST_T); TOAST_T = setTimeout(function () { U.toast.classList.add('hide'); }, (sec || 2.4) * 1000);
 }
@@ -2679,11 +2688,21 @@ function hideChoices() { U.slip.classList.add('hide'); SLIP.open = false; U.sub.
 function showCall(title, ja, onPick, onLet) {
   hideCall();
   var c = el('div', 'callcard', '<div class="ct">' + icon('phone', 24) + '<span>' + title + '</span></div><div class="cj">' + ja + '</div><div class="cb"><button class="pick">PICK UP<small>電話に出る</small></button><button class="let">LET IT RING<small>出ない</small></button></div>', UI);
-  U.call = c; UI.classList.add('calling'); if (MINI.active) stackCooking();
+  U.call = c; UI.classList.add('calling'); stackCooking();
   onTap(c.querySelector('.pick'), function () { sfx('click'); hideCall(); onPick && onPick(); });
   onTap(c.querySelector('.let'), function () { sfx('click'); hideCall(); onLet && onLet(); });
 }
-function hideCall() { if (U.call && U.call.parentNode) U.call.parentNode.removeChild(U.call); U.call = null; UI.classList.remove('calling'); }
+// a two-button question card (e.g. Sunny calls your name: answer / ignore). sits under the phone card
+function showAsk(title, ja, a, b) {
+  hideAsk();
+  var c = el('div', 'callcard askcard', '<div class="ct">' + icon('reply', 24) + '<span>' + title + '</span></div><div class="cj">' + ja + '</div><div class="cb"><button class="pick">' + a.en + '<small>' + a.ja + '</small></button><button class="let">' + b.en + '<small>' + b.ja + '</small></button></div>', UI);
+  U.ask = c; sfx('pop', null, { vol: 0.3 });
+  onTap(c.querySelector('.pick'), function () { sfx('click'); hideAsk(); a.fn && a.fn(); });
+  onTap(c.querySelector('.let'), function () { sfx('click'); hideAsk(); b.fn && b.fn(); });
+  stackCooking();
+}
+function hideAsk() { if (U.ask && U.ask.parentNode) U.ask.parentNode.removeChild(U.ask); U.ask = null; if (U.sub) U.sub.style.top = ''; stackCooking(); }
+function hideCall() { if (U.call && U.call.parentNode) U.call.parentNode.removeChild(U.call); U.call = null; UI.classList.remove('calling'); if (U.ask) stackCooking(); }
 // ---- subtitles --------------------------------------------------------------------------
 var SUBQ = { cur: null, queue: [], typing: 0, timer: 0 };
 var WHO_CLASS = { SUNNY: 'sunny', MANAGER: 'mgr', DALE: 'mgr', YOU: 'you', '???': 'odd' };
@@ -2695,6 +2714,7 @@ function subShow(line) {
   U.sub.querySelector('.more').style.opacity = 0;
   U.sub.classList.remove('hide'); U.subTap.style.display = MINI.active ? 'none' : '';
   U.sub.classList.toggle('top', SLIP.open); U.subTap.classList.toggle('top', SLIP.open);
+  if (U.ask) stackCooking();
 }
 function subUpdate(dt) {
   var L = SUBQ.cur; if (!L) return;
@@ -4694,14 +4714,15 @@ var ANOM = {
       setTimeout(function () {
         if (A.done) return;
         say('SUNNY', 'Rise and shine, ' + nm + '! Hey! ' + nm + '! Over here!', 'おはよう、' + nm + '！ ねえ！ ' + nm + '！ こっちだよ！', { voice: 'sunny', picoDark: Math.min(1, GAME.day * 0.18), hold: 2 });
-        A.trap = { icon: 'reply', en: 'REPLY "Yes?"', ja: '返事をする「はい？」', glow: true, fn: function () { A.replied = true; say('YOU', 'Yes...?', 'はい……？', { voice: 'you', cls: 'you' }).then(function () { setNeonEyes(0, 'red'); say('SUNNY', 'There you are.', 'みーつけた。', { voice: 'sunny', picoDark: 1, rate: 0.7, pitch: 0.6 }).then(function () { anomalyFail(A, A.face, { rule: 'sunny' }); }); }); } };
-        A.phase = 1; A.t = 0; updateMainButton();
+        // the moment the voice is heard: answer, or ignore
+        showAsk('Sunny is calling your name', 'Sunny があなたの名前を呼んでいる', { en: 'ANSWER', ja: '答える「はい？」', fn: function () { A.replied = true; say('YOU', 'Yes...?', 'はい……？', { voice: 'you', cls: 'you' }).then(function () { setNeonEyes(0, 'red'); say('SUNNY', 'There you are.', 'みーつけた。', { voice: 'sunny', picoDark: 1, rate: 0.7, pitch: 0.6 }).then(function () { anomalyFail(A, A.face, { rule: 'sunny' }); }); }); } }, { en: 'IGNORE', ja: '無視する', fn: function () { A.ignored = true; } });
+        A.phase = 1; A.t = 0;
       }, 2500);
     },
     update: function (A, dt) {
-      if (A.phase === 1 && A.t > 9 && !A.replied) { A.phase = 2; A.trap = null; updateMainButton(); say('SUNNY', '...' + (SAVE.name || 'friend') + '? ...Aw. Maybe later!', '……' + (SAVE.name || 'ともだち') + '？ ……ちぇっ。またあとでね！', { voice: 'sunny', picoDark: 0.4 }).then(function () { if (!A.done) { setNeonEyes(0, null); LSTATE.eyesExtra = 1; anomalyResolve(A); } }); }
+      if (A.phase === 1 && !A.replied && (A.t > 9 || (A.ignored && (!SUBQ.cur || SUBQ.cur.who !== 'SUNNY')))) { A.phase = 2; hideAsk(); say('SUNNY', '...' + (SAVE.name || 'friend') + '? ...Aw. Maybe later!', '……' + (SAVE.name || 'ともだち') + '？ ……ちぇっ。またあとでね！', { voice: 'sunny', picoDark: 0.4 }).then(function () { if (!A.done) { setNeonEyes(0, null); LSTATE.eyesExtra = 1; anomalyResolve(A); } }); }
     },
-    cleanup: function (A) { A.trap = null; updateMainButton(); }
+    cleanup: function (A) { hideAsk(); }
   },
   // R5 — 3 AM ticket from booth 4
   booth4: {
@@ -4862,7 +4883,7 @@ function jumpscare(n, opt) {
   if (JS.on || GAME.mode === 'dead') return;
   opt = opt || {}; JS = { on: true, t: 0, n: n || 1, P: opt.person || null, mild: SAVE.settings.scare === 'MILD' };
   GAME.mode = 'dead'; GAME.deathAt = GAME.min;
-  stopVoice(); talkCancel(); hideChoices(); hideCall(); closeDocs(true); if (MINI.active) { MINI.active = false; U.mini.classList.add('hide'); U.chips.innerHTML = ''; } setMain2(null); stackCooking();
+  stopVoice(); talkCancel(); hideChoices(); hideCall(); closeDocs(true); hideAsk(); if (MINI.active) { MINI.active = false; U.mini.classList.add('hide'); U.chips.innerHTML = ''; } setMain2(null); stackCooking();
   jukeStop(0.05); stopMusic(0.05);
   setMain(null); setGameHUD(false);
   LSTATE.flick = 3; LSTATE.coldT = 1;
@@ -4994,7 +5015,7 @@ function clearWorld() {
   ACTIVE.slice().forEach(function (A) { if (A.cleanup) try { A.cleanup(A); } catch (e) {} if (A.def && A.def.cleanup) try { A.def.cleanup(A); } catch (e) {} }); ACTIVE.length = 0;
   SEATS.forEach(function (s) { s.taken = null; });
   if (FX.visitor) { FX.visitor.state = 'idle'; FX.visitor.obj.visible = false; }
-  hideCall(); hideChoices();
+  hideCall(); hideAsk(); hideChoices();
   LSTATE.lightsOn = true; LSTATE.neonOn = true; LSTATE.coldT = 0; LSTATE.cold = 0; LSTATE.flick = 0; LSTATE.eyesExtra = 1; LSTATE.kitchenFlick = false; LSTATE.kitchenOff = false; LSTATE.powerT = 1;
   if (WORLD.pendants) WORLD.pendants.forEach(function (b) { b.userData.off = false; }); if (WORLD.lights && WORLD.lights.fill) WORLD.lights.fill.intensity = 0;
   if (typeof setMain2 === 'function' && U.main2) { setMain2(null); } MINI.active = false; if (MINI.objs && MINI.objs.parent) MINI.objs.parent.remove(MINI.objs); if (U.mini) { U.mini.classList.add('hide'); U.chips.innerHTML = ''; } if (typeof stackCooking === 'function' && U.mini) stackCooking(); scaresReset();
@@ -5413,7 +5434,7 @@ function updateGame(dt, t) {
   // pre-anomaly tape wobble on the jukebox
   if (nextA) wob = clamp(1 - (nextA.at - GAME.min) / 25, 0, 1); JUKE.wobble = wob; JUKE.drift = wob * 0.6;
   HUD_T -= dt; if (HUD_T <= 0) { HUD_T = 0.5; setClock(GAME.min, GAME.day); var nT = TICKETS.length; pruneTickets(); if (TICKETS.length !== nT) refreshTickets(); updateMainButton(); refreshSpeed(); }
-  if (MINI.active && RENDER.frame % 4 === 0) stackCooking();
+  if ((MINI.active || U.ask) && RENDER.frame % 4 === 0) stackCooking();
   UI.classList.toggle('flick', GAME.day >= 3 && GAME.min > 200);
   UI.style.setProperty('--wear', clamp((GAME.day - 1) * 0.12 + (GAME.min / SHIFT_LEN) * 0.12, 0, 0.6).toFixed(2));
   PU.uCold.value = LSTATE.cold * 0.85; PU.uGrain.value = 0.035 + LSTATE.cold * 0.025; PU.uVig.value = 0.55 + LSTATE.cold * 0.15;

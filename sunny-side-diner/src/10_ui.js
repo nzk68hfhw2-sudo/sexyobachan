@@ -129,6 +129,7 @@ var UI_CSS = function () {
     '@keyframes ring{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}',
     '.callcard .cj{font:600 11.5px/1.4 "Zen Kaku Gothic New",sans-serif;margin:2px 0 10px 34px;color:#5a1430}',
     '#ssd-ui.calling .rail{opacity:0;pointer-events:none}',
+    '.askcard{background:linear-gradient(180deg,#ffd77a,#ffae3c) padding-box,linear-gradient(160deg,#fff,#8e979f 35%,#eef1f3 55%,#5a6168) border-box;color:#3a1600}.askcard .ct .ic{animation:none}.askcard .cj{color:#5a2a00}',
     '.callcard .cb{display:flex;gap:10px}.callcard button{flex:1;height:46px;border-radius:999px;border:2px solid #fff3f7;font:600 14px/1.1 Oswald,sans-serif;letter-spacing:.06em;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 3px 0 rgba(90,10,40,.5)}',
     '.callcard button small{font:600 10px/1.2 "Zen Kaku Gothic New";letter-spacing:0}.callcard .pick{background:#c8282e;color:#fff4dc}.callcard .let{background:#fbf3e0;color:#3a0a1c}',
     '.callcard button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(90,10,40,.5)}',
@@ -149,6 +150,7 @@ var UI_CSS = function () {
     '#ssd-ui.cooking.tight1 .subband{padding:5px 10px 6px;min-height:0}#ssd-ui.cooking.tight1 .subband .sub{padding:2px}#ssd-ui.cooking.tight1 .subband .sub .who{height:18px;line-height:18px;margin-bottom:3px}#ssd-ui.cooking.tight1 .subband .sub .l1{font-size:15px;line-height:1.25;min-height:0}#ssd-ui.cooking.tight1 .subband .sub .l2{font-size:11.5px;line-height:1.35;margin-top:2px}',
     '#ssd-ui.cooking.tight1 .callcard{padding:8px 12px}#ssd-ui.cooking.tight1 .callcard .ct{font-size:15px}#ssd-ui.cooking.tight1 .callcard .cj{margin:0 0 6px 34px;font-size:10.5px}#ssd-ui.cooking.tight1 .callcard button{height:40px}',
     '#ssd-ui.cooking.tight1 .mb2{height:48px}',
+    '#ssd-ui.cooking.tight3 .callcard{padding:6px 10px}#ssd-ui.cooking.tight3 .callcard .cj{display:none}#ssd-ui.cooking.tight3 .callcard .ct{font-size:13px;margin-bottom:5px}#ssd-ui.cooking.tight3 .callcard button{height:36px}',
     '#ssd-ui.cooking.tight2 .mini .tt{display:none}#ssd-ui.cooking.tight2 .mini .ins{margin-top:0}#ssd-ui.cooking.tight2 .subband .sub .l2{display:none}',
     '.mb2{position:absolute;left:50%;transform:translateX(-50%);height:54px;min-width:200px;max-width:calc(100% - 40px);z-index:7;}',
     '.mb2 .ic{width:24px;height:24px}.mb2 .en{font-size:16px}',
@@ -249,8 +251,14 @@ function setMain2(act) {
 function stackCooking() {
   var on = !!(MINI.active && GAME.mode === 'play');
   if (UI.classList.contains('cooking') !== on) UI.classList.toggle('cooking', on);
-  var list = [U.call, SUBQ.cur ? U.sub : null, U.main2Act ? U.main2 : null, U.toast.classList.contains('hide') ? null : U.toast];
-  if (!on) { if (U._stacked) { U._stacked = false; [U.call, U.sub, U.main2, U.toast].forEach(function (e) { if (e) e.style.top = ''; }); } return; }
+  var list = [U.call, U.ask, SUBQ.cur ? U.sub : null, U.main2Act ? U.main2 : null, U.toast.classList.contains('hide') ? null : U.toast];
+  if (!on) { if (U._stacked) { U._stacked = false; [U.call, U.sub, U.main2, U.toast].forEach(function (e) { if (e) e.style.top = ''; }); }
+    if (U.ask) { // outside cooking: under the phone card; a top subtitle goes under it
+      var b0 = UI.getBoundingClientRect().top, yy = U.call ? U.call.getBoundingClientRect().bottom - b0 + 8 : null;
+      U.ask.style.top = yy == null ? '' : Math.round(yy) + 'px';
+      if (SUBQ.cur && U.sub.classList.contains('top')) U.sub.style.top = Math.round(U.ask.getBoundingClientRect().bottom - b0 + 8) + 'px';
+    }
+    return; }
   U._stacked = true;
   var base = UI.getBoundingClientRect().top, r = U.mini.getBoundingClientRect(), y = (U.mini.classList.contains('hide') ? r.top + 8 : r.bottom) - base + 8;
   // keep clear of the cooking chips / main button at the bottom: tighten the subtitle if needed
@@ -258,7 +266,8 @@ function stackCooking() {
   var measure = function () { var n = (U.mini.classList.contains('hide') ? r.top + 8 : U.mini.getBoundingClientRect().bottom) - base + 8; list.forEach(function (e) { if (e) n += e.offsetHeight + 6; }); return n; };
   // tighten step by step until everything fits above the cooking controls
   UI.classList.remove('tight1', 'tight2');
-  if (measure() > lim) { UI.classList.add('tight1'); if (measure() > lim) UI.classList.add('tight2'); }
+  UI.classList.remove('tight3');
+  if (measure() > lim) { UI.classList.add('tight1'); if (measure() > lim) { UI.classList.add('tight2'); if (measure() > lim) UI.classList.add('tight3'); } }
   y = (U.mini.classList.contains('hide') ? r.top + 8 : U.mini.getBoundingClientRect().bottom) - base + (UI.classList.contains('tight2') ? 6 : 8);
   list.forEach(function (e) { if (!e) return; e.style.top = Math.round(y) + 'px'; y += e.offsetHeight + 6; });
 }
@@ -275,7 +284,7 @@ var TOAST_T = 0;
 function toast(en, ja, sec, tries) {
   // wait while a guest check / phone card / top subtitle is on screen (so nothing overlaps), up to ~6s
   tries = tries || 0;
-  if (tries < 10 && (SLIP.open || U.call || (SUBQ.cur && U.sub.classList.contains('top')))) { setTimeout(function () { toast(en, ja, sec, tries + 1); }, 600); return; }
+  if (tries < 10 && (SLIP.open || U.call || U.ask || (SUBQ.cur && U.sub.classList.contains('top')))) { setTimeout(function () { toast(en, ja, sec, tries + 1); }, 600); return; }
   U.toast.innerHTML = '<span class="en">' + en + '</span>' + (ja ? '<span class="ja">' + ja + '</span>' : '');
   U.toast.classList.remove('hide'); clearTimeout(TOAST_T); TOAST_T = setTimeout(function () { U.toast.classList.add('hide'); }, (sec || 2.4) * 1000);
 }
@@ -302,11 +311,21 @@ function hideChoices() { U.slip.classList.add('hide'); SLIP.open = false; U.sub.
 function showCall(title, ja, onPick, onLet) {
   hideCall();
   var c = el('div', 'callcard', '<div class="ct">' + icon('phone', 24) + '<span>' + title + '</span></div><div class="cj">' + ja + '</div><div class="cb"><button class="pick">PICK UP<small>電話に出る</small></button><button class="let">LET IT RING<small>出ない</small></button></div>', UI);
-  U.call = c; UI.classList.add('calling'); if (MINI.active) stackCooking();
+  U.call = c; UI.classList.add('calling'); stackCooking();
   onTap(c.querySelector('.pick'), function () { sfx('click'); hideCall(); onPick && onPick(); });
   onTap(c.querySelector('.let'), function () { sfx('click'); hideCall(); onLet && onLet(); });
 }
-function hideCall() { if (U.call && U.call.parentNode) U.call.parentNode.removeChild(U.call); U.call = null; UI.classList.remove('calling'); }
+// a two-button question card (e.g. Sunny calls your name: answer / ignore). sits under the phone card
+function showAsk(title, ja, a, b) {
+  hideAsk();
+  var c = el('div', 'callcard askcard', '<div class="ct">' + icon('reply', 24) + '<span>' + title + '</span></div><div class="cj">' + ja + '</div><div class="cb"><button class="pick">' + a.en + '<small>' + a.ja + '</small></button><button class="let">' + b.en + '<small>' + b.ja + '</small></button></div>', UI);
+  U.ask = c; sfx('pop', null, { vol: 0.3 });
+  onTap(c.querySelector('.pick'), function () { sfx('click'); hideAsk(); a.fn && a.fn(); });
+  onTap(c.querySelector('.let'), function () { sfx('click'); hideAsk(); b.fn && b.fn(); });
+  stackCooking();
+}
+function hideAsk() { if (U.ask && U.ask.parentNode) U.ask.parentNode.removeChild(U.ask); U.ask = null; if (U.sub) U.sub.style.top = ''; stackCooking(); }
+function hideCall() { if (U.call && U.call.parentNode) U.call.parentNode.removeChild(U.call); U.call = null; UI.classList.remove('calling'); if (U.ask) stackCooking(); }
 // ---- subtitles --------------------------------------------------------------------------
 var SUBQ = { cur: null, queue: [], typing: 0, timer: 0 };
 var WHO_CLASS = { SUNNY: 'sunny', MANAGER: 'mgr', DALE: 'mgr', YOU: 'you', '???': 'odd' };
@@ -318,6 +337,7 @@ function subShow(line) {
   U.sub.querySelector('.more').style.opacity = 0;
   U.sub.classList.remove('hide'); U.subTap.style.display = MINI.active ? 'none' : '';
   U.sub.classList.toggle('top', SLIP.open); U.subTap.classList.toggle('top', SLIP.open);
+  if (U.ask) stackCooking();
 }
 function subUpdate(dt) {
   var L = SUBQ.cur; if (!L) return;

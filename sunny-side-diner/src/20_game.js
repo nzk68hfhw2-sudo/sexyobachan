@@ -13,7 +13,7 @@ function clearWorld() {
   ACTIVE.slice().forEach(function (A) { if (A.cleanup) try { A.cleanup(A); } catch (e) {} if (A.def && A.def.cleanup) try { A.def.cleanup(A); } catch (e) {} }); ACTIVE.length = 0;
   SEATS.forEach(function (s) { s.taken = null; });
   if (FX.visitor) { FX.visitor.state = 'idle'; FX.visitor.obj.visible = false; }
-  hideCall(); hideChoices();
+  hideCall(); hideAsk(); hideChoices();
   LSTATE.lightsOn = true; LSTATE.neonOn = true; LSTATE.coldT = 0; LSTATE.cold = 0; LSTATE.flick = 0; LSTATE.eyesExtra = 1; LSTATE.kitchenFlick = false; LSTATE.kitchenOff = false; LSTATE.powerT = 1;
   if (WORLD.pendants) WORLD.pendants.forEach(function (b) { b.userData.off = false; }); if (WORLD.lights && WORLD.lights.fill) WORLD.lights.fill.intensity = 0;
   if (typeof setMain2 === 'function' && U.main2) { setMain2(null); } MINI.active = false; if (MINI.objs && MINI.objs.parent) MINI.objs.parent.remove(MINI.objs); if (U.mini) { U.mini.classList.add('hide'); U.chips.innerHTML = ''; } if (typeof stackCooking === 'function' && U.mini) stackCooking(); scaresReset();
@@ -432,7 +432,7 @@ function updateGame(dt, t) {
   // pre-anomaly tape wobble on the jukebox
   if (nextA) wob = clamp(1 - (nextA.at - GAME.min) / 25, 0, 1); JUKE.wobble = wob; JUKE.drift = wob * 0.6;
   HUD_T -= dt; if (HUD_T <= 0) { HUD_T = 0.5; setClock(GAME.min, GAME.day); var nT = TICKETS.length; pruneTickets(); if (TICKETS.length !== nT) refreshTickets(); updateMainButton(); refreshSpeed(); }
-  if (MINI.active && RENDER.frame % 4 === 0) stackCooking();
+  if ((MINI.active || U.ask) && RENDER.frame % 4 === 0) stackCooking();
   UI.classList.toggle('flick', GAME.day >= 3 && GAME.min > 200);
   UI.style.setProperty('--wear', clamp((GAME.day - 1) * 0.12 + (GAME.min / SHIFT_LEN) * 0.12, 0, 0.6).toFixed(2));
   PU.uCold.value = LSTATE.cold * 0.85; PU.uGrain.value = 0.035 + LSTATE.cold * 0.025; PU.uVig.value = 0.55 + LSTATE.cold * 0.15;
