@@ -20,21 +20,20 @@ const D = '/tmp/claude-0/-home-user-sexyobachan/3e557370-2a49-54b8-ba77-e910b93b
       // a smeared handprint on the counter
       g.save(); g.translate(250, 655); g.rotate(-0.5); g.fillStyle = 'rgba(110,4,10,0.45)'; g.beginPath(); g.ellipse(0, 0, 30, 34, 0, 0, 7); g.fill(); [[-24, -46, 8, 24], [-8, -58, 8, 28], [8, -56, 8, 27], [23, -44, 7, 22], [34, -6, 7, 18]].forEach(([x, y, rx, ry]) => { g.beginPath(); g.ellipse(x, y, rx, ry, x > 30 ? -0.9 : 0, 0, 7); g.fill(); }); g.fillRect(-10, 26, 20, 26); g.restore();
       if (variant === 'text') {
-        // dark top band so the words read
-        const tb = g.createLinearGradient(0, 360, 0, 660); tb.addColorStop(0, 'rgba(4,4,8,0)'); tb.addColorStop(0.3, 'rgba(4,4,8,0.78)'); tb.addColorStop(0.7, 'rgba(4,4,8,0.78)'); tb.addColorStop(1, 'rgba(4,4,8,0)'); g.fillStyle = tb; g.fillRect(0, 360, 1024, 300);
-        // neon title with a dying letter
-        g.textAlign = 'center'; g.font = '104px ' + F.logo; const t = 'Sunny Side Diner';
-        g.shadowColor = '#ff2f6a'; g.shadowBlur = 46; g.lineWidth = 10; g.lineJoin = 'round'; g.strokeStyle = '#ff2f6a'; g.strokeText(t, 512, 492);
-        g.shadowBlur = 16; g.fillStyle = '#ffe0e8'; g.fillText(t, 512, 492);
-        g.shadowBlur = 0;
-        // genre band
-        const y0 = 532, h = 68, bw = 840, bx0 = 512 - bw / 2; g.fillStyle = 'rgba(10,6,8,0.88)'; g.fillRect(bx0, y0, bw, h);
-        g.fillStyle = '#c8101c'; g.fillRect(bx0, y0, bw, 4); g.fillRect(bx0, y0 + h - 4, bw, 4);
-        g.textAlign = 'center'; g.textBaseline = 'middle'; const a = '海外風経営シミュレーション', bx = 'インディーホラー', sep = ' × '; let fs = 46; do { g.font = '900 ' + fs + 'px "Zen Kaku Gothic New", sans-serif'; fs--; } while (g.measureText(a + sep + bx).width > 780);
-        const wa = g.measureText(a).width, ws = g.measureText(sep).width, wb = g.measureText(bx).width, x0 = 512 - (wa + ws + wb) / 2;
-        g.textAlign = 'left'; g.fillStyle = '#f3e6c8'; g.fillText(a, x0, y0 + h / 2 + 2);
-        g.fillStyle = '#ff3040'; g.shadowColor = '#ff0010'; g.shadowBlur = 14; g.fillText(sep, x0 + wa, y0 + h / 2 + 2); g.shadowBlur = 0;
-        g.fillStyle = '#ff5a5a'; g.shadowColor = 'rgba(255,0,20,0.7)'; g.shadowBlur = 18; g.fillText(bx, x0 + wa + ws, y0 + h / 2 + 2); g.shadowBlur = 0;
+        // dark band behind the words so they read even at icon size
+        const tb = g.createLinearGradient(0, 330, 0, 900); tb.addColorStop(0, 'rgba(4,4,8,0)'); tb.addColorStop(0.18, 'rgba(4,4,8,0.82)'); tb.addColorStop(0.82, 'rgba(4,4,8,0.82)'); tb.addColorStop(1, 'rgba(4,4,8,0)'); g.fillStyle = tb; g.fillRect(0, 330, 1024, 570);
+        const neon = (txt, size, y) => { g.textAlign = 'center'; g.font = size + 'px ' + F.logo; g.lineJoin = 'round';
+          g.shadowColor = '#ff2f6a'; g.shadowBlur = 50; g.lineWidth = 14; g.strokeStyle = '#ff2f6a'; g.strokeText(txt, 512, y);
+          g.shadowBlur = 18; g.fillStyle = '#fff0f4'; g.fillText(txt, 512, y); g.shadowBlur = 0; };
+        neon('Sunny Side', 164, 512); neon('Diner', 136, 636);
+        // genre, two lines, big
+        const y0 = 672, h = 166, bw = 900, bx0 = 512 - bw / 2; g.fillStyle = 'rgba(10,6,8,0.9)'; g.fillRect(bx0, y0, bw, h);
+        g.fillStyle = '#c8101c'; g.fillRect(bx0, y0, bw, 6); g.fillRect(bx0, y0 + h - 6, bw, 6);
+        g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+        const line = (txt, y, fill, glow) => { let fs = 72; do { g.font = '900 ' + fs + 'px "Zen Kaku Gothic New", sans-serif'; fs--; } while (g.measureText(txt).width > 840);
+          g.lineWidth = 8; g.strokeStyle = '#000'; g.strokeText(txt, 512, y); if (glow) { g.shadowColor = glow; g.shadowBlur = 22; } g.fillStyle = fill; g.fillText(txt, 512, y); g.shadowBlur = 0; };
+        line('海外風経営シミュレーション', y0 + 50, '#fff3d6');
+        line('× インディーホラー', y0 + 124, '#ff4848', 'rgba(255,0,20,0.85)');
         g.textBaseline = 'alphabetic';
         // red scrawl on the counter
         g.save(); g.translate(512, 1000); g.rotate(-0.03); g.textAlign = 'center'; g.font = '64px ' + F.fake; g.fillStyle = 'rgba(190,12,22,0.92)'; g.shadowColor = 'rgba(0,0,0,0.8)'; g.shadowBlur = 6; g.fillText("DON'T LOOK UP", 0, 0); g.restore();
