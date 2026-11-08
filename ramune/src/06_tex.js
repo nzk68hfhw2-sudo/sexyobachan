@@ -54,6 +54,7 @@ function ramuneIcon(s, size) {
   g.globalAlpha = 0.5; g.fillStyle = '#fff';
   g.beginPath(); g.ellipse(m - r * 0.3, m - r * 0.38, r * 0.22, r * 0.11, -0.6, 0, TAU); g.fill();
   g.globalAlpha = 1;
+  if (s.imp && s.shape !== 'ring') { g.font = '900 ' + Math.round(r * (s.shape === 'tiny' ? 0.38 : 0.5)) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = 'rgba(0,0,0,0.38)'; g.fillText(s.imp, m + 1, m + r * 0.08 + 1); g.fillStyle = 'rgba(255,255,255,0.55)'; g.fillText(s.imp, m, m + r * 0.08); }
   return (ICON_CACHE[key] = c.toDataURL());
 }
 function canIcon(d, size) {

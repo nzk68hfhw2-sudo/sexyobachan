@@ -183,81 +183,81 @@ function fmtClock(min) {
 // ph = physiology at peak: hr 心拍(bpm)  tp 体温(℃)  rr 呼吸(回/分)
 
 var CLASSES = {
-  psy: { name: '幻覚系', short: 'サイケ', col: '#b46bff', icon: '🌈' },
-  up: { name: 'アッパー系', short: 'アッパー', col: '#30c8ff', icon: '⚡' },
-  down: { name: 'ダウナー系', short: 'ダウナー', col: '#6a7dff', icon: '💤' },
-  op: { name: 'ぬくぬく系（オピオイド系）', short: 'オピオイド', col: '#ffb347', icon: '☁️' },
-  dis: { name: '解離系', short: '解離', col: '#7af0c8', icon: '🪐' },
-  emp: { name: 'ハート系（エンパス系）', short: 'ハート', col: '#ff5fa8', icon: '💗' },
-  del: { name: 'とばり系（せん妄系）', short: 'とばり', col: '#8a8a9a', icon: '🌑' },
-  etc: { name: 'とくしゅ', short: 'とくしゅ', col: '#e8e8e8', icon: '✨' },
-  alc: { name: 'お酒', short: 'お酒', col: '#d8f060', icon: '🍋' }
+  psy: { name: '幻覚系', short: 'サイケ', col: '#b46bff', icon: '🌈', real: '現実の幻覚剤は、強い不安・パニック・判断力の低下を起こし、事故や危険な行動につながることがあります。' },
+  up: { name: 'アッパー系', short: 'アッパー', col: '#30c8ff', icon: '⚡', real: '現実の覚醒剤・興奮剤は、心臓や血管に大きな負担をかけ、依存性も強いものが多くあります。' },
+  down: { name: 'ダウナー系', short: 'ダウナー', col: '#6a7dff', icon: '💤', real: '現実の鎮静剤・睡眠薬は、お酒や他の鎮静系と重なると呼吸が止まることがあります。' },
+  op: { name: 'ぬくぬく系（オピオイド系）', short: 'オピオイド', col: '#ffb347', icon: '☁️', real: '現実のオピオイドは、少しの量の違いで呼吸が止まることがあり、依存性もとても強い薬です。' },
+  dis: { name: '解離系', short: '解離', col: '#7af0c8', icon: '🪐', real: '現実の解離性の薬物は、体の感覚や判断を失わせ、転倒・溺水・事故の原因になります。' },
+  emp: { name: 'ハート系（エンパス系）', short: 'ハート', col: '#ff5fa8', icon: '💗', real: '現実のこの種の薬物は、体温の異常な上昇や脱水、他の薬との危険な相互作用を起こします。' },
+  del: { name: 'とばり系（せん妄系）', short: 'とばり', col: '#8a8a9a', icon: '🌑', real: '現実のせん妄を起こす薬物は、長く続く混乱・幻覚・心臓への負担を起こし、とても危険です。' },
+  etc: { name: 'とくしゅ', short: 'とくしゅ', col: '#e8e8e8', icon: '✨', real: '現実では、薬どうし・薬とお酒の組み合わせで予想外の強い作用が出ることがあります。' },
+  alc: { name: 'お酒', short: 'お酒', col: '#d8f060', icon: '🍋', real: 'お酒は20歳になってから。短時間の大量飲酒は急性アルコール中毒の原因になります。' }
 };
 
 var SUBS = [
   // ---- 幻覚系 ----
-  { id: 'yumeiro', name: 'ゆめいろラムネ', cls: 'psy', col: '#c77dff', col2: '#7df9ff', shape: 'star',
+  { id: 'yumeiro', name: 'ルミセルジン', nick: 'ゆめいろラムネ', imp: 'LM', cls: 'psy', col: '#c77dff', col2: '#7df9ff', shape: 'star',
     on: 30, pk: 90, pl: 210, du: 420, fx: { ps: 1.0, eu: 0.45, an: 0.2, na: 0.15, st: 0.15 }, ph: { hr: 12, tp: 0.3, rr: 1 }, tail: { se: 0.1 }, stock: 3,
     desc: '七色に光る星形のラムネ。世界の輪郭がほどけて、色と模様があふれ出す。王道の幻覚系。' },
-  { id: 'prism', name: 'プリズムラムネ', cls: 'psy', col: '#ffffff', col2: '#ff7df0', shape: 'gem',
+  { id: 'prism', name: 'プリズマトリン', nick: 'プリズムラムネ', imp: 'PZ', cls: 'psy', col: '#ffffff', col2: '#ff7df0', shape: 'gem',
     on: 1, pk: 4, pl: 7, du: 18, fx: { ps: 1.8, di: 0.6, eu: 0.4, an: 0.35 }, ph: { hr: 25, tp: 0.1 }, stock: 2,
     desc: '口に入れた瞬間に弾ける。ほんの数分間だけ、まったく別の次元へ飛ばされる。' },
-  { id: 'kinoko', name: 'きのこぐもラムネ', cls: 'psy', col: '#e8c48a', col2: '#c0392b', shape: 'mushroom',
+  { id: 'kinoko', name: 'ミコルミン', nick: 'きのこぐもラムネ', imp: 'MC', cls: 'psy', col: '#e8c48a', col2: '#c0392b', shape: 'mushroom',
     on: 40, pk: 100, pl: 170, du: 330, fx: { ps: 0.8, eu: 0.6, na: 0.35, em: 0.2 }, ph: { hr: 8, tp: 0.2 }, stock: 3,
     desc: 'きのこの形。理由もなく笑いが止まらなくなり、床の木目がうねりはじめる。最初は少し気持ち悪い。' },
   // ---- アッパー系 ----
-  { id: 'hyper', name: 'ハイパーソーダ', cls: 'up', col: '#29b6ff', col2: '#e0fbff', shape: 'round',
+  { id: 'hyper', name: 'ヴェロキサン', nick: 'ハイパーソーダ', imp: 'VX', cls: 'up', col: '#29b6ff', col2: '#e0fbff', shape: 'round',
     on: 15, pk: 45, pl: 200, du: 360, fx: { st: 1.0, eu: 0.5, an: 0.25 }, ph: { hr: 32, tp: 0.5, rr: 3 }, tail: { eu: -0.35, an: 0.25, se: 0.35 }, dehyd: 0.8, stock: 3,
     desc: 'しゅわしゅわの青いラムネ。頭が冴えわたり、何でもできる気がしてくる。切れたあとはぐったり。' },
-  { id: 'rocket', name: 'ロケットラムネ', cls: 'up', col: '#ff3b3b', col2: '#ffd23b', shape: 'bullet',
+  { id: 'rocket', name: 'ストラトリン', nick: 'ロケットラムネ', imp: 'ST', cls: 'up', col: '#ff3b3b', col2: '#ffd23b', shape: 'bullet',
     on: 2, pk: 8, pl: 30, du: 75, fx: { st: 1.5, eu: 0.9, an: 0.3 }, ph: { hr: 40, tp: 0.6, rr: 4 }, tail: { eu: -0.6, an: 0.5, se: 0.3 }, stock: 2,
     desc: '一瞬で打ち上がり、すぐ落ちてくる。落ちたあとがかなりつらいので、もう一粒…となりがち。' },
-  { id: 'mint', name: 'ミントシャキッとラムネ', cls: 'up', col: '#7dffcf', col2: '#ffffff', shape: 'round',
+  { id: 'mint', name: 'メンタセプト', nick: 'ミントシャキッとラムネ', imp: 'MT', cls: 'up', col: '#7dffcf', col2: '#ffffff', shape: 'round',
     on: 10, pk: 30, pl: 140, du: 240, fx: { st: 0.45, an: 0.05, eu: 0.1 }, ph: { hr: 12, tp: 0.1 }, stock: 4,
     desc: 'スースーするミント味。いちばんマイルドなアッパー。眠気ざましに。' },
   // ---- ダウナー系 ----
-  { id: 'fuwa', name: 'ふわふわラムネ', cls: 'down', col: '#b9c6ff', col2: '#ffffff', shape: 'cloud',
+  { id: 'fuwa', name: 'カルミゾラム', nick: 'ふわふわラムネ', imp: 'CZ', cls: 'down', col: '#b9c6ff', col2: '#ffffff', shape: 'cloud',
     on: 20, pk: 60, pl: 170, du: 360, fx: { se: 0.7, eu: 0.25, an: -0.75 }, ph: { hr: -8, rr: -2.5 }, stock: 3,
     desc: '不安がすーっと溶けていく。体がソファに沈みこんでいく。お酒と混ぜると危ない。' },
-  { id: 'nemu', name: 'ねむねむラムネ', cls: 'down', col: '#4b4ba8', col2: '#ffe066', shape: 'moon',
+  { id: 'nemu', name: 'ソムナゾラム', nick: 'ねむねむラムネ', imp: 'SZ', cls: 'down', col: '#4b4ba8', col2: '#ffe066', shape: 'moon',
     on: 25, pk: 60, pl: 220, du: 420, fx: { se: 1.25, an: -0.4, eu: 0.1 }, ph: { hr: -10, rr: -3.5 }, stock: 2,
     desc: '強力なおやすみラムネ。まぶたが鉛のように重くなる。眠ったまま起きられなくなることも。' },
-  { id: 'toro', name: 'とろけるゼリーラムネ', cls: 'down', col: '#9fffe0', col2: '#3fd4ff', shape: 'drop',
+  { id: 'toro', name: 'ジェリロキシン', nick: 'とろけるゼリーラムネ', imp: 'GX', cls: 'down', col: '#9fffe0', col2: '#3fd4ff', shape: 'drop',
     on: 12, pk: 30, pl: 50, du: 120, fx: { eu: 0.7, se: 0.8, em: 0.3, na: 0.25 }, ph: { hr: -4, rr: -3.5 }, steep: 1.8, stock: 2,
     desc: 'ぷるぷるのゼリー状。気持ちいいけど、ちょっと増やすだけで効き目が跳ね上がる。お酒とは絶対に合わない。' },
   // ---- ぬくぬく系（オピオイド系） ----
-  { id: 'nukunuku', name: 'ぬくぬくラムネ', cls: 'op', col: '#ffcf8a', col2: '#ff8a3d', shape: 'round',
+  { id: 'nukunuku', name: 'カリドルフィン', nick: 'ぬくぬくラムネ', imp: 'CD', cls: 'op', col: '#ffcf8a', col2: '#ff8a3d', shape: 'round',
     on: 20, pk: 50, pl: 140, du: 300, fx: { pa: 1.0, eu: 0.7, se: 0.55, na: 0.3 }, ph: { hr: -8, rr: -5, tp: -0.1 }, tail: { an: 0.2, na: 0.1 }, stock: 3,
     desc: '毛布にくるまれたような温かさ。痛みも悩みも遠くなる。呼吸がゆっくりになっていく。' },
-  { id: 'masshiro', name: 'まっしろラムネ', cls: 'op', col: '#ffffff', col2: '#f0f0f0', shape: 'tiny',
+  { id: 'masshiro', name: 'ニヴェタニル', nick: 'まっしろラムネ', imp: 'NV', cls: 'op', col: '#ffffff', col2: '#f0f0f0', shape: 'tiny',
     on: 8, pk: 25, pl: 70, du: 200, fx: { pa: 1.6, eu: 1.1, se: 0.95, na: 0.35 }, ph: { hr: -12, rr: -8.5 }, tail: { an: 0.35, na: 0.2 }, stock: 2,
     desc: '真っ白で小さな粒。とても強い。ほかの鎮静系やお酒と重なると、呼吸が止まりかける。' },
-  { id: 'syrup', name: 'あまあまシロップラムネ', cls: 'op', col: '#c0392b', col2: '#ff9ff3', shape: 'drop',
+  { id: 'syrup', name: 'シロピナール', nick: 'あまあまシロップラムネ', imp: 'SY', cls: 'op', col: '#c0392b', col2: '#ff9ff3', shape: 'drop',
     on: 30, pk: 80, pl: 160, du: 330, fx: { pa: 0.35, di: 0.55, eu: 0.35, na: 0.3, se: 0.25 }, ph: { hr: 6, rr: -2, tp: 0.2 }, stock: 3,
     desc: 'あまったるいシロップ味。体からふわっと抜け出すような、不思議なまどろみ。' },
   // ---- 解離系 ----
-  { id: 'fuyuu', name: 'ふゆうラムネ', cls: 'dis', col: '#b8fff0', col2: '#5e7bff', shape: 'ring',
+  { id: 'fuyuu', name: 'フロタミン', nick: 'ふゆうラムネ', imp: 'FT', cls: 'dis', col: '#b8fff0', col2: '#5e7bff', shape: 'ring',
     on: 4, pk: 12, pl: 28, du: 70, fx: { di: 1.25, se: 0.3, eu: 0.25, na: 0.2 }, ph: { hr: 10, rr: -1 }, stock: 3,
     desc: '重力が消えて、体が自分のものじゃなくなる。たくさん飲むと「ラムネホール」に落ちる。' },
-  { id: 'mirror', name: 'かがみのラムネ', cls: 'dis', col: '#d6dde6', col2: '#7af0c8', shape: 'gem',
+  { id: 'mirror', name: 'スペキュロン', nick: 'かがみのラムネ', imp: 'SP', cls: 'dis', col: '#d6dde6', col2: '#7af0c8', shape: 'gem',
     on: 30, pk: 80, pl: 170, du: 360, fx: { di: 0.8, ps: 0.3, eu: 0.3, an: 0.1 }, ph: { hr: 8, rr: -1 }, stock: 2,
     desc: '自分が自分を少し離れたところから見ている。部屋がゆっくり裏返っていく。' },
   // ---- ハート系 ----
-  { id: 'heart', name: 'ハートラムネ', cls: 'emp', col: '#ff5fa8', col2: '#ffd1e8', shape: 'heart',
+  { id: 'heart', name: 'アモリクシン', nick: 'ハートラムネ', imp: 'AM', cls: 'emp', col: '#ff5fa8', col2: '#ffd1e8', shape: 'heart',
     on: 30, pk: 75, pl: 150, du: 270, fx: { em: 1.2, eu: 1.0, st: 0.45, ps: 0.15 }, ph: { hr: 28, tp: 1.0, rr: 2 }, tail: { eu: -0.5, an: 0.2, se: 0.2 }, dehyd: 1.5, stock: 3,
     desc: 'ピンクのハート形。世界中のすべてが大好きになる。そのかわり体がとても熱くなる。水を忘れずに。' },
   // ---- とばり系 ----
-  { id: 'tobari', name: 'よるのとばりラムネ', cls: 'del', col: '#1b1b24', col2: '#6a00ff', shape: 'round',
+  { id: 'tobari', name: 'ノクスベリン', nick: 'よるのとばりラムネ', imp: 'NX', cls: 'del', col: '#1b1b24', col2: '#6a00ff', shape: 'round',
     on: 60, pk: 180, pl: 330, du: 720, fx: { de: 1.2, se: 0.35, an: 0.4, na: 0.1, ps: 0.1 }, ph: { hr: 30, tp: 0.6 }, dehyd: 1.0, stock: 2,
     desc: '真っ黒なラムネ。見えないはずのものが見え、いないはずの誰かと会話する。とても長く、あまり楽しくない。' },
   // ---- とくしゅ ----
-  { id: 'booster', name: 'ブースターラムネ', cls: 'etc', col: '#ffe14d', col2: '#ff8800', shape: 'bolt',
+  { id: 'booster', name: 'アンプリフェン', nick: 'ブースターラムネ', imp: 'AF', cls: 'etc', col: '#ffe14d', col2: '#ff8800', shape: 'bolt',
     on: 20, pk: 40, pl: 230, du: 360, fx: { na: 0.2 }, ph: { hr: 4 }, boost: true, stock: 2,
     desc: 'それ自体はほとんど何も起きない。でも、ほかのラムネの効き目と長さを何倍にもしてしまう。' },
-  { id: 'reset', name: 'リセットラムネ', cls: 'etc', col: '#ff2d55', col2: '#ffffff', shape: 'cross',
+  { id: 'reset', name: 'ネガトキソン', nick: 'リセットラムネ', imp: 'NG', cls: 'etc', col: '#ff2d55', col2: '#ffffff', shape: 'cross',
     on: 1, pk: 2, pl: 40, du: 90, fx: {}, ph: {}, reset: true, stock: 2,
     desc: '救急用。ぬくぬく系（オピオイド系）の効果をすぐに打ち消す。打ち消された反動でかなり気分が悪くなる。' },
-  { id: 'zero', name: 'ただのラムネ', cls: 'etc', col: '#d0f4ff', col2: '#8ad8ff', shape: 'round',
+  { id: 'zero', name: 'スクロース錠', nick: 'ただのラムネ', imp: 'SU', cls: 'etc', col: '#d0f4ff', col2: '#8ad8ff', shape: 'round',
     on: 2, pk: 5, pl: 8, du: 15, fx: { eu: 0.04 }, ph: {}, placebo: true, stock: 5,
     desc: '駄菓子屋さんのふつうのラムネ。ぶどう味。…本当にただのラムネ。' }
 ];
@@ -315,7 +315,7 @@ var COMBOS = [
     hint: 'ぬくぬく系 × ダウナー系 × お酒', desc: '三つの鎮静が重なった最悪の組み合わせ。ほぼ確実に呼吸が止まる。',
     f: function (m, s) { m.rrMul += 0.9 * s; m.add.se += 0.4 * s; } },
   { id: 'jelly', name: 'とろける沼', need: [{ s: 'toro' }, { c: 'alc' }], danger: 3,
-    hint: 'とろけるゼリーラムネ × お酒', desc: 'ゼリーラムネとお酒は最悪の相性。気持ちよさの直後、意識ごと沼に沈む。',
+    hint: 'ジェリロキシン（ゼリー）× お酒', desc: 'ゼリーラムネとお酒は最悪の相性。気持ちよさの直後、意識ごと沼に沈む。',
     f: function (m, s) { m.add.se += 0.8 * s; m.rrMul += 1.2 * s; } },
   { id: 'overheat', name: 'オーバーヒート', need: [{ c: 'up' }, { c: 'emp' }], danger: 2,
     hint: 'アッパー系 × ハート系', desc: 'テンションは最高潮。でも体温がぐんぐん上がっていく。水とベランダの風が大事。',
@@ -336,13 +336,13 @@ var COMBOS = [
     hint: 'とばり系 × 幻覚系', desc: '幻覚の色と、とばりの影がまざりあう。もう、どこまでが部屋なのかわからない。',
     f: function (m, s) { m.add.de += 0.4 * s; m.mul.ps += 0.3 * s; m.add.an += 0.4 * s; } },
   { id: 'amplify', name: '増幅トリップ', need: [{ s: 'booster' }, { c: 'psy' }], danger: 1,
-    hint: 'ブースターラムネ × 幻覚系', desc: 'ブースターが幻覚を何倍にも引きのばす。終わりが見えない。',
+    hint: 'アンプリフェン（ブースター）× 幻覚系', desc: 'ブースターが幻覚を何倍にも引きのばす。終わりが見えない。',
     f: function (m, s) { m.mul.ps += 0.3 * s; m.vis.kal += 0.4 * s; } },
   { id: 'storm', name: 'セロトニン・ストーム（架空）', need: [{ s: 'booster' }, { c: 'emp' }], danger: 3,
-    hint: 'ブースターラムネ × ハート系', desc: 'ブースターとハートの組み合わせは体の中で嵐を起こす。体温と心拍が暴走する。',
+    hint: 'アンプリフェン（ブースター）× ハート系', desc: 'ブースターとハートの組み合わせは体の中で嵐を起こす。体温と心拍が暴走する。',
     f: function (m, s) { m.ph.tp += 1.6 * s; m.ph.hr += 22 * s; m.add.an += 0.5 * s; m.add.na += 0.3 * s; } },
   { id: 'crisis', name: 'ハイパー・クライシス', need: [{ s: 'booster' }, { c: 'up' }], danger: 3,
-    hint: 'ブースターラムネ × アッパー系', desc: 'ブースターでアッパーが暴走。頭がガンガンして、心臓が破裂しそうになる。',
+    hint: 'アンプリフェン（ブースター）× アッパー系', desc: 'ブースターでアッパーが暴走。頭がガンガンして、心臓が破裂しそうになる。',
     f: function (m, s) { m.ph.hr += 35 * s; m.add.an += 0.5 * s; m.vis.flash += s; } },
   { id: 'speedball', name: 'ジェットボール', need: [{ c: 'op' }, { c: 'up' }], danger: 2,
     hint: 'ぬくぬく系 × アッパー系', desc: 'アッパーがぬくぬくの眠気を隠す。アッパーが先に切れると、隠れていた鎮静が一気に来る。',
@@ -360,9 +360,9 @@ var COMBOS = [
     hint: '解離系 × ハート系', desc: '離れたところから自分を見て、その自分のことも大好きになる。',
     f: function (m, s) { m.add.em += 0.3 * s; m.add.di += 0.15 * s; m.add.eu += 0.2 * s; } },
   { id: 'reset', name: '強制リセット', need: [], special: true, danger: 1,
-    hint: 'リセットラムネ × ぬくぬく系', desc: 'ぬくぬく系を一瞬で打ち消した。命は助かるが、反動で最悪の気分になる。' },
+    hint: 'ネガトキソン（リセット）× オピオイド系', desc: 'ぬくぬく系を一瞬で打ち消した。命は助かるが、反動で最悪の気分になる。' },
   { id: 'placebo', name: 'プラセボ効果', need: [], special: true, danger: 0,
-    hint: 'ただのラムネ ×（思い込み）', desc: 'ただのラムネなのに、なんだか効いてきた気がする。人間の脳っておもしろい。' },
+    hint: 'スクロース錠（ただのラムネ）×（思い込み）', desc: 'ただのラムネなのに、なんだか効いてきた気がする。人間の脳っておもしろい。' },
   { id: 'chain', name: 'ラムネ・パーティー', need: [], special: true, danger: 2,
     hint: '4系統以上を同時に', desc: '4種類以上の系統が同時に効いている。もう自分が何を飲んだのかもわからない。' }
 ];
@@ -1152,6 +1152,7 @@ function ramuneIcon(s, size) {
   g.globalAlpha = 0.5; g.fillStyle = '#fff';
   g.beginPath(); g.ellipse(m - r * 0.3, m - r * 0.38, r * 0.22, r * 0.11, -0.6, 0, TAU); g.fill();
   g.globalAlpha = 1;
+  if (s.imp && s.shape !== 'ring') { g.font = '900 ' + Math.round(r * (s.shape === 'tiny' ? 0.38 : 0.5)) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = 'rgba(0,0,0,0.38)'; g.fillText(s.imp, m + 1, m + r * 0.08 + 1); g.fillStyle = 'rgba(255,255,255,0.55)'; g.fillText(s.imp, m, m + r * 0.08); }
   return (ICON_CACHE[key] = c.toDataURL());
 }
 function canIcon(d, size) {
@@ -2215,6 +2216,8 @@ var UI_CSS = [
   '.rm-card img{width:52px;height:52px;display:block;margin:0 auto 2px}',
   '.rm-card .nm{font-size:11.5px;font-weight:900;line-height:1.25;min-height:2.5em;display:flex;align-items:center;justify-content:center}',
   '.rm-card .st{font-size:10px;opacity:.75}',
+  '.rm-card .nk{font-size:9.5px;opacity:.7;margin:-2px 0 2px;line-height:1.2}',
+  '.rm-real{font-size:12.5px;line-height:1.55;padding:9px 11px;border-radius:12px;background:rgba(255,255,255,.06);border-left:4px solid var(--c,#fff)}',
   '.rm-card .cl{position:absolute;left:6px;top:6px;font-size:9px;padding:1px 5px;border-radius:6px;font-weight:900;color:#111}',
   '.rm-card.empty{opacity:.35}',
   '.rm-detail{display:flex;flex-direction:column;gap:10px}',
@@ -2385,7 +2388,7 @@ function renderPillGrid(body) {
   SUBS.forEach(function (s) {
     if (s.hidden) return;
     var n = stockOf(s.id), cl = CLASSES[s.cls];
-    var c = el('div', 'rm-card' + (n <= 0 ? ' empty' : ''), '<span class="cl" style="background:' + cl.col + '">' + cl.short + '</span><img src="' + ramuneIcon(s, 104) + '"><div class="nm">' + esc(s.name) + '</div><div class="st">' + (SAVE.settings.sandbox ? '∞' : 'のこり ' + n) + '</div>', g);
+    var c = el('div', 'rm-card' + (n <= 0 ? ' empty' : ''), '<span class="cl" style="background:' + cl.col + '">' + cl.short + '</span><img src="' + ramuneIcon(s, 104) + '"><div class="nm">' + esc(s.name) + '</div><div class="nk">「' + esc(s.nick) + '」</div><div class="st">' + (SAVE.settings.sandbox ? '∞' : 'のこり ' + n) + '</div>', g);
     onTap(c, function () { sfx('ui'); renderPillDetail(body, s); });
   });
   el('div', 'rm-note', '※ すべて架空のラムネです。カードをタップすると説明が見られます。', body);
@@ -2415,8 +2418,9 @@ function renderPillDetail(body, s) {
   var cl = CLASSES[s.cls], n = stockOf(s.id), B = GAME.B;
   body.innerHTML = '';
   var d = el('div', 'rm-detail', '', body);
-  el('div', 'hd', '<img src="' + ramuneIcon(s, 168) + '"><div><div class="t">' + esc(s.name) + '</div><span class="c" style="background:' + cl.col + '">' + cl.icon + ' ' + esc(cl.name) + '</span></div>', d);
+  el('div', 'hd', '<img src="' + ramuneIcon(s, 168) + '"><div><span class="c" style="background:' + cl.col + ';font-size:14px">' + cl.icon + ' ' + esc(cl.name) + '</span><div class="t">' + esc(s.name) + '</div><div style="font-size:12px;opacity:.75">通称「' + esc(s.nick) + '」・刻印 ' + esc(s.imp) + '</div></div>', d);
   el('p', '', esc(s.desc), d);
+  var rn = el('div', 'rm-real', '<b>現実では…</b> ' + esc(cl.real) + '<br><span style="opacity:.6">（' + esc(s.name) + ' は架空の名前です）</span>', d); rn.style.setProperty('--c', cl.col);
   el('div', 'rm-kv', '<span>効きはじめ</span><b>約 ' + timeText(s.on) + '</b><span>ピーク</span><b>' + timeText(s.pk) + ' 〜 ' + timeText(s.pl) + '</b><span>効き目の長さ</span><b>約 ' + timeText(s.du) + '</b><span>手持ち</span><b>' + (SAVE.settings.sandbox ? '∞（サンドボックス）' : n + ' 個') + '</b>', d);
   var taken = B.doses.filter(function (x) { return x.s === s.id; }).length;
   var warn = [];
@@ -2511,7 +2515,7 @@ function phoneZukan(body) {
   SUBS.forEach(function (s) {
     if (s.hidden) return;
     var ok = SAVE.seenSubs[s.id];
-    el('div', 'rm-item' + (ok ? '' : ' lock'), '<img src="' + ramuneIcon(s, 88) + '" style="' + (ok ? '' : 'filter:brightness(0) opacity(.5)') + '"><div class="tx"><b>' + (ok ? esc(s.name) : '？？？') + ' <span style="font-size:11px;color:' + CLASSES[s.cls].col + '">' + CLASSES[s.cls].icon + esc(CLASSES[s.cls].short) + '</span></b><small>' + (ok ? esc(s.desc) + '<br>効きはじめ 約' + timeText(s.on) + ' ／ 長さ 約' + timeText(s.du) : 'まだ飲んだことがない') + '</small></div>', l);
+    el('div', 'rm-item' + (ok ? '' : ' lock'), '<img src="' + ramuneIcon(s, 88) + '" style="' + (ok ? '' : 'filter:brightness(0) opacity(.5)') + '"><div class="tx"><b>' + (ok ? esc(s.name) + ' <span style="font-size:11px;opacity:.7">「' + esc(s.nick) + '」</span>' : '？？？') + ' <span style="font-size:11px;color:' + CLASSES[s.cls].col + '">' + CLASSES[s.cls].icon + esc(CLASSES[s.cls].short) + '</span></b><small>' + (ok ? esc(s.desc) + '<br>効きはじめ 約' + timeText(s.on) + ' ／ 長さ 約' + timeText(s.du) + '<br><span style="opacity:.8">現実では… ' + esc(CLASSES[s.cls].real) + '</span>' : 'まだ飲んだことがない') + '</small></div>', l);
   });
 }
 function phoneCombo(body) {
@@ -2526,7 +2530,7 @@ function phoneCombo(body) {
 function phoneHelp(body) {
   var d = el('div', 'rm-detail', '', body);
   el('p', '', '具合がおかしいとき、だれかが倒れているときは、ためらわずに助けを呼ぼう。<b>このゲームの中でも、現実でも。</b>', d);
-  el('div', 'rm-kv', '<span>呼吸が弱い</span><b>リセットラムネ（ぬくぬく系だけに効く）／119</b><span>体温が高い</span><b>水を飲む・ベランダで風にあたる</b><span>吐き気</span><b>トイレで吐く（飲んだばかりなら体に入る量も減る）</b><span>心拍が速い</span><b>じっと休む・水を飲む</b>', d);
+  el('div', 'rm-kv', '<span>呼吸が弱い</span><b>ネガトキソン＝リセットラムネ（オピオイド系だけに効く）／119</b><span>体温が高い</span><b>水を飲む・ベランダで風にあたる</b><span>吐き気</span><b>トイレで吐く（飲んだばかりなら体に入る量も減る）</b><span>心拍が速い</span><b>じっと休む・水を飲む</b>', d);
   var b = el('button', 'btn warn', '📞 119に電話する（今夜はここで終わり）', d);
   onTap(b, function () { closeModal(true); endNight('ambulance'); });
   el('div', 'rm-note', '現実で困ったとき：救急車 119／迷ったら 救急安心センター #7119（地域による）', body);
@@ -2613,7 +2617,7 @@ function actTakePill(id) {
     takeSub(GAME.B, id); sfx('pill'); GAME.lock = false;
     var first = !SAVE.seenSubs[id];
     SAVE.seenSubs[id] = 1; writeSave();
-    toast((first ? '🆕 ' : '') + s.name + ' を口に入れた。カリッ。', 'good');
+    toast((first ? '🆕 ' : '') + s.name + '（' + s.nick + '）を口に入れた。カリッ。', 'good');
     if (s.reset && !GAME.B.found.length) { }
   });
 }
@@ -2927,9 +2931,9 @@ function showHowTo() {
   var html = '<div class="rm-card2"><h3>あそびかた</h3>' +
     '<p>夜8時から朝8時まで、自分の部屋で好きにすごすゲームです。<br>テーブルの<b>ラムネケース</b>から架空のラムネを、<b>冷蔵庫</b>から ZER9（架空のチューハイ）を選んで、いろいろな効果と<b>飲み合わせ</b>を見つけよう。</p>' +
     '<ul><li><b>移動</b>：画面の左側をドラッグ（PC：WASD）</li><li><b>見回す</b>：右側をドラッグ（PC：マウスでドラッグ）</li><li><b>しらべる</b>：モノをタップ、または右下のボタン（PC：クリック / E）</li><li><b>⏩</b>：時間を早送り（効き目が出るまで待つときに）</li><li><b>📱</b>：からだの状態・図鑑・設定・119</li></ul>' +
-    '<p><b>ラムネの系統</b>：🌈幻覚系　⚡アッパー系　💤ダウナー系　☁️ぬくぬく系（オピオイド系）　🪐解離系　💗ハート系　🌑とばり系　✨とくしゅ</p>' +
+    '<p><b>ラムネの名前</b>：どれも医薬品っぽい名前と「通称」がついていますが、<b>すべて架空</b>です。</p><p><b>ラムネの系統</b>：🌈幻覚系　⚡アッパー系　💤ダウナー系　☁️ぬくぬく系（オピオイド系）　🪐解離系　💗ハート系　🌑とばり系　✨とくしゅ</p>' +
     '<p><b>からだに注意</b>：心拍・体温・呼吸が危険なところに入ると、画面が赤くなって「危険度」がたまります。100になると BAD END。<br>' +
-    '水を飲む・ベランダで風にあたる・トイレで吐く・リセットラムネ・119番などで切り抜けよう。</p>' +
+    '水を飲む・ベランダで風にあたる・トイレで吐く・ネガトキソン（リセットラムネ）・119番などで切り抜けよう。</p>' +
     '<p><b>スコア</b>：楽しい気分の量 ＋ 見つけた飲み合わせ ＋ 朝まで無事だったボーナス。</p>' +
     '<div class="rm-menu" style="margin:10px auto 0"><button class="btn pri" id="rm-back">もどる</button></div></div>';
   showScreen(html);

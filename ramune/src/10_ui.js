@@ -56,6 +56,8 @@ var UI_CSS = [
   '.rm-card img{width:52px;height:52px;display:block;margin:0 auto 2px}',
   '.rm-card .nm{font-size:11.5px;font-weight:900;line-height:1.25;min-height:2.5em;display:flex;align-items:center;justify-content:center}',
   '.rm-card .st{font-size:10px;opacity:.75}',
+  '.rm-card .nk{font-size:9.5px;opacity:.7;margin:-2px 0 2px;line-height:1.2}',
+  '.rm-real{font-size:12.5px;line-height:1.55;padding:9px 11px;border-radius:12px;background:rgba(255,255,255,.06);border-left:4px solid var(--c,#fff)}',
   '.rm-card .cl{position:absolute;left:6px;top:6px;font-size:9px;padding:1px 5px;border-radius:6px;font-weight:900;color:#111}',
   '.rm-card.empty{opacity:.35}',
   '.rm-detail{display:flex;flex-direction:column;gap:10px}',
@@ -226,7 +228,7 @@ function renderPillGrid(body) {
   SUBS.forEach(function (s) {
     if (s.hidden) return;
     var n = stockOf(s.id), cl = CLASSES[s.cls];
-    var c = el('div', 'rm-card' + (n <= 0 ? ' empty' : ''), '<span class="cl" style="background:' + cl.col + '">' + cl.short + '</span><img src="' + ramuneIcon(s, 104) + '"><div class="nm">' + esc(s.name) + '</div><div class="st">' + (SAVE.settings.sandbox ? '∞' : 'のこり ' + n) + '</div>', g);
+    var c = el('div', 'rm-card' + (n <= 0 ? ' empty' : ''), '<span class="cl" style="background:' + cl.col + '">' + cl.short + '</span><img src="' + ramuneIcon(s, 104) + '"><div class="nm">' + esc(s.name) + '</div><div class="nk">「' + esc(s.nick) + '」</div><div class="st">' + (SAVE.settings.sandbox ? '∞' : 'のこり ' + n) + '</div>', g);
     onTap(c, function () { sfx('ui'); renderPillDetail(body, s); });
   });
   el('div', 'rm-note', '※ すべて架空のラムネです。カードをタップすると説明が見られます。', body);
@@ -256,8 +258,9 @@ function renderPillDetail(body, s) {
   var cl = CLASSES[s.cls], n = stockOf(s.id), B = GAME.B;
   body.innerHTML = '';
   var d = el('div', 'rm-detail', '', body);
-  el('div', 'hd', '<img src="' + ramuneIcon(s, 168) + '"><div><div class="t">' + esc(s.name) + '</div><span class="c" style="background:' + cl.col + '">' + cl.icon + ' ' + esc(cl.name) + '</span></div>', d);
+  el('div', 'hd', '<img src="' + ramuneIcon(s, 168) + '"><div><span class="c" style="background:' + cl.col + ';font-size:14px">' + cl.icon + ' ' + esc(cl.name) + '</span><div class="t">' + esc(s.name) + '</div><div style="font-size:12px;opacity:.75">通称「' + esc(s.nick) + '」・刻印 ' + esc(s.imp) + '</div></div>', d);
   el('p', '', esc(s.desc), d);
+  var rn = el('div', 'rm-real', '<b>現実では…</b> ' + esc(cl.real) + '<br><span style="opacity:.6">（' + esc(s.name) + ' は架空の名前です）</span>', d); rn.style.setProperty('--c', cl.col);
   el('div', 'rm-kv', '<span>効きはじめ</span><b>約 ' + timeText(s.on) + '</b><span>ピーク</span><b>' + timeText(s.pk) + ' 〜 ' + timeText(s.pl) + '</b><span>効き目の長さ</span><b>約 ' + timeText(s.du) + '</b><span>手持ち</span><b>' + (SAVE.settings.sandbox ? '∞（サンドボックス）' : n + ' 個') + '</b>', d);
   var taken = B.doses.filter(function (x) { return x.s === s.id; }).length;
   var warn = [];
@@ -352,7 +355,7 @@ function phoneZukan(body) {
   SUBS.forEach(function (s) {
     if (s.hidden) return;
     var ok = SAVE.seenSubs[s.id];
-    el('div', 'rm-item' + (ok ? '' : ' lock'), '<img src="' + ramuneIcon(s, 88) + '" style="' + (ok ? '' : 'filter:brightness(0) opacity(.5)') + '"><div class="tx"><b>' + (ok ? esc(s.name) : '？？？') + ' <span style="font-size:11px;color:' + CLASSES[s.cls].col + '">' + CLASSES[s.cls].icon + esc(CLASSES[s.cls].short) + '</span></b><small>' + (ok ? esc(s.desc) + '<br>効きはじめ 約' + timeText(s.on) + ' ／ 長さ 約' + timeText(s.du) : 'まだ飲んだことがない') + '</small></div>', l);
+    el('div', 'rm-item' + (ok ? '' : ' lock'), '<img src="' + ramuneIcon(s, 88) + '" style="' + (ok ? '' : 'filter:brightness(0) opacity(.5)') + '"><div class="tx"><b>' + (ok ? esc(s.name) + ' <span style="font-size:11px;opacity:.7">「' + esc(s.nick) + '」</span>' : '？？？') + ' <span style="font-size:11px;color:' + CLASSES[s.cls].col + '">' + CLASSES[s.cls].icon + esc(CLASSES[s.cls].short) + '</span></b><small>' + (ok ? esc(s.desc) + '<br>効きはじめ 約' + timeText(s.on) + ' ／ 長さ 約' + timeText(s.du) + '<br><span style="opacity:.8">現実では… ' + esc(CLASSES[s.cls].real) + '</span>' : 'まだ飲んだことがない') + '</small></div>', l);
   });
 }
 function phoneCombo(body) {
@@ -367,7 +370,7 @@ function phoneCombo(body) {
 function phoneHelp(body) {
   var d = el('div', 'rm-detail', '', body);
   el('p', '', '具合がおかしいとき、だれかが倒れているときは、ためらわずに助けを呼ぼう。<b>このゲームの中でも、現実でも。</b>', d);
-  el('div', 'rm-kv', '<span>呼吸が弱い</span><b>リセットラムネ（ぬくぬく系だけに効く）／119</b><span>体温が高い</span><b>水を飲む・ベランダで風にあたる</b><span>吐き気</span><b>トイレで吐く（飲んだばかりなら体に入る量も減る）</b><span>心拍が速い</span><b>じっと休む・水を飲む</b>', d);
+  el('div', 'rm-kv', '<span>呼吸が弱い</span><b>ネガトキソン＝リセットラムネ（オピオイド系だけに効く）／119</b><span>体温が高い</span><b>水を飲む・ベランダで風にあたる</b><span>吐き気</span><b>トイレで吐く（飲んだばかりなら体に入る量も減る）</b><span>心拍が速い</span><b>じっと休む・水を飲む</b>', d);
   var b = el('button', 'btn warn', '📞 119に電話する（今夜はここで終わり）', d);
   onTap(b, function () { closeModal(true); endNight('ambulance'); });
   el('div', 'rm-note', '現実で困ったとき：救急車 119／迷ったら 救急安心センター #7119（地域による）', body);
