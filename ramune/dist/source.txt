@@ -1,0 +1,19 @@
+RAMUNE NIGHT（ラムネナイト） — source.txt
+架空のラムネ＆チューハイ・シミュレーター / ブラウザ用フル3D (three.js r128)
+
+これはフィクションのゲームです。登場する「ラムネ」「ZER9」などはすべて架空で、
+実在の薬物・製品とは関係ありません。ゲーム内の効果や飲み合わせも創作です。
+
+ファイル
+  index.html                      game.js を読むだけのページ
+  game.js                         本体（ソースは ramune/src/*.js を結合したもの）
+  ramune_night_standalone.html    game.js を埋め込んだ1ファイル版
+  _headers                        CORS / キャッシュ設定（Netlify に置く場合）
+
+外部から読むもの
+  three.js r128  https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
+  Google Fonts   DotGothic16 / Rampart One / Zen Maru Gothic
+  画像・音声ファイルは使っていません（テクスチャはcanvas、音はWebAudioで生成）。
+
+保存
+  localStorage "ramune_night_v1" に図鑑・設定・記録を保存（使えない環境でも遊べます）。

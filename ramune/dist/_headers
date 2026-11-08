@@ -1,0 +1,16 @@
+/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, HEAD, OPTIONS
+  Access-Control-Allow-Headers: Range, Content-Type
+  Access-Control-Expose-Headers: Content-Length, Content-Range, Accept-Ranges
+  Cross-Origin-Resource-Policy: cross-origin
+  Timing-Allow-Origin: *
+
+/game.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=300, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+
