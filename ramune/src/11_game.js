@@ -471,6 +471,7 @@ function toTitle() {
   WORLD.lightMode = 1; WORLD.tvOn = true;
   var html = '<div class="rm-title-card"><div class="rm-logo-pre">キケンな</div><div class="rm-logo">ラムネ<span>シミュレーター</span></div><div class="rm-logo-sub">DANGEROUS RAMUNE SIMULATOR</div>' +
     '<div class="rm-title-lead">架空のラムネとチューハイで過ごす、ひと晩のシミュレーター</div></div>' +
+    '<div class="rm-sound">🔇 消音モード（マナーモード）を解除すると音が聞こえます 🔊</div>' +
     '<div class="rm-menu"><button class="btn pri" id="rm-start">はじめる</button><button class="btn" id="rm-tut">チュートリアルつきで始める</button><button class="btn" id="rm-zukan">図鑑</button><button class="btn" id="rm-howto">あそびかた</button><button class="btn ghost" id="rm-set">設定</button></div>' +
     '<div class="rm-note">図鑑：ラムネ ' + Object.keys(SAVE.seenSubs).length + '/' + SUBS.filter(function (s) { return !s.hidden; }).length + ' ・ 飲み合わせ ' + Object.keys(SAVE.seenCombos).length + '/' + COMBOS.length + (SAVE.best ? ' ・ ベスト ' + SAVE.best : '') + '<br>※ フィクションです。実在の薬物・製品とは関係ありません。</div>';
   showScreen(html, 'rm-title');

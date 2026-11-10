@@ -19,7 +19,7 @@
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.7.1';
+var GAME_VERSION = '1.7.2';
 
 var ROOT, UI, CANVAS_HOST;
 
@@ -2932,6 +2932,7 @@ var UI_CSS = [
   '.rm-screen{position:absolute;inset:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:calc(var(--top-safe) + 4px) 18px var(--bot-safe)}',
   '.rm-screen.rm-title{background:radial-gradient(ellipse at center,rgba(8,4,20,.88) 0%,rgba(8,4,20,.7) 60%,rgba(8,4,20,.45) 100%)}',
   '.rm-title-card{padding:18px 16px 16px;border-radius:26px;background:rgba(12,6,28,.82);border:2px solid rgba(255,255,255,.18);box-shadow:0 0 40px rgba(255,95,168,.25);width:min(92vw,460px)}',
+  '.rm-sound{margin-top:12px;padding:9px 16px;border-radius:999px;background:rgba(10,6,24,.88);border:2px solid #ffe14d;color:#fff;font-size:14px;font-weight:900;line-height:1.4;max-width:92vw;box-shadow:0 0 18px rgba(255,225,77,.35)}',
   '.rm-title-lead{font-size:14px;font-weight:700;color:#fff;margin-top:8px;line-height:1.5}',
   '.rm-logo{font-family:"Zen Maru Gothic",sans-serif;font-weight:900;font-size:clamp(60px,19vw,112px);line-height:1;color:#fff;text-shadow:0 0 1px #000,4px 4px 0 #ff5fa8,8px 8px 0 #6a3cff,0 0 30px rgba(125,249,255,.45)}',
   '.rm-logo-sub{font-size:12px;letter-spacing:.3em;margin:12px 0 0;color:#7df9ff;font-weight:900}',
@@ -3769,6 +3770,7 @@ function toTitle() {
   WORLD.lightMode = 1; WORLD.tvOn = true;
   var html = '<div class="rm-title-card"><div class="rm-logo-pre">キケンな</div><div class="rm-logo">ラムネ<span>シミュレーター</span></div><div class="rm-logo-sub">DANGEROUS RAMUNE SIMULATOR</div>' +
     '<div class="rm-title-lead">架空のラムネとチューハイで過ごす、ひと晩のシミュレーター</div></div>' +
+    '<div class="rm-sound">🔇 消音モード（マナーモード）を解除すると音が聞こえます 🔊</div>' +
     '<div class="rm-menu"><button class="btn pri" id="rm-start">はじめる</button><button class="btn" id="rm-tut">チュートリアルつきで始める</button><button class="btn" id="rm-zukan">図鑑</button><button class="btn" id="rm-howto">あそびかた</button><button class="btn ghost" id="rm-set">設定</button></div>' +
     '<div class="rm-note">図鑑：ラムネ ' + Object.keys(SAVE.seenSubs).length + '/' + SUBS.filter(function (s) { return !s.hidden; }).length + ' ・ 飲み合わせ ' + Object.keys(SAVE.seenCombos).length + '/' + COMBOS.length + (SAVE.best ? ' ・ ベスト ' + SAVE.best : '') + '<br>※ フィクションです。実在の薬物・製品とは関係ありません。</div>';
   showScreen(html, 'rm-title');
