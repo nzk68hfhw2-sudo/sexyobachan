@@ -19,7 +19,7 @@
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.6.0';
+var GAME_VERSION = '1.6.1';
 
 var ROOT, UI, CANVAS_HOST;
 
@@ -2858,7 +2858,7 @@ var UI_CSS = [
   '.rm-chip img{width:22px;height:22px}.rm-chip .ph{opacity:.7;font-weight:500}.rm-chip .lv{width:34px;height:4px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}.rm-chip .lv i{display:block;height:100%;background:var(--cyan)}',
   '.rm-feel{position:absolute;left:10px;top:calc(var(--top-safe) + 62px);display:flex;flex-direction:column;gap:3px;font-size:11px}',
   '.rm-feel div{display:flex;align-items:center;gap:5px}.rm-feel .b{width:54px;height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}.rm-feel .b i{display:block;height:100%}',
-  '.rm-combos{position:absolute;left:10px;top:calc(var(--top-safe) + 150px);display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:900;text-shadow:0 1px 4px #000}',
+  '.rm-combos{position:absolute;left:10px;top:calc(var(--top-safe) + 150px);display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:900;max-width:46vw}.rm-combos div{padding:3px 9px;border-radius:999px;background:rgba(10,6,24,.82);border:1px solid currentColor;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
   '.rm-cross{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:rgba(255,255,255,0.8);box-shadow:0 0 6px #fff;transition:transform .15s}',
   '.rm-cross.on{transform:scale(2.2);background:var(--cyan)}',
   '.rm-focus{position:absolute;left:50%;top:calc(50% + 18px);transform:translateX(-50%);padding:4px 10px;border-radius:999px;background:rgba(10,6,24,0.65);font-size:12px;font-weight:700;white-space:nowrap;display:none}',
@@ -2883,10 +2883,13 @@ var UI_CSS = [
   '.rm-toast{padding:7px 14px;border-radius:14px;background:rgba(14,8,30,.82);border:1px solid var(--line);font-size:13px;font-weight:700;text-align:center;animation:rmIn .3s ease-out}',
   '.rm-toast.warn{border-color:#ff3355;background:rgba(70,0,16,.85)} .rm-toast.good{border-color:var(--cyan)}',
   '@keyframes rmIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}',
-  '.rm-banner{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;width:92vw}',
-  '.rm-banner .k{font-size:12px;letter-spacing:.3em;color:var(--cyan);font-weight:900}',
-  '.rm-banner .n{font-family:"Rampart One","Zen Maru Gothic",sans-serif;font-size:clamp(28px,8vw,52px);line-height:1.15;margin:6px 0;background:linear-gradient(90deg,#7df9ff,#ff5fa8,#ffe14d,#7df9ff);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rmShine 2s linear infinite;filter:drop-shadow(0 0 12px rgba(255,95,168,.6))}',
-  '.rm-banner .d{font-size:13px;opacity:.9;max-width:420px;margin:0 auto;text-shadow:0 2px 4px #000}',
+  '.rm-banner{--bc:#7df9ff;position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;width:min(90vw,440px);z-index:5;padding:14px 18px 16px;border-radius:20px;background:rgba(10,6,24,.94);border:2px solid var(--bc);box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 28px var(--bc),0 12px 40px rgba(0,0,0,.7)}',
+  '.rm-banner.dg0{--bc:#7dffb0}.rm-banner.dg1{--bc:#ffe14d}.rm-banner.dg2{--bc:#ff9f1c}.rm-banner.dg3{--bc:#ff3355}',
+  '.rm-banner .k{font-size:13px;letter-spacing:.15em;color:var(--bc);font-weight:900}',
+  '.rm-banner .n{font-family:"Rampart One","Zen Maru Gothic",sans-serif;font-size:clamp(28px,8.5vw,44px);line-height:1.2;margin:6px 0 8px;color:#fff;text-shadow:0 0 10px var(--bc),0 2px 0 #000;animation:rmPop .45s ease-out}',
+  '.rm-banner .lv{display:inline-block;font-size:12px;font-weight:900;padding:3px 10px;border-radius:999px;background:var(--bc);color:#120a20;margin-bottom:8px}',
+  '.rm-banner .d{font-size:15px;line-height:1.65;font-weight:700;color:#fff;max-width:400px;margin:0 auto}',
+  '@keyframes rmPop{from{transform:scale(.8);opacity:0}to{transform:none;opacity:1}}',
   '@keyframes rmShine{to{background-position:300% 0}}',
   '.rm-modal{position:absolute;inset:0;background:rgba(4,2,12,.55);display:flex;align-items:flex-end;justify-content:center;pointer-events:auto;animation:rmFade .2s}',
   '@keyframes rmFade{from{opacity:0}to{opacity:1}}',
@@ -3025,10 +3028,12 @@ function say(text, dur, cls) {
   SUBT.t = dur || 3.5;
 }
 function banner(kicker, name, desc, cls) {
-  HUD.banner.innerHTML = '<div class="k">' + esc(kicker) + '</div><div class="n">' + esc(name) + '</div><div class="d ' + (cls || '') + '">' + esc(desc) + '</div>';
+  var lvl = /dg(\d)/.exec(cls || ''); lvl = lvl ? +lvl[1] : -1;
+  HUD.banner.className = 'rm-banner ' + (cls || '');
+  HUD.banner.innerHTML = '<div class="k">' + esc(kicker) + '</div><div class="n">' + esc(name) + '</div>' + (lvl >= 0 ? '<div class="lv">危険度：' + ['安全', '注意', '危険', '命にかかわる'][lvl] + '</div>' : '') + '<div class="d">' + esc(desc) + '</div>';
   HUD.banner.style.display = ''; HUD.banner.style.opacity = 1; HUD.banner.style.transition = '';
   clearTimeout(HUD.bannerTO);
-  HUD.bannerTO = setTimeout(function () { HUD.banner.style.transition = 'opacity .8s'; HUD.banner.style.opacity = 0; setTimeout(function () { HUD.banner.style.display = 'none'; }, 800); }, 4200);
+  HUD.bannerTO = setTimeout(function () { HUD.banner.style.transition = 'opacity .8s'; HUD.banner.style.opacity = 0; setTimeout(function () { HUD.banner.style.display = 'none'; }, 800); }, 5500);
 }
 function updateUITimers(dt) {
   if (SUBT.t > 0) { SUBT.t -= dt; if (SUBT.t <= 0) HUD.sub.style.opacity = 0; }
