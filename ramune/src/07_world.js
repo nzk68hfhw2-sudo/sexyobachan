@@ -448,7 +448,7 @@ function canMesh(d) {
 }
 function holdItem(kind, obj, dur, cb) {
   if (HELD.mesh) HELD.g.remove(HELD.mesh);
-  HELD.mesh = obj; HELD.g.add(obj); HELD.puffed = false; HELD.kind = kind; HELD.t = 0; HELD.dur = dur; HELD.cb = cb; HELD.g.visible = true;
+  HELD.mesh = obj; HELD.g.add(obj); HELD.puffed = false; HELD.bites = 0; HELD.kind = kind; HELD.t = 0; HELD.dur = dur; HELD.cb = cb; HELD.g.visible = true;
 }
 function updateHeld(dt) {
   if (!HELD.kind) return;
@@ -460,6 +460,15 @@ function updateHeld(dt) {
     m.rotation.set(0.2, 0.6 - inh * 0.5, 0);
     if (m.userData.ember) m.userData.ember.material.color.setHSL(0.05, 1, 0.45 + inh * 0.25);
     if (!HELD.puffed && k > 0.62) { HELD.puffed = true; puffSmoke(14, HELD.tint); }
+  } else if (HELD.kind === 'food') {
+    // bring the food up, take 3 bites (it shrinks), then lower it
+    var near = smooth((k - 0.2) / 0.15) * (1 - smooth((k - 0.82) / 0.12));
+    var bite = 0, bk = [0.38, 0.56, 0.74];
+    bk.forEach(function (b, i) { var d = k - b; if (d > 0 && d < 0.08) bite = Math.sin(d / 0.08 * PI); if (d > 0.04 && HELD.bites <= i) { HELD.bites = i + 1; sfx(m.userData.slurp ? 'slurp' : 'bite'); var sc = 1 - 0.2 * (i + 1); m.userData.eat && m.userData.eat.scale.setScalar(Math.max(0.2, sc)); } });
+    g.position.set(0.0, -0.3 + up * 0.18 + near * 0.06 + bite * 0.03, -0.4 + near * 0.12 + bite * 0.05);
+    m.rotation.set(0.5 - near * 0.25 - bite * 0.15, Math.sin(HELD.t * 1.3) * 0.08, 0);
+    m.position.set(0, 0, 0);
+    if (m.userData.sticks) m.userData.sticks.rotation.x = -0.3 + bite * 0.6;
   } else if (HELD.kind === 'pill') {
     g.position.set(0.0, -0.2 + up * 0.12 - smooth((k - 0.6) / 0.3) * 0.1, -0.34 + smooth((k - 0.55) / 0.35) * 0.22);
     m.rotation.set(0.25, Math.sin(HELD.t * 2.2) * 0.6, HELD.t * 2.2);
@@ -714,4 +723,56 @@ function showPackage(on) {
     addInter('package', '荷物（ヨルイーツ）', '受け取る', new THREE.Vector3(3.45, 0.1, 3.95), [g], function () { receivePackage(); }, { cond: function () { return WORLD.pkg.visible; } });
   }
   WORLD.pkg.visible = !!on;
+}
+
+// ---- delivery food models (held in front of the camera while eating) ----
+function foodMesh(id) {
+  var g = new THREE.Group(), M = function (c, o) { return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.6 }, o || {})); };
+  if (id === 'water' || id === 'sports') {
+    var body = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.032, 0.17, 18), M(id === 'water' ? 0xcfeeff : 0x2f7fe0, { transparent: id === 'water', opacity: id === 'water' ? 0.55 : 1, roughness: 0.15 }));
+    g.add(body);
+    var lab = new THREE.Mesh(new THREE.CylinderGeometry(0.0325, 0.0325, 0.06, 18, 1, true), M(id === 'water' ? 0x3fa9f5 : 0xffffff));
+    g.add(lab);
+    var cap = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.02, 12), M(id === 'water' ? 0x2266cc : 0x1f4fa8));
+    cap.position.y = 0.095; g.add(cap);
+    return g;
+  }
+  if (id === 'ramen') {
+    var bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.045, 0.06, 24, 1, true), M(0xb3261e, { side: THREE.DoubleSide }));
+    g.add(bowl);
+    var bottom = new THREE.Mesh(new THREE.CircleGeometry(0.045, 20), M(0x111111)); bottom.rotation.x = -PI / 2; bottom.position.y = -0.03; g.add(bottom);
+    var soup = new THREE.Mesh(new THREE.CircleGeometry(0.068, 24), M(0xd9a441, { roughness: 0.2 })); soup.rotation.x = -PI / 2; soup.position.y = 0.018; g.add(soup);
+    var top = new THREE.Group(); top.position.y = 0.022; g.add(top); g.userData.eat = top;
+    for (var i = 0; i < 7; i++) { var n = new THREE.Mesh(new THREE.TorusGeometry(0.018 + i * 0.004, 0.003, 4, 16), M(0xf2d27a)); n.rotation.x = PI / 2; n.position.set(Math.sin(i) * 0.01, 0, Math.cos(i) * 0.01); top.add(n); }
+    var egg = new THREE.Mesh(new THREE.SphereGeometry(0.016, 12, 8), M(0xfff6e0)); egg.scale.y = 0.6; egg.position.set(0.03, 0.004, 0.01); top.add(egg);
+    var yolk = new THREE.Mesh(new THREE.CircleGeometry(0.008, 10), M(0xf2a516)); yolk.rotation.x = -PI / 2; yolk.position.set(0.03, 0.0145, 0.01); top.add(yolk);
+    var nori = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.04), M(0x1b2a1b, { side: THREE.DoubleSide })); nori.position.set(-0.04, 0.01, -0.03); nori.rotation.x = -0.4; top.add(nori);
+    var sticks = new THREE.Group(); sticks.position.set(0.02, 0.03, 0); g.add(sticks); g.userData.sticks = sticks;
+    [-0.006, 0.006].forEach(function (x) { var s = new THREE.Mesh(new THREE.CylinderGeometry(0.0018, 0.0025, 0.2, 6), M(0xc8955c)); s.rotation.z = 1.2; s.position.set(x, 0.02, x * 2); sticks.add(s); });
+    g.userData.slurp = true; g.scale.setScalar(0.9);
+    return g;
+  }
+  if (id === 'pizza') {
+    var sh = new THREE.Shape(); sh.moveTo(0, 0.11); sh.lineTo(-0.06, -0.05); sh.quadraticCurveTo(0, -0.075, 0.06, -0.05); sh.closePath();
+    var slice = new THREE.Group(); g.add(slice); g.userData.eat = slice;
+    var dough = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.008, bevelEnabled: false }), M(0xf1c27d)); dough.rotation.x = -PI / 2; slice.add(dough);
+    var cheese = new THREE.Mesh(new THREE.ShapeGeometry(sh), M(0xffd54a, { roughness: 0.4 })); cheese.rotation.x = -PI / 2; cheese.position.y = 0.0085; cheese.scale.setScalar(0.88); slice.add(cheese);
+    [[0, 0.04], [-0.02, -0.02], [0.025, -0.025], [0.005, 0.0]].forEach(function (p) { var pe = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.003, 14), M(0xb3261e)); pe.position.set(p[0], 0.011, -p[1]); slice.add(pe); });
+    var crust = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.008, 6, 16, 1.15), M(0xc98a3e)); crust.rotation.x = PI / 2; crust.rotation.z = -PI / 2 - 0.57; crust.position.set(0, 0.006, 0.0); crust.scale.set(0.9, 0.9, 0.9); crust.position.z = -0.005; slice.add(crust);
+    slice.rotation.y = PI; slice.position.z = 0.02;
+    return g;
+  }
+  if (id === 'ice') {
+    var cup = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.03, 0.05, 20), M(0xffffff)); g.add(cup);
+    var band = new THREE.Mesh(new THREE.CylinderGeometry(0.0405, 0.036, 0.018, 20, 1, true), M(0xff8fb1)); band.position.y = 0.0; g.add(band);
+    var scoops = new THREE.Group(); scoops.position.y = 0.03; g.add(scoops); g.userData.eat = scoops;
+    [[0xffc1dc, -0.015], [0xfff3c4, 0.015], [0x9be7c4, 0]].forEach(function (c, i) { var s = new THREE.Mesh(new THREE.SphereGeometry(0.022, 14, 10), M(c[0], { roughness: 0.8 })); s.position.set(c[1], i === 2 ? 0.02 : 0, i === 2 ? 0 : 0.005); scoops.add(s); });
+    var spoon = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.07, 0.003), M(0xffffff)); spoon.position.set(0.025, 0.05, 0); spoon.rotation.z = -0.5; g.add(spoon);
+    return g;
+  }
+  // first-aid kit / anything else: a small box
+  var box = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 0.06), M(0xffffff)); g.add(box);
+  var c1 = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.01), new THREE.MeshBasicMaterial({ color: 0xff3355 })); c1.position.z = 0.031; g.add(c1);
+  var c2 = new THREE.Mesh(new THREE.PlaneGeometry(0.01, 0.03), new THREE.MeshBasicMaterial({ color: 0xff3355 })); c2.position.z = 0.031; g.add(c2);
+  return g;
 }

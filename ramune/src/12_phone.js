@@ -577,11 +577,38 @@ function phoneEats(body) {
   });
   el('div', 'rm-note', '届いたら玄関の荷物をしらべて受け取ろう。', body);
 }
+var EAT_LINE = {
+  water: ['ごくごく…水、うまい。', 'つめたい水が体にしみる。'],
+  sports: ['スポドリ最高…生きかえる。', 'あまじょっぱい。体がよろこんでる。'],
+  ramen: ['ずるずる…深夜のラーメンは罪の味。', 'スープまで飲んじゃう…'],
+  pizza: ['チーズのびる〜！', 'ピザ、ひとりで1枚は多かったかも。'],
+  ice: ['つめた〜い！体温が下がっていく。', '3つの味、ぜんぶおいしい。'],
+  kit: ['冷えピタを貼って、胃薬（架空）も飲んだ。', 'おでこがひんやり。'],
+  zer9: ['ZER9 を冷蔵庫にしまった。']
+};
 function receivePackage() {
-  var B = GAME.B, got = [];
-  GAME.orders.forEach(function (o) { if (o.arrived && !o.got) { o.got = true; o.items.forEach(function (m) { m.fn(B); got.push(m.icon + m.name); }); } });
+  if (GAME.lock) return;
+  var B = GAME.B, items = [];
+  GAME.orders.forEach(function (o) { if (o.arrived && !o.got) { o.got = true; o.items.forEach(function (m) { items.push(m); }); } });
   showPackage(false); updatePhoneBadge();
-  if (got.length) { sfx('pill'); toast('📦 受け取った：' + got.join('、'), 'good', 5); logEvent('📦 受け取り：' + got.join('、')); }
+  if (!items.length) return;
+  sfx('pill'); toast('📦 受け取った：' + items.map(function (m) { return m.icon + m.name; }).join('、'), 'good', 4);
+  logEvent('📦 受け取り：' + items.map(function (m) { return m.name; }).join('、'));
+  GAME.lock = true;
+  (function next() {
+    var m = items.shift();
+    if (!m) { GAME.lock = false; return; }
+    if (m.id === 'zer9') { m.fn(B); sfx('fridge'); say(pick(EAT_LINE.zer9), 2.5); setTimeout(next, 600); return; }
+    var drink = m.id === 'water' || m.id === 'sports';
+    if (drink) setTimeout(function () { sfx('gulp'); }, 900);
+    if (m.id === 'sports') sfx('can');
+    holdItem(drink ? 'can' : 'food', foodMesh(m.id), drink ? 2.7 : 3.4, function () {
+      m.fn(B); say(pick(EAT_LINE[m.id] || ['おいしかった。']), 3);
+      toast(m.icon + ' ' + m.name + ' を' + (drink ? '飲んだ' : m.id === 'kit' ? '使った' : '食べた') + '。' + m.desc, 'good', 3.5);
+      logEvent(m.icon + ' ' + m.name + ' を' + (drink ? '飲んだ' : '食べた'));
+      setTimeout(next, 500);
+    });
+  })();
 }
 
 // ---- 🗺 map ----

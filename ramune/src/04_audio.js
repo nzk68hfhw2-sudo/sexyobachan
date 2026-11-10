@@ -133,6 +133,10 @@ function sfx(name, arg) {
       for (i = 0; i < 8; i++) tone(1320, t + i * 0.18, 0.1, { vol: 0.12, type: 'square', filter: { f: 3000 } }); break;
     case 'shutter':
       noiseHit(t, 0.05, { f: 3000, q: 1, vol: 0.3 }); noiseHit(t + 0.08, 0.06, { f: 2500, q: 1, vol: 0.25 }); break;
+    case 'bite':
+      noiseHit(t, 0.05, { f: 1800, q: 2, vol: 0.3 }); noiseHit(t + 0.07, 0.06, { f: 1400, q: 2, vol: 0.22 }); tone(150, t + 0.12, 0.1, { vol: 0.08, slide: 90 }); break;
+    case 'slurp':
+      noiseHit(t, 0.5, { f: 800, fTo: 2600, q: 3, vol: 0.25, attack: 0.05 }); tone(220, t + 0.45, 0.12, { vol: 0.08, slide: 120 }); break;
     case 'tv':
       noiseHit(t, 0.3, { f: 4000, q: 0.3, vol: 0.1 }); break;
   }
