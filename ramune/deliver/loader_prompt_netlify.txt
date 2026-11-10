@@ -1,0 +1,41 @@
+一字一句変えずに出力してください。書き換えは禁止です。
+以下のHTMLを、そのまま1文字も変えずにゲームのコードとして使ってください。説明文・コメント・改行の追加や削除、URLの変更、ライブラリの追加、iframe化、fetch化、コードの整形・省略はすべて禁止です。
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>キケンなラムネシミュレーター</title>
+<link rel="icon" type="image/png" href="https://super-tartufo-ba91a4.netlify.app/icons/favicon-64.png">
+<link rel="apple-touch-icon" href="https://super-tartufo-ba91a4.netlify.app/icons/apple-touch-icon-180.png">
+<style>
+html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden}
+#rml{position:fixed;left:16px;right:16px;top:45%;color:#ffb3dc;font:16px monospace;text-align:center;letter-spacing:.15em}
+#rme{display:none;position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 120px);background:#1a0616;color:#ffe0f4;border:2px solid #e2a;border-radius:8px;padding:12px;font:13px/1.5 monospace;white-space:pre-wrap;z-index:2147483647}
+</style>
+</head>
+<body>
+<div id="rml">LOADING RAMUNE...</div>
+<div id="rme"></div>
+<script>
+(function(){
+var U=["https://super-tartufo-ba91a4.netlify.app/game.js"];
+var i=0,done=false,tried=[];
+function show(t,d){var e=document.getElementById('rme');e.style.display='block';e.textContent='[読み込みエラー] '+t+'\n'+(d||'')+'\n\n試したURL:\n'+tried.join('\n')+'\nオンライン: '+(navigator.onLine?'はい':'いいえ');var l=document.getElementById('rml');if(l)l.style.display='none';}
+function next(){
+if(i>=U.length){show('game.js を読み込めませんでした','通信状態を確認して、もう一度ひらいてください。');return;}
+var u=U[i++];tried.push(u);
+var s=document.createElement('script');s.src=u;s.async=true;
+s.onload=function(){var t0=Date.now();(function chk(){
+if(window.__rmReady||document.getElementById('rm-fatal')){done=true;var l=document.getElementById('rml');if(l)l.style.display='none';return;}
+if(Date.now()-t0>40000){show('起動がタイムアウトしました','three.js (cdnjs) の読み込みがブロックされていないか確認してください。');return;}
+setTimeout(chk,400);})();};
+s.onerror=function(){if(s.parentNode)s.parentNode.removeChild(s);next();};
+document.body.appendChild(s);
+}
+next();
+})();
+</script>
+</body>
+</html>

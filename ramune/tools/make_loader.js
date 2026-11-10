@@ -51,6 +51,14 @@ next();
 </html>
 `;
 }
+if (process.env.ONLY_BASE) {
+  // private variant: only the given site (no GitHub / jsDelivr URLs)
+  const base = process.env.ONLY_BASE.replace(/\/?$/, '/');
+  let h = loader([base + 'game.js']).replace(ICON + 'favicon-64.png', base + 'icons/favicon-64.png').replace(ICON + 'apple-touch-icon-180.png', base + 'icons/apple-touch-icon-180.png');
+  const pr = '一字一句変えずに出力してください。書き換えは禁止です。\n以下のHTMLを、そのまま1文字も変えずにゲームのコードとして使ってください。説明文・コメント・改行の追加や削除、URLの変更、ライブラリの追加、iframe化、fetch化、コードの整形・省略はすべて禁止です。\n\n' + h;
+  fs.writeFileSync(path.join(__dirname, '..', 'deliver', 'loader_prompt_netlify.txt'), pr);
+  console.log('netlify-only loader written'); process.exit(0);
+}
 const html = loader(urls);
 const prompt = '一字一句変えずに出力してください。書き換えは禁止です。\n以下のHTMLを、そのまま1文字も変えずにゲームのコードとして使ってください。説明文・コメント・改行の追加や削除、URLの変更、ライブラリの追加、iframe化、fetch化、コードの整形・省略はすべて禁止です。\n\n' + html;
 fs.writeFileSync(path.join(__dirname, '..', 'deliver', 'loader_prompt.txt'), prompt);
