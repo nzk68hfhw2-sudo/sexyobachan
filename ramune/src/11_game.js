@@ -11,7 +11,7 @@ function startNight() {
   GAME.fx.fade = 1;
   WORLD.cans.forEach(function (m) { RENDER.scene.remove(m); }); WORLD.cans = [];
   WORLD.lightMode = 0; WORLD.tvOn = true; AU.music = true; auVol();
-  resetPlayer(); GAME.regret = []; GAME.endBy = null; resetPhone(); clearPuddles();
+  resetPlayer(); GAME.regret = []; GAME.endBy = null; resetPhone(); clearPuddles(); showPackage(false); AU.style = AU.style || 'lofi';
   GAME.mode = 'play'; INPUT.enabled = true;
   showHUD(true); setSpeed(1); WORLD.bed = WORLD.bedMain;
   HUD.hint.innerHTML = isTouchDevice() || isMobile() ? '左側をドラッグで移動<br>右側をドラッグで見回す<br>モノをタップでしらべる' : 'WASD 移動 ・ ドラッグで見回す<br>クリック/E しらべる ・ F 速さ ・ Tab スマホ';
@@ -46,7 +46,7 @@ function actTakePill(id) {
   GAME.lock = true;
   if (!SAVE.settings.sandbox) GAME.stash[id]--;
   holdItem('pill', pillMesh(s), 1.25, function () {
-    takeSub(GAME.B, id); sfx('pill'); GAME.lock = false;
+    takeSub(GAME.B, id); sfx('pill'); GAME.lock = false; logEvent('🍬 ' + s.name + '（' + s.nick + '）を飲んだ');
     var first = !SAVE.seenSubs[id];
     SAVE.seenSubs[id] = 1; writeSave();
     toast((first ? '🆕 ' : '') + s.name + '（' + s.nick + '）を口に入れた。カリッ。', 'good');
@@ -60,7 +60,7 @@ function actDrink(id) {
   sfx('can');
   setTimeout(function () { sfx('gulp'); }, 900);
   holdItem('can', canMesh(d), 2.7, function () {
-    drinkCan(GAME.B, id); GAME.lock = false;
+    drinkCan(GAME.B, id); GAME.lock = false; logEvent('🍋 ' + d.name + ' を飲んだ');
     placeCanOnTable(d);
     var n = GAME.B.stats.cans;
     toast(d.name + ' を飲みほした' + (d.alc > 0 ? '（今夜 ' + n + ' 缶目）' : ''), 'good');
@@ -153,7 +153,7 @@ function actSmoke(id) {
   sfx('click');
   HELD.tint = id === 'chillmaki' ? 0xcfe8c0 : id === 'shakimaki' ? 0xd0ecff : 0xd8d0c8;
   holdItem('smoke', cigarMesh(s), 3.2, function () {
-    takeSub(GAME.B, id); GAME.lock = false;
+    takeSub(GAME.B, id); GAME.lock = false; logEvent('🚬 ' + s.name + ' を吸った');
     var first = !SAVE.seenSubs[id]; SAVE.seenSubs[id] = 1; writeSave();
     if (GAME.B.F.na > 0.2 || Math.random() < 0.35) sfx('cough');
     toast((first ? '🆕 ' : '') + s.name + ' をふかした。ふぅ…', 'good');
@@ -222,19 +222,19 @@ function processEvents() {
   while (B.events.length) {
     var e = B.events.shift(), d = e.data, s;
     switch (e.type) {
-      case 'onset': s = SUB[d.id]; toast(s.name + ' が効いてきた…'); monologue(true); break;
+      case 'onset': s = SUB[d.id]; toast(s.name + ' が効いてきた…'); monologue(true); logEvent('✨ ' + s.name + ' が効いてきた'); break;
       case 'peak': break;
       case 'fade': s = SUB[d.id]; toast(s.name + ' の効き目が引いていく'); break;
       case 'combo':
         var cb = COMBO[d.id], isNew = !SAVE.seenCombos[d.id];
-        SAVE.seenCombos[d.id] = 1; writeSave();
+        SAVE.seenCombos[d.id] = 1; writeSave(); logEvent('🧪 飲み合わせ「' + cb.name + '」');
         sfx('combo');
         banner(isNew ? '🧪 NEW 飲み合わせ発見' : '🧪 飲み合わせ', cb.name, cb.desc, 'dg' + cb.danger);
         break;
       case 'vomit': if (GAME.fx.vomit <= 0) { GAME.fx.vomit = 1.4; sfx('vomit'); toast(B.unconscious ? '意識がないまま吐いてしまった！' : '耐えきれずに吐いてしまった…' + (areaAt(PL.x, PL.z).id === 'toilet' ? '（ぎりぎりトイレに間に合った）' : '（床が汚れた）'), 'warn'); if (areaAt(PL.x, PL.z).id !== 'toilet') addPuddle(PL.x - Math.sin(PL.yaw) * 0.5, PL.z - Math.cos(PL.yaw) * 0.5); } break;
-      case 'pass': toast('意識が…遠のいていく…', 'warn', 4); setSpeed(1); break;
+      case 'pass': logEvent('💫 気を失った'); toast('意識が…遠のいていく…', 'warn', 4); setSpeed(1); break;
       case 'wake': toast('…はっ。' + Math.max(1, Math.round(d.mins)) + '分くらい記憶がない。', 'warn', 4); break;
-      case 'warn': toast('⚠ ' + d.msg, 'warn'); sfx('warn'); break;
+      case 'warn': toast('⚠ ' + d.msg, 'warn'); sfx('warn'); logEvent('⚠ ' + d.msg); break;
       case 'dead': endNight('dead', d.cause); return;
     }
   }
@@ -377,6 +377,7 @@ function updateWorldFX(dt) {
   W.spkLed.visible = AU.music;
   W.cones.forEach(function (c, i) { var s = AU.music ? 1 + Math.max(0, Math.sin(t * 8.2 * AU.p.tempo + i)) * 0.06 : 1; c.scale.set(s, s, 1); });
   W.fan.rotation.z += dt * 12;
+  if (W.flash) W.flash.intensity = damp(W.flash.intensity, GAME.mode === 'play' && GAME.flash ? 1.8 : 0, 10, dt);
   var ar = GAME.mode === 'play' ? areaAt(PL.x, PL.z) : AREAS[2];
   var rl = ar.light || AREAS[2].light;
   if (W.roomLight !== rl) { W.roomLight = rl; Lt.bath.position.set(rl[0], rl[1], rl[2]); Lt.bath.color.setHex(rl[3]); Lt.bath.distance = ar.id === 'hall' ? 7 : 5.5; Lt.bath.intensity = ar.id === 'tatami' ? 0.9 : 0.75; }

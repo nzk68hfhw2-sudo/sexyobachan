@@ -125,6 +125,14 @@ function sfx(name, arg) {
       for (i = 0; i < 5; i++) tone(1800 + Math.random() * 2400, t + i * 0.06, 0.25, { vol: 0.03, type: 'sine', pan: Math.random() * 2 - 1 }); break;
     case 'cough':
       for (i = 0; i < 3; i++) { noiseHit(t + i * 0.32, 0.18, { f: 900 + i * 80, q: 1.2, vol: 0.35, attack: 0.01 }); tone(160, t + i * 0.32, 0.12, { vol: 0.08, type: 'sawtooth', filter: { f: 600 } }); } break;
+    case 'ring':
+      for (i = 0; i < 2; i++) { tone(880, t + i * 0.5, 0.18, { vol: 0.1, type: 'sine' }); tone(660, t + i * 0.5 + 0.2, 0.18, { vol: 0.1, type: 'sine' }); } break;
+    case 'chime':
+      tone(1046.5, t, 0.8, { vol: 0.15, type: 'sine' }); tone(784, t + 0.45, 1.0, { vol: 0.15, type: 'sine' }); break;
+    case 'alarm':
+      for (i = 0; i < 8; i++) tone(1320, t + i * 0.18, 0.1, { vol: 0.12, type: 'square', filter: { f: 3000 } }); break;
+    case 'shutter':
+      noiseHit(t, 0.05, { f: 3000, q: 1, vol: 0.3 }); noiseHit(t + 0.08, 0.06, { f: 2500, q: 1, vol: 0.25 }); break;
     case 'tv':
       noiseHit(t, 0.3, { f: 4000, q: 0.3, vol: 0.1 }); break;
   }
@@ -133,14 +141,21 @@ function sfx(name, arg) {
 // ---- music sequencer (lo-fi loop that reacts to the body) ---------------------------
 // chords: Fmaj7, Em7, Dm7, Cmaj7 (+9)
 var CHORDS = [[53, 57, 60, 64, 67], [52, 55, 59, 62, 66], [50, 53, 57, 60, 64], [48, 52, 55, 59, 62]];
+var STYLES = {
+  lofi: { bpm: 78, chords: CHORDS, drums: 'lofi', mel: 0.55 },
+  ambient: { bpm: 58, chords: [[48, 55, 62, 64, 71], [53, 60, 64, 67, 72], [45, 52, 59, 60, 67], [50, 57, 60, 65, 69]], drums: 'none', mel: 0.25 },
+  techno: { bpm: 122, chords: [[45, 52, 57, 60, 64], [45, 52, 57, 60, 64], [43, 50, 55, 58, 62], [41, 48, 53, 57, 60]], drums: 'techno', mel: 0.2 },
+  citypop: { bpm: 100, chords: [[53, 57, 60, 64, 69], [55, 59, 62, 65, 69], [52, 55, 59, 62, 67], [57, 60, 64, 67, 71]], drums: 'pop', mel: 0.7 }
+};
 function midi(n) { return 440 * Math.pow(2, (n - 69) / 12); }
 function updateMusic() {
   if (!AU.ready) return;
   var c = AU.ctx, p = AU.p;
-  var bpm = 78 * p.tempo, sixteenth = 60 / bpm / 4;
+  var ST = STYLES[AU.style || 'lofi'] || STYLES.lofi;
+  var bpm = ST.bpm * p.tempo, sixteenth = 60 / bpm / 4;
   while (AU.nextT < c.currentTime + 0.25) {
     var t = AU.nextT, s = AU.step % 16, bar = Math.floor(AU.step / 16);
-    var ch = CHORDS[bar % 4], bus = AU.bgmFilter;
+    var ch = ST.chords[bar % ST.chords.length], bus = AU.bgmFilter;
     var det = p.detune + (p.wob > 0 ? Math.sin(t * 1.3) * 40 * p.wob : 0);
     if (AU.music) {
       if (s === 0) { // pad + bass
@@ -151,13 +166,23 @@ function updateMusic() {
         tone(midi(ch[0] - 12), t, sixteenth * 7, { vol: 0.16, type: 'sine', attack: 0.02, detune: det, bus: bus });
       }
       if (s === 10) tone(midi(ch[0] - 12 + 7), t, sixteenth * 5, { vol: 0.12, type: 'sine', attack: 0.02, detune: det, bus: bus });
-      if (p.drums > 0.05) {
+      if (p.drums > 0.05 && ST.drums === 'lofi') {
         if (s === 0 || s === 7 || s === 10) tone(110, t, 0.25, { vol: 0.32 * p.drums, slide: 40, bus: bus });
         if (s === 4 || s === 12) noiseHit(t, 0.18, { f: 1800, q: 0.7, vol: 0.13 * p.drums, bus: bus });
         if (s % 2 === 0 || (p.tempo > 1.08 && s % 1 === 0)) noiseHit(t, 0.04, { f: 8000, type: 'highpass', vol: (s % 4 === 2 ? 0.05 : 0.03) * p.drums, bus: bus });
+      } else if (p.drums > 0.05 && ST.drums === 'techno') {
+        if (s % 4 === 0) tone(120, t, 0.22, { vol: 0.4 * p.drums, slide: 38, bus: bus });
+        if (s % 4 === 2) noiseHit(t, 0.06, { f: 9000, type: 'highpass', vol: 0.07 * p.drums, bus: bus });
+        if (s === 4 || s === 12) noiseHit(t, 0.12, { f: 1500, q: 1.2, vol: 0.12 * p.drums, bus: bus });
+        if (s % 2 === 1) tone(midi(ch[0] - 12), t, sixteenth * 0.9, { vol: 0.07, type: 'sawtooth', detune: det, bus: bus, filter: { f: 500 + 400 * Math.sin(t * 0.5) + 400 } });
+      } else if (p.drums > 0.05 && ST.drums === 'pop') {
+        if (s === 0 || s === 8 || s === 11) tone(100, t, 0.2, { vol: 0.3 * p.drums, slide: 45, bus: bus });
+        if (s === 4 || s === 12) noiseHit(t, 0.15, { f: 2200, q: 0.8, vol: 0.13 * p.drums, bus: bus });
+        if (s % 2 === 0) noiseHit(t, 0.03, { f: 8000, type: 'highpass', vol: 0.04 * p.drums, bus: bus });
+        if (s % 4 === 2) tone(midi(ch[0] - 12 + (s === 6 ? 7 : 12)), t, sixteenth * 1.5, { vol: 0.08, type: 'triangle', bus: bus });
       }
-      // melody (sparse, lo-fi keys)
-      if ((s === 2 || s === 6 || s === 9 || s === 14) && Math.random() < 0.55) {
+      // melody (sparse keys)
+      if ((s === 2 || s === 6 || s === 9 || s === 14) && Math.random() < ST.mel) {
         var n = ch[1 + Math.floor(Math.random() * 4)] + 12;
         tone(midi(n), t, sixteenth * 6, { vol: 0.05, type: 'triangle', detune: det, bus: bus, filter: { f: 2400 } });
       }

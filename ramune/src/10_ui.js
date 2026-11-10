@@ -113,6 +113,23 @@ var UI_CSS = [
   '.rm-feed{display:flex;flex-direction:column;gap:8px}.rm-tw{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:14px;line-height:1.5}.rm-tw.mine{border-color:rgba(255,95,168,.6)}',
   '.rm-tw .hd{display:flex;align-items:center;gap:6px;font-size:12px}.rm-tw .hd small{margin-left:auto;opacity:.6}.rm-tw .ic{font-size:18px}.rm-tw img{width:100%;border-radius:10px;margin-top:6px;display:block}.rm-tw .ft{font-size:12px;opacity:.7;margin-top:4px}.rm-tw .rp{font-size:12.5px;margin-top:4px;padding-left:10px;border-left:2px solid var(--line);opacity:.9}',
   '.btn.round.notif::after{content:"";position:absolute;right:4px;top:4px;width:12px;height:12px;border-radius:50%;background:#ff3355;box-shadow:0 0 8px #ff3355}.btn.round{position:relative}',
+  '#rm-root input,#rm-root select{-webkit-user-select:text;user-select:text;font-family:inherit}',
+  '.rm-hearts{font-size:10px;color:#ff5fa8;letter-spacing:-1px}',
+  '.rm-vid{position:relative;border-radius:16px;overflow:hidden;margin:0 auto;width:100%;max-width:340px}.rm-vid img{width:100%;display:block;filter:saturate(1.1)}.rm-vid .rm-av{position:absolute;right:8px;bottom:8px;width:64px;height:64px;font-size:34px;border:2px solid #fff}',
+  '.rm-bars{display:grid;grid-template-columns:auto 1fr auto;gap:4px 8px;align-items:center;font-size:12px;margin-top:10px}.rm-bars>div{display:contents}.rm-bars .b{height:7px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden}.rm-bars .b i{display:block;height:100%;background:linear-gradient(90deg,#7df9ff,#ff5fa8)}.rm-bars b{font-family:"DotGothic16",monospace;font-weight:400}',
+  '.rm-snshead{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;margin-bottom:10px}.rm-snshead div{padding:8px;border-radius:12px;background:rgba(255,255,255,.06)}.rm-snshead b{display:block;font-family:"DotGothic16",monospace;font-size:20px;font-weight:400}.rm-snshead span{font-size:11px;opacity:.7}',
+  '.rm-tw .lk{cursor:pointer;pointer-events:auto}.rm-tw u,.rm-chat u{cursor:pointer;pointer-events:auto;opacity:.8}',
+  '.rm-album{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.rm-album .ph{cursor:pointer;pointer-events:auto}.rm-album img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;display:block}.rm-album small{font-size:10px;opacity:.7}',
+  '.rm-photo{width:100%;border-radius:12px;display:block}',
+  '.rm-np{display:flex;gap:12px;align-items:center;padding:12px;border-radius:14px;background:rgba(255,255,255,.06)}.rm-np .disc{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;background:radial-gradient(circle,#333 20%,#111 22%,#222 60%,#444)}.rm-np .disc.spin{animation:rmSpin 3s linear infinite}.rm-np small{display:block;font-size:12px;opacity:.7}',
+  '@keyframes rmSpin{to{transform:rotate(360deg)}}',
+  '.rm-item.on{border-color:#ff5fa8;background:rgba(255,95,168,.12)}',
+  '.rm-map{width:100%;border-radius:12px;background:rgba(0,0,0,.3);display:block;margin-bottom:6px}',
+  '.rm-term{font-family:"DotGothic16",monospace;font-size:13px;line-height:1.5;background:#05030c;border:1px solid var(--line);border-radius:10px;padding:10px;min-height:200px;color:#9dffb0;word-break:break-all}.rm-term .cmd{color:#7df9ff}.rm-term .err{color:#ff6b81}.rm-term .sys{color:#ffe14d}',
+  '.rm-termin{margin-top:8px}.rm-termin input,.rm-select{pointer-events:auto;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:#fff;font-size:16px;min-width:0}.rm-select{max-width:70%;font-size:14px}.rm-select option{color:#000}',
+  '.rm-chat .bub em{display:block;font-style:normal;font-size:10px;opacity:.7}.rm-chat .bub.stk{font-size:40px;background:none;padding:0}.rm-chat .bub.typing span{display:inline-block;margin:0 2px;animation:rmBlink .8s infinite alternate}.rm-chat .bub.typing span:nth-child(2){animation-delay:.2s}.rm-chat .bub.typing span:nth-child(3){animation-delay:.4s}',
+  '.rm-sug.stickers .btn{font-size:20px;padding:6px 9px}',
+  '.rm-apps{grid-template-columns:repeat(4,1fr)}',
   '.rm-stick{position:absolute;width:110px;height:110px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06)}',
   '.rm-stick .knob{position:absolute;left:33px;top:33px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.4)}',
   '.rm-hint{position:absolute;left:14px;bottom:calc(var(--bot-safe) + 6px);font-size:11px;opacity:.55;line-height:1.5;max-width:46vw}',
@@ -328,22 +345,6 @@ function openBedMenu() {
 }
 
 // ---- phone ----------------------------------------------------------------------
-function phoneBody(body) {
-  var B = GAME.B;
-  el('div', 'rm-big', '<div><b>' + Math.round(B.hr) + '</b><span>心拍（回/分）</span></div><div><b>' + B.tp.toFixed(1) + '℃</b><span>体温</span></div><div><b>' + B.rr.toFixed(1) + '</b><span>呼吸（回/分）</span></div><div><b>' + Math.round(B.con) + '%</b><span>意識</span></div><div><b>' + Math.round(B.hyd * 100) + '%</b><span>水分</span></div><div><b>' + (B.bac * 100 / 100).toFixed(3) + '%</b><span>血中アルコール（架空）</span></div>', body);
-  var cv = el('canvas', 'rm-graph', '', body); cv.width = 600; cv.height = 180; cv.style.marginTop = '10px';
-  drawHistory(cv);
-  el('div', 'rm-note', '— 心拍（ピンク）・体温（オレンジ）・呼吸（水色）・危険度（赤）の記録', body).style.marginTop = '4px';
-  var l = el('div', 'rm-list', '', body); l.style.marginTop = '10px';
-  var arr = activeDoseSummary(B);
-  if (!arr.length) el('div', 'rm-item', '<div class="tx"><b>いまは何も効いていない</b><small>シラフ。ラムネケースや冷蔵庫をしらべてみよう。</small></div>', l);
-  arr.forEach(function (o) {
-    if (o.alc) { el('div', 'rm-item', '<img src="' + canIcon(DRINK.z9lemon, 88) + '"><div class="tx"><b>お酒 ' + (o.ph ? '（' + o.ph + '）' : '') + '</b><small>今夜 ' + B.stats.cans + ' 缶。' + (B.bac > 0.2 ? '完全に飲みすぎ。' : B.bac > 0.1 ? 'かなり酔っている。' : B.bac > 0.04 ? 'ほろ酔い。' : 'ほんのり。') + '</small></div>', l); return; }
-    el('div', 'rm-item', '<img src="' + ramuneIcon(o.s, 88) + '"><div class="tx"><b>' + esc(o.s.name) + (o.n > 1 ? ' ×' + o.n : '') + '（' + o.ph + '）</b><small>' + esc(CLASSES[o.s.cls].name) + ' ・ 飲んでから ' + timeText(o.t) + '</small></div>', l);
-  });
-  var act = B.found.length ? B.found.map(function (id) { return COMBO[id].name; }).join('、') : 'まだなし';
-  el('div', 'rm-note', '今夜見つけた飲み合わせ：' + esc(act), body);
-}
 function drawHistory(cv) {
   var g = cv.getContext('2d'), H = GAME.hist, w = cv.width, h = cv.height;
   g.clearRect(0, 0, w, h);
@@ -373,14 +374,6 @@ function phoneCombo(body) {
     var ok = SAVE.seenCombos[cb.id];
     el('div', 'rm-item' + (ok ? '' : ' lock'), '<div class="tx"><b class="dg' + cb.danger + '">' + (ok ? '🧪 ' + esc(cb.name) : '？？？') + '</b><small>' + esc(cb.hint) + (ok ? '<br>' + esc(cb.desc) : '') + '</small></div>', l);
   });
-}
-function phoneHelp(body) {
-  var d = el('div', 'rm-detail', '', body);
-  el('p', '', '具合がおかしいとき、だれかが倒れているときは、ためらわずに助けを呼ぼう。<b>このゲームの中でも、現実でも。</b>', d);
-  el('div', 'rm-kv', '<span>呼吸が弱い</span><b>ネガトキソン＝リセットラムネ（オピオイド系だけに効く）／119</b><span>体温が高い</span><b>水を飲む・ベランダで風にあたる</b><span>吐き気</span><b>トイレで吐く（飲んだばかりなら体に入る量も減る）</b><span>心拍が速い</span><b>じっと休む・水を飲む</b>', d);
-  var b = el('button', 'btn warn', '📞 119に電話する（今夜はここで終わり）', d);
-  onTap(b, function () { closeModal(true); endNight('ambulance'); });
-  el('div', 'rm-note', '現実で困ったとき：救急車 119／迷ったら 救急安心センター #7119（地域による）', body);
 }
 function phoneSettings(body) {
   var S = SAVE.settings;

@@ -307,6 +307,9 @@ function buildWorld() {
   WORLD.strips = [strip, strip2];
 
   buildHouse();
+  // phone flashlight (added up front so the light count never changes)
+  WORLD.flash = new THREE.SpotLight(0xfff6e8, 0, 9, 0.5, 0.6, 1.5); RENDER.camera.add(WORLD.flash); WORLD.flash.position.set(0.1, -0.1, 0);
+  WORLD.flashTarget = new THREE.Object3D(); RENDER.camera.add(WORLD.flashTarget); WORLD.flashTarget.position.set(0, -0.2, -4); WORLD.flash.target = WORLD.flashTarget;
   buildCity();
   buildSky();
   buildHeld();
@@ -692,4 +695,16 @@ function updateSmoke(dt) {
     o.s.material.opacity = Math.min(1, o.life * 3) * (1 - k) * 0.16;
     if (k >= 1) { RENDER.scene.remove(o.s); o.s.material.dispose(); SMOKE.splice(i, 1); }
   }
+}
+
+// ---- delivery package at the entrance ----
+function showPackage(on) {
+  if (!WORLD.pkg) {
+    var g = new THREE.Group();
+    addBox(g, 0.45, 0.3, 0.35, stdMat({ color: 0xc89a5c, roughness: 0.9 }), 3.45, -0.12, 3.95);
+    addBox(g, 0.46, 0.02, 0.08, stdMat({ color: 0x3a8f5c }), 3.45, 0.17, 3.95);
+    RENDER.scene.add(g); WORLD.pkg = g;
+    addInter('package', '荷物（ヨルイーツ）', '受け取る', new THREE.Vector3(3.45, 0.1, 3.95), [g], function () { receivePackage(); }, { cond: function () { return WORLD.pkg.visible; } });
+  }
+  WORLD.pkg.visible = !!on;
 }

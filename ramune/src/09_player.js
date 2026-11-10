@@ -45,6 +45,7 @@ function initInput() {
   host.addEventListener('pointerup', end); host.addEventListener('pointercancel', end); host.addEventListener('lostpointercapture', end);
   window.addEventListener('keydown', function (e) {
     initAudio();
+    if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
     var k = (e.key || '').toLowerCase();
     if (!INPUT.keys[k]) {
       if (k === 'e' || k === 'enter') press('interact');
