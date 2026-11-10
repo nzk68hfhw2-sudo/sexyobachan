@@ -242,6 +242,7 @@ var APP_TITLE = { home: 'スマホ', body: 'からだ', call: '電話', dm: 'メ
 function openPhone(app) {
   PHONE_APP.app = app || 'home'; PHONE_APP.f = null;
   openModal('スマホ', function (body, M) { PHONE_APP.body = body; renderPhoneApp(); });
+  tutEvent('phone');
 }
 function phoneNav(app, f) { PHONE_APP.app = app; PHONE_APP.f = f || null; sfx('ui'); renderPhoneApp(); }
 function renderPhoneApp() {

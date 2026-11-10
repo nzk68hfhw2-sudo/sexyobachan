@@ -4,7 +4,7 @@
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.6.1';
+var GAME_VERSION = '1.7.0';
 
 var ROOT, UI, CANVAS_HOST;
 

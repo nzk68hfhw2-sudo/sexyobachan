@@ -27,8 +27,8 @@ var UI_CSS = [
   '.btn:active{transform:scale(.95)}',
   '.btn.round{width:58px;height:58px;border-radius:50%;padding:0;font-size:24px;display:flex;align-items:center;justify-content:center}',
   '.btn.round.speed{flex-direction:column;font-size:15px;line-height:1;gap:2px}.btn.round.speed b{font-size:15px;font-family:"DotGothic16",monospace;font-weight:400}',
-  '.rm-logo-pre{font-family:"Rampart One","Zen Maru Gothic",sans-serif;font-size:clamp(26px,8vw,48px);color:#ff3355;transform:rotate(-6deg);text-shadow:0 0 14px rgba(255,51,85,.7);margin-bottom:-4px}',
-  '.rm-logo span{font-size:.5em;display:inline-block;margin-top:6px}',
+  '.rm-logo-pre{font-family:"Zen Maru Gothic",sans-serif;font-weight:900;font-size:clamp(26px,8vw,44px);color:#fff;display:inline-block;padding:2px 14px 4px;border-radius:12px;background:#ff3355;transform:rotate(-4deg);box-shadow:0 4px 0 #8a0f25,0 0 20px rgba(255,51,85,.6);margin-bottom:6px}',
+  '.rm-logo span{display:block;font-size:.42em;margin-top:4px;letter-spacing:.04em}',
   '.btn.act{min-width:96px;height:72px;border-radius:22px;font-size:14px;background:linear-gradient(160deg,#ff5fa8,#b46bff);border-color:rgba(255,255,255,.5);line-height:1.2}',
   '.btn.act.off{opacity:.45;filter:grayscale(.6)}',
   '.btn.on{background:linear-gradient(160deg,#30c8ff,#7df9ff);color:#08203a}',
@@ -89,9 +89,11 @@ var UI_CSS = [
   '.rm-big div{padding:10px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid var(--line)}',
   '.rm-big b{display:block;font-family:"DotGothic16",monospace;font-size:24px;font-weight:400}.rm-big span{font-size:12px;opacity:.7}',
   '.rm-screen{position:absolute;inset:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:calc(var(--top-safe) + 4px) 18px var(--bot-safe)}',
-  '.rm-screen.rm-title{background:radial-gradient(ellipse at center,rgba(8,4,20,.72) 0%,rgba(8,4,20,.45) 60%,rgba(8,4,20,.2) 100%)}',
-  '.rm-logo{font-family:"Rampart One","Zen Maru Gothic",sans-serif;font-size:clamp(56px,19vw,120px);line-height:.95;background:linear-gradient(90deg,#7df9ff,#ff5fa8,#ffe14d,#b46bff,#7df9ff);background-size:400% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rmShine 6s linear infinite;filter:drop-shadow(0 0 18px rgba(255,95,168,.5))}',
-  '.rm-logo-sub{font-size:11px;letter-spacing:.35em;margin:10px 0 4px;color:#ffd1e8;font-weight:900}',
+  '.rm-screen.rm-title{background:radial-gradient(ellipse at center,rgba(8,4,20,.88) 0%,rgba(8,4,20,.7) 60%,rgba(8,4,20,.45) 100%)}',
+  '.rm-title-card{padding:18px 16px 16px;border-radius:26px;background:rgba(12,6,28,.82);border:2px solid rgba(255,255,255,.18);box-shadow:0 0 40px rgba(255,95,168,.25);width:min(92vw,460px)}',
+  '.rm-title-lead{font-size:14px;font-weight:700;color:#fff;margin-top:8px;line-height:1.5}',
+  '.rm-logo{font-family:"Zen Maru Gothic",sans-serif;font-weight:900;font-size:clamp(60px,19vw,112px);line-height:1;color:#fff;text-shadow:0 0 1px #000,4px 4px 0 #ff5fa8,8px 8px 0 #6a3cff,0 0 30px rgba(125,249,255,.45)}',
+  '.rm-logo-sub{font-size:12px;letter-spacing:.3em;margin:12px 0 0;color:#7df9ff;font-weight:900}',
   '.rm-menu{display:flex;flex-direction:column;gap:10px;margin-top:26px;width:min(80vw,300px)}',
   '.rm-note{font-size:11px;opacity:.6;margin-top:18px;line-height:1.6}',
   '.rm-card2{width:min(92vw,520px);max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;text-align:left;font-size:14px;line-height:1.7}',
@@ -135,6 +137,14 @@ var UI_CSS = [
   '.rm-chat .bub em{display:block;font-style:normal;font-size:10px;opacity:.7}.rm-chat .bub.stk{font-size:40px;background:none;padding:0}.rm-chat .bub.typing span{display:inline-block;margin:0 2px;animation:rmBlink .8s infinite alternate}.rm-chat .bub.typing span:nth-child(2){animation-delay:.2s}.rm-chat .bub.typing span:nth-child(3){animation-delay:.4s}',
   '.rm-sug.stickers .btn{font-size:20px;padding:6px 9px}',
   '.rm-apps{grid-template-columns:repeat(4,1fr)}',
+  '.rm-tut{position:absolute;left:50%;transform:translateX(-50%);top:calc(var(--top-safe) + 64px);width:min(92vw,440px);padding:12px 14px 14px;border-radius:18px;background:rgba(10,6,24,.94);border:2px solid #ffe14d;box-shadow:0 0 24px rgba(255,225,77,.45);pointer-events:auto;z-index:6}',
+  '.rm-tut .hd{display:flex;justify-content:space-between;font-size:11px;font-weight:900;color:#ffe14d}.rm-tut .hd u{cursor:pointer;color:#fff;opacity:.75}',
+  '.rm-tut .tt{font-size:19px;font-weight:900;margin:4px 0 4px}.rm-tut .tx{font-size:14px;line-height:1.6}.rm-tut .tx b{color:#ffe14d}',
+  '.rm-tut .bar{height:8px;border-radius:4px;background:rgba(255,255,255,.15);margin-top:8px;overflow:hidden}.rm-tut .bar i{display:block;height:100%;background:#ffe14d;transition:width .15s}',
+  '.rm-tut .gest{position:fixed;font-size:44px;pointer-events:none;animation:rmGest 1.6s ease-in-out infinite;filter:drop-shadow(0 2px 6px #000)}.rm-tut .gest.right{right:18%;top:56vh}.rm-tut .gest.left{left:14%;top:62vh;animation-name:rmGestV}',
+  '@keyframes rmGest{0%,100%{transform:translateX(-30px)}50%{transform:translateX(30px)}}@keyframes rmGestV{0%,100%{transform:translateY(-25px)}50%{transform:translateY(20px)}}',
+  '.rm-pulse{animation:rmPulseB 1s ease-in-out infinite;outline:3px solid #ffe14d;outline-offset:3px}',
+  '@keyframes rmPulseB{0%,100%{box-shadow:0 0 0 0 rgba(255,225,77,.8)}50%{box-shadow:0 0 0 12px rgba(255,225,77,0)}}',
   '.rm-stick{position:absolute;width:110px;height:110px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06)}',
   '.rm-stick .knob{position:absolute;left:33px;top:33px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.4)}',
   '.rm-hint{position:absolute;left:14px;bottom:calc(var(--bot-safe) + 6px);font-size:11px;opacity:.55;line-height:1.5;max-width:46vw}',
@@ -422,6 +432,7 @@ function phoneSettings(body) {
   slider('音楽', 'bgm', 0, 1, 0.05, auVol); slider('効果音', 'sfx', 0, 1, 0.05, auVol); slider('視点の感度', 'sens', 0.3, 2.5, 0.05);
   toggle('光の点滅・ゆれをおさえる', 'calm');
   toggle('上下の視点を反転', 'invertY');
+  if (GAME.mode === 'play') { var tb = el('button', 'btn', '📘 チュートリアルをもう一度', body); tb.style.marginTop = '8px'; onTap(tb, function () { closeModal(true); startTutorial(); }); }
   toggle('サンドボックス（ラムネ・お酒が無限）', 'sandbox');
   var r = el('div', 'rm-set', '<span>画質</span>', body), seg = el('div', 'rm-seg', '', r);
   ['AUTO', 'LOW', 'MEDIUM', 'HIGH'].forEach(function (q) { var o = el('div', S.quality === q ? 'on' : '', q, seg); onTap(o, function () { S.quality = q; writeSave(); applyQuality(q); Array.prototype.forEach.call(seg.children, function (c) { c.className = c.textContent === q ? 'on' : ''; }); }); });

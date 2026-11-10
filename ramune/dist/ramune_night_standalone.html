@@ -19,7 +19,7 @@
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.6.1';
+var GAME_VERSION = '1.7.0';
 
 var ROOT, UI, CANVAS_HOST;
 
@@ -2868,8 +2868,8 @@ var UI_CSS = [
   '.btn:active{transform:scale(.95)}',
   '.btn.round{width:58px;height:58px;border-radius:50%;padding:0;font-size:24px;display:flex;align-items:center;justify-content:center}',
   '.btn.round.speed{flex-direction:column;font-size:15px;line-height:1;gap:2px}.btn.round.speed b{font-size:15px;font-family:"DotGothic16",monospace;font-weight:400}',
-  '.rm-logo-pre{font-family:"Rampart One","Zen Maru Gothic",sans-serif;font-size:clamp(26px,8vw,48px);color:#ff3355;transform:rotate(-6deg);text-shadow:0 0 14px rgba(255,51,85,.7);margin-bottom:-4px}',
-  '.rm-logo span{font-size:.5em;display:inline-block;margin-top:6px}',
+  '.rm-logo-pre{font-family:"Zen Maru Gothic",sans-serif;font-weight:900;font-size:clamp(26px,8vw,44px);color:#fff;display:inline-block;padding:2px 14px 4px;border-radius:12px;background:#ff3355;transform:rotate(-4deg);box-shadow:0 4px 0 #8a0f25,0 0 20px rgba(255,51,85,.6);margin-bottom:6px}',
+  '.rm-logo span{display:block;font-size:.42em;margin-top:4px;letter-spacing:.04em}',
   '.btn.act{min-width:96px;height:72px;border-radius:22px;font-size:14px;background:linear-gradient(160deg,#ff5fa8,#b46bff);border-color:rgba(255,255,255,.5);line-height:1.2}',
   '.btn.act.off{opacity:.45;filter:grayscale(.6)}',
   '.btn.on{background:linear-gradient(160deg,#30c8ff,#7df9ff);color:#08203a}',
@@ -2930,9 +2930,11 @@ var UI_CSS = [
   '.rm-big div{padding:10px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid var(--line)}',
   '.rm-big b{display:block;font-family:"DotGothic16",monospace;font-size:24px;font-weight:400}.rm-big span{font-size:12px;opacity:.7}',
   '.rm-screen{position:absolute;inset:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:calc(var(--top-safe) + 4px) 18px var(--bot-safe)}',
-  '.rm-screen.rm-title{background:radial-gradient(ellipse at center,rgba(8,4,20,.72) 0%,rgba(8,4,20,.45) 60%,rgba(8,4,20,.2) 100%)}',
-  '.rm-logo{font-family:"Rampart One","Zen Maru Gothic",sans-serif;font-size:clamp(56px,19vw,120px);line-height:.95;background:linear-gradient(90deg,#7df9ff,#ff5fa8,#ffe14d,#b46bff,#7df9ff);background-size:400% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rmShine 6s linear infinite;filter:drop-shadow(0 0 18px rgba(255,95,168,.5))}',
-  '.rm-logo-sub{font-size:11px;letter-spacing:.35em;margin:10px 0 4px;color:#ffd1e8;font-weight:900}',
+  '.rm-screen.rm-title{background:radial-gradient(ellipse at center,rgba(8,4,20,.88) 0%,rgba(8,4,20,.7) 60%,rgba(8,4,20,.45) 100%)}',
+  '.rm-title-card{padding:18px 16px 16px;border-radius:26px;background:rgba(12,6,28,.82);border:2px solid rgba(255,255,255,.18);box-shadow:0 0 40px rgba(255,95,168,.25);width:min(92vw,460px)}',
+  '.rm-title-lead{font-size:14px;font-weight:700;color:#fff;margin-top:8px;line-height:1.5}',
+  '.rm-logo{font-family:"Zen Maru Gothic",sans-serif;font-weight:900;font-size:clamp(60px,19vw,112px);line-height:1;color:#fff;text-shadow:0 0 1px #000,4px 4px 0 #ff5fa8,8px 8px 0 #6a3cff,0 0 30px rgba(125,249,255,.45)}',
+  '.rm-logo-sub{font-size:12px;letter-spacing:.3em;margin:12px 0 0;color:#7df9ff;font-weight:900}',
   '.rm-menu{display:flex;flex-direction:column;gap:10px;margin-top:26px;width:min(80vw,300px)}',
   '.rm-note{font-size:11px;opacity:.6;margin-top:18px;line-height:1.6}',
   '.rm-card2{width:min(92vw,520px);max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;text-align:left;font-size:14px;line-height:1.7}',
@@ -2976,6 +2978,14 @@ var UI_CSS = [
   '.rm-chat .bub em{display:block;font-style:normal;font-size:10px;opacity:.7}.rm-chat .bub.stk{font-size:40px;background:none;padding:0}.rm-chat .bub.typing span{display:inline-block;margin:0 2px;animation:rmBlink .8s infinite alternate}.rm-chat .bub.typing span:nth-child(2){animation-delay:.2s}.rm-chat .bub.typing span:nth-child(3){animation-delay:.4s}',
   '.rm-sug.stickers .btn{font-size:20px;padding:6px 9px}',
   '.rm-apps{grid-template-columns:repeat(4,1fr)}',
+  '.rm-tut{position:absolute;left:50%;transform:translateX(-50%);top:calc(var(--top-safe) + 64px);width:min(92vw,440px);padding:12px 14px 14px;border-radius:18px;background:rgba(10,6,24,.94);border:2px solid #ffe14d;box-shadow:0 0 24px rgba(255,225,77,.45);pointer-events:auto;z-index:6}',
+  '.rm-tut .hd{display:flex;justify-content:space-between;font-size:11px;font-weight:900;color:#ffe14d}.rm-tut .hd u{cursor:pointer;color:#fff;opacity:.75}',
+  '.rm-tut .tt{font-size:19px;font-weight:900;margin:4px 0 4px}.rm-tut .tx{font-size:14px;line-height:1.6}.rm-tut .tx b{color:#ffe14d}',
+  '.rm-tut .bar{height:8px;border-radius:4px;background:rgba(255,255,255,.15);margin-top:8px;overflow:hidden}.rm-tut .bar i{display:block;height:100%;background:#ffe14d;transition:width .15s}',
+  '.rm-tut .gest{position:fixed;font-size:44px;pointer-events:none;animation:rmGest 1.6s ease-in-out infinite;filter:drop-shadow(0 2px 6px #000)}.rm-tut .gest.right{right:18%;top:56vh}.rm-tut .gest.left{left:14%;top:62vh;animation-name:rmGestV}',
+  '@keyframes rmGest{0%,100%{transform:translateX(-30px)}50%{transform:translateX(30px)}}@keyframes rmGestV{0%,100%{transform:translateY(-25px)}50%{transform:translateY(20px)}}',
+  '.rm-pulse{animation:rmPulseB 1s ease-in-out infinite;outline:3px solid #ffe14d;outline-offset:3px}',
+  '@keyframes rmPulseB{0%,100%{box-shadow:0 0 0 0 rgba(255,225,77,.8)}50%{box-shadow:0 0 0 12px rgba(255,225,77,0)}}',
   '.rm-stick{position:absolute;width:110px;height:110px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06)}',
   '.rm-stick .knob{position:absolute;left:33px;top:33px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.4)}',
   '.rm-hint{position:absolute;left:14px;bottom:calc(var(--bot-safe) + 6px);font-size:11px;opacity:.55;line-height:1.5;max-width:46vw}',
@@ -3263,6 +3273,7 @@ function phoneSettings(body) {
   slider('音楽', 'bgm', 0, 1, 0.05, auVol); slider('効果音', 'sfx', 0, 1, 0.05, auVol); slider('視点の感度', 'sens', 0.3, 2.5, 0.05);
   toggle('光の点滅・ゆれをおさえる', 'calm');
   toggle('上下の視点を反転', 'invertY');
+  if (GAME.mode === 'play') { var tb = el('button', 'btn', '📘 チュートリアルをもう一度', body); tb.style.marginTop = '8px'; onTap(tb, function () { closeModal(true); startTutorial(); }); }
   toggle('サンドボックス（ラムネ・お酒が無限）', 'sandbox');
   var r = el('div', 'rm-set', '<span>画質</span>', body), seg = el('div', 'rm-seg', '', r);
   ['AUTO', 'LOW', 'MEDIUM', 'HIGH'].forEach(function (q) { var o = el('div', S.quality === q ? 'on' : '', q, seg); onTap(o, function () { S.quality = q; writeSave(); applyQuality(q); Array.prototype.forEach.call(seg.children, function (c) { c.className = c.textContent === q ? 'on' : ''; }); }); });
@@ -3304,6 +3315,7 @@ function startNight() {
   setTimeout(function () { if (HUD.hint) HUD.hint.style.transition = 'opacity 2s'; HUD.hint.style.opacity = 0.0; }, 14000);
   HUD.hint.style.opacity = 0.55; HUD.hint.style.transition = '';
   SAVE.nights++; writeSave();
+  if (!SAVE.tutorialDone || GAME.forceTut) { GAME.forceTut = false; setTimeout(function () { if (GAME.mode === 'play') startTutorial(); }, 1200); } else if (TUT.on) endTutorial(false);
   var lines = ['金曜の夜。明日はなにもない。', 'テーブルにはラムネケース。冷蔵庫にはZER9。', '朝まで、好きにすごそう。'];
   lines.forEach(function (l, i) { setTimeout(function () { if (GAME.mode === 'play') say(l, 3.4); }, 900 + i * 3600); });
   sfx('ui');
@@ -3318,7 +3330,7 @@ function toggleFF() {
   if (GAME.mode !== 'play') return;
   var i = SPEEDS.indexOf(GAME.speed || 1);
   setSpeed(SPEEDS[(i + 1) % SPEEDS.length]);
-  toast(GAME.speed > 1 ? '⏩ 時間の速さ ' + GAME.speed + '倍' : '▶ ふつうの速さ'); sfx('click');
+  toast(GAME.speed > 1 ? '⏩ 時間の速さ ' + GAME.speed + '倍' : '▶ ふつうの速さ'); sfx('click'); tutEvent('speed');
 }
 
 // ---- actions -----------------------------------------------------------------------
@@ -3326,6 +3338,7 @@ function doInteract(it) {
   if (GAME.mode !== 'play' || GAME.paused || GAME.lock || GAME.B.unconscious || GAME.rest) return;
   sfx('click');
   it.fn();
+  tutEvent('interact');
 }
 function actTakePill(id, n) {
   var s = SUB[id]; if (GAME.lock) return; n = Math.max(1, n || 1);
@@ -3587,6 +3600,7 @@ function updatePlay(dt) {
     if (GAME.monoT <= 0) { GAME.monoT = rnd(10, 17) / (GAME.ff ? 1.5 : 1); if (!GAME.rest) monologue(false); }
     // player
     updatePlayer(dt, B, !B.unconscious && !GAME.rest && !GAME.lock);
+    updateTutorial(dt);
     var it = (B.unconscious || GAME.rest) ? null : updateFocus();
     updateFocusUI(it);
     if (consume('interact') && it) doInteract(it);
@@ -3693,6 +3707,7 @@ function updateWorldFX(dt) {
 function endNight(kind, cause) {
   if (GAME.mode !== 'play') return;
   var B = GAME.B;
+  if (TUT.on) endTutorial(false);
   GAME.mode = 'end'; INPUT.enabled = false; closeModal(true); showHUD(false); setSpeed(1);
   HUD.sub.style.opacity = 0;
   B.onBed = false;
@@ -3751,12 +3766,13 @@ function toTitle() {
   GAME.fx.dead = 0; GAME.fx.white = 0; GAME.fx.deadFade = GAME.fx.whiteFade = false; GAME.fx.fade = 0.8;
   GAME.clock = 23 * 60;
   WORLD.lightMode = 1; WORLD.tvOn = true;
-  var html = '<div class="rm-logo-pre">キケンな</div><div class="rm-logo">ラムネ<br><span>シミュレーター</span></div><div class="rm-logo-sub">DANGEROUS RAMUNE SIMULATOR</div>' +
-    '<div style="font-size:13px;opacity:.85">架空のラムネとチューハイで過ごす、ひと晩のシミュレーター</div>' +
-    '<div class="rm-menu"><button class="btn pri" id="rm-start">はじめる</button><button class="btn" id="rm-zukan">図鑑</button><button class="btn" id="rm-howto">あそびかた</button><button class="btn ghost" id="rm-set">設定</button></div>' +
+  var html = '<div class="rm-title-card"><div class="rm-logo-pre">キケンな</div><div class="rm-logo">ラムネ<span>シミュレーター</span></div><div class="rm-logo-sub">DANGEROUS RAMUNE SIMULATOR</div>' +
+    '<div class="rm-title-lead">架空のラムネとチューハイで過ごす、ひと晩のシミュレーター</div></div>' +
+    '<div class="rm-menu"><button class="btn pri" id="rm-start">はじめる</button><button class="btn" id="rm-tut">チュートリアルつきで始める</button><button class="btn" id="rm-zukan">図鑑</button><button class="btn" id="rm-howto">あそびかた</button><button class="btn ghost" id="rm-set">設定</button></div>' +
     '<div class="rm-note">図鑑：ラムネ ' + Object.keys(SAVE.seenSubs).length + '/' + SUBS.filter(function (s) { return !s.hidden; }).length + ' ・ 飲み合わせ ' + Object.keys(SAVE.seenCombos).length + '/' + COMBOS.length + (SAVE.best ? ' ・ ベスト ' + SAVE.best : '') + '<br>※ フィクションです。実在の薬物・製品とは関係ありません。</div>';
   showScreen(html, 'rm-title');
   onTap(document.getElementById('rm-start'), function () { initAudio(); startNight(); });
+  onTap(document.getElementById('rm-tut'), function () { initAudio(); GAME.forceTut = true; startNight(); });
   onTap(document.getElementById('rm-zukan'), function () { initAudio(); openPhone('zukan'); });
   onTap(document.getElementById('rm-howto'), function () { initAudio(); showHowTo(); });
   onTap(document.getElementById('rm-set'), function () { initAudio(); openPhone('set'); });
@@ -4043,6 +4059,7 @@ var APP_TITLE = { home: 'スマホ', body: 'からだ', call: '電話', dm: 'メ
 function openPhone(app) {
   PHONE_APP.app = app || 'home'; PHONE_APP.f = null;
   openModal('スマホ', function (body, M) { PHONE_APP.body = body; renderPhoneApp(); });
+  tutEvent('phone');
 }
 function phoneNav(app, f) { PHONE_APP.app = app; PHONE_APP.f = f || null; sfx('ui'); renderPhoneApp(); }
 function renderPhoneApp() {
@@ -4556,6 +4573,80 @@ function phoneHelp(body) {
   el('div', 'rm-kv', '<span>呼吸が弱い</span><b>リセットラムネ（オピオイド系だけに効く）／119</b><span>体温が高い</span><b>水・シャワー・ベランダの風・アイス</b><span>吐き気</span><b>トイレで吐く</b><span>心拍が速い</span><b>じっと休む・水を飲む</b><span>不安</span><b>だれかと話す</b>', d);
   el('div', 'rm-note', '現実で困ったとき：救急車 119／迷ったら 救急安心センター #7119（地域による）／こころの健康相談統一ダイヤル 0570-064-556', body);
 }
+
+
+// ===== 13_tutorial.js =====
+// ---- tutorial: look, walk, examine, phone, speed --------------------------------------------
+var TUT = { on: false, step: 0, prog: 0, el: null, marker: null, lastYaw: 0, lastX: 0, lastZ: 0 };
+var TUT_STEPS = [
+  { id: 'look', title: 'まわりを見てみよう', touch: '画面の<b>右半分</b>を指でなぞると、まわりを見回せる。', pc: '<b>マウスでドラッグ</b>すると、まわりを見回せる。', need: 1.2 },
+  { id: 'walk', title: '歩いてみよう', touch: '画面の<b>左半分</b>に指を置いて、そのまま動かすと歩ける（スティックが出る）。', pc: '<b>W A S D</b> キー（または矢印キー）で歩ける。', need: 2.0 },
+  { id: 'touch', title: 'モノをしらべよう', touch: 'テーブルの<b>ラムネケース</b>（光る矢印の下）を<b>タップ</b>するか、近づいて右下の<b>ピンクのボタン</b>を押そう。', pc: 'テーブルの<b>ラムネケース</b>（光る矢印の下）を<b>クリック</b>するか、近づいて <b>E</b> キー。', need: 1 },
+  { id: 'phone', title: 'スマホを開こう', touch: '右下の<b>📱ボタン</b>で、からだの状態・友達・図鑑などを見られる。', pc: '右下の<b>📱ボタン</b>（または <b>Tab</b> キー）で、からだの状態・友達・図鑑などを見られる。', need: 1 },
+  { id: 'speed', title: '時間の速さを変えよう', touch: '右下の<b>▶1x ボタン</b>をタップするたびに 1倍→2倍→4倍→8倍 と速くなる。', pc: '右下の<b>▶1x ボタン</b>（または <b>F</b> キー）で 1倍→2倍→4倍→8倍。', need: 1 }
+];
+function startTutorial() {
+  TUT.on = true; TUT.step = 0; TUT.prog = 0; TUT.lastYaw = PL.yaw; TUT.lastX = PL.x; TUT.lastZ = PL.z;
+  if (!TUT.el) TUT.el = el('div', 'rm-tut', '', UI);
+  if (!TUT.marker) {
+    var c = mkCanvas(64, 96), g = c.getContext('2d');
+    g.fillStyle = '#ffe14d'; g.shadowColor = '#ffe14d'; g.shadowBlur = 12;
+    g.beginPath(); g.moveTo(32, 90); g.lineTo(8, 50); g.lineTo(22, 50); g.lineTo(22, 8); g.lineTo(42, 8); g.lineTo(42, 50); g.lineTo(56, 50); g.closePath(); g.fill();
+    TUT.marker = new THREE.Sprite(new THREE.SpriteMaterial({ map: toTex(c), depthTest: false, transparent: true }));
+    TUT.marker.scale.set(0.14, 0.21, 1); TUT.marker.renderOrder = 20; RENDER.scene.add(TUT.marker);
+  }
+  TUT.el.style.display = '';
+  renderTutorial();
+}
+function endTutorial(done) {
+  TUT.on = false;
+  if (TUT.el) TUT.el.style.display = 'none';
+  if (TUT.marker) TUT.marker.visible = false;
+  clearPulse();
+  SAVE.tutorialDone = true; writeSave();
+  if (done) { toast('🎉 チュートリアル完了！あとは朝まで自由にすごそう。', 'good', 4); sfx('combo'); }
+}
+function clearPulse() { [HUD.bPhone, HUD.bFF, HUD.bAct].forEach(function (b) { if (b) b.classList.remove('rm-pulse'); }); }
+function renderTutorial() {
+  if (!TUT.on) return;
+  var st = TUT_STEPS[TUT.step], touch = isTouchDevice() || isMobile();
+  var pct = Math.min(1, TUT.prog / st.need);
+  TUT.el.innerHTML = '<div class="hd"><span>チュートリアル ' + (TUT.step + 1) + ' / ' + TUT_STEPS.length + '</span><u>スキップ</u></div>' +
+    '<div class="tt">' + st.title + '</div><div class="tx">' + (touch ? st.touch : st.pc) + '</div>' +
+    (st.need > 1 ? '<div class="bar"><i style="width:' + Math.round(pct * 100) + '%"></i></div>' : '') +
+    (st.id === 'look' && touch ? '<div class="gest right">👆↔</div>' : '') + (st.id === 'walk' && touch ? '<div class="gest left">👆↕</div>' : '');
+  onTap(TUT.el.querySelector('u'), function () { endTutorial(false); toast('チュートリアルをスキップした（設定からもう一度見られます）'); });
+  clearPulse();
+  if (st.id === 'touch') HUD.bAct.classList.add('rm-pulse');
+  if (st.id === 'phone') HUD.bPhone.classList.add('rm-pulse');
+  if (st.id === 'speed') HUD.bFF.classList.add('rm-pulse');
+}
+function tutNext() {
+  sfx('ui'); TUT.step++; TUT.prog = 0;
+  if (TUT.step >= TUT_STEPS.length) { endTutorial(true); return; }
+  toast('✅ OK！', 'good', 1.5);
+  renderTutorial();
+}
+function tutEvent(kind) {
+  if (!TUT.on) return;
+  var st = TUT_STEPS[TUT.step];
+  if ((st.id === 'touch' && kind === 'interact') || (st.id === 'phone' && kind === 'phone') || (st.id === 'speed' && kind === 'speed')) setTimeout(tutNext, 300);
+}
+var _tutUiT = 0;
+function updateTutorial(dt) {
+  if (!TUT.on) return;
+  var st = TUT_STEPS[TUT.step];
+  if (st.id === 'look') { TUT.prog += Math.abs(angDiff(TUT.lastYaw, PL.yaw)) + 0; }
+  if (st.id === 'walk') { TUT.prog += Math.hypot(PL.x - TUT.lastX, PL.z - TUT.lastZ); }
+  TUT.lastYaw = PL.yaw; TUT.lastX = PL.x; TUT.lastZ = PL.z;
+  if (st.need > 1 && TUT.prog >= st.need) { tutNext(); return; }
+  _tutUiT -= dt; if (_tutUiT <= 0 && st.need > 1) { _tutUiT = 0.15; var b = TUT.el.querySelector('.bar i'); if (b) b.style.width = Math.round(Math.min(1, TUT.prog / st.need) * 100) + '%'; }
+  // marker above the ramune case
+  var show = st.id === 'touch';
+  TUT.marker.visible = show;
+  if (show) TUT.marker.position.set(-0.75, 0.75 + Math.sin(LOOP.t * 4) * 0.05, 0.55);
+}
+function angDiff(a, b) { var d = (b - a) % TAU; if (d > PI) d -= TAU; if (d < -PI) d += TAU; return d; }
 
 
 // ===== 99_main.js =====

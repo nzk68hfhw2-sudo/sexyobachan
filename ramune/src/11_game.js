@@ -18,6 +18,7 @@ function startNight() {
   setTimeout(function () { if (HUD.hint) HUD.hint.style.transition = 'opacity 2s'; HUD.hint.style.opacity = 0.0; }, 14000);
   HUD.hint.style.opacity = 0.55; HUD.hint.style.transition = '';
   SAVE.nights++; writeSave();
+  if (!SAVE.tutorialDone || GAME.forceTut) { GAME.forceTut = false; setTimeout(function () { if (GAME.mode === 'play') startTutorial(); }, 1200); } else if (TUT.on) endTutorial(false);
   var lines = ['金曜の夜。明日はなにもない。', 'テーブルにはラムネケース。冷蔵庫にはZER9。', '朝まで、好きにすごそう。'];
   lines.forEach(function (l, i) { setTimeout(function () { if (GAME.mode === 'play') say(l, 3.4); }, 900 + i * 3600); });
   sfx('ui');
@@ -32,7 +33,7 @@ function toggleFF() {
   if (GAME.mode !== 'play') return;
   var i = SPEEDS.indexOf(GAME.speed || 1);
   setSpeed(SPEEDS[(i + 1) % SPEEDS.length]);
-  toast(GAME.speed > 1 ? '⏩ 時間の速さ ' + GAME.speed + '倍' : '▶ ふつうの速さ'); sfx('click');
+  toast(GAME.speed > 1 ? '⏩ 時間の速さ ' + GAME.speed + '倍' : '▶ ふつうの速さ'); sfx('click'); tutEvent('speed');
 }
 
 // ---- actions -----------------------------------------------------------------------
@@ -40,6 +41,7 @@ function doInteract(it) {
   if (GAME.mode !== 'play' || GAME.paused || GAME.lock || GAME.B.unconscious || GAME.rest) return;
   sfx('click');
   it.fn();
+  tutEvent('interact');
 }
 function actTakePill(id, n) {
   var s = SUB[id]; if (GAME.lock) return; n = Math.max(1, n || 1);
@@ -301,6 +303,7 @@ function updatePlay(dt) {
     if (GAME.monoT <= 0) { GAME.monoT = rnd(10, 17) / (GAME.ff ? 1.5 : 1); if (!GAME.rest) monologue(false); }
     // player
     updatePlayer(dt, B, !B.unconscious && !GAME.rest && !GAME.lock);
+    updateTutorial(dt);
     var it = (B.unconscious || GAME.rest) ? null : updateFocus();
     updateFocusUI(it);
     if (consume('interact') && it) doInteract(it);
@@ -407,6 +410,7 @@ function updateWorldFX(dt) {
 function endNight(kind, cause) {
   if (GAME.mode !== 'play') return;
   var B = GAME.B;
+  if (TUT.on) endTutorial(false);
   GAME.mode = 'end'; INPUT.enabled = false; closeModal(true); showHUD(false); setSpeed(1);
   HUD.sub.style.opacity = 0;
   B.onBed = false;
@@ -465,12 +469,13 @@ function toTitle() {
   GAME.fx.dead = 0; GAME.fx.white = 0; GAME.fx.deadFade = GAME.fx.whiteFade = false; GAME.fx.fade = 0.8;
   GAME.clock = 23 * 60;
   WORLD.lightMode = 1; WORLD.tvOn = true;
-  var html = '<div class="rm-logo-pre">キケンな</div><div class="rm-logo">ラムネ<br><span>シミュレーター</span></div><div class="rm-logo-sub">DANGEROUS RAMUNE SIMULATOR</div>' +
-    '<div style="font-size:13px;opacity:.85">架空のラムネとチューハイで過ごす、ひと晩のシミュレーター</div>' +
-    '<div class="rm-menu"><button class="btn pri" id="rm-start">はじめる</button><button class="btn" id="rm-zukan">図鑑</button><button class="btn" id="rm-howto">あそびかた</button><button class="btn ghost" id="rm-set">設定</button></div>' +
+  var html = '<div class="rm-title-card"><div class="rm-logo-pre">キケンな</div><div class="rm-logo">ラムネ<span>シミュレーター</span></div><div class="rm-logo-sub">DANGEROUS RAMUNE SIMULATOR</div>' +
+    '<div class="rm-title-lead">架空のラムネとチューハイで過ごす、ひと晩のシミュレーター</div></div>' +
+    '<div class="rm-menu"><button class="btn pri" id="rm-start">はじめる</button><button class="btn" id="rm-tut">チュートリアルつきで始める</button><button class="btn" id="rm-zukan">図鑑</button><button class="btn" id="rm-howto">あそびかた</button><button class="btn ghost" id="rm-set">設定</button></div>' +
     '<div class="rm-note">図鑑：ラムネ ' + Object.keys(SAVE.seenSubs).length + '/' + SUBS.filter(function (s) { return !s.hidden; }).length + ' ・ 飲み合わせ ' + Object.keys(SAVE.seenCombos).length + '/' + COMBOS.length + (SAVE.best ? ' ・ ベスト ' + SAVE.best : '') + '<br>※ フィクションです。実在の薬物・製品とは関係ありません。</div>';
   showScreen(html, 'rm-title');
   onTap(document.getElementById('rm-start'), function () { initAudio(); startNight(); });
+  onTap(document.getElementById('rm-tut'), function () { initAudio(); GAME.forceTut = true; startNight(); });
   onTap(document.getElementById('rm-zukan'), function () { initAudio(); openPhone('zukan'); });
   onTap(document.getElementById('rm-howto'), function () { initAudio(); showHowTo(); });
   onTap(document.getElementById('rm-set'), function () { initAudio(); openPhone('set'); });
