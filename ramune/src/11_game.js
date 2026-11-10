@@ -132,6 +132,33 @@ function actMirror() {
   if (!out.length) out.push('いつもの自分だ。');
   say('（鏡）' + out.slice(0, 3).join(' '), 5);
 }
+function openSmokeMenu() {
+  var B = GAME.B;
+  openModal('葉巻ケース', function (body) {
+    var l = el('div', 'rm-list', '', body);
+    SUBS.filter(function (s) { return s.smoke; }).forEach(function (s) {
+      var n = stockOf(s.id), cl = CLASSES[s.cls];
+      var it = el('div', 'rm-item' + (n <= 0 ? ' lock' : ''), '<img src="' + ramuneIcon(s, 88) + '"><div class="tx"><b>' + esc(s.name) + ' <span style="font-size:11px;color:' + cl.col + '">' + cl.icon + esc(cl.short) + '</span></b><small>' + esc(s.desc) + '<br><span style="opacity:.8">現実では… ' + esc(cl.real) + '</span></small></div>', l);
+      var b = el('button', 'btn', n > 0 ? '吸う<br><small style="font-weight:500;opacity:.7">のこり' + (SAVE.settings.sandbox ? '∞' : n) + '</small>' : 'ない', it);
+      if (n <= 0) b.disabled = true;
+      onTap(b, function () { closeModal(true); actSmoke(s.id); });
+    });
+    el('div', 'rm-note', '※ すべて架空のはまきです。20歳未満の喫煙は法律で禁止されています。', body);
+  });
+}
+function actSmoke(id) {
+  var s = SUB[id]; if (GAME.lock) return;
+  GAME.lock = true;
+  if (!SAVE.settings.sandbox) GAME.stash[id]--;
+  sfx('click');
+  HELD.tint = id === 'chillmaki' ? 0xcfe8c0 : id === 'shakimaki' ? 0xd0ecff : 0xd8d0c8;
+  holdItem('smoke', cigarMesh(s), 3.2, function () {
+    takeSub(GAME.B, id); GAME.lock = false;
+    var first = !SAVE.seenSubs[id]; SAVE.seenSubs[id] = 1; writeSave();
+    if (GAME.B.F.na > 0.2 || Math.random() < 0.35) sfx('cough');
+    toast((first ? '🆕 ' : '') + s.name + ' をふかした。ふぅ…', 'good');
+  });
+}
 function actFrontDoor() {
   var B = GAME.B, high = B.bac > 0.05 || B.F.ps > 0.3 || B.F.di > 0.3 || B.F.de > 0.3 || B.F.se > 0.5 || B.F.st > 0.6;
   sfx('door');
@@ -148,7 +175,9 @@ function actMikan() {
   var B = GAME.B;
   B.hyd = Math.min(1, B.hyd + 0.06); B.naRelief = Math.max(B.naRelief, 0.12);
   sfx('pill');
-  toast('みかんを食べた。甘ずっぱい。（水分が少しもどった）', 'good');
+  var munch = (B.Ls.chillmaki || 0) > 0.3;
+  if (munch) { B.socialT = Math.max(B.socialT || 0, 15); toast('みかん…うますぎる…！！（おなかがすいていたので、最高においしい）', 'good'); }
+  else toast('みかんを食べた。甘ずっぱい。（水分が少しもどった）', 'good');
   if (B.F.ps > 0.6) say('みかんの皮の中に、小さな太陽が入ってた…', 3.5);
 }
 function actWasher() {
@@ -217,6 +246,7 @@ function monologue(force) {
   if (B.danger > 25) key = 'danger';
   else if (B.tp > 38.6 || B.hyd < 0.4) key = Math.random() < 0.6 ? 'hot' : (dom[0] ? dom[0][0] : 'idle');
   else if (dom.length) { var r = Math.random(), tot = 0; dom.forEach(function (x) { tot += x[1]; }); var acc = 0; for (var i = 0; i < dom.length; i++) { acc += dom[i][1] / tot; if (r <= acc) { key = dom[i][0]; break; } } }
+  if ((B.Ls.chillmaki || 0) > 0.35 && Math.random() < 0.4) key = 'munch';
   if (key === 'eu') key = B.F.em > 0.3 ? 'em' : B.motor > 0.3 ? 'drunk' : B.F.ps > 0.2 ? 'ps' : 'idle';
   var arr = VOICE[key] || VOICE.idle;
   if (!force && key === 'idle' && Math.random() < 0.5) return;

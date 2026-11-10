@@ -1,7 +1,7 @@
 // ---- body simulation (pure logic, no DOM / no three.js) ------------------------
 var CH = ['eu', 'st', 'se', 'ps', 'di', 'de', 'em', 'an', 'na', 'pa'];
 var BOOSTABLE = { psy: 1, emp: 1, up: 1, del: 1 };
-var DRUG_CLASSES = ['psy', 'up', 'down', 'op', 'dis', 'emp', 'del'];
+var DRUG_CLASSES = ['psy', 'up', 'down', 'op', 'dis', 'emp', 'del', 'gaba', 'chill', 'smk'];
 
 function newBody() {
   var F = {}; CH.forEach(function (c) { F[c] = 0; });

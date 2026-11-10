@@ -117,6 +117,12 @@ function buildWorld() {
   addBox(bal, 3.0, 0.03, 0.03, M.metal, -0.8, 1.95, -3.0);
   // little stool + ashtray-less table
   addBox(bal, 0.35, 0.4, 0.35, M.wood, -1.3, 0, -3.8, { col: true });
+  // cigar case + ashtray on the stool
+  var cg = new THREE.Group(); bal.add(cg);
+  addBox(cg, 0.22, 0.06, 0.14, M.darkWood, -1.36, 0.4, -3.82);
+  var lidc = addBox(cg, 0.22, 0.012, 0.14, stdMat({ color: 0xc8a060, metalness: 0.4, roughness: 0.4 }), -1.36, 0.46, -3.82);
+  var ash = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.03, 16), M.metal); ash.position.set(-1.2, 0.415, -3.72); cg.add(ash);
+  addInter('cigar', '葉巻ケース', '葉巻を吸う', new THREE.Vector3(-1.3, 0.45, -3.8), [cg], function () { openSmokeMenu(); });
 
   // ---- bed ----
   var bed = new THREE.Group(); W.add(bed);
@@ -439,13 +445,19 @@ function canMesh(d) {
 }
 function holdItem(kind, obj, dur, cb) {
   if (HELD.mesh) HELD.g.remove(HELD.mesh);
-  HELD.mesh = obj; HELD.g.add(obj); HELD.kind = kind; HELD.t = 0; HELD.dur = dur; HELD.cb = cb; HELD.g.visible = true;
+  HELD.mesh = obj; HELD.g.add(obj); HELD.puffed = false; HELD.kind = kind; HELD.t = 0; HELD.dur = dur; HELD.cb = cb; HELD.g.visible = true;
 }
 function updateHeld(dt) {
   if (!HELD.kind) return;
   HELD.t += dt; var k = HELD.t / HELD.dur, g = HELD.g, m = HELD.mesh;
   var up = smooth(Math.min(1, k * 3)) * (1 - smooth((k - 0.85) / 0.15));
-  if (HELD.kind === 'pill') {
+  if (HELD.kind === 'smoke') {
+    var inh = smooth((k - 0.2) / 0.25) * (1 - smooth((k - 0.6) / 0.2));
+    g.position.set(0.07 - inh * 0.06, -0.2 + up * 0.08 + inh * 0.1, -0.42 + inh * 0.14); m.scale.setScalar(0.75);
+    m.rotation.set(0.2, 0.6 - inh * 0.5, 0);
+    if (m.userData.ember) m.userData.ember.material.color.setHSL(0.05, 1, 0.45 + inh * 0.25);
+    if (!HELD.puffed && k > 0.62) { HELD.puffed = true; puffSmoke(14, HELD.tint); }
+  } else if (HELD.kind === 'pill') {
     g.position.set(0.0, -0.2 + up * 0.12 - smooth((k - 0.6) / 0.3) * 0.1, -0.34 + smooth((k - 0.55) / 0.35) * 0.22);
     m.rotation.set(0.25, Math.sin(HELD.t * 2.2) * 0.6, HELD.t * 2.2);
     m.position.set(0, 0, 0);
@@ -643,4 +655,41 @@ function buildHouse() {
   spray.position.set(7.75, 1.08, 3.6); spray.visible = false; H.add(spray); WORLD.spray = spray;
   addInter('shower', 'シャワー', 'シャワーを浴びる', new THREE.Vector3(7.85, 1.3, 3.6), [shw], function () { actShower(); });
   var bl = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.03, 0.5), new THREE.MeshBasicMaterial({ color: 0xf6fbff })); bl.position.set(6.0, 2.48, 2.9); H.add(bl);
+}
+
+// ---- cigar & smoke -------------------------------------------------------------------
+function cigarMesh(s) {
+  var g = new THREE.Group();
+  var body = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.01, 0.14, 12), new THREE.MeshStandardMaterial({ color: s.col, roughness: 0.8 }));
+  body.rotation.x = PI / 2; g.add(body);
+  var band = new THREE.Mesh(new THREE.CylinderGeometry(0.0105, 0.0105, 0.018, 12), new THREE.MeshStandardMaterial({ color: s.col2, roughness: 0.4 }));
+  band.rotation.x = PI / 2; band.position.z = 0.035; g.add(band);
+  var ember = new THREE.Mesh(new THREE.SphereGeometry(0.0095, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff5a14 }));
+  ember.position.z = -0.07; g.add(ember); g.userData.ember = ember;
+  var glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.glow, color: 0xff6a1a, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  glow.scale.set(0.05, 0.05, 1); glow.position.z = -0.07; g.add(glow);
+  return g;
+}
+var SMOKE = [];
+function puffSmoke(n, tint) {
+  var cam = RENDER.camera, p = new THREE.Vector3(), f = new THREE.Vector3();
+  cam.getWorldPosition(p); cam.getWorldDirection(f);
+  for (var i = 0; i < n; i++) {
+    var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.glow, color: tint || 0xd8d8d8, transparent: true, opacity: 0.0, depthWrite: false }));
+    sp.position.copy(p).addScaledVector(f, 0.6 + Math.random() * 0.3); sp.position.y -= 0.05;
+    sp.scale.setScalar(0.12);
+    RENDER.scene.add(sp);
+    SMOKE.push({ s: sp, v: new THREE.Vector3(f.x * 0.25 + rnd(-0.05, 0.05), rnd(0.12, 0.25), f.z * 0.25 + rnd(-0.05, 0.05)), life: 0, max: rnd(2.5, 4), delay: i * 0.08 });
+  }
+}
+function updateSmoke(dt) {
+  for (var i = SMOKE.length - 1; i >= 0; i--) {
+    var o = SMOKE[i];
+    if (o.delay > 0) { o.delay -= dt; continue; }
+    o.life += dt; var k = o.life / o.max;
+    o.s.position.addScaledVector(o.v, dt); o.v.multiplyScalar(1 - dt * 0.4); o.v.x += Math.sin(o.life * 2 + i) * dt * 0.05;
+    o.s.scale.setScalar(0.12 + k * 0.7);
+    o.s.material.opacity = Math.min(1, o.life * 3) * (1 - k) * 0.16;
+    if (k >= 1) { RENDER.scene.remove(o.s); o.s.material.dispose(); SMOKE.splice(i, 1); }
+  }
 }

@@ -40,6 +40,7 @@ function tick(dt) {
     updateHeld(dt);
     updateCamera(dt, B);
   }
+  updateSmoke(dt);
   updateHallucinations(dt, B, RENDER.camera);
   updateTripVisuals(dt, B);
   updateWorldFX(dt);

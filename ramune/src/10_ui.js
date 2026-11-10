@@ -17,6 +17,7 @@ var UI_CSS = [
   '.rm-chip img{width:22px;height:22px}.rm-chip .ph{opacity:.7;font-weight:500}.rm-chip .lv{width:34px;height:4px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}.rm-chip .lv i{display:block;height:100%;background:var(--cyan)}',
   '.rm-feel{position:absolute;left:10px;top:calc(var(--top-safe) + 62px);display:flex;flex-direction:column;gap:3px;font-size:11px}',
   '.rm-feel div{display:flex;align-items:center;gap:5px}.rm-feel .b{width:54px;height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}.rm-feel .b i{display:block;height:100%}',
+  '.rm-combos{position:absolute;left:10px;top:calc(var(--top-safe) + 150px);display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:900;text-shadow:0 1px 4px #000}',
   '.rm-cross{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:rgba(255,255,255,0.8);box-shadow:0 0 6px #fff;transition:transform .15s}',
   '.rm-cross.on{transform:scale(2.2);background:var(--cyan)}',
   '.rm-focus{position:absolute;left:50%;top:calc(50% + 18px);transform:translateX(-50%);padding:4px 10px;border-radius:999px;background:rgba(10,6,24,0.65);font-size:12px;font-weight:700;white-space:nowrap;display:none}',
@@ -132,6 +133,7 @@ function initUI() {
   HUD.danger = el('div', 'rm-danger', '⚠ からだが危ない <span></span><div class="bar"><i></i></div>', UI);
   HUD.fx = el('div', 'rm-fx', '', UI);
   HUD.feel = el('div', 'rm-feel', '', UI);
+  HUD.combos = el('div', 'rm-combos', '', UI);
   HUD.cross = el('div', 'rm-cross', '', UI);
   HUD.focus = el('div', 'rm-focus', '', UI);
   HUD.sub = el('div', 'rm-sub', '', UI);
@@ -146,7 +148,7 @@ function initUI() {
   showHUD(false);
 }
 function showHUD(on) {
-  ['hud', 'fx', 'feel', 'cross', 'btns', 'hint'].forEach(function (k) { HUD[k].style.display = on ? '' : 'none'; });
+  ['hud', 'fx', 'feel', 'combos', 'cross', 'btns', 'hint'].forEach(function (k) { HUD[k].style.display = on ? '' : 'none'; });
   if (!on) { HUD.danger.style.display = 'none'; HUD.focus.style.display = 'none'; }
 }
 function layoutUI() {}
@@ -198,6 +200,9 @@ function updateHUD(dt, B) {
   // feelings bars
   var fl = dominantFeelings(B, 4), cols = { ps: '#b46bff', st: '#30c8ff', se: '#6a7dff', pa: '#ffb347', di: '#7af0c8', de: '#8a8a9a', em: '#ff5fa8', an: '#ff3355', na: '#9be15d', eu: '#ffe14d', drunk: '#d8f060' };
   HUD.feel.innerHTML = fl.map(function (f) { return '<div><div class="b"><i style="width:' + clamp(f[1] / 1.6 * 100, 4, 100) + '%;background:' + cols[f[0]] + '"></i></div>' + EFFECT_NAMES[f[0]] + '</div>'; }).join('');
+  // active combinations
+  var act = COMBOS.filter(function (c) { return !c.special && (B.comboS[c.id] || 0) > 0.45; }).sort(function (a, b) { return b.danger - a.danger; }).slice(0, 4);
+  HUD.combos.innerHTML = act.map(function (c) { var known = SAVE.seenCombos[c.id]; return '<div class="dg' + c.danger + '">🧪 ' + (known ? esc(c.name) : '？？？') + '</div>'; }).join('');
   // phone screen texture on table
   drawPhoneScreen(fmtClock(GAME.clock), totalUnread() > 0);
 }
@@ -245,7 +250,7 @@ function renderPillGrid(body) {
   body.innerHTML = '';
   var g = el('div', 'rm-grid', '', body);
   SUBS.forEach(function (s) {
-    if (s.hidden) return;
+    if (s.hidden || s.smoke) return;
     var n = stockOf(s.id), cl = CLASSES[s.cls];
     var c = el('div', 'rm-card' + (n <= 0 ? ' empty' : ''), '<span class="cl" style="background:' + cl.col + '">' + cl.short + '</span><img src="' + ramuneIcon(s, 104) + '"><div class="nm">' + esc(s.name) + '</div><div class="nk">「' + esc(s.nick) + '」</div><div class="st">' + (SAVE.settings.sandbox ? '∞' : 'のこり ' + n) + '</div>', g);
     onTap(c, function () { sfx('ui'); renderPillDetail(body, s); });

@@ -19,7 +19,7 @@
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.2.0';
+var GAME_VERSION = '1.3.0';
 
 var ROOT, UI, CANVAS_HOST;
 
@@ -200,6 +200,9 @@ var CLASSES = {
   dis: { name: '解離系', short: '解離', col: '#7af0c8', icon: '🪐', real: '現実の解離性の薬物は、体の感覚や判断を失わせ、転倒・溺水・事故の原因になります。' },
   emp: { name: 'ハート系（エンパス系）', short: 'ハート', col: '#ff5fa8', icon: '💗', real: '現実のこの種の薬物は、体温の異常な上昇や脱水、他の薬との危険な相互作用を起こします。' },
   del: { name: 'とばり系（せん妄系）', short: 'とばり', col: '#8a8a9a', icon: '🌑', real: '現実のせん妄を起こす薬物は、長く続く混乱・幻覚・心臓への負担を起こし、とても危険です。' },
+  gaba: { name: 'ギャバ系（ガバペンチノイド系）', short: 'ギャバ', col: '#9ad0ff', icon: '💊', real: '現実のこの種の薬は、ふらつき・転倒や、オピオイド・お酒などほかの鎮静系と重なったときの呼吸抑制が問題になり、乱用や依存も報告されています。' },
+  chill: { name: 'チル系（はまき）', short: 'チル', col: '#7ccf6a', icon: '🌿', real: '現実の大麻などは、不安発作・判断力の低下・事故の原因になり、日本では所持も使用も法律で禁止されています。' },
+  smk: { name: 'けむり系（タバコ系）', short: 'けむり', col: '#b08a64', icon: '🚬', real: '現実のタバコ・葉巻は依存性が強く、がんや心臓病の原因になります。20歳未満の喫煙は法律で禁止されています。' },
   etc: { name: 'とくしゅ', short: 'とくしゅ', col: '#e8e8e8', icon: '✨', real: '現実では、薬どうし・薬とお酒の組み合わせで予想外の強い作用が出ることがあります。' },
   alc: { name: 'お酒', short: 'お酒', col: '#d8f060', icon: '🍋', real: 'お酒は20歳になってから。短時間の大量飲酒は急性アルコール中毒の原因になります。' }
 };
@@ -259,6 +262,20 @@ var SUBS = [
   { id: 'velvet', name: 'ベルベチン', nick: 'ラブラムネ', imp: 'LV', cls: 'emp', col: '#ff2e7e', col2: '#ffd6e7', shape: 'heart',
     on: 35, pk: 80, pl: 160, du: 300, fx: { em: 1.45, eu: 1.2, st: 0.55, ps: 0.1, an: -0.3 }, ph: { hr: 30, tp: 1.1, rr: 2 }, tail: { eu: -0.7, an: 0.35, se: 0.25 }, dehyd: 1.7, stock: 3,
     desc: 'さわるもの、聞こえる音、ぜんぶがやさしく感じる“ラブラムネ”。だれかと話したくて、つながりたくてたまらなくなる。体温がかなり上がり、切れたあとは落ちこみやすい。' },
+  // ---- ギャバ系 ----
+  { id: 'nebula', name: 'ネビュラリン', nick: 'ふわとろカプセル', imp: 'NB', cls: 'gaba', col: '#9ad0ff', col2: '#ffffff', shape: 'bullet',
+    on: 40, pk: 90, pl: 230, du: 480, fx: { eu: 0.55, se: 0.5, an: -0.65, di: 0.25 }, ph: { hr: -4, rr: -2.5 }, tail: { an: 0.25 }, stock: 3,
+    desc: '白と水色のカプセル。不安がすっと消えて、ふわっと酔ったような気分になる。足元はふらつく。オピオイド系やお酒、ほかの鎮静系と重なると呼吸が浅くなる。' },
+  // ---- はまき（ベランダの葉巻ケース） ----
+  { id: 'hamaki', name: 'ヴィンテージ葉巻', nick: 'ふつうの葉巻', imp: '', cls: 'smk', smoke: true, col: '#7a4a2a', col2: '#c8a060', shape: 'cigar',
+    on: 1, pk: 5, pl: 20, du: 60, fx: { st: 0.25, eu: 0.15, na: 0.25, an: -0.1 }, ph: { hr: 12 }, stock: 3,
+    desc: '太くて香りの強い葉巻。ゆっくりふかすと頭が少しシャキッとする。吸いなれていないとクラッとして気持ち悪くなる。' },
+  { id: 'chillmaki', name: 'チルはまき', nick: 'みどりのけむり', imp: '', cls: 'chill', smoke: true, col: '#5fa84f', col2: '#d9f2a6', shape: 'cigar',
+    on: 2, pk: 10, pl: 50, du: 170, fx: { eu: 0.55, se: 0.35, ps: 0.3, em: 0.15, an: 0.1 }, ph: { hr: 18 }, tail: { se: 0.2 }, hunger: true, stock: 3,
+    desc: 'みどり色の巻紙のはまき。くすくす笑いが止まらなくなり、音楽が体にしみて、時間がゆっくりになる。なぜかおなかがすく。吸いすぎると不安になる。' },
+  { id: 'shakimaki', name: 'シャキシャキはまき', nick: 'しびれるけむり', imp: '', cls: 'up', smoke: true, col: '#e8f6ff', col2: '#29b6ff', shape: 'cigar',
+    on: 1, pk: 3, pl: 15, du: 45, fx: { st: 1.1, eu: 0.6, an: 0.35 }, ph: { hr: 38, tp: 0.4, rr: 3 }, tail: { eu: -0.5, an: 0.4, se: 0.3 }, stock: 2,
+    desc: '青白いけむりのはまき。ひと口で目がギンギンになるが、15分もすると落ちてくる。何本も吸いたくなるのが危ないところ。' },
   // ---- とばり系 ----
   { id: 'tobari', name: 'ノクスベリン', nick: 'よるのとばりラムネ', imp: 'NX', cls: 'del', col: '#1b1b24', col2: '#6a00ff', shape: 'round',
     on: 60, pk: 180, pl: 330, du: 720, fx: { de: 1.2, se: 0.35, an: 0.4, na: 0.1, ps: 0.1 }, ph: { hr: 30, tp: 0.6 }, dehyd: 1.0, stock: 2,
@@ -440,6 +457,115 @@ var COMBOS = [
   { id: 'giga2', name: 'エナドリ・ナイト', need: [{ s: 'gigafx' }, { distinct: 'up', n: 2 }], danger: 2,
     hint: 'ギガボルト × アッパー系', desc: 'エナドリでアッパーを流しこんだ。目はギンギン、心臓はドラムロール。',
     f: function (m, s) { m.ph.hr += 15 * s; m.add.an += 0.2 * s; } },
+
+  // ---- ギャバ系の飲み合わせ ----
+  { id: 'silentstop', name: 'しずかな停止', need: [{ c: 'gaba' }, { c: 'op' }], danger: 3,
+    hint: 'ギャバ系 × オピオイド系', desc: '不安も痛みも消えて、とても静か。静かすぎて、呼吸まで止まりかける。現実でも特に危険とされる組み合わせ。',
+    f: function (m, s) { m.add.se += 0.4 * s; m.rrMul += 1.0 * s; } },
+  { id: 'gunya', name: 'ぐにゃぐにゃ酔い', need: [{ c: 'gaba' }, { c: 'alc' }], danger: 2,
+    hint: 'ギャバ系 × お酒', desc: '少しの量でベロベロに。床がやわらかくなり、まっすぐ歩けない。呼吸も浅くなっていく。',
+    f: function (m, s) { m.add.se += 0.4 * s; m.add.di += 0.3 * s; m.rrMul += 0.4 * s; } },
+  { id: 'blanket', name: 'ダブルブランケット', need: [{ c: 'gaba' }, { c: 'down' }], danger: 3,
+    hint: 'ギャバ系 × ダウナー系', desc: '毛布を二枚重ねたような重さ。気持ちいいまま、まぶたも呼吸も重くなる。',
+    f: function (m, s) { m.add.se += 0.5 * s; m.rrMul += 0.55 * s; } },
+  { id: 'fuwashaki', name: 'ふわシャキ', need: [{ c: 'gaba' }, { c: 'up' }], danger: 1,
+    hint: 'ギャバ系 × アッパー系', desc: 'アッパーのとげとげが取れて、ふわっとハイ。でも心臓には両方の負担がかかる。',
+    f: function (m, s) { m.add.an -= 0.3 * s; m.add.eu += 0.3 * s; m.irregular += 0.3 * s; } },
+  { id: 'sofamelt', name: 'とろけるソファ', need: [{ c: 'gaba' }, { c: 'chill' }], danger: 1,
+    hint: 'ギャバ系 × チル系', desc: 'ソファと自分の境目がなくなる。立ち上がる理由が見つからない。',
+    f: function (m, s) { m.add.se += 0.3 * s; m.add.eu += 0.3 * s; } },
+  { id: 'softkal', name: 'やわらかい万華鏡', need: [{ c: 'gaba' }, { c: 'psy' }], danger: 1,
+    hint: 'ギャバ系 × 幻覚系', desc: '幻覚の角がとれて、ぜんぶがやわらかい色にとけていく。',
+    f: function (m, s) { m.mul.ps -= 0.1 * s; m.add.an -= 0.4 * s; m.add.eu += 0.2 * s; } },
+  { id: 'fuwalove', name: 'ふわふわラブ', need: [{ c: 'gaba' }, { c: 'emp' }], danger: 1,
+    hint: 'ギャバ系 × ハート系', desc: '愛とまどろみ。みんなにやさしくなれるけど、眠気もやってくる。',
+    f: function (m, s) { m.add.eu += 0.3 * s; m.add.em += 0.2 * s; m.add.se += 0.15 * s; } },
+  { id: 'suspend', name: '宙づり', need: [{ c: 'gaba' }, { c: 'dis' }], danger: 2,
+    hint: 'ギャバ系 × 解離系', desc: '体が糸でつられて浮いているみたい。足の感覚がない。',
+    f: function (m, s) { m.add.di += 0.4 * s; m.rrMul += 0.3 * s; } },
+  // ---- チル系（はまき）の飲み合わせ ----
+  { id: 'greenout', name: 'グリーンアウト', need: [{ c: 'chill' }, { c: 'alc' }], danger: 1,
+    hint: 'チル系 × お酒', desc: '急に世界がぐるぐる回りだして、顔が真っ青に。だいたい吐く。',
+    f: function (m, s) { m.add.na += 0.8 * s; m.add.se += 0.3 * s; m.vis.spin += 0.6 * s; } },
+  { id: 'dreamdream', name: '夢の中の夢', need: [{ c: 'chill' }, { c: 'psy' }], danger: 1,
+    hint: 'チル系 × 幻覚系', desc: 'チルが幻覚を強めて、夢の中でさらに夢を見ているような感覚に。',
+    f: function (m, s) { m.mul.ps += 0.4 * s; m.add.an += 0.2 * s; } },
+  { id: 'highhigh', name: 'ハイ＆ハイ', need: [{ c: 'chill' }, { c: 'up' }], danger: 1,
+    hint: 'チル系 × アッパー系', desc: 'ゆるいのにテンションが高い。しゃべりが止まらず、心臓も速い。',
+    f: function (m, s) { m.add.an += 0.3 * s; m.ph.hr += 12 * s; m.add.eu += 0.2 * s; } },
+  { id: 'yuruhug', name: 'ゆるハグ', need: [{ c: 'chill' }, { c: 'emp' }], danger: 1,
+    hint: 'チル系 × ハート系', desc: '音楽と愛にとろける。ずっと笑っている。',
+    f: function (m, s) { m.add.eu += 0.35 * s; m.add.em += 0.15 * s; } },
+  { id: 'spacewalk', name: 'ふわふわ宇宙遊泳', need: [{ c: 'chill' }, { c: 'dis' }], danger: 1,
+    hint: 'チル系 × 解離系', desc: '部屋の中を宇宙飛行士みたいに漂っている気がする。',
+    f: function (m, s) { m.add.di += 0.3 * s; m.add.na += 0.2 * s; } },
+  { id: 'smokeresident', name: 'けむりの住人', need: [{ c: 'chill' }, { c: 'del' }], danger: 1,
+    hint: 'チル系 × せん妄系', desc: 'けむりの中から、だれかがこっちを見ている。',
+    f: function (m, s) { m.add.de += 0.4 * s; m.add.an += 0.3 * s; } },
+  { id: 'drowsyforest', name: 'まどろみの森', need: [{ c: 'chill' }, { c: 'op' }], danger: 2,
+    hint: 'チル系 × オピオイド系', desc: '深い森の中でうとうと。呼吸もゆっくりになっていく。',
+    f: function (m, s) { m.add.se += 0.4 * s; m.rrMul += 0.2 * s; } },
+  { id: 'sinksofa', name: '沈むソファ', need: [{ c: 'chill' }, { c: 'down' }], danger: 1,
+    hint: 'チル系 × ダウナー系', desc: 'ソファがどんどん深くなる。たぶんもう立てない。',
+    f: function (m, s) { m.add.se += 0.4 * s; } },
+  { id: 'mushforest', name: 'きのこの森', need: [{ s: 'chillmaki' }, { s: 'kinoko' }], danger: 1,
+    hint: 'チルはまき × ミコルミン（きのこぐも）', desc: '部屋が森になり、笑い声がこだまする。',
+    f: function (m, s) { m.mul.ps += 0.3 * s; m.add.eu += 0.3 * s; } },
+  { id: 'longchill', name: 'ロングチル', need: [{ s: 'booster' }, { c: 'chill' }], danger: 1,
+    hint: 'アンプリフェン（ブースター）× チル系', desc: 'チルが終わらない。時間がほとんど止まって見える。',
+    f: function (m, s) { m.add.se += 0.2 * s; m.add.eu += 0.2 * s; } },
+  // ---- けむり系（葉巻） ----
+  { id: 'izakaya', name: '居酒屋の香り', need: [{ c: 'smk' }, { c: 'alc' }], danger: 0,
+    hint: 'けむり系 × お酒', desc: '葉巻とチューハイ。気分はすっかり大人の居酒屋。ちょっとクラクラする。',
+    f: function (m, s) { m.add.eu += 0.1 * s; m.add.na += 0.15 * s; } },
+  { id: 'chainsmoke', name: 'チェーンスモーカー', need: [{ c: 'smk' }, { c: 'up' }], danger: 1,
+    hint: 'けむり系 × アッパー系', desc: '吸っても吸っても落ちつかない。心臓がずっと早足。',
+    f: function (m, s) { m.ph.hr += 12 * s; m.add.an += 0.1 * s; } },
+  { id: 'mixsmoke', name: 'まぜけむり', need: [{ c: 'smk' }, { c: 'chill' }], danger: 0,
+    hint: 'けむり系 × チル系', desc: 'けむりが二重になって、ベランダがもくもくの雲の中に。',
+    f: function (m, s) { m.add.na += 0.15 * s; m.add.eu += 0.1 * s; } },
+  { id: 'dawnsmoke', name: '夜明けの一服', need: [{ c: 'smk' }, { c: 'emp' }], danger: 0,
+    hint: 'けむり系 × ハート系', desc: 'けむりの向こうの街が、ぜんぶ愛おしい。',
+    f: function (m, s) { m.add.eu += 0.15 * s; } },
+  { id: 'wakeup', name: 'ねむけざまし', need: [{ c: 'smk' }, { c: 'down' }], danger: 0,
+    hint: 'けむり系 × ダウナー系', desc: '葉巻でほんの少し目が覚める。ほんの少しだけ。',
+    f: function (m, s) { m.mul.se -= 0.15 * s; } },
+  // ---- シャキシャキはまき ----
+  { id: 'sparksour', name: '火花チューハイ', need: [{ s: 'shakimaki' }, { c: 'alc' }], danger: 2,
+    hint: 'シャキシャキはまき × お酒', desc: '酔いがシャキッと隠れて、ついもう一本。心臓は火花を散らしている。',
+    f: function (m, s) { m.mask.alc += 0.4 * s; m.ph.hr += 15 * s; } },
+  { id: 'doublespark', name: 'ダブルスパーク', need: [{ s: 'shakimaki' }, { s: 'hyper' }], danger: 2,
+    hint: 'シャキシャキはまき × ヴェロキサン（ハイパーソーダ）', desc: '二つのシャキシャキが重なって、頭の中で火花がはじける。',
+    f: function (m, s) { m.ph.hr += 15 * s; m.add.an += 0.2 * s; m.vis.flash += 0.5 * s; } },
+  // ---- 三つどもえ ----
+  { id: 'fesnight', name: 'フェスの夜', need: [{ c: 'psy' }, { c: 'emp' }, { c: 'up' }], danger: 2,
+    hint: '幻覚系 × ハート系 × アッパー系', desc: '部屋がまるごと野外フェス。最高に楽しいけど、体温と心拍が限界に近い。',
+    f: function (m, s) { m.add.eu += 0.4 * s; m.ph.tp += 0.6 * s; m.ph.hr += 10 * s; m.vis.kal += 0.3 * s; } },
+  { id: 'otherdoor', name: '異次元の扉', need: [{ c: 'psy' }, { c: 'dis' }, { c: 'del' }], danger: 2,
+    hint: '幻覚系 × 解離系 × せん妄系', desc: '部屋のドアが、知らない場所につながっている。',
+    f: function (m, s) { m.add.de += 0.3 * s; m.add.di += 0.3 * s; m.mul.ps += 0.2 * s; m.vis.kal += 0.6 * s; } },
+  { id: 'allnight', name: '朝までパーティー', need: [{ c: 'alc' }, { c: 'up' }, { c: 'emp' }], danger: 2,
+    hint: 'お酒 × アッパー系 × ハート系', desc: '飲んで、上がって、みんな大好き。水を飲むのを完全に忘れている。',
+    f: function (m, s) { m.ph.tp += 0.5 * s; m.dehyd += 1.5 * s; m.add.eu += 0.3 * s; } },
+  { id: 'silentnight', name: 'サイレント・ナイト', need: [{ c: 'op' }, { c: 'alc' }, { c: 'gaba' }], danger: 3,
+    hint: 'オピオイド系 × お酒 × ギャバ系', desc: 'とても静かな夜。静かすぎて、だれの呼吸の音も聞こえない。',
+    f: function (m, s) { m.rrMul += 0.8 * s; } },
+  { id: 'neonspin', name: 'ぐるぐるネオン', need: [{ c: 'chill' }, { c: 'alc' }, { c: 'psy' }], danger: 1,
+    hint: 'チル系 × お酒 × 幻覚系', desc: 'ネオンの渦がぐるぐる回る。楽しいけど胃もぐるぐる。',
+    f: function (m, s) { m.add.na += 0.5 * s; m.vis.spin += 0.8 * s; } },
+  // ---- そのほか ----
+  { id: 'scaryhug', name: 'こわいハグ', need: [{ c: 'emp' }, { c: 'del' }], danger: 1,
+    hint: 'ハート系 × せん妄系', desc: '影の住人たちまで大好きになって、つい抱きしめようとしてしまう。',
+    f: function (m, s) { m.add.de += 0.3 * s; m.add.em += 0.1 * s; } },
+  { id: 'yumeutsutsu', name: 'ゆめうつつ', need: [{ c: 'op' }, { c: 'dis' }], danger: 2,
+    hint: 'オピオイド系 × 解離系', desc: '夢と現実の境目がない。体はどこか遠くで眠っている。',
+    f: function (m, s) { m.add.di += 0.3 * s; m.rrMul += 0.3 * s; } },
+  { id: 'hyperspace', name: 'ハイパー宇宙', need: [{ c: 'up' }, { c: 'dis' }], danger: 1,
+    hint: 'アッパー系 × 解離系', desc: '体を置いたまま、ものすごいスピードで宇宙を飛んでいる。',
+    f: function (m, s) { m.add.di += 0.2 * s; m.add.an += 0.2 * s; m.ph.hr += 8 * s; } },
+  { id: 'shadowcradle', name: '影のゆりかご', need: [{ c: 'del' }, { c: 'op' }], danger: 2,
+    hint: 'せん妄系 × オピオイド系', desc: '影の住人にゆらされながら、ゆっくり沈んでいく。',
+    f: function (m, s) { m.add.de += 0.3 * s; m.add.se += 0.2 * s; m.rrMul += 0.2 * s; } },
   { id: 'reset', name: '強制リセット', need: [], special: true, danger: 1,
     hint: 'ネガトキソン（リセット）× オピオイド系', desc: 'ぬくぬく系を一瞬で打ち消した。命は助かるが、反動で最悪の気分になる。' },
   { id: 'placebo', name: 'プラセボ効果', need: [], special: true, danger: 0,
@@ -460,6 +586,7 @@ var VOICE = {
   de: ['さっきから、だれかソファに座ってる…？', 'あ、タバコ吸おう。…タバコ持ってないのに。', 'スマホが鳴ってる。…鳴ってない。', '壁を小さい虫が歩いてる…', 'だれかと話してたんだけど、だれだっけ'],
   em: ['みんな大好き。冷蔵庫も大好き。', 'このクッション、さわり心地が天才', '今ならだれとでも仲よくなれる', '音楽が…体にしみる…'],
   an: ['なんか…やばい気がする', 'ドアの向こうにだれかいない？', '落ち着け…落ち着け…', '心臓の音、大きすぎない？'],
+  munch: ['おなかすいた…冷蔵庫になにかない？', 'みかん…みかんが食べたい…', 'カップ麺のにおいがする気がする'],
   na: ['うっ…気持ち悪い', '吐きそう…トイレどこだっけ', '胃がぐるぐるする'],
   drunk: ['まだ全然よってないし', 'ZER9、もう1本いっちゃう？', '床がななめになってる', 'へへへ…'],
   hot: ['あつい…ベランダで風にあたりたい', 'のどがカラカラ…水…'],
@@ -472,7 +599,7 @@ var EFFECT_NAMES = { eu: '多幸感', st: '覚醒', se: '鎮静', ps: '幻覚', 
 // ---- body simulation (pure logic, no DOM / no three.js) ------------------------
 var CH = ['eu', 'st', 'se', 'ps', 'di', 'de', 'em', 'an', 'na', 'pa'];
 var BOOSTABLE = { psy: 1, emp: 1, up: 1, del: 1 };
-var DRUG_CLASSES = ['psy', 'up', 'down', 'op', 'dis', 'emp', 'del'];
+var DRUG_CLASSES = ['psy', 'up', 'down', 'op', 'dis', 'emp', 'del', 'gaba', 'chill', 'smk'];
 
 function newBody() {
   var F = {}; CH.forEach(function (c) { F[c] = 0; });
@@ -866,6 +993,8 @@ function sfx(name, arg) {
       tone(58, t, 0.16, { vol: 0.35 * (arg || 1), type: 'sine', slide: 40 }); tone(52, t + 0.17, 0.2, { vol: 0.25 * (arg || 1), type: 'sine', slide: 36 }); break;
     case 'sparkle':
       for (i = 0; i < 5; i++) tone(1800 + Math.random() * 2400, t + i * 0.06, 0.25, { vol: 0.03, type: 'sine', pan: Math.random() * 2 - 1 }); break;
+    case 'cough':
+      for (i = 0; i < 3; i++) { noiseHit(t + i * 0.32, 0.18, { f: 900 + i * 80, q: 1.2, vol: 0.35, attack: 0.01 }); tone(160, t + i * 0.32, 0.12, { vol: 0.08, type: 'sawtooth', filter: { f: 600 } }); } break;
     case 'tv':
       noiseHit(t, 0.3, { f: 4000, q: 0.3, vol: 0.1 }); break;
   }
@@ -1200,6 +1329,10 @@ function shapePoints(shape) {
     case 'bolt': pts = [[0.2, 1], [-0.6, -0.1], [-0.05, -0.1], [-0.3, -1], [0.6, 0.15], [0.05, 0.15]]; break;
     case 'cross': pts = [[-0.3, 1], [0.3, 1], [0.3, 0.3], [1, 0.3], [1, -0.3], [0.3, -0.3], [0.3, -1], [-0.3, -1], [-0.3, -0.3], [-1, -0.3], [-1, 0.3], [-0.3, 0.3]]; break;
     case 'tiny': pts = circ(24, 0.6); break;
+    case 'cigar':
+      for (i = 0; i <= 10; i++) { a = -PI / 2 + i / 10 * PI; pts.push([0.85 + Math.cos(a) * 0.17, Math.sin(a) * 0.17]); }
+      for (i = 0; i <= 10; i++) { a = PI / 2 + i / 10 * PI; pts.push([-0.95 + Math.cos(a) * 0.06, Math.sin(a) * 0.15]); }
+      pts = pts.map(function (p) { var c = Math.cos(0.45), s = Math.sin(0.45); return [p[0] * c - p[1] * s, p[0] * s + p[1] * c]; }); break;
     default: pts = circ(32, 1);
   }
   return pts;
@@ -1228,6 +1361,12 @@ function ramuneIcon(s, size) {
   drawShape(g, s.shape, m, m, r);
   g.fill('evenodd');
   g.restore();
+  if (s.shape === 'cigar') { // paper band + ember
+    g.save(); g.translate(m, m); g.rotate(-0.45);
+    g.fillStyle = s.col2; g.fillRect(r * 0.35, -r * 0.17, r * 0.18, r * 0.34);
+    g.fillStyle = '#ff6a1a'; g.shadowColor = '#ff6a1a'; g.shadowBlur = size * 0.1; g.beginPath(); g.ellipse(-r * 0.95, 0, r * 0.06, r * 0.15, 0, 0, TAU); g.fill();
+    g.restore(); return (ICON_CACHE[key] = c.toDataURL());
+  }
   g.lineWidth = size * 0.025; g.strokeStyle = 'rgba(255,255,255,0.65)';
   drawShape(g, s.shape, m, m, r); g.stroke();
   // engraved line / sheen
@@ -1565,6 +1704,12 @@ function buildWorld() {
   addBox(bal, 3.0, 0.03, 0.03, M.metal, -0.8, 1.95, -3.0);
   // little stool + ashtray-less table
   addBox(bal, 0.35, 0.4, 0.35, M.wood, -1.3, 0, -3.8, { col: true });
+  // cigar case + ashtray on the stool
+  var cg = new THREE.Group(); bal.add(cg);
+  addBox(cg, 0.22, 0.06, 0.14, M.darkWood, -1.36, 0.4, -3.82);
+  var lidc = addBox(cg, 0.22, 0.012, 0.14, stdMat({ color: 0xc8a060, metalness: 0.4, roughness: 0.4 }), -1.36, 0.46, -3.82);
+  var ash = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.03, 16), M.metal); ash.position.set(-1.2, 0.415, -3.72); cg.add(ash);
+  addInter('cigar', '葉巻ケース', '葉巻を吸う', new THREE.Vector3(-1.3, 0.45, -3.8), [cg], function () { openSmokeMenu(); });
 
   // ---- bed ----
   var bed = new THREE.Group(); W.add(bed);
@@ -1887,13 +2032,19 @@ function canMesh(d) {
 }
 function holdItem(kind, obj, dur, cb) {
   if (HELD.mesh) HELD.g.remove(HELD.mesh);
-  HELD.mesh = obj; HELD.g.add(obj); HELD.kind = kind; HELD.t = 0; HELD.dur = dur; HELD.cb = cb; HELD.g.visible = true;
+  HELD.mesh = obj; HELD.g.add(obj); HELD.puffed = false; HELD.kind = kind; HELD.t = 0; HELD.dur = dur; HELD.cb = cb; HELD.g.visible = true;
 }
 function updateHeld(dt) {
   if (!HELD.kind) return;
   HELD.t += dt; var k = HELD.t / HELD.dur, g = HELD.g, m = HELD.mesh;
   var up = smooth(Math.min(1, k * 3)) * (1 - smooth((k - 0.85) / 0.15));
-  if (HELD.kind === 'pill') {
+  if (HELD.kind === 'smoke') {
+    var inh = smooth((k - 0.2) / 0.25) * (1 - smooth((k - 0.6) / 0.2));
+    g.position.set(0.07 - inh * 0.06, -0.2 + up * 0.08 + inh * 0.1, -0.42 + inh * 0.14); m.scale.setScalar(0.75);
+    m.rotation.set(0.2, 0.6 - inh * 0.5, 0);
+    if (m.userData.ember) m.userData.ember.material.color.setHSL(0.05, 1, 0.45 + inh * 0.25);
+    if (!HELD.puffed && k > 0.62) { HELD.puffed = true; puffSmoke(14, HELD.tint); }
+  } else if (HELD.kind === 'pill') {
     g.position.set(0.0, -0.2 + up * 0.12 - smooth((k - 0.6) / 0.3) * 0.1, -0.34 + smooth((k - 0.55) / 0.35) * 0.22);
     m.rotation.set(0.25, Math.sin(HELD.t * 2.2) * 0.6, HELD.t * 2.2);
     m.position.set(0, 0, 0);
@@ -2091,6 +2242,43 @@ function buildHouse() {
   spray.position.set(7.75, 1.08, 3.6); spray.visible = false; H.add(spray); WORLD.spray = spray;
   addInter('shower', 'シャワー', 'シャワーを浴びる', new THREE.Vector3(7.85, 1.3, 3.6), [shw], function () { actShower(); });
   var bl = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.03, 0.5), new THREE.MeshBasicMaterial({ color: 0xf6fbff })); bl.position.set(6.0, 2.48, 2.9); H.add(bl);
+}
+
+// ---- cigar & smoke -------------------------------------------------------------------
+function cigarMesh(s) {
+  var g = new THREE.Group();
+  var body = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.01, 0.14, 12), new THREE.MeshStandardMaterial({ color: s.col, roughness: 0.8 }));
+  body.rotation.x = PI / 2; g.add(body);
+  var band = new THREE.Mesh(new THREE.CylinderGeometry(0.0105, 0.0105, 0.018, 12), new THREE.MeshStandardMaterial({ color: s.col2, roughness: 0.4 }));
+  band.rotation.x = PI / 2; band.position.z = 0.035; g.add(band);
+  var ember = new THREE.Mesh(new THREE.SphereGeometry(0.0095, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff5a14 }));
+  ember.position.z = -0.07; g.add(ember); g.userData.ember = ember;
+  var glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.glow, color: 0xff6a1a, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  glow.scale.set(0.05, 0.05, 1); glow.position.z = -0.07; g.add(glow);
+  return g;
+}
+var SMOKE = [];
+function puffSmoke(n, tint) {
+  var cam = RENDER.camera, p = new THREE.Vector3(), f = new THREE.Vector3();
+  cam.getWorldPosition(p); cam.getWorldDirection(f);
+  for (var i = 0; i < n; i++) {
+    var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.glow, color: tint || 0xd8d8d8, transparent: true, opacity: 0.0, depthWrite: false }));
+    sp.position.copy(p).addScaledVector(f, 0.6 + Math.random() * 0.3); sp.position.y -= 0.05;
+    sp.scale.setScalar(0.12);
+    RENDER.scene.add(sp);
+    SMOKE.push({ s: sp, v: new THREE.Vector3(f.x * 0.25 + rnd(-0.05, 0.05), rnd(0.12, 0.25), f.z * 0.25 + rnd(-0.05, 0.05)), life: 0, max: rnd(2.5, 4), delay: i * 0.08 });
+  }
+}
+function updateSmoke(dt) {
+  for (var i = SMOKE.length - 1; i >= 0; i--) {
+    var o = SMOKE[i];
+    if (o.delay > 0) { o.delay -= dt; continue; }
+    o.life += dt; var k = o.life / o.max;
+    o.s.position.addScaledVector(o.v, dt); o.v.multiplyScalar(1 - dt * 0.4); o.v.x += Math.sin(o.life * 2 + i) * dt * 0.05;
+    o.s.scale.setScalar(0.12 + k * 0.7);
+    o.s.material.opacity = Math.min(1, o.life * 3) * (1 - k) * 0.16;
+    if (k >= 1) { RENDER.scene.remove(o.s); o.s.material.dispose(); SMOKE.splice(i, 1); }
+  }
 }
 
 
@@ -2446,6 +2634,7 @@ var UI_CSS = [
   '.rm-chip img{width:22px;height:22px}.rm-chip .ph{opacity:.7;font-weight:500}.rm-chip .lv{width:34px;height:4px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}.rm-chip .lv i{display:block;height:100%;background:var(--cyan)}',
   '.rm-feel{position:absolute;left:10px;top:calc(var(--top-safe) + 62px);display:flex;flex-direction:column;gap:3px;font-size:11px}',
   '.rm-feel div{display:flex;align-items:center;gap:5px}.rm-feel .b{width:54px;height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}.rm-feel .b i{display:block;height:100%}',
+  '.rm-combos{position:absolute;left:10px;top:calc(var(--top-safe) + 150px);display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:900;text-shadow:0 1px 4px #000}',
   '.rm-cross{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:rgba(255,255,255,0.8);box-shadow:0 0 6px #fff;transition:transform .15s}',
   '.rm-cross.on{transform:scale(2.2);background:var(--cyan)}',
   '.rm-focus{position:absolute;left:50%;top:calc(50% + 18px);transform:translateX(-50%);padding:4px 10px;border-radius:999px;background:rgba(10,6,24,0.65);font-size:12px;font-weight:700;white-space:nowrap;display:none}',
@@ -2561,6 +2750,7 @@ function initUI() {
   HUD.danger = el('div', 'rm-danger', '⚠ からだが危ない <span></span><div class="bar"><i></i></div>', UI);
   HUD.fx = el('div', 'rm-fx', '', UI);
   HUD.feel = el('div', 'rm-feel', '', UI);
+  HUD.combos = el('div', 'rm-combos', '', UI);
   HUD.cross = el('div', 'rm-cross', '', UI);
   HUD.focus = el('div', 'rm-focus', '', UI);
   HUD.sub = el('div', 'rm-sub', '', UI);
@@ -2575,7 +2765,7 @@ function initUI() {
   showHUD(false);
 }
 function showHUD(on) {
-  ['hud', 'fx', 'feel', 'cross', 'btns', 'hint'].forEach(function (k) { HUD[k].style.display = on ? '' : 'none'; });
+  ['hud', 'fx', 'feel', 'combos', 'cross', 'btns', 'hint'].forEach(function (k) { HUD[k].style.display = on ? '' : 'none'; });
   if (!on) { HUD.danger.style.display = 'none'; HUD.focus.style.display = 'none'; }
 }
 function layoutUI() {}
@@ -2627,6 +2817,9 @@ function updateHUD(dt, B) {
   // feelings bars
   var fl = dominantFeelings(B, 4), cols = { ps: '#b46bff', st: '#30c8ff', se: '#6a7dff', pa: '#ffb347', di: '#7af0c8', de: '#8a8a9a', em: '#ff5fa8', an: '#ff3355', na: '#9be15d', eu: '#ffe14d', drunk: '#d8f060' };
   HUD.feel.innerHTML = fl.map(function (f) { return '<div><div class="b"><i style="width:' + clamp(f[1] / 1.6 * 100, 4, 100) + '%;background:' + cols[f[0]] + '"></i></div>' + EFFECT_NAMES[f[0]] + '</div>'; }).join('');
+  // active combinations
+  var act = COMBOS.filter(function (c) { return !c.special && (B.comboS[c.id] || 0) > 0.45; }).sort(function (a, b) { return b.danger - a.danger; }).slice(0, 4);
+  HUD.combos.innerHTML = act.map(function (c) { var known = SAVE.seenCombos[c.id]; return '<div class="dg' + c.danger + '">🧪 ' + (known ? esc(c.name) : '？？？') + '</div>'; }).join('');
   // phone screen texture on table
   drawPhoneScreen(fmtClock(GAME.clock), totalUnread() > 0);
 }
@@ -2674,7 +2867,7 @@ function renderPillGrid(body) {
   body.innerHTML = '';
   var g = el('div', 'rm-grid', '', body);
   SUBS.forEach(function (s) {
-    if (s.hidden) return;
+    if (s.hidden || s.smoke) return;
     var n = stockOf(s.id), cl = CLASSES[s.cls];
     var c = el('div', 'rm-card' + (n <= 0 ? ' empty' : ''), '<span class="cl" style="background:' + cl.col + '">' + cl.short + '</span><img src="' + ramuneIcon(s, 104) + '"><div class="nm">' + esc(s.name) + '</div><div class="nk">「' + esc(s.nick) + '」</div><div class="st">' + (SAVE.settings.sandbox ? '∞' : 'のこり ' + n) + '</div>', g);
     onTap(c, function () { sfx('ui'); renderPillDetail(body, s); });
@@ -2977,6 +3170,33 @@ function actMirror() {
   if (!out.length) out.push('いつもの自分だ。');
   say('（鏡）' + out.slice(0, 3).join(' '), 5);
 }
+function openSmokeMenu() {
+  var B = GAME.B;
+  openModal('葉巻ケース', function (body) {
+    var l = el('div', 'rm-list', '', body);
+    SUBS.filter(function (s) { return s.smoke; }).forEach(function (s) {
+      var n = stockOf(s.id), cl = CLASSES[s.cls];
+      var it = el('div', 'rm-item' + (n <= 0 ? ' lock' : ''), '<img src="' + ramuneIcon(s, 88) + '"><div class="tx"><b>' + esc(s.name) + ' <span style="font-size:11px;color:' + cl.col + '">' + cl.icon + esc(cl.short) + '</span></b><small>' + esc(s.desc) + '<br><span style="opacity:.8">現実では… ' + esc(cl.real) + '</span></small></div>', l);
+      var b = el('button', 'btn', n > 0 ? '吸う<br><small style="font-weight:500;opacity:.7">のこり' + (SAVE.settings.sandbox ? '∞' : n) + '</small>' : 'ない', it);
+      if (n <= 0) b.disabled = true;
+      onTap(b, function () { closeModal(true); actSmoke(s.id); });
+    });
+    el('div', 'rm-note', '※ すべて架空のはまきです。20歳未満の喫煙は法律で禁止されています。', body);
+  });
+}
+function actSmoke(id) {
+  var s = SUB[id]; if (GAME.lock) return;
+  GAME.lock = true;
+  if (!SAVE.settings.sandbox) GAME.stash[id]--;
+  sfx('click');
+  HELD.tint = id === 'chillmaki' ? 0xcfe8c0 : id === 'shakimaki' ? 0xd0ecff : 0xd8d0c8;
+  holdItem('smoke', cigarMesh(s), 3.2, function () {
+    takeSub(GAME.B, id); GAME.lock = false;
+    var first = !SAVE.seenSubs[id]; SAVE.seenSubs[id] = 1; writeSave();
+    if (GAME.B.F.na > 0.2 || Math.random() < 0.35) sfx('cough');
+    toast((first ? '🆕 ' : '') + s.name + ' をふかした。ふぅ…', 'good');
+  });
+}
 function actFrontDoor() {
   var B = GAME.B, high = B.bac > 0.05 || B.F.ps > 0.3 || B.F.di > 0.3 || B.F.de > 0.3 || B.F.se > 0.5 || B.F.st > 0.6;
   sfx('door');
@@ -2993,7 +3213,9 @@ function actMikan() {
   var B = GAME.B;
   B.hyd = Math.min(1, B.hyd + 0.06); B.naRelief = Math.max(B.naRelief, 0.12);
   sfx('pill');
-  toast('みかんを食べた。甘ずっぱい。（水分が少しもどった）', 'good');
+  var munch = (B.Ls.chillmaki || 0) > 0.3;
+  if (munch) { B.socialT = Math.max(B.socialT || 0, 15); toast('みかん…うますぎる…！！（おなかがすいていたので、最高においしい）', 'good'); }
+  else toast('みかんを食べた。甘ずっぱい。（水分が少しもどった）', 'good');
   if (B.F.ps > 0.6) say('みかんの皮の中に、小さな太陽が入ってた…', 3.5);
 }
 function actWasher() {
@@ -3062,6 +3284,7 @@ function monologue(force) {
   if (B.danger > 25) key = 'danger';
   else if (B.tp > 38.6 || B.hyd < 0.4) key = Math.random() < 0.6 ? 'hot' : (dom[0] ? dom[0][0] : 'idle');
   else if (dom.length) { var r = Math.random(), tot = 0; dom.forEach(function (x) { tot += x[1]; }); var acc = 0; for (var i = 0; i < dom.length; i++) { acc += dom[i][1] / tot; if (r <= acc) { key = dom[i][0]; break; } } }
+  if ((B.Ls.chillmaki || 0) > 0.35 && Math.random() < 0.4) key = 'munch';
   if (key === 'eu') key = B.F.em > 0.3 ? 'em' : B.motor > 0.3 ? 'drunk' : B.F.ps > 0.2 ? 'ps' : 'idle';
   var arr = VOICE[key] || VOICE.idle;
   if (!force && key === 'idle' && Math.random() < 0.5) return;
@@ -3672,6 +3895,7 @@ function tick(dt) {
     updateHeld(dt);
     updateCamera(dt, B);
   }
+  updateSmoke(dt);
   updateHallucinations(dt, B, RENDER.camera);
   updateTripVisuals(dt, B);
   updateWorldFX(dt);

@@ -123,6 +123,8 @@ function sfx(name, arg) {
       tone(58, t, 0.16, { vol: 0.35 * (arg || 1), type: 'sine', slide: 40 }); tone(52, t + 0.17, 0.2, { vol: 0.25 * (arg || 1), type: 'sine', slide: 36 }); break;
     case 'sparkle':
       for (i = 0; i < 5; i++) tone(1800 + Math.random() * 2400, t + i * 0.06, 0.25, { vol: 0.03, type: 'sine', pan: Math.random() * 2 - 1 }); break;
+    case 'cough':
+      for (i = 0; i < 3; i++) { noiseHit(t + i * 0.32, 0.18, { f: 900 + i * 80, q: 1.2, vol: 0.35, attack: 0.01 }); tone(160, t + i * 0.32, 0.12, { vol: 0.08, type: 'sawtooth', filter: { f: 600 } }); } break;
     case 'tv':
       noiseHit(t, 0.3, { f: 4000, q: 0.3, vol: 0.1 }); break;
   }

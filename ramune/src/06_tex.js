@@ -20,6 +20,10 @@ function shapePoints(shape) {
     case 'bolt': pts = [[0.2, 1], [-0.6, -0.1], [-0.05, -0.1], [-0.3, -1], [0.6, 0.15], [0.05, 0.15]]; break;
     case 'cross': pts = [[-0.3, 1], [0.3, 1], [0.3, 0.3], [1, 0.3], [1, -0.3], [0.3, -0.3], [0.3, -1], [-0.3, -1], [-0.3, -0.3], [-1, -0.3], [-1, 0.3], [-0.3, 0.3]]; break;
     case 'tiny': pts = circ(24, 0.6); break;
+    case 'cigar':
+      for (i = 0; i <= 10; i++) { a = -PI / 2 + i / 10 * PI; pts.push([0.85 + Math.cos(a) * 0.17, Math.sin(a) * 0.17]); }
+      for (i = 0; i <= 10; i++) { a = PI / 2 + i / 10 * PI; pts.push([-0.95 + Math.cos(a) * 0.06, Math.sin(a) * 0.15]); }
+      pts = pts.map(function (p) { var c = Math.cos(0.45), s = Math.sin(0.45); return [p[0] * c - p[1] * s, p[0] * s + p[1] * c]; }); break;
     default: pts = circ(32, 1);
   }
   return pts;
@@ -48,6 +52,12 @@ function ramuneIcon(s, size) {
   drawShape(g, s.shape, m, m, r);
   g.fill('evenodd');
   g.restore();
+  if (s.shape === 'cigar') { // paper band + ember
+    g.save(); g.translate(m, m); g.rotate(-0.45);
+    g.fillStyle = s.col2; g.fillRect(r * 0.35, -r * 0.17, r * 0.18, r * 0.34);
+    g.fillStyle = '#ff6a1a'; g.shadowColor = '#ff6a1a'; g.shadowBlur = size * 0.1; g.beginPath(); g.ellipse(-r * 0.95, 0, r * 0.06, r * 0.15, 0, 0, TAU); g.fill();
+    g.restore(); return (ICON_CACHE[key] = c.toDataURL());
+  }
   g.lineWidth = size * 0.025; g.strokeStyle = 'rgba(255,255,255,0.65)';
   drawShape(g, s.shape, m, m, r); g.stroke();
   // engraved line / sheen
