@@ -270,7 +270,7 @@ function buildWorld() {
   var seat = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.035, 8, 20), M.ceramic); seat.rotation.x = PI / 2; seat.position.set(-0.07, 0.41, 0); seat.scale.set(1.25, 1, 1); toilet.add(seat);
   var tank = addBox(toilet, 0.2, 0.42, 0.42, M.ceramic, 0.22, 0.35, 0);
   addCol(2.2, 3.0, 3.4, 4.0);
-  addInter('toilet', 'トイレ', '吐く / 流す', new THREE.Vector3(2.55, 0.45, 3.7), [toilet], function () { actToilet(); });
+  addInter('toilet', 'トイレ', 'トイレを使う', new THREE.Vector3(2.55, 0.45, 3.7), [toilet], function () { actToilet(); });
   // washbasin + mirror
   var basin = new THREE.Group(); basin.position.set(0.85, 0, 3.5); bath.add(basin);
   addBox(basin, 0.42, 0.8, 0.5, M.white, 0.06, 0, 0);

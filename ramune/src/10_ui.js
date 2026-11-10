@@ -96,6 +96,22 @@ var UI_CSS = [
   '.rm-tog{width:52px;height:30px;border-radius:15px;background:rgba(255,255,255,.18);position:relative;cursor:pointer;pointer-events:auto;flex:0 0 auto}',
   '.rm-tog i{position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s}.rm-tog.on{background:#ff5fa8}.rm-tog.on i{left:25px}',
   '.rm-seg{display:flex;gap:4px}.rm-seg div{padding:6px 9px;border-radius:9px;background:rgba(255,255,255,.08);font-size:12px;font-weight:900;cursor:pointer;pointer-events:auto}.rm-seg div.on{background:#ff5fa8}',
+  '.rm-back{align-self:flex-start;margin-bottom:8px;padding:6px 12px;font-size:13px}',
+  '.rm-ph-status{font-family:"DotGothic16",monospace;font-size:22px;text-align:center;margin:4px 0 12px}.rm-ph-status span{display:block;font-family:inherit;font-size:12px;opacity:.75;margin-top:2px}',
+  '.rm-apps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px;padding:4px 2px 10px}',
+  '.rm-app{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;font-weight:700;cursor:pointer;pointer-events:auto;text-align:center}',
+  '.rm-app .ic{position:relative;width:58px;height:58px;border-radius:17px;display:flex;align-items:center;justify-content:center;font-size:28px;background:linear-gradient(160deg,rgba(255,255,255,.2),rgba(255,255,255,.05));border:1px solid var(--line)}',
+  '.rm-app .ic i,.rm-badge{font-style:normal;background:#ff3355;color:#fff;border-radius:10px;padding:1px 6px;font-size:11px;font-weight:900}.rm-app .ic i{position:absolute;right:-5px;top:-5px}',
+  '.rm-av{width:44px;height:44px;flex:0 0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px}.rm-av.big{width:96px;height:96px;font-size:52px;margin:6px auto}',
+  '.rm-item.tap{cursor:pointer;pointer-events:auto}',
+  '.rm-call{display:flex;flex-direction:column;gap:8px;text-align:center}.rm-call .nm{font-size:22px;font-weight:900}.rm-call .st{font-size:12px;opacity:.7}',
+  '.rm-call .lines{display:flex;flex-direction:column;gap:6px;text-align:left;min-height:120px}.rm-call .ln{padding:8px 11px;border-radius:12px;font-size:14px;line-height:1.5;background:rgba(255,255,255,.07)}.rm-call .ln b{display:block;font-size:11px;opacity:.7}.rm-call .ln.me{background:rgba(255,95,168,.18)}.rm-call .ln.sys{opacity:.7;font-size:12.5px}',
+  '.rm-chat{display:flex;flex-direction:column;gap:6px}.rm-chat .bub{max-width:78%;padding:8px 11px;border-radius:16px;font-size:14px;line-height:1.45;background:rgba(255,255,255,.1);align-self:flex-start;word-break:break-all}.rm-chat .bub.me{align-self:flex-end;background:#3ec46d;color:#06210f}.rm-chat .bub small{display:block;font-size:10px;opacity:.6;margin-top:2px}',
+  '.rm-sug{display:flex;flex-wrap:wrap;gap:6px}.rm-sug .btn{font-size:13px;padding:8px 11px;max-width:100%;word-break:break-all}',
+  '.rm-post{padding:10px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line);margin-bottom:10px}',
+  '.rm-feed{display:flex;flex-direction:column;gap:8px}.rm-tw{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:14px;line-height:1.5}.rm-tw.mine{border-color:rgba(255,95,168,.6)}',
+  '.rm-tw .hd{display:flex;align-items:center;gap:6px;font-size:12px}.rm-tw .hd small{margin-left:auto;opacity:.6}.rm-tw .ic{font-size:18px}.rm-tw img{width:100%;border-radius:10px;margin-top:6px;display:block}.rm-tw .ft{font-size:12px;opacity:.7;margin-top:4px}.rm-tw .rp{font-size:12.5px;margin-top:4px;padding-left:10px;border-left:2px solid var(--line);opacity:.9}',
+  '.btn.round.notif::after{content:"";position:absolute;right:4px;top:4px;width:12px;height:12px;border-radius:50%;background:#ff3355;box-shadow:0 0 8px #ff3355}.btn.round{position:relative}',
   '.rm-stick{position:absolute;width:110px;height:110px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06)}',
   '.rm-stick .knob{position:absolute;left:33px;top:33px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.4)}',
   '.rm-hint{position:absolute;left:14px;bottom:calc(var(--bot-safe) + 6px);font-size:11px;opacity:.55;line-height:1.5;max-width:46vw}',
@@ -183,7 +199,7 @@ function updateHUD(dt, B) {
   var fl = dominantFeelings(B, 4), cols = { ps: '#b46bff', st: '#30c8ff', se: '#6a7dff', pa: '#ffb347', di: '#7af0c8', de: '#8a8a9a', em: '#ff5fa8', an: '#ff3355', na: '#9be15d', eu: '#ffe14d', drunk: '#d8f060' };
   HUD.feel.innerHTML = fl.map(function (f) { return '<div><div class="b"><i style="width:' + clamp(f[1] / 1.6 * 100, 4, 100) + '%;background:' + cols[f[0]] + '"></i></div>' + EFFECT_NAMES[f[0]] + '</div>'; }).join('');
   // phone screen texture on table
-  drawPhoneScreen(fmtClock(GAME.clock), false);
+  drawPhoneScreen(fmtClock(GAME.clock), totalUnread() > 0);
 }
 function updateFocusUI(it) {
   HUD.cross.className = 'rm-cross' + (it ? ' on' : '');
@@ -307,23 +323,6 @@ function openBedMenu() {
 }
 
 // ---- phone ----------------------------------------------------------------------
-var PHONE_TAB = 'body';
-function openPhone(tab) {
-  if (tab) PHONE_TAB = tab;
-  openModal('スマホ', function (body, M) {
-    var tabs = el('div', 'rm-tabs', '', M.sheet); M.sheet.insertBefore(tabs, body);
-    var defs = [['body', '🫀 からだ'], ['zukan', '🍬 ラムネ図鑑'], ['combo', '🧪 飲み合わせ'], ['help', '🚑 たすけ'], ['set', '⚙ 設定']];
-    if (GAME.mode !== 'play') defs = defs.filter(function (d) { return d[0] !== 'body' && d[0] !== 'help'; });
-    if (!defs.some(function (d) { return d[0] === PHONE_TAB; })) PHONE_TAB = defs[0][0];
-    function render() {
-      tabs.innerHTML = '';
-      defs.forEach(function (d) { var t = el('div', 'rm-tab' + (PHONE_TAB === d[0] ? ' on' : ''), d[1], tabs); onTap(t, function () { PHONE_TAB = d[0]; sfx('ui'); render(); }); });
-      body.innerHTML = '';
-      ({ body: phoneBody, zukan: phoneZukan, combo: phoneCombo, help: phoneHelp, set: phoneSettings })[PHONE_TAB](body);
-    }
-    render();
-  });
-}
 function phoneBody(body) {
   var B = GAME.B;
   el('div', 'rm-big', '<div><b>' + Math.round(B.hr) + '</b><span>心拍（回/分）</span></div><div><b>' + B.tp.toFixed(1) + '℃</b><span>体温</span></div><div><b>' + B.rr.toFixed(1) + '</b><span>呼吸（回/分）</span></div><div><b>' + Math.round(B.con) + '%</b><span>意識</span></div><div><b>' + Math.round(B.hyd * 100) + '%</b><span>水分</span></div><div><b>' + (B.bac * 100 / 100).toFixed(3) + '%</b><span>血中アルコール（架空）</span></div>', body);

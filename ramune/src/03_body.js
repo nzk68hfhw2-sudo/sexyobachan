@@ -176,6 +176,7 @@ function bodyStep1(B, dt) {
   // ---- apply combination modifiers ----
   CH.forEach(function (c) { F[c] = F[c] * Math.max(0, m.mul[c]) + m.add[c]; });
   F.na = Math.max(0, F.na - B.naRelief * 1.2);
+  if (B.socialT > 0) { B.socialT -= dt; F.an -= 0.3; F.eu += 0.12; }
   CH.forEach(function (c) { if (F[c] < 0) F[c] = 0; });
   P.hr += m.ph.hr; P.tp += m.ph.tp;
 

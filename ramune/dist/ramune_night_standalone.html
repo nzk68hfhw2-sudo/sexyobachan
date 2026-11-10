@@ -19,7 +19,7 @@
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.1.0';
+var GAME_VERSION = '1.2.0';
 
 var ROOT, UI, CANVAS_HOST;
 
@@ -256,6 +256,9 @@ var SUBS = [
   { id: 'heart', name: 'アモリクシン', nick: 'ハートラムネ', imp: 'AM', cls: 'emp', col: '#ff5fa8', col2: '#ffd1e8', shape: 'heart',
     on: 30, pk: 75, pl: 150, du: 270, fx: { em: 1.2, eu: 1.0, st: 0.45, ps: 0.15 }, ph: { hr: 28, tp: 1.0, rr: 2 }, tail: { eu: -0.5, an: 0.2, se: 0.2 }, dehyd: 1.5, stock: 3,
     desc: 'ピンクのハート形。世界中のすべてが大好きになる。そのかわり体がとても熱くなる。水を忘れずに。' },
+  { id: 'velvet', name: 'ベルベチン', nick: 'ラブラムネ', imp: 'LV', cls: 'emp', col: '#ff2e7e', col2: '#ffd6e7', shape: 'heart',
+    on: 35, pk: 80, pl: 160, du: 300, fx: { em: 1.45, eu: 1.2, st: 0.55, ps: 0.1, an: -0.3 }, ph: { hr: 30, tp: 1.1, rr: 2 }, tail: { eu: -0.7, an: 0.35, se: 0.25 }, dehyd: 1.7, stock: 3,
+    desc: 'さわるもの、聞こえる音、ぜんぶがやさしく感じる“ラブラムネ”。だれかと話したくて、つながりたくてたまらなくなる。体温がかなり上がり、切れたあとは落ちこみやすい。' },
   // ---- とばり系 ----
   { id: 'tobari', name: 'ノクスベリン', nick: 'よるのとばりラムネ', imp: 'NX', cls: 'del', col: '#1b1b24', col2: '#6a00ff', shape: 'round',
     on: 60, pk: 180, pl: 330, du: 720, fx: { de: 1.2, se: 0.35, an: 0.4, na: 0.1, ps: 0.1 }, ph: { hr: 30, tp: 0.6 }, dehyd: 1.0, stock: 2,
@@ -369,6 +372,74 @@ var COMBOS = [
   { id: 'mirrorlove', name: '鏡の中の愛', need: [{ c: 'dis' }, { c: 'emp' }], danger: 1,
     hint: '解離系 × ハート系', desc: '離れたところから自分を見て、その自分のことも大好きになる。',
     f: function (m, s) { m.add.em += 0.3 * s; m.add.di += 0.15 * s; m.add.eu += 0.2 * s; } },
+
+  // ---- 追加の飲み合わせ ----
+  { id: 'forest', name: '森のハグ', need: [{ s: 'kinoko' }, { c: 'emp' }], danger: 1,
+    hint: 'ミコルミン（きのこぐも）× ハート系', desc: '笑いと愛がまざって、部屋の植物とハグしたくなる。木目が手をふっている。',
+    f: function (m, s) { m.add.eu += 0.35 * s; m.add.em += 0.2 * s; m.mul.ps += 0.15 * s; m.ph.tp += 0.3 * s; } },
+  { id: 'warp', name: '光速ワープ', need: [{ s: 'prism' }, { c: 'dis' }], danger: 2,
+    hint: 'プリズマトリン（プリズム）× 解離系', desc: '数分間だけ、体ごと光の筒の中を飛んでいく。戻ってきたとき、どこにいたか思い出せない。',
+    f: function (m, s) { m.mul.ps += 0.5 * s; m.add.di += 0.6 * s; m.vis.kal += 1.0 * s; m.add.an += 0.2 * s; } },
+  { id: 'mintsour', name: 'ミントチューハイ', need: [{ s: 'mint' }, { c: 'alc' }], danger: 0,
+    hint: 'メンタセプト（ミント）× お酒', desc: 'スースーするレモンサワーみたいな夜。ちょっとだけ眠気がとぶ。',
+    f: function (m, s) { m.mask.alc += 0.2 * s; m.add.eu += 0.1 * s; } },
+  { id: 'syrupswamp', name: 'あまい沼', need: [{ s: 'syrup' }, { c: 'alc' }], danger: 3,
+    hint: 'シロピナール（シロップ）× お酒', desc: 'あまったるさとお酒で、ずぶずぶと沈む。体が重く、呼吸がにぶる。',
+    f: function (m, s) { m.add.se += 0.45 * s; m.add.di += 0.25 * s; m.rrMul += 0.6 * s; m.add.na += 0.2 * s; } },
+  { id: 'robot', name: 'ロボット歩き', need: [{ s: 'syrup' }, { c: 'dis' }], danger: 2,
+    hint: 'シロピナール（シロップ）× 解離系', desc: '手足がカクカクと別々に動く。自分が遠隔操作のロボットになったみたい。',
+    f: function (m, s) { m.add.di += 0.5 * s; m.add.na += 0.25 * s; m.rrMul += 0.2 * s; } },
+  { id: 'breakup', name: '空中分解', need: [{ s: 'rocket' }, { c: 'alc' }], danger: 2,
+    hint: 'ストラトリン（ロケット）× お酒', desc: '打ち上がったまま酔いが回る。ハイなのに足元はふらふら、心臓はばくばく。',
+    f: function (m, s) { m.mask.alc += 0.4 * s; m.ph.hr += 18 * s; m.add.an += 0.2 * s; } },
+  { id: 'loveod', name: 'ラブ・オーバードーズ', need: [{ distinct: 'emp', n: 2 }], danger: 3,
+    hint: 'ハート系 × 別のハート系', desc: '愛を重ねすぎた。世界中が好きすぎて、体温がとまらない。',
+    f: function (m, s) { m.ph.tp += 1.0 * s; m.ph.hr += 14 * s; m.add.em += 0.3 * s; m.add.na += 0.25 * s; m.dehyd += 1.5 * s; } },
+  { id: 'lovecall', name: '深夜の告白', need: [{ s: 'velvet' }, { c: 'alc' }], danger: 1,
+    hint: 'ベルベチン（ラブラムネ）× お酒', desc: 'だれかに気持ちを伝えたくて、スマホを手放せない。朝になって後悔するやつ。',
+    f: function (m, s) { m.add.em += 0.3 * s; m.add.eu += 0.2 * s; m.dehyd += 0.8 * s; } },
+  { id: 'loveparty', name: 'ラブ＆ネオン', need: [{ s: 'velvet' }, { c: 'psy' }], danger: 2,
+    hint: 'ベルベチン（ラブラムネ）× 幻覚系', desc: 'ピンクの光と愛の波。部屋がまるごとクラブのフロアになる。体温はぐんぐん上がる。',
+    f: function (m, s) { m.add.eu += 0.4 * s; m.mul.ps += 0.3 * s; m.ph.tp += 0.6 * s; m.vis.kal += 0.3 * s; } },
+  { id: 'mazemirror', name: '合わせ鏡の迷宮', need: [{ s: 'mirror' }, { c: 'psy' }], danger: 1,
+    hint: 'スペキュロン（かがみ）× 幻覚系', desc: '自分を見ている自分を、さらに見ている自分がいる。どこまでも続く。',
+    f: function (m, s) { m.add.di += 0.35 * s; m.mul.ps += 0.25 * s; m.vis.kal += 0.5 * s; } },
+  { id: 'tobaribottom', name: 'とばりの底', need: [{ c: 'del' }, { c: 'down' }], danger: 2,
+    hint: 'せん妄系 × ダウナー系', desc: '眠いのに、影の住人たちが寝かせてくれない。重くて、暗くて、息苦しい。',
+    f: function (m, s) { m.add.de += 0.4 * s; m.add.se += 0.3 * s; m.rrMul += 0.35 * s; } },
+  { id: 'paranoia', name: 'パラノイア・ラン', need: [{ c: 'del' }, { c: 'up' }], danger: 2,
+    hint: 'せん妄系 × アッパー系', desc: 'だれかに追われている気がして、部屋中を歩きまわってしまう。心臓が休まらない。',
+    f: function (m, s) { m.add.an += 0.6 * s; m.add.de += 0.3 * s; m.ph.hr += 20 * s; } },
+  { id: 'nabe', name: 'きのこ鍋', need: [{ s: 'kinoko' }, { c: 'alc' }], danger: 1,
+    hint: 'ミコルミン（きのこぐも）× お酒', desc: '笑いが止まらないまま、胃がぐつぐつ煮えてくる。だいたいトイレ行き。',
+    f: function (m, s) { m.add.na += 0.5 * s; m.add.eu += 0.15 * s; } },
+  { id: 'insomnia', name: 'ねむいのに眠れない', need: [{ s: 'nemu' }, { c: 'up' }], danger: 1,
+    hint: 'ソムナゾラム（ねむねむ）× アッパー系', desc: 'まぶたは重いのに、頭だけがフル回転。天井のシミを数えつづける夜。',
+    f: function (m, s) { m.add.an += 0.4 * s; m.mul.se -= 0.25 * s; m.irregular += 0.4 * s; } },
+  { id: 'heaven', name: 'ふわふわ天国', need: [{ c: 'emp' }, { c: 'op' }], danger: 2,
+    hint: 'ハート系 × オピオイド系', desc: 'あたたかくて、やさしくて、なにも怖くない。そのぶん呼吸のことも忘れそうになる。',
+    f: function (m, s) { m.add.eu += 0.4 * s; m.mask.op += 0.3 * s; m.rrMul += 0.3 * s; } },
+  { id: 'meltinghug', name: 'とろけるハグ', need: [{ c: 'emp' }, { c: 'down' }], danger: 1,
+    hint: 'ハート系 × ダウナー系', desc: 'クッションを抱きしめたまま、ゆっくりとろけていく。',
+    f: function (m, s) { m.add.em += 0.2 * s; m.add.se += 0.2 * s; m.add.an -= 0.3 * s; } },
+  { id: 'psymix', name: '幻覚ミックス', need: [{ distinct: 'psy', n: 2 }], danger: 1,
+    hint: '幻覚系 × 別の幻覚系', desc: '二種類の幻覚が混ざりあい、模様が模様を生んでいく。',
+    f: function (m, s) { m.mul.ps += 0.35 * s; m.add.an += 0.25 * s; m.vis.kal += 0.3 * s; } },
+  { id: 'doublesleep', name: 'ダブル睡眠', need: [{ distinct: 'down', n: 2 }], danger: 3,
+    hint: 'ダウナー系 × 別のダウナー系', desc: '鎮静を重ねがけした。まぶたも呼吸も、どんどん重くなる。',
+    f: function (m, s) { m.add.se += 0.5 * s; m.rrMul += 0.32 * s; } },
+  { id: 'doubleop', name: '重ねぬくぬく', need: [{ distinct: 'op', n: 2 }], danger: 3,
+    hint: 'オピオイド系 × 別のオピオイド系', desc: 'ぬくぬくの重ねがけ。とても危ない。呼吸が止まりかける。',
+    f: function (m, s) { m.add.se += 0.4 * s; m.rrMul += 0.9 * s; } },
+  { id: 'eternal', name: '永遠のとばり', need: [{ s: 'booster' }, { c: 'del' }], danger: 2,
+    hint: 'アンプリフェン（ブースター）× せん妄系', desc: 'ブースターでとばりが伸びつづける。朝が来ても、影たちは帰らない。',
+    f: function (m, s) { m.add.de += 0.4 * s; m.add.an += 0.3 * s; m.ph.hr += 12 * s; } },
+  { id: 'bottomless', name: '底なし解離', need: [{ s: 'booster' }, { c: 'dis' }], danger: 2,
+    hint: 'アンプリフェン（ブースター）× 解離系', desc: '体から離れたまま、なかなか戻ってこられない。',
+    f: function (m, s) { m.add.di += 0.5 * s; m.add.na += 0.2 * s; } },
+  { id: 'giga2', name: 'エナドリ・ナイト', need: [{ s: 'gigafx' }, { distinct: 'up', n: 2 }], danger: 2,
+    hint: 'ギガボルト × アッパー系', desc: 'エナドリでアッパーを流しこんだ。目はギンギン、心臓はドラムロール。',
+    f: function (m, s) { m.ph.hr += 15 * s; m.add.an += 0.2 * s; } },
   { id: 'reset', name: '強制リセット', need: [], special: true, danger: 1,
     hint: 'ネガトキソン（リセット）× オピオイド系', desc: 'ぬくぬく系を一瞬で打ち消した。命は助かるが、反動で最悪の気分になる。' },
   { id: 'placebo', name: 'プラセボ効果', need: [], special: true, danger: 0,
@@ -576,6 +647,7 @@ function bodyStep1(B, dt) {
   // ---- apply combination modifiers ----
   CH.forEach(function (c) { F[c] = F[c] * Math.max(0, m.mul[c]) + m.add[c]; });
   F.na = Math.max(0, F.na - B.naRelief * 1.2);
+  if (B.socialT > 0) { B.socialT -= dt; F.an -= 0.3; F.eu += 0.12; }
   CH.forEach(function (c) { if (F[c] < 0) F[c] = 0; });
   P.hr += m.ph.hr; P.tp += m.ph.tp;
 
@@ -1646,7 +1718,7 @@ function buildWorld() {
   var seat = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.035, 8, 20), M.ceramic); seat.rotation.x = PI / 2; seat.position.set(-0.07, 0.41, 0); seat.scale.set(1.25, 1, 1); toilet.add(seat);
   var tank = addBox(toilet, 0.2, 0.42, 0.42, M.ceramic, 0.22, 0.35, 0);
   addCol(2.2, 3.0, 3.4, 4.0);
-  addInter('toilet', 'トイレ', '吐く / 流す', new THREE.Vector3(2.55, 0.45, 3.7), [toilet], function () { actToilet(); });
+  addInter('toilet', 'トイレ', 'トイレを使う', new THREE.Vector3(2.55, 0.45, 3.7), [toilet], function () { actToilet(); });
   // washbasin + mirror
   var basin = new THREE.Group(); basin.position.set(0.85, 0, 3.5); bath.add(basin);
   addBox(basin, 0.42, 0.8, 0.5, M.white, 0.06, 0, 0);
@@ -2300,6 +2372,12 @@ function updateCamera(dt, B) {
     var cc = collide(x, z, 0.1); x = cc[0]; z = cc[1]; y = Math.min(y, ROOM.h - 0.15);
     pitch = lerp(pitch, -0.45, PL.oob * 0.6);
   }
+  PL.kneel = damp(PL.kneel || 0, GAME.kneelOn ? 1 : 0, 4, dt);
+  if (PL.kneel > 0.01) {
+    var kk = smooth(PL.kneel);
+    x = lerp(x, 2.12, kk); z = lerp(z, 3.7, kk); y = lerp(y, 0.8, kk);
+    var dy = ((-PI / 2 - yaw) % TAU + TAU * 1.5) % TAU - PI; yaw += dy * kk; pitch = lerp(pitch, -0.95, kk);
+  }
   WORLD.self.visible = PL.oob > 0.15;
   if (WORLD.self.visible) { WORLD.self.position.set(bx, 0, bz); WORLD.self.rotation.y = PL.yaw + PI; WORLD.self.traverse(function (o) { if (o.material) { o.material.transparent = true; o.material.opacity = clamp(PL.oob * 1.2, 0, 1); } }); }
   cam.position.set(x, y, z);
@@ -2447,6 +2525,22 @@ var UI_CSS = [
   '.rm-tog{width:52px;height:30px;border-radius:15px;background:rgba(255,255,255,.18);position:relative;cursor:pointer;pointer-events:auto;flex:0 0 auto}',
   '.rm-tog i{position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s}.rm-tog.on{background:#ff5fa8}.rm-tog.on i{left:25px}',
   '.rm-seg{display:flex;gap:4px}.rm-seg div{padding:6px 9px;border-radius:9px;background:rgba(255,255,255,.08);font-size:12px;font-weight:900;cursor:pointer;pointer-events:auto}.rm-seg div.on{background:#ff5fa8}',
+  '.rm-back{align-self:flex-start;margin-bottom:8px;padding:6px 12px;font-size:13px}',
+  '.rm-ph-status{font-family:"DotGothic16",monospace;font-size:22px;text-align:center;margin:4px 0 12px}.rm-ph-status span{display:block;font-family:inherit;font-size:12px;opacity:.75;margin-top:2px}',
+  '.rm-apps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px;padding:4px 2px 10px}',
+  '.rm-app{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;font-weight:700;cursor:pointer;pointer-events:auto;text-align:center}',
+  '.rm-app .ic{position:relative;width:58px;height:58px;border-radius:17px;display:flex;align-items:center;justify-content:center;font-size:28px;background:linear-gradient(160deg,rgba(255,255,255,.2),rgba(255,255,255,.05));border:1px solid var(--line)}',
+  '.rm-app .ic i,.rm-badge{font-style:normal;background:#ff3355;color:#fff;border-radius:10px;padding:1px 6px;font-size:11px;font-weight:900}.rm-app .ic i{position:absolute;right:-5px;top:-5px}',
+  '.rm-av{width:44px;height:44px;flex:0 0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px}.rm-av.big{width:96px;height:96px;font-size:52px;margin:6px auto}',
+  '.rm-item.tap{cursor:pointer;pointer-events:auto}',
+  '.rm-call{display:flex;flex-direction:column;gap:8px;text-align:center}.rm-call .nm{font-size:22px;font-weight:900}.rm-call .st{font-size:12px;opacity:.7}',
+  '.rm-call .lines{display:flex;flex-direction:column;gap:6px;text-align:left;min-height:120px}.rm-call .ln{padding:8px 11px;border-radius:12px;font-size:14px;line-height:1.5;background:rgba(255,255,255,.07)}.rm-call .ln b{display:block;font-size:11px;opacity:.7}.rm-call .ln.me{background:rgba(255,95,168,.18)}.rm-call .ln.sys{opacity:.7;font-size:12.5px}',
+  '.rm-chat{display:flex;flex-direction:column;gap:6px}.rm-chat .bub{max-width:78%;padding:8px 11px;border-radius:16px;font-size:14px;line-height:1.45;background:rgba(255,255,255,.1);align-self:flex-start;word-break:break-all}.rm-chat .bub.me{align-self:flex-end;background:#3ec46d;color:#06210f}.rm-chat .bub small{display:block;font-size:10px;opacity:.6;margin-top:2px}',
+  '.rm-sug{display:flex;flex-wrap:wrap;gap:6px}.rm-sug .btn{font-size:13px;padding:8px 11px;max-width:100%;word-break:break-all}',
+  '.rm-post{padding:10px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line);margin-bottom:10px}',
+  '.rm-feed{display:flex;flex-direction:column;gap:8px}.rm-tw{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:14px;line-height:1.5}.rm-tw.mine{border-color:rgba(255,95,168,.6)}',
+  '.rm-tw .hd{display:flex;align-items:center;gap:6px;font-size:12px}.rm-tw .hd small{margin-left:auto;opacity:.6}.rm-tw .ic{font-size:18px}.rm-tw img{width:100%;border-radius:10px;margin-top:6px;display:block}.rm-tw .ft{font-size:12px;opacity:.7;margin-top:4px}.rm-tw .rp{font-size:12.5px;margin-top:4px;padding-left:10px;border-left:2px solid var(--line);opacity:.9}',
+  '.btn.round.notif::after{content:"";position:absolute;right:4px;top:4px;width:12px;height:12px;border-radius:50%;background:#ff3355;box-shadow:0 0 8px #ff3355}.btn.round{position:relative}',
   '.rm-stick{position:absolute;width:110px;height:110px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06)}',
   '.rm-stick .knob{position:absolute;left:33px;top:33px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.4)}',
   '.rm-hint{position:absolute;left:14px;bottom:calc(var(--bot-safe) + 6px);font-size:11px;opacity:.55;line-height:1.5;max-width:46vw}',
@@ -2534,7 +2628,7 @@ function updateHUD(dt, B) {
   var fl = dominantFeelings(B, 4), cols = { ps: '#b46bff', st: '#30c8ff', se: '#6a7dff', pa: '#ffb347', di: '#7af0c8', de: '#8a8a9a', em: '#ff5fa8', an: '#ff3355', na: '#9be15d', eu: '#ffe14d', drunk: '#d8f060' };
   HUD.feel.innerHTML = fl.map(function (f) { return '<div><div class="b"><i style="width:' + clamp(f[1] / 1.6 * 100, 4, 100) + '%;background:' + cols[f[0]] + '"></i></div>' + EFFECT_NAMES[f[0]] + '</div>'; }).join('');
   // phone screen texture on table
-  drawPhoneScreen(fmtClock(GAME.clock), false);
+  drawPhoneScreen(fmtClock(GAME.clock), totalUnread() > 0);
 }
 function updateFocusUI(it) {
   HUD.cross.className = 'rm-cross' + (it ? ' on' : '');
@@ -2658,23 +2752,6 @@ function openBedMenu() {
 }
 
 // ---- phone ----------------------------------------------------------------------
-var PHONE_TAB = 'body';
-function openPhone(tab) {
-  if (tab) PHONE_TAB = tab;
-  openModal('スマホ', function (body, M) {
-    var tabs = el('div', 'rm-tabs', '', M.sheet); M.sheet.insertBefore(tabs, body);
-    var defs = [['body', '🫀 からだ'], ['zukan', '🍬 ラムネ図鑑'], ['combo', '🧪 飲み合わせ'], ['help', '🚑 たすけ'], ['set', '⚙ 設定']];
-    if (GAME.mode !== 'play') defs = defs.filter(function (d) { return d[0] !== 'body' && d[0] !== 'help'; });
-    if (!defs.some(function (d) { return d[0] === PHONE_TAB; })) PHONE_TAB = defs[0][0];
-    function render() {
-      tabs.innerHTML = '';
-      defs.forEach(function (d) { var t = el('div', 'rm-tab' + (PHONE_TAB === d[0] ? ' on' : ''), d[1], tabs); onTap(t, function () { PHONE_TAB = d[0]; sfx('ui'); render(); }); });
-      body.innerHTML = '';
-      ({ body: phoneBody, zukan: phoneZukan, combo: phoneCombo, help: phoneHelp, set: phoneSettings })[PHONE_TAB](body);
-    }
-    render();
-  });
-}
 function phoneBody(body) {
   var B = GAME.B;
   el('div', 'rm-big', '<div><b>' + Math.round(B.hr) + '</b><span>心拍（回/分）</span></div><div><b>' + B.tp.toFixed(1) + '℃</b><span>体温</span></div><div><b>' + B.rr.toFixed(1) + '</b><span>呼吸（回/分）</span></div><div><b>' + Math.round(B.con) + '%</b><span>意識</span></div><div><b>' + Math.round(B.hyd * 100) + '%</b><span>水分</span></div><div><b>' + (B.bac * 100 / 100).toFixed(3) + '%</b><span>血中アルコール（架空）</span></div>', body);
@@ -2779,7 +2856,7 @@ function startNight() {
   GAME.fx.fade = 1;
   WORLD.cans.forEach(function (m) { RENDER.scene.remove(m); }); WORLD.cans = [];
   WORLD.lightMode = 0; WORLD.tvOn = true; AU.music = true; auVol();
-  resetPlayer();
+  resetPlayer(); GAME.regret = []; GAME.endBy = null; resetPhone(); clearPuddles();
   GAME.mode = 'play'; INPUT.enabled = true;
   showHUD(true); setSpeed(1); WORLD.bed = WORLD.bedMain;
   HUD.hint.innerHTML = isTouchDevice() || isMobile() ? '左側をドラッグで移動<br>右側をドラッグで見回す<br>モノをタップでしらべる' : 'WASD 移動 ・ ドラッグで見回す<br>クリック/E しらべる ・ F 速さ ・ Tab スマホ';
@@ -2843,11 +2920,47 @@ function actWater() {
 }
 function actToilet() {
   var B = GAME.B;
-  var recent = B.doses.some(function (d) { var s = SUB[d.s]; return !s.hidden && d.t < s.pk; });
-  if (B.F.na > 0.25 || B.stom > 0.3 || recent) {
-    GAME.lock = true; GAME.fx.vomit = 1.6; sfx('vomit');
-    setTimeout(function () { vomit(B); sfx('flush'); GAME.lock = false; toast('トイレで吐いた…。少し楽になった。' + (recent || B.stom > 0.3 ? '（まだ吸収されていない分が減った）' : ''), 'good', 4); }, 1500);
-  } else { sfx('flush'); toast('トイレを流した。とくに吐き気はない。'); }
+  openModal('トイレ', function (body) {
+    var d = el('div', 'rm-detail', '', body);
+    var full = B.stom > 0.3 || B.doses.some(function (x) { var s = SUB[x.s]; return !s.hidden && x.t < s.pk * 1.2; });
+    el('p', '', B.F.na > 0.5 ? 'うっ…胃がひっくりかえりそう。' : B.F.na > 0.2 ? 'ちょっと気持ち悪い。' : 'とくに気持ち悪くはない。', d);
+    el('div', 'rm-kv', '<span>吐き気</span><b>' + (B.F.na > 0.9 ? 'かなり強い' : B.F.na > 0.4 ? 'ある' : B.F.na > 0.1 ? '少し' : 'なし') + '</b><span>胃の中</span><b>' + (full ? 'まだ吸収されていないものがある' : 'ほとんど空っぽ') + '</b>', d);
+    var b1 = el('button', 'btn pri', '🤮 便器に吐く', d); onTap(b1, function () { closeModal(true); toiletVomit(); });
+    var b2 = el('button', 'btn', '🚽 流す', d); onTap(b2, function () { closeModal(true); sfx('flush'); toast('トイレを流した。'); });
+    var b3 = el('button', 'btn', '🪑 座ってひと休み（10分）', d); onTap(b3, function () { closeModal(true); B.naRelief = Math.max(B.naRelief, 0.2); bodyStep(B, 10); GAME.clock += 10; toast('便座に座って少し休んだ。'); });
+    el('div', 'rm-note', '※ 吐いても、すでに体に入った分は減りません。具合が悪いときは迷わず119番。', body);
+  });
+}
+function toiletVomit() {
+  var B = GAME.B;
+  var full = B.stom > 0.3 || B.F.na > 0.2 || B.doses.some(function (x) { var s = SUB[x.s]; return !s.hidden && x.t < s.pk * 1.2; });
+  GAME.lock = true; GAME.kneelOn = true;
+  setTimeout(function () {
+    if (full) { GAME.fx.vomit = 1.6; sfx('vomit'); } else { sfx('gulp'); }
+  }, 900);
+  setTimeout(function () {
+    if (full) { GAME.inToilet = true; vomit(B); GAME.inToilet = false; B.events = B.events.filter(function (e) { return e.type !== 'vomit'; }); sfx('flush'); toast('便器に吐いた…。少し楽になった。', 'good', 4); }
+    else { B.naRelief = Math.max(B.naRelief, 0.15); toast('えずいただけで、なにも出なかった。'); }
+    GAME.kneelOn = false; GAME.lock = false;
+  }, 2600);
+}
+// vomit puddles (when it happens away from the toilet)
+var PUDDLES = [];
+function clearPuddles() { PUDDLES.forEach(function (p) { RENDER.scene.remove(p.m); WORLD.interMeshes = WORLD.interMeshes.filter(function (x) { return x !== p.m; }); WORLD.inter = WORLD.inter.filter(function (x) { return x !== p.it; }); }); PUDDLES = []; }
+function addPuddle(x, z) {
+  if (!TEX.puddle) {
+    var c = mkCanvas(128, 128), g = c.getContext('2d');
+    for (var i = 0; i < 14; i++) { g.fillStyle = 'rgba(' + (180 + Math.random() * 40 | 0) + ',' + (170 + Math.random() * 40 | 0) + ',' + (90 + Math.random() * 40 | 0) + ',0.85)'; g.beginPath(); g.ellipse(64 + rnd(-30, 30), 64 + rnd(-30, 30), rnd(10, 26), rnd(8, 20), rnd(0, 3), 0, TAU); g.fill(); }
+    TEX.puddle = toTex(c);
+  }
+  var m = new THREE.Mesh(new THREE.CircleGeometry(0.32, 20), new THREE.MeshStandardMaterial({ map: TEX.puddle, transparent: true, roughness: 0.2, depthWrite: false }));
+  m.rotation.x = -PI / 2; m.position.set(x, 0.012, z); RENDER.scene.add(m);
+  var p = { m: m };
+  p.it = addInter('puddle', '床の汚れ', '床をふく', new THREE.Vector3(x, 0.05, z), [m], function () {
+    sfx('water'); RENDER.scene.remove(m); WORLD.interMeshes = WORLD.interMeshes.filter(function (q) { return q !== m; }); WORLD.inter = WORLD.inter.filter(function (q) { return q !== p.it; }); PUDDLES = PUDDLES.filter(function (q) { return q !== p; });
+    toast('床をきれいにふいた。');
+  }, { reach: 2.0 });
+  PUDDLES.push(p);
 }
 function actMirror() {
   var B = GAME.B, F = B.F, out = [];
@@ -2934,7 +3047,7 @@ function processEvents() {
         sfx('combo');
         banner(isNew ? '🧪 NEW 飲み合わせ発見' : '🧪 飲み合わせ', cb.name, cb.desc, 'dg' + cb.danger);
         break;
-      case 'vomit': if (GAME.fx.vomit <= 0) { GAME.fx.vomit = 1.4; sfx('vomit'); toast(B.unconscious ? '意識がないまま吐いてしまった！' : '耐えきれずに吐いてしまった…', 'warn'); } break;
+      case 'vomit': if (GAME.fx.vomit <= 0) { GAME.fx.vomit = 1.4; sfx('vomit'); toast(B.unconscious ? '意識がないまま吐いてしまった！' : '耐えきれずに吐いてしまった…' + (areaAt(PL.x, PL.z).id === 'toilet' ? '（ぎりぎりトイレに間に合った）' : '（床が汚れた）'), 'warn'); if (areaAt(PL.x, PL.z).id !== 'toilet') addPuddle(PL.x - Math.sin(PL.yaw) * 0.5, PL.z - Math.cos(PL.yaw) * 0.5); } break;
       case 'pass': toast('意識が…遠のいていく…', 'warn', 4); setSpeed(1); break;
       case 'wake': toast('…はっ。' + Math.max(1, Math.round(d.mins)) + '分くらい記憶がない。', 'warn', 4); break;
       case 'warn': toast('⚠ ' + d.msg, 'warn'); sfx('warn'); break;
@@ -3119,7 +3232,7 @@ function showEnding() {
     note = { rr: 'お酒・睡眠薬・オピオイドなど「鎮静系」どうしの組み合わせは、現実でも呼吸を止めてしまうことがあります。', hr: 'アッパー系の重ねがけや、ほかの薬との組み合わせは、現実でも心臓に大きな負担をかけます。', tp: '体温を上げる薬と脱水・興奮の組み合わせは、現実でも命にかかわります。', vomit: '泥酔して意識がない人は、吐いたもので窒息しないよう横向きに寝かせて、すぐに119番を。' }[I.cause] || '';
     rank = 'GAME OVER';
   } else if (I.kind === 'ambulance') {
-    title = '救急搬送'; sub = '救急車で運ばれて、病院のベッドで朝をむかえた。'; note = '具合が悪いとき・だれかが倒れているときは、迷わず119番。それはかっこ悪いことじゃない。'; rank = '生きてるだけで100点';
+    title = '救急搬送'; sub = (GAME.endBy ? GAME.endBy + 'が救急車を呼んでくれた。' : '') + '救急車で運ばれて、病院のベッドで朝をむかえた。'; note = '具合が悪いとき・だれかが倒れているときは、迷わず119番。それはかっこ悪いことじゃない。'; rank = '生きてるだけで100点';
   } else {
     title = I.kind === 'blackmorning' ? '気づいたら朝' : 'GOOD MORNING';
     sub = I.kind === 'blackmorning' ? '床の上で目が覚めた。昨日の夜のことは、ほとんど覚えていない。' : '窓の外が明るい。長い夜が終わった。';
@@ -3134,6 +3247,7 @@ function showEnding() {
     (I.kind !== 'dead' ? '<div style="font-size:13px;opacity:.75">スコア</div><div style="font-family:DotGothic16,monospace;font-size:40px;line-height:1">' + I.score + '</div>' : '') +
     '<div class="rm-big" style="margin:12px 0;text-align:left"><div><b>' + S.pills + '</b><span>飲んだラムネ</span></div><div><b>' + S.cans + '</b><span>飲んだ缶</span></div><div><b>' + Math.round(S.maxHR) + '</b><span>最高心拍</span></div><div><b>' + S.maxTp.toFixed(1) + '℃</b><span>最高体温</span></div><div><b>' + S.minRR.toFixed(1) + '</b><span>最低呼吸</span></div><div><b>' + S.vomits + '</b><span>吐いた回数</span></div></div>' +
     '<div style="font-size:13px;text-align:left;line-height:1.8"><b>見つけた飲み合わせ：</b>' + foundHtml + '</div>' +
+    (GAME.regret && GAME.regret.length ? '<div style="font-size:13px;text-align:left;line-height:1.7;margin-top:8px"><b>📱 朝になって見返したスマホ：</b><br>' + GAME.regret.slice(-5).map(esc).join('<br>') + '<br><span style="opacity:.7">…そっとアプリを閉じた。</span></div>' : '') +
     (note ? '<div class="rm-alert" style="margin-top:12px;text-align:left">' + esc(note) + '</div>' : '') +
     '<div class="rm-menu" style="margin:16px auto 0"><button class="btn pri" id="rm-again">もう一晩</button><button class="btn ghost" id="rm-title">タイトルへ</button></div>' +
     '<div class="rm-note">これはフィクションのゲームです。登場するラムネ・お酒はすべて架空のものです。</div></div>';
@@ -3152,7 +3266,7 @@ function toTitle() {
   var html = '<div class="rm-logo-pre">キケンな</div><div class="rm-logo">ラムネ<br><span>シミュレーター</span></div><div class="rm-logo-sub">DANGEROUS RAMUNE SIMULATOR</div>' +
     '<div style="font-size:13px;opacity:.85">架空のラムネとチューハイで過ごす、ひと晩のシミュレーター</div>' +
     '<div class="rm-menu"><button class="btn pri" id="rm-start">はじめる</button><button class="btn" id="rm-zukan">図鑑</button><button class="btn" id="rm-howto">あそびかた</button><button class="btn ghost" id="rm-set">設定</button></div>' +
-    '<div class="rm-note">図鑑：ラムネ ' + Object.keys(SAVE.seenSubs).length + '/19 ・ 飲み合わせ ' + Object.keys(SAVE.seenCombos).length + '/' + COMBOS.length + (SAVE.best ? ' ・ ベスト ' + SAVE.best : '') + '<br>※ フィクションです。実在の薬物・製品とは関係ありません。</div>';
+    '<div class="rm-note">図鑑：ラムネ ' + Object.keys(SAVE.seenSubs).length + '/' + SUBS.filter(function (s) { return !s.hidden; }).length + ' ・ 飲み合わせ ' + Object.keys(SAVE.seenCombos).length + '/' + COMBOS.length + (SAVE.best ? ' ・ ベスト ' + SAVE.best : '') + '<br>※ フィクションです。実在の薬物・製品とは関係ありません。</div>';
   showScreen(html, 'rm-title');
   onTap(document.getElementById('rm-start'), function () { initAudio(); startNight(); });
   onTap(document.getElementById('rm-zukan'), function () { initAudio(); openPhone('zukan'); });
@@ -3196,6 +3310,325 @@ function updateTitle(dt) {
 }
 
 
+// ===== 12_phone.js =====
+// ---- phone: home screen, calls, DM, SNS ---------------------------------------------
+// friends are fictional characters
+var FRIENDS = [
+  { id: 'misaki', name: 'ミサキ', icon: '🐰', col: '#ff8fb1', desc: '幼なじみ。しっかり者で心配性', sleep: 25 * 60 + 30 },
+  { id: 'kenta', name: 'ケンタ', icon: '🦊', col: '#ffb347', desc: '大学の友達。夜型で朝までゲーム', sleep: 31 * 60 + 30 },
+  { id: 'yuzu', name: 'ユズ', icon: '🍋', col: '#d8f060', desc: 'バイト先の後輩。絵文字が多い', sleep: 26 * 60 + 30 },
+  { id: 'mom', name: 'お母さん', icon: '🌷', col: '#9ec5e8', desc: '実家の母。夜は早い', sleep: 22 * 60 + 30 }
+];
+var FRIEND = {}; FRIENDS.forEach(function (f) { FRIEND[f.id] = f; });
+
+function moodKey(B) {
+  var F = B.F;
+  if (B.danger > 15 || B.rr < 9 || B.hr > 170 || B.tp > 39.3) return 'danger';
+  if (F.de > 0.6) return 'del';
+  if (F.di > 0.8) return 'dis';
+  if (F.ps > 0.7) return 'psy';
+  if (F.em > 0.6) return 'emp';
+  if (F.st > 0.7) return 'up';
+  if (F.se > 0.9 || F.pa > 0.8) return 'down';
+  if (B.motor > 0.6) return 'drunk';
+  if (B.motor > 0.22) return 'tipsy';
+  return 'sober';
+}
+var MOOD_NAME = { sober: 'シラフ', tipsy: 'ほろ酔い', drunk: '泥酔', up: 'ハイテンション', down: 'ねむねむ', psy: 'トリップ中', dis: 'ふわふわ', emp: 'ラブ', del: 'こんらん', danger: 'ぐったり' };
+
+// what *you* end up saying, by mood
+var ME_CALL = {
+  sober: ['もしもし、いま暇？', 'なんとなく声聞きたくなって。'],
+  tipsy: ['もしもし〜！いま家で飲んでる〜', 'ねえ聞いて、ZER9うまいんだけど'],
+  drunk: ['もひもひ…？あれ、だれにかけたんだっけ', 'おれ…ぜんぜん酔ってないから…'],
+  up: ['ねえねえ聞いて！いま最高にアイデアが降ってきてて！', '今から朝までしゃべろうよ！'],
+  down: ['……ん……もしもし……', '……ねむい……'],
+  psy: ['ねえ、電話の声が虹色に見える…', 'いま天井が星空なんだけど、そっちは？'],
+  dis: ['…いま、自分がどこにいるかわかんない…', '自分の声が遠くから聞こえる…'],
+  emp: ['ほんとにさ…出会ってくれてありがとう…', 'だいすき。なんか急に言いたくなった。'],
+  del: ['さっきうちに来てたよね？…え、来てない？', 'ねえ、後ろでだれかしゃべってない？'],
+  danger: ['……なんか…息が…くるしい……', '……たすけて……かも……']
+};
+var FR_CALL = {
+  misaki: { sober: 'めずらしいね！ちゃんとご飯食べた？', tipsy: 'また飲んでるの？ほどほどにね〜', drunk: 'ちょっと、ろれつ回ってないよ…？水飲んで、もう寝な。', up: 'テンション高すぎない…？ちゃんと寝なよ？', down: 'え、声ねむそう…大丈夫？', psy: '…なに言ってるの？ほんとに大丈夫？', dis: 'ねえ、ほんとに大丈夫？いま家？', emp: 'え、どうしたの急に…でも、ありがと。笑', del: 'だれも来てないよ…？ちょっと心配なんだけど。', danger: 'ちょっと待って！それ本気で危ないって！救急車呼ぶよ！？' },
+  kenta: { sober: 'おー、どした？いまランクマ中！', tipsy: 'いいねぇ、俺も飲みながらゲームしてる', drunk: 'お前ベロベロじゃん！笑　水飲めって', up: 'わかる！わかんないけどわかる！', down: 'おーい、寝落ちすんなよ〜', psy: '星空？いいなー、こっちはモニターしか見えない', dis: 'お前、声が宇宙人みたいになってる', emp: 'お、おう…俺も好きだぞ…？笑', del: 'だれもいねーって。こわいこと言うなよ', danger: 'え、マジでやばくない？救急車呼べ！俺から呼ぼうか！？' },
+  yuzu: { sober: 'せんぱーい！どうしたんですか〜？☺️', tipsy: 'せんぱい飲んでる〜！いいな〜🍋', drunk: 'せんぱい、酔いすぎです😂 お水！', up: 'せんぱいめっちゃ元気〜！⚡', down: 'せんぱい、ねむそう…おやすみなさい？🌙', psy: 'え、天井が星空…？せんぱい大丈夫です…？', dis: 'せんぱい、どこにいるんですか…？', emp: 'えっ…せんぱい…どうしたんですか…🥺', del: 'え、こわいこわい！だれもいないですよ…？', danger: 'せんぱい！？それ救急車案件です！呼びますね！？' },
+  mom: { sober: 'あら、めずらしい。ちゃんとご飯食べてる？', tipsy: 'お酒もほどほどにしなさいよ。', drunk: 'あんた酔っぱらってるでしょ。早く寝なさい。', up: 'こんな時間に元気ねえ…早く寝なさい。', down: 'もう寝なさい。おやすみ。', psy: '…なに言ってるの？熱でもあるの？', dis: 'ちょっと、大丈夫なの？', emp: 'あら…お母さんもよ。どうしたの急に。', del: 'だれも行ってないわよ。疲れてるんじゃない？', danger: '声がおかしいわよ！いますぐ救急車呼びなさい！' }
+};
+var SLEEP_LINE = { misaki: '（留守番電話サービスに接続します…ミサキはもう寝ているみたい）', kenta: '（呼び出し音だけが鳴りつづける…ヘッドホンで気づいてないのかも）', yuzu: '（留守番電話…ユズはもう寝ているみたい）', mom: '（留守番電話…お母さんはもう寝ている時間だ）' };
+
+// DM: suggestions by mood (drunk ones get mangled)
+var DM_SUGGEST = {
+  sober: ['なにしてる？', '明日ひま？', 'おつかれー'],
+  tipsy: ['いま家で飲んでる🍋', 'ZER9 なんぼんめだっけ', '会いたいな〜'],
+  drunk: ['いまなにしてりゅ', 'あいたいいいいい', 'おれ　よってない'],
+  up: ['ねえ聞いて！！！', '今から集まらない！？', 'すごいこと思いついた⚡⚡⚡'],
+  down: ['ねむ', '……', 'おやすみ'],
+  psy: ['空の色、何色に見える？', 'かべが呼吸してるんだけど', '🌈🌈🌈'],
+  dis: ['いまどこにいるかわからない', 'ここにいる？', '自分がとおい'],
+  emp: ['だいすき', 'いつもありがとう🫶', '出会ってくれてありがとう'],
+  del: ['さっき来てたよね？', 'うちにだれかいる', '電話鳴った？'],
+  danger: ['たすけて', 'くるしい', '息が']
+};
+var FR_DM = {
+  misaki: { sober: 'ひまだよー。どした？', tipsy: '飲みすぎないでね！', drunk: '酔ってるでしょ。水飲んで寝な？', up: 'テンション高っ。ちゃんと寝てね', down: 'おやすみー', psy: '？？？ 大丈夫？', dis: 'え、家にいるんだよね？', emp: 'なに急に〜照れる', del: 'だれも来てないよ？大丈夫？', danger: '本気でやばいなら119して！！いま電話する！' },
+  kenta: { sober: 'ゲーム中ー', tipsy: 'かんぱーい🍺', drunk: 'なにいってんのw', up: 'わかるwww', down: 'おやすみー', psy: 'いい夜すごしてんなw', dis: 'どこ行ったんだよw', emp: 'お、おう？ありがと？', del: 'こわいこと言うなし', danger: 'え、マジならすぐ119な！！' },
+  yuzu: { sober: 'おつかれさまです〜☺️', tipsy: 'いいな〜🍋🍋', drunk: 'せんぱいwww 寝てください😂', up: 'どうしたんですか⚡笑', down: 'おやすみなさい🌙', psy: '🌈？？', dis: 'せんぱい大丈夫です…？', emp: '🥺🥺🥺', del: 'え、こわい…', danger: 'せんぱい！！119してください！！' },
+  mom: { sober: 'げんき？', tipsy: '飲みすぎないように', drunk: '早く寝なさい', up: 'もう寝なさい', down: 'おやすみ', psy: '大丈夫？', dis: '大丈夫なの？', emp: 'お母さんもよ', del: '疲れてるのよ。早く寝なさい', danger: 'すぐ119番しなさい！' }
+};
+var FR_PING = {
+  misaki: ['起きてる？', '明日のお昼、どうする？', 'ちゃんと寝なよー'],
+  kenta: ['今からゲームやらん？', 'ねむれん', 'ガチャ爆死した'],
+  yuzu: ['せんぱーい！起きてますか〜？🌙', 'シフト代わってほしいです🙏', '見て、夜の空きれい✨'],
+  mom: ['ちゃんとご飯食べてる？', 'お米送ったからね']
+};
+
+// SNS (fictional app "ナイトライン")
+var SNS_USERS = [
+  { name: 'まよなかの猫', icon: '🐈' }, { name: 'コンビニ夜勤', icon: '🏪' }, { name: '終電のがした', icon: '🚃' }, { name: 'ねむれないOL', icon: '🌙' }, { name: '深夜ラジオ好き', icon: '📻' }, { name: '月見バーガー', icon: '🍔' }
+];
+var SNS_POOL = ['寝る前にカップ麺食べちゃった', 'まだ起きてる人〜？', '終電のがしたので歩いて帰ってます', '夜中のコンビニって落ちつく', '明日（もう今日）のことは考えない', '深夜ラジオおもしろすぎる', 'ねむれないから羊かぞえてる 1243匹', '雨のにおいがする', '月がきれい', 'あしたの自分、がんばれ'];
+var SNS_SUGGEST = {
+  sober: ['今夜はのんびり。', '夜景がきれい。', 'みかんうまい'],
+  tipsy: ['ZER9うますぎ問題', '金曜の夜さいこう🍋', 'ほろよい'],
+  drunk: ['おれは　よってない', 'みんなだいすきだあああああ', 'ゆかがななめ'],
+  up: ['人生の真理に気づいたかもしれない', '今なら何でもできる！！！', '朝まで起きてる人集合！！'],
+  down: ['ねむ', 'ソファと結婚した', '……'],
+  psy: ['かべが呼吸してる', '天井の向こうに宇宙があった', '色に音がある🌈'],
+  dis: ['自分の体を後ろから見てる', 'いまどこ', '重力どこいった'],
+  emp: ['フォロワーのみんな愛してる🫶', 'この世界やさしすぎる', '今夜、全員と友達になりたい'],
+  del: ['ソファにだれか座ってる', 'さっきから壁に虫が', 'スマホ鳴った？'],
+  danger: ['たすけ', 'いき', '…']
+};
+var SNS_REPLIES = ['え、だいじょうぶ？', 'わかる', 'それな', '寝なよw', '今夜もおつかれ', '朝になったら消しなよ笑', 'なにがあった', '🌙'];
+
+function mangle(t, k) {
+  if (k <= 0) return t;
+  var s = '', small = 'ぁぃぅぇぉゃゅょっ';
+  for (var i = 0; i < t.length; i++) {
+    var c = t[i];
+    s += c;
+    if (Math.random() < 0.12 * k) s += c;
+    if (Math.random() < 0.06 * k) s += small[Math.floor(Math.random() * small.length)];
+  }
+  return s;
+}
+
+// per-night phone state
+function resetPhone() {
+  GAME.dm = {}; GAME.unread = {}; FRIENDS.forEach(function (f) { GAME.dm[f.id] = []; GAME.unread[f.id] = 0; });
+  GAME.dm.misaki.push({ me: false, text: '今日はちゃんと休みなよー', at: START_CLOCK - 120 });
+  GAME.sns = [];
+  for (var i = 0; i < 5; i++) snsNpcPost(START_CLOCK - (5 - i) * 25);
+  GAME.phoneQ = []; GAME.pingT = rnd(40, 70); GAME.snsT = 30; GAME.calls = 0;
+  updatePhoneBadge();
+}
+function snsNpcPost(at) {
+  var u = pick(SNS_USERS);
+  GAME.sns.unshift({ user: u.name, icon: u.icon, text: pick(SNS_POOL), likes: Math.floor(rnd(0, 40)), at: at, replies: [] });
+  if (GAME.sns.length > 40) GAME.sns.pop();
+}
+function totalUnread() { var n = 0; for (var k in GAME.unread) n += GAME.unread[k]; return n; }
+function updatePhoneBadge() { if (HUD.bPhone) HUD.bPhone.classList.toggle('notif', totalUnread() > 0); }
+function friendAwake(f) { return GAME.clock < f.sleep || (f.id === 'kenta' && Math.random() < 0.8); }
+
+// runs every frame in play (real-time dt; game-time from GAME.clock)
+function updatePhone(dt) {
+  if (!GAME.phoneQ) return;
+  for (var i = GAME.phoneQ.length - 1; i >= 0; i--) {
+    var q = GAME.phoneQ[i]; q.t -= dt;
+    if (q.t > 0) continue;
+    GAME.phoneQ.splice(i, 1);
+    if (q.type === 'dm') {
+      GAME.dm[q.f].push({ me: false, text: q.text, at: GAME.clock });
+      if (PHONE_APP.app === 'dmthread' && PHONE_APP.f === q.f && MODAL) { renderPhoneApp(); sfx('ui'); }
+      else { GAME.unread[q.f]++; toast('💬 ' + FRIEND[q.f].name + '「' + q.text + '」'); sfx('buzz'); }
+      updatePhoneBadge();
+    } else if (q.type === 'like') {
+      var p = q.ref; p.likes += q.n; if (q.reply) p.replies.push(q.reply);
+      if (q.notify) toast('📣 あなたの投稿に いいね ' + p.likes + ' 件' + (q.reply ? '・返信「' + q.reply.text + '」' : ''));
+    }
+  }
+  if (GAME.paused) return;
+  // friends sometimes message you first; the timeline keeps moving
+  GAME.pingT -= dt * (GAME.speed || 1);
+  if (GAME.pingT <= 0) {
+    GAME.pingT = rnd(45, 90);
+    var aw = FRIENDS.filter(function (f) { return friendAwake(f); });
+    if (aw.length) { var f = pick(aw); GAME.phoneQ.push({ type: 'dm', f: f.id, text: pick(FR_PING[f.id]), t: 0 }); }
+  }
+  GAME.snsT -= dt * (GAME.speed || 1);
+  if (GAME.snsT <= 0) { GAME.snsT = rnd(20, 40); snsNpcPost(GAME.clock); }
+}
+
+// ---- phone UI -----------------------------------------------------------------------
+var PHONE_APP = { app: 'home', f: null };
+var APPS = [
+  { id: 'body', icon: '🫀', name: 'からだ', play: true },
+  { id: 'call', icon: '📞', name: '電話', play: true },
+  { id: 'dm', icon: '💬', name: 'メッセージ', play: true },
+  { id: 'sns', icon: '🌙', name: 'ナイトライン', play: true },
+  { id: 'zukan', icon: '🍬', name: 'ラムネ図鑑' },
+  { id: 'combo', icon: '🧪', name: '飲み合わせ' },
+  { id: 'help', icon: '🚑', name: '119・たすけ', play: true },
+  { id: 'set', icon: '⚙', name: '設定' }
+];
+function openPhone(app) {
+  PHONE_APP.app = app || 'home'; PHONE_APP.f = null;
+  if (PHONE_APP.app === 'home' && GAME.mode !== 'play') PHONE_APP.app = 'zukan';
+  openModal('スマホ', function (body, M) { PHONE_APP.body = body; renderPhoneApp(); });
+}
+function phoneNav(app, f) { PHONE_APP.app = app; PHONE_APP.f = f || null; sfx('ui'); renderPhoneApp(); }
+function renderPhoneApp() {
+  var body = PHONE_APP.body; if (!body || !MODAL) return;
+  body.innerHTML = '';
+  var a = PHONE_APP.app, playing = GAME.mode === 'play';
+  var titles = { home: 'スマホ', body: 'からだ', call: '電話', dm: 'メッセージ', dmthread: FRIEND[PHONE_APP.f] ? FRIEND[PHONE_APP.f].name : '', sns: 'ナイトライン', zukan: 'ラムネ図鑑', combo: '飲み合わせ図鑑', help: '119・たすけ', set: '設定', calling: '通話' };
+  setModalTitle(titles[a] || 'スマホ');
+  if (a !== 'home' && a !== 'calling') {
+    var back = el('button', 'btn ghost rm-back', '← ' + (a === 'dmthread' ? 'メッセージ' : 'ホーム'), body);
+    onTap(back, function () { phoneNav(a === 'dmthread' ? 'dm' : (playing ? 'home' : 'zukan')); });
+  }
+  if (a === 'home') return phoneHome(body);
+  ({ body: phoneBody, zukan: phoneZukan, combo: phoneCombo, help: phoneHelp, set: phoneSettings, call: phoneCallList, dm: phoneDMList, dmthread: phoneDMThread, sns: phoneSNS })[a](body);
+  if (a === 'dmthread') { var sc = body; setTimeout(function () { sc.scrollTop = sc.scrollHeight; }, 0); }
+}
+function phoneHome(body) {
+  var B = GAME.B;
+  el('div', 'rm-ph-status', fmtClock(GAME.clock) + '　<span>いまの状態：' + MOOD_NAME[moodKey(B)] + '</span>', body);
+  var g = el('div', 'rm-apps', '', body);
+  APPS.forEach(function (ap) {
+    var n = ap.id === 'dm' ? totalUnread() : 0;
+    var c = el('div', 'rm-app', '<div class="ic">' + ap.icon + (n ? '<i>' + n + '</i>' : '') + '</div><div>' + ap.name + '</div>', g);
+    onTap(c, function () { phoneNav(ap.id); });
+  });
+}
+// ---- calls ----
+function phoneCallList(body) {
+  var l = el('div', 'rm-list', '', body);
+  FRIENDS.forEach(function (f) {
+    var it = el('div', 'rm-item', '<div class="rm-av" style="background:' + f.col + '">' + f.icon + '</div><div class="tx"><b>' + f.name + '</b><small>' + f.desc + '</small></div>', l);
+    var b = el('button', 'btn', '📞', it); onTap(b, function () { startCall(f); });
+  });
+  el('div', 'rm-note', '登場する友達はすべて架空の人物です。', body);
+}
+function startCall(f) {
+  var B = GAME.B, body = PHONE_APP.body, mood = moodKey(B);
+  PHONE_APP.app = 'calling'; setModalTitle('通話');
+  body.innerHTML = '';
+  var box = el('div', 'rm-call', '<div class="rm-av big" style="background:' + f.col + '">' + f.icon + '</div><div class="nm">' + f.name + '</div><div class="st">呼び出し中…</div><div class="lines"></div>', body);
+  var st = box.querySelector('.st'), lines = box.querySelector('.lines');
+  var hang = el('button', 'btn warn', '📵 切る', box);
+  var done = false;
+  onTap(hang, function () { done = true; phoneNav('call'); });
+  sfx('buzz');
+  function line(who, text, cls) { var d = el('div', 'ln ' + cls, '<b>' + esc(who) + '</b>' + esc(text), lines); }
+  var awake = friendAwake(f);
+  var steps = [];
+  if (!awake) steps.push(function () { st.textContent = '応答なし'; line('', SLEEP_LINE[f.id], 'sys'); });
+  else {
+    steps.push(function () { st.textContent = '通話中 0:01'; sfx('click'); });
+    var mine = ME_CALL[mood];
+    steps.push(function () { line('あなた', mangle(mine[0], mood === 'drunk' ? 1.2 : mood === 'tipsy' ? 0.4 : 0), 'me'); });
+    steps.push(function () { line(f.name, FR_CALL[f.id][mood], 'fr'); });
+    if (mood !== 'danger') {
+      steps.push(function () { line('あなた', mangle(mine[1], mood === 'drunk' ? 1.2 : 0), 'me'); });
+      steps.push(function () { line(f.name, pick(['うん、またね。', 'ちゃんと水飲んでね。', 'じゃあね〜。', 'おやすみ。']), 'fr'); st.textContent = '通話終了'; });
+    } else {
+      steps.push(function () {
+        st.textContent = '通話中';
+        var row = el('div', 'rm-row', '', box); box.insertBefore(row, hang);
+        var y = el('button', 'btn warn', '🚑 救急車を呼んでもらう', row); y.style.flex = '1';
+        var n = el('button', 'btn ghost', '大丈夫って言う', row);
+        onTap(y, function () { done = true; GAME.endBy = f.name; closeModal(true); endNight('ambulance'); });
+        onTap(n, function () { line('あなた', '…だいじょうぶ…', 'me'); line(f.name, '絶対おかしいって…なにかあったらすぐ119してね！', 'fr'); row.remove(); });
+      });
+    }
+  }
+  var i = 0;
+  (function next() {
+    if (done || !MODAL || PHONE_APP.app !== 'calling') return;
+    if (i >= steps.length) {
+      if (awake) { GAME.calls++; B.socialT = Math.max(B.socialT || 0, 40); GAME.clock += 10; bodyStep(B, 10); }
+      return;
+    }
+    steps[i++](); setTimeout(next, i === 1 ? 1500 : 1700);
+  })();
+}
+// ---- DM ----
+function phoneDMList(body) {
+  var l = el('div', 'rm-list', '', body);
+  FRIENDS.forEach(function (f) {
+    var th = GAME.dm[f.id], last = th[th.length - 1], n = GAME.unread[f.id];
+    var it = el('div', 'rm-item tap', '<div class="rm-av" style="background:' + f.col + '">' + f.icon + '</div><div class="tx"><b>' + f.name + (n ? ' <span class="rm-badge">' + n + '</span>' : '') + '</b><small>' + (last ? esc((last.me ? 'あなた：' : '') + last.text) : 'メッセージはまだありません') + '</small></div>', l);
+    onTap(it, function () { phoneNav('dmthread', f.id); });
+  });
+}
+function phoneDMThread(body) {
+  var f = FRIEND[PHONE_APP.f], B = GAME.B, mood = moodKey(B);
+  GAME.unread[f.id] = 0; updatePhoneBadge();
+  var chat = el('div', 'rm-chat', '', body);
+  GAME.dm[f.id].forEach(function (m) { el('div', 'bub ' + (m.me ? 'me' : 'fr'), esc(m.text) + '<small>' + fmtClock(m.at) + (m.me && m.read ? ' 既読' : '') + '</small>', chat); });
+  el('div', 'rm-note', 'いまの状態（' + MOOD_NAME[mood] + '）で送れるメッセージ：', body).style.marginTop = '8px';
+  var sug = el('div', 'rm-sug', '', body);
+  var mk = mood === 'drunk' ? 1.3 : mood === 'tipsy' ? 0.5 : mood === 'down' ? 0.4 : 0;
+  DM_SUGGEST[mood].forEach(function (t) {
+    var text = mangle(t, mk);
+    var b = el('button', 'btn', esc(text), sug);
+    onTap(b, function () { sendDM(f, text, mood); });
+  });
+}
+function sendDM(f, text, mood) {
+  var msg = { me: true, text: text, at: GAME.clock, mood: mood };
+  GAME.dm[f.id].push(msg); sfx('ui');
+  if (friendAwake(f)) {
+    msg.read = true;
+    GAME.phoneQ.push({ type: 'dm', f: f.id, text: FR_DM[f.id][mood], t: rnd(2.5, 6) });
+  }
+  if (mood !== 'sober' && mood !== 'tipsy') (GAME.regret = GAME.regret || []).push('💬 ' + f.name + 'に「' + text + '」');
+  renderPhoneApp();
+}
+// ---- SNS ----
+function phoneSNS(body) {
+  var B = GAME.B, mood = moodKey(B);
+  var box = el('div', 'rm-post', '<div class="rm-note" style="margin:0 0 6px">投稿する（いまの状態：' + MOOD_NAME[mood] + '）</div>', body);
+  var sug = el('div', 'rm-sug', '', box);
+  var mk = mood === 'drunk' ? 1.3 : mood === 'tipsy' ? 0.4 : 0;
+  SNS_SUGGEST[mood].forEach(function (t) { var text = mangle(t, mk); var b = el('button', 'btn', esc(text), sug); onTap(b, function () { snsPost(text, null, mood); }); });
+  var cam = el('button', 'btn pri', '📷 いま見えている景色を撮って投稿', box); cam.style.width = '100%'; cam.style.marginTop = '6px';
+  onTap(cam, function () { var img = snapPhoto(); snsPost(pick(['いまの景色', '今夜の部屋', 'みて', '📷']), img, mood); });
+  var feed = el('div', 'rm-feed', '', body);
+  GAME.sns.forEach(function (p) {
+    var d = el('div', 'rm-tw' + (p.mine ? ' mine' : ''), '<div class="hd"><span class="ic">' + p.icon + '</span><b>' + esc(p.user) + '</b><small>' + fmtClock(p.at) + '</small></div><div class="tx">' + esc(p.text) + '</div>' + (p.img ? '<img src="' + p.img + '">' : '') + '<div class="ft">♡ ' + p.likes + (p.replies.length ? '　💬 ' + p.replies.length : '') + '</div>' + p.replies.map(function (r) { return '<div class="rp">' + r.icon + ' <b>' + esc(r.user) + '</b> ' + esc(r.text) + '</div>'; }).join(''), feed);
+  });
+}
+function snapPhoto() {
+  try {
+    var wasModal = MODAL && MODAL.el; if (wasModal) wasModal.style.visibility = 'hidden';
+    renderFrame();
+    var src = RENDER.renderer.domElement, c = mkCanvas(320, Math.round(320 * src.height / src.width)), g = c.getContext('2d');
+    g.drawImage(src, 0, 0, c.width, c.height);
+    if (wasModal) wasModal.style.visibility = '';
+    var url = c.toDataURL('image/jpeg', 0.7);
+    sfx('click'); GAME.fx.flash = 0.6;
+    return url;
+  } catch (e) { return null; }
+}
+function snsPost(text, img, mood) {
+  var p = { user: 'あなた', icon: '🙂', text: text, img: img, likes: 0, at: GAME.clock, replies: [], mine: true, mood: mood };
+  GAME.sns.unshift(p);
+  var n = Math.floor(rnd(2, 6)), late = GAME.clock > 26 * 60;
+  for (var i = 0; i < n; i++) (function (k) {
+    var fr = FRIENDS.filter(function (f) { return friendAwake(f) && f.id !== 'mom'; });
+    var reply = k === 1 && fr.length ? { user: pick(fr).name, icon: '💬', text: mood === 'danger' ? '大丈夫！？だれか近くにいる！？119して！' : pick(SNS_REPLIES) } : null;
+    GAME.phoneQ.push({ type: 'like', ref: p, n: Math.floor(rnd(1, late ? 3 : 8)), reply: reply, t: rnd(3, 12) + k * 4, notify: k === n - 1 });
+  })(i);
+  if (mood !== 'sober' && mood !== 'tipsy') (GAME.regret = GAME.regret || []).push('🌙 ナイトラインに「' + text + '」' + (img ? '（写真つき）' : ''));
+  sfx('ui'); toast('ナイトラインに投稿した');
+  renderPhoneApp();
+}
+
+
 // ===== 99_main.js =====
 // ---- boot & main loop --------------------------------------------------------------
 var LOOP = { last: 0, t: 0, err: false };
@@ -3234,7 +3667,7 @@ function tick(dt) {
     B = FAKE_BODY;
   } else {
     B = GAME.B;
-    if (mode === 'play') updatePlay(dt);
+    if (mode === 'play') { updatePlay(dt); updatePhone(dt); }
     if (GAME.mode === 'end') updateEndFX(dt);
     updateHeld(dt);
     updateCamera(dt, B);

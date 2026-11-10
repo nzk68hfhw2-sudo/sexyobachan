@@ -11,7 +11,7 @@ function startNight() {
   GAME.fx.fade = 1;
   WORLD.cans.forEach(function (m) { RENDER.scene.remove(m); }); WORLD.cans = [];
   WORLD.lightMode = 0; WORLD.tvOn = true; AU.music = true; auVol();
-  resetPlayer();
+  resetPlayer(); GAME.regret = []; GAME.endBy = null; resetPhone(); clearPuddles();
   GAME.mode = 'play'; INPUT.enabled = true;
   showHUD(true); setSpeed(1); WORLD.bed = WORLD.bedMain;
   HUD.hint.innerHTML = isTouchDevice() || isMobile() ? '左側をドラッグで移動<br>右側をドラッグで見回す<br>モノをタップでしらべる' : 'WASD 移動 ・ ドラッグで見回す<br>クリック/E しらべる ・ F 速さ ・ Tab スマホ';
@@ -75,11 +75,47 @@ function actWater() {
 }
 function actToilet() {
   var B = GAME.B;
-  var recent = B.doses.some(function (d) { var s = SUB[d.s]; return !s.hidden && d.t < s.pk; });
-  if (B.F.na > 0.25 || B.stom > 0.3 || recent) {
-    GAME.lock = true; GAME.fx.vomit = 1.6; sfx('vomit');
-    setTimeout(function () { vomit(B); sfx('flush'); GAME.lock = false; toast('トイレで吐いた…。少し楽になった。' + (recent || B.stom > 0.3 ? '（まだ吸収されていない分が減った）' : ''), 'good', 4); }, 1500);
-  } else { sfx('flush'); toast('トイレを流した。とくに吐き気はない。'); }
+  openModal('トイレ', function (body) {
+    var d = el('div', 'rm-detail', '', body);
+    var full = B.stom > 0.3 || B.doses.some(function (x) { var s = SUB[x.s]; return !s.hidden && x.t < s.pk * 1.2; });
+    el('p', '', B.F.na > 0.5 ? 'うっ…胃がひっくりかえりそう。' : B.F.na > 0.2 ? 'ちょっと気持ち悪い。' : 'とくに気持ち悪くはない。', d);
+    el('div', 'rm-kv', '<span>吐き気</span><b>' + (B.F.na > 0.9 ? 'かなり強い' : B.F.na > 0.4 ? 'ある' : B.F.na > 0.1 ? '少し' : 'なし') + '</b><span>胃の中</span><b>' + (full ? 'まだ吸収されていないものがある' : 'ほとんど空っぽ') + '</b>', d);
+    var b1 = el('button', 'btn pri', '🤮 便器に吐く', d); onTap(b1, function () { closeModal(true); toiletVomit(); });
+    var b2 = el('button', 'btn', '🚽 流す', d); onTap(b2, function () { closeModal(true); sfx('flush'); toast('トイレを流した。'); });
+    var b3 = el('button', 'btn', '🪑 座ってひと休み（10分）', d); onTap(b3, function () { closeModal(true); B.naRelief = Math.max(B.naRelief, 0.2); bodyStep(B, 10); GAME.clock += 10; toast('便座に座って少し休んだ。'); });
+    el('div', 'rm-note', '※ 吐いても、すでに体に入った分は減りません。具合が悪いときは迷わず119番。', body);
+  });
+}
+function toiletVomit() {
+  var B = GAME.B;
+  var full = B.stom > 0.3 || B.F.na > 0.2 || B.doses.some(function (x) { var s = SUB[x.s]; return !s.hidden && x.t < s.pk * 1.2; });
+  GAME.lock = true; GAME.kneelOn = true;
+  setTimeout(function () {
+    if (full) { GAME.fx.vomit = 1.6; sfx('vomit'); } else { sfx('gulp'); }
+  }, 900);
+  setTimeout(function () {
+    if (full) { GAME.inToilet = true; vomit(B); GAME.inToilet = false; B.events = B.events.filter(function (e) { return e.type !== 'vomit'; }); sfx('flush'); toast('便器に吐いた…。少し楽になった。', 'good', 4); }
+    else { B.naRelief = Math.max(B.naRelief, 0.15); toast('えずいただけで、なにも出なかった。'); }
+    GAME.kneelOn = false; GAME.lock = false;
+  }, 2600);
+}
+// vomit puddles (when it happens away from the toilet)
+var PUDDLES = [];
+function clearPuddles() { PUDDLES.forEach(function (p) { RENDER.scene.remove(p.m); WORLD.interMeshes = WORLD.interMeshes.filter(function (x) { return x !== p.m; }); WORLD.inter = WORLD.inter.filter(function (x) { return x !== p.it; }); }); PUDDLES = []; }
+function addPuddle(x, z) {
+  if (!TEX.puddle) {
+    var c = mkCanvas(128, 128), g = c.getContext('2d');
+    for (var i = 0; i < 14; i++) { g.fillStyle = 'rgba(' + (180 + Math.random() * 40 | 0) + ',' + (170 + Math.random() * 40 | 0) + ',' + (90 + Math.random() * 40 | 0) + ',0.85)'; g.beginPath(); g.ellipse(64 + rnd(-30, 30), 64 + rnd(-30, 30), rnd(10, 26), rnd(8, 20), rnd(0, 3), 0, TAU); g.fill(); }
+    TEX.puddle = toTex(c);
+  }
+  var m = new THREE.Mesh(new THREE.CircleGeometry(0.32, 20), new THREE.MeshStandardMaterial({ map: TEX.puddle, transparent: true, roughness: 0.2, depthWrite: false }));
+  m.rotation.x = -PI / 2; m.position.set(x, 0.012, z); RENDER.scene.add(m);
+  var p = { m: m };
+  p.it = addInter('puddle', '床の汚れ', '床をふく', new THREE.Vector3(x, 0.05, z), [m], function () {
+    sfx('water'); RENDER.scene.remove(m); WORLD.interMeshes = WORLD.interMeshes.filter(function (q) { return q !== m; }); WORLD.inter = WORLD.inter.filter(function (q) { return q !== p.it; }); PUDDLES = PUDDLES.filter(function (q) { return q !== p; });
+    toast('床をきれいにふいた。');
+  }, { reach: 2.0 });
+  PUDDLES.push(p);
 }
 function actMirror() {
   var B = GAME.B, F = B.F, out = [];
@@ -166,7 +202,7 @@ function processEvents() {
         sfx('combo');
         banner(isNew ? '🧪 NEW 飲み合わせ発見' : '🧪 飲み合わせ', cb.name, cb.desc, 'dg' + cb.danger);
         break;
-      case 'vomit': if (GAME.fx.vomit <= 0) { GAME.fx.vomit = 1.4; sfx('vomit'); toast(B.unconscious ? '意識がないまま吐いてしまった！' : '耐えきれずに吐いてしまった…', 'warn'); } break;
+      case 'vomit': if (GAME.fx.vomit <= 0) { GAME.fx.vomit = 1.4; sfx('vomit'); toast(B.unconscious ? '意識がないまま吐いてしまった！' : '耐えきれずに吐いてしまった…' + (areaAt(PL.x, PL.z).id === 'toilet' ? '（ぎりぎりトイレに間に合った）' : '（床が汚れた）'), 'warn'); if (areaAt(PL.x, PL.z).id !== 'toilet') addPuddle(PL.x - Math.sin(PL.yaw) * 0.5, PL.z - Math.cos(PL.yaw) * 0.5); } break;
       case 'pass': toast('意識が…遠のいていく…', 'warn', 4); setSpeed(1); break;
       case 'wake': toast('…はっ。' + Math.max(1, Math.round(d.mins)) + '分くらい記憶がない。', 'warn', 4); break;
       case 'warn': toast('⚠ ' + d.msg, 'warn'); sfx('warn'); break;
@@ -351,7 +387,7 @@ function showEnding() {
     note = { rr: 'お酒・睡眠薬・オピオイドなど「鎮静系」どうしの組み合わせは、現実でも呼吸を止めてしまうことがあります。', hr: 'アッパー系の重ねがけや、ほかの薬との組み合わせは、現実でも心臓に大きな負担をかけます。', tp: '体温を上げる薬と脱水・興奮の組み合わせは、現実でも命にかかわります。', vomit: '泥酔して意識がない人は、吐いたもので窒息しないよう横向きに寝かせて、すぐに119番を。' }[I.cause] || '';
     rank = 'GAME OVER';
   } else if (I.kind === 'ambulance') {
-    title = '救急搬送'; sub = '救急車で運ばれて、病院のベッドで朝をむかえた。'; note = '具合が悪いとき・だれかが倒れているときは、迷わず119番。それはかっこ悪いことじゃない。'; rank = '生きてるだけで100点';
+    title = '救急搬送'; sub = (GAME.endBy ? GAME.endBy + 'が救急車を呼んでくれた。' : '') + '救急車で運ばれて、病院のベッドで朝をむかえた。'; note = '具合が悪いとき・だれかが倒れているときは、迷わず119番。それはかっこ悪いことじゃない。'; rank = '生きてるだけで100点';
   } else {
     title = I.kind === 'blackmorning' ? '気づいたら朝' : 'GOOD MORNING';
     sub = I.kind === 'blackmorning' ? '床の上で目が覚めた。昨日の夜のことは、ほとんど覚えていない。' : '窓の外が明るい。長い夜が終わった。';
@@ -366,6 +402,7 @@ function showEnding() {
     (I.kind !== 'dead' ? '<div style="font-size:13px;opacity:.75">スコア</div><div style="font-family:DotGothic16,monospace;font-size:40px;line-height:1">' + I.score + '</div>' : '') +
     '<div class="rm-big" style="margin:12px 0;text-align:left"><div><b>' + S.pills + '</b><span>飲んだラムネ</span></div><div><b>' + S.cans + '</b><span>飲んだ缶</span></div><div><b>' + Math.round(S.maxHR) + '</b><span>最高心拍</span></div><div><b>' + S.maxTp.toFixed(1) + '℃</b><span>最高体温</span></div><div><b>' + S.minRR.toFixed(1) + '</b><span>最低呼吸</span></div><div><b>' + S.vomits + '</b><span>吐いた回数</span></div></div>' +
     '<div style="font-size:13px;text-align:left;line-height:1.8"><b>見つけた飲み合わせ：</b>' + foundHtml + '</div>' +
+    (GAME.regret && GAME.regret.length ? '<div style="font-size:13px;text-align:left;line-height:1.7;margin-top:8px"><b>📱 朝になって見返したスマホ：</b><br>' + GAME.regret.slice(-5).map(esc).join('<br>') + '<br><span style="opacity:.7">…そっとアプリを閉じた。</span></div>' : '') +
     (note ? '<div class="rm-alert" style="margin-top:12px;text-align:left">' + esc(note) + '</div>' : '') +
     '<div class="rm-menu" style="margin:16px auto 0"><button class="btn pri" id="rm-again">もう一晩</button><button class="btn ghost" id="rm-title">タイトルへ</button></div>' +
     '<div class="rm-note">これはフィクションのゲームです。登場するラムネ・お酒はすべて架空のものです。</div></div>';
@@ -384,7 +421,7 @@ function toTitle() {
   var html = '<div class="rm-logo-pre">キケンな</div><div class="rm-logo">ラムネ<br><span>シミュレーター</span></div><div class="rm-logo-sub">DANGEROUS RAMUNE SIMULATOR</div>' +
     '<div style="font-size:13px;opacity:.85">架空のラムネとチューハイで過ごす、ひと晩のシミュレーター</div>' +
     '<div class="rm-menu"><button class="btn pri" id="rm-start">はじめる</button><button class="btn" id="rm-zukan">図鑑</button><button class="btn" id="rm-howto">あそびかた</button><button class="btn ghost" id="rm-set">設定</button></div>' +
-    '<div class="rm-note">図鑑：ラムネ ' + Object.keys(SAVE.seenSubs).length + '/19 ・ 飲み合わせ ' + Object.keys(SAVE.seenCombos).length + '/' + COMBOS.length + (SAVE.best ? ' ・ ベスト ' + SAVE.best : '') + '<br>※ フィクションです。実在の薬物・製品とは関係ありません。</div>';
+    '<div class="rm-note">図鑑：ラムネ ' + Object.keys(SAVE.seenSubs).length + '/' + SUBS.filter(function (s) { return !s.hidden; }).length + ' ・ 飲み合わせ ' + Object.keys(SAVE.seenCombos).length + '/' + COMBOS.length + (SAVE.best ? ' ・ ベスト ' + SAVE.best : '') + '<br>※ フィクションです。実在の薬物・製品とは関係ありません。</div>';
   showScreen(html, 'rm-title');
   onTap(document.getElementById('rm-start'), function () { initAudio(); startNight(); });
   onTap(document.getElementById('rm-zukan'), function () { initAudio(); openPhone('zukan'); });

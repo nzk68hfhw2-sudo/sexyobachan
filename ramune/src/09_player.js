@@ -144,6 +144,12 @@ function updateCamera(dt, B) {
     var cc = collide(x, z, 0.1); x = cc[0]; z = cc[1]; y = Math.min(y, ROOM.h - 0.15);
     pitch = lerp(pitch, -0.45, PL.oob * 0.6);
   }
+  PL.kneel = damp(PL.kneel || 0, GAME.kneelOn ? 1 : 0, 4, dt);
+  if (PL.kneel > 0.01) {
+    var kk = smooth(PL.kneel);
+    x = lerp(x, 2.12, kk); z = lerp(z, 3.7, kk); y = lerp(y, 0.8, kk);
+    var dy = ((-PI / 2 - yaw) % TAU + TAU * 1.5) % TAU - PI; yaw += dy * kk; pitch = lerp(pitch, -0.95, kk);
+  }
   WORLD.self.visible = PL.oob > 0.15;
   if (WORLD.self.visible) { WORLD.self.position.set(bx, 0, bz); WORLD.self.rotation.y = PL.yaw + PI; WORLD.self.traverse(function (o) { if (o.material) { o.material.transparent = true; o.material.opacity = clamp(PL.oob * 1.2, 0, 1); } }); }
   cam.position.set(x, y, z);

@@ -35,7 +35,7 @@ function tick(dt) {
     B = FAKE_BODY;
   } else {
     B = GAME.B;
-    if (mode === 'play') updatePlay(dt);
+    if (mode === 'play') { updatePlay(dt); updatePhone(dt); }
     if (GAME.mode === 'end') updateEndFX(dt);
     updateHeld(dt);
     updateCamera(dt, B);
