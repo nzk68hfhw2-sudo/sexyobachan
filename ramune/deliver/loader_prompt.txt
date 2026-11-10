@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>RAMUNE NIGHT</title>
+<title>キケンなラムネシミュレーター</title>
 <style>
 html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden}
 #rml{position:fixed;left:16px;right:16px;top:45%;color:#ffb3dc;font:16px monospace;text-align:center;letter-spacing:.15em}
@@ -18,7 +18,7 @@ html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden}
 <div id="rme"></div>
 <script>
 (function(){
-var U=["https://cdn.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@dcb06486af423a575912f67ed09c27c3059fdb24/ramune/dist/game.js","https://fastly.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@dcb06486af423a575912f67ed09c27c3059fdb24/ramune/dist/game.js","https://cdn.statically.io/gh/nzk68hfhw2-sudo/sexyobachan/dcb06486af423a575912f67ed09c27c3059fdb24/ramune/dist/game.js","https://rawcdn.githack.com/nzk68hfhw2-sudo/sexyobachan/dcb06486af423a575912f67ed09c27c3059fdb24/ramune/dist/game.js"];
+var U=["https://cdn.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@1f273b67c0d6362ae2942cc28207c8fa52609128/ramune/dist/game.js","https://fastly.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@1f273b67c0d6362ae2942cc28207c8fa52609128/ramune/dist/game.js","https://cdn.statically.io/gh/nzk68hfhw2-sudo/sexyobachan/1f273b67c0d6362ae2942cc28207c8fa52609128/ramune/dist/game.js","https://rawcdn.githack.com/nzk68hfhw2-sudo/sexyobachan/1f273b67c0d6362ae2942cc28207c8fa52609128/ramune/dist/game.js"];
 var i=0,done=false,tried=[];
 function show(t,d){var e=document.getElementById('rme');e.style.display='block';e.textContent='[読み込みエラー] '+t+'\n'+(d||'')+'\n\n試したURL:\n'+tried.join('\n')+'\nオンライン: '+(navigator.onLine?'はい':'いいえ');var l=document.getElementById('rml');if(l)l.style.display='none';}
 function next(){
