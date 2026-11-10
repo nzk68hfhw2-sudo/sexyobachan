@@ -31,14 +31,16 @@ function tailCurve(t, s) {
   return Math.sin(PI * (t - a) / (b - a));
 }
 
+// strength of one combination requirement. Heavy-dose needs (lv) stay at 0 until ~60% of the level.
+function needV(nd, val) { if (nd.lv) return clamp((val - nd.lv * 0.6) / (nd.lv * 0.4), 0, 1.5); return clamp(val / 0.7, 0, 1.5); }
 function bodyEvent(B, type, data) { B.events.push({ type: type, data: data || {} }); }
 
 // ---- intake -------------------------------------------------------------------
-function takeSub(B, id) {
-  var s = SUB[id]; if (!s) return;
-  B.doses.push({ s: id, t: 0, amt: 1, onsetSaid: false, peakSaid: false, fadeSaid: false });
-  if (!s.hidden) { B.stats.pills++; B.stats.taken[id] = (B.stats.taken[id] || 0) + 1; }
-  if (s.liver) B.liver = (B.liver || 0) + s.liver;
+function takeSub(B, id, n) {
+  var s = SUB[id]; if (!s) return; n = Math.max(1, n || 1);
+  B.doses.push({ s: id, t: 0, amt: n, onsetSaid: false, peakSaid: false, fadeSaid: false });
+  if (!s.hidden) { B.stats.pills += n; B.stats.taken[id] = (B.stats.taken[id] || 0) + n; B.stats.maxAtOnce = Math.max(B.stats.maxAtOnce || 0, n); }
+  if (s.liver) B.liver = (B.liver || 0) + s.liver * n;
   if (s.reset) {
     var had = 0;
     B.doses.forEach(function (d) { var ss = SUB[d.s]; if (ss.cls === 'op') { had += subCurve(d.t, ss) * d.amt; d.amt *= 0.04; } });
@@ -151,8 +153,7 @@ function bodyStep1(B, dt) {
     for (var ni = 0; ni < cb.need.length; ni++) {
       var nd = cb.need[ni], v;
       if (nd.distinct) { var n = distinct[nd.distinct] ? Object.keys(distinct[nd.distinct]).length : 0; v = n >= nd.n ? clamp((L[nd.distinct] || 0) / 1.0, 0, 1.5) : 0; }
-      else if (nd.s) v = clamp((Ls[nd.s] || 0) / 0.7, 0, 1.5);
-      else v = clamp((L[nd.c] || 0) / 0.7, 0, 1.5);
+      else v = needV(nd, nd.s ? (Ls[nd.s] || 0) : (L[nd.c] || 0));
       if (v < st) st = v;
     }
     B.comboS[cb.id] = st;

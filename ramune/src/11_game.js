@@ -7,7 +7,7 @@ function startNight() {
   hideScreen(); closeModal(true);
   GAME.B = newBody();
   GAME.clock = START_CLOCK; setSpeed(1); GAME.paused = false; GAME.rest = null; GAME.lock = false; GAME.hist = []; GAME.histT = 0; GAME.monoT = 4;
-  GAME.stash = {}; SUBS.forEach(function (s) { if (!s.hidden) GAME.stash[s.id] = s.stock || 2; }); DRINKS.forEach(function (d) { GAME.stash[d.id] = d.stock; });
+  GAME.stash = {}; SUBS.forEach(function (s) { if (!s.hidden) GAME.stash[s.id] = (s.stock || 2) * 3; }); DRINKS.forEach(function (d) { GAME.stash[d.id] = d.stock; });
   GAME.fx.fade = 1;
   WORLD.cans.forEach(function (m) { RENDER.scene.remove(m); }); WORLD.cans = [];
   WORLD.lightMode = 0; WORLD.tvOn = true; AU.music = true; auVol();
@@ -41,15 +41,16 @@ function doInteract(it) {
   sfx('click');
   it.fn();
 }
-function actTakePill(id) {
-  var s = SUB[id]; if (GAME.lock) return;
+function actTakePill(id, n) {
+  var s = SUB[id]; if (GAME.lock) return; n = Math.max(1, n || 1);
   GAME.lock = true;
-  if (!SAVE.settings.sandbox) GAME.stash[id]--;
-  holdItem('pill', pillMesh(s), 1.25, function () {
-    takeSub(GAME.B, id); sfx('pill'); GAME.lock = false; logEvent('🍬 ' + s.name + '（' + s.nick + '）を飲んだ');
+  if (!SAVE.settings.sandbox) GAME.stash[id] = Math.max(0, GAME.stash[id] - n);
+  holdItem('pill', pillMesh(s), 1.25 + Math.min(n, 6) * 0.15, function () {
+    takeSub(GAME.B, id, n); sfx('pill'); if (n > 1) setTimeout(function () { sfx('pill'); }, 250); GAME.lock = false; logEvent('🍬 ' + s.name + '（' + s.nick + '）を' + (n > 1 ? n + '個まとめて' : '') + '飲んだ');
+    if (n >= 3) { say(pick(['…ちょっと多すぎたかも。', 'まとめて飲んじゃった…', 'のどに' + n + '個ひっかかってる気がする']), 3.5); }
     var first = !SAVE.seenSubs[id];
     SAVE.seenSubs[id] = 1; writeSave();
-    toast((first ? '🆕 ' : '') + s.name + '（' + s.nick + '）を口に入れた。カリッ。', 'good');
+    toast((first ? '🆕 ' : '') + s.name + '（' + s.nick + '）' + (n > 1 ? 'を ' + n + ' 個まとめて' : 'を') + '口に入れた。カリッ。', n >= 3 ? 'warn' : 'good');
     if (s.reset && !GAME.B.found.length) { }
   });
 }
@@ -141,7 +142,7 @@ function openMedMenu() {
       var it = el('div', 'rm-item' + (n <= 0 ? ' lock' : ''), '<img src="' + ramuneIcon(s, 88) + '"><div class="tx"><b>' + esc(s.name) + ' <span style="font-size:11px;opacity:.7">（' + esc(s.nick) + '）</span></b><small>' + esc(s.desc) + (taken ? '<br><span class="dg2">今夜すでに ' + taken + ' 回飲んでいる</span>' : '') + '</small></div>', l);
       var b = el('button', 'btn', n > 0 ? '飲む<br><small style="font-weight:500;opacity:.7">のこり' + (SAVE.settings.sandbox ? '∞' : n) + '</small>' : 'ない', it);
       if (n <= 0) b.disabled = true;
-      onTap(b, function () { closeModal(true); actTakePill(s.id); });
+      onTap(b, function () { renderPillDetail(MODAL.body, s, function () { openMedMenu(); }); });
     });
     el('div', 'rm-note', '現実で困ったとき：こころの健康相談統一ダイヤル 0570-064-556／救急車 119／迷ったら #7119（地域による）', body);
   });
@@ -155,22 +156,22 @@ function openSmokeMenu() {
       var it = el('div', 'rm-item' + (n <= 0 ? ' lock' : ''), '<img src="' + ramuneIcon(s, 88) + '"><div class="tx"><b>' + esc(s.name) + ' <span style="font-size:11px;color:' + cl.col + '">' + cl.icon + esc(cl.short) + '</span></b><small>' + esc(s.desc) + '<br><span style="opacity:.8">現実では… ' + esc(cl.real) + '</span></small></div>', l);
       var b = el('button', 'btn', n > 0 ? '吸う<br><small style="font-weight:500;opacity:.7">のこり' + (SAVE.settings.sandbox ? '∞' : n) + '</small>' : 'ない', it);
       if (n <= 0) b.disabled = true;
-      onTap(b, function () { closeModal(true); actSmoke(s.id); });
+      onTap(b, function () { renderPillDetail(MODAL.body, s, function () { openSmokeMenu(); }); });
     });
     el('div', 'rm-note', '※ すべて架空のはまきです。20歳未満の喫煙は法律で禁止されています。', body);
   });
 }
-function actSmoke(id) {
-  var s = SUB[id]; if (GAME.lock) return;
+function actSmoke(id, n) {
+  var s = SUB[id]; if (GAME.lock) return; n = Math.max(1, n || 1);
   GAME.lock = true;
-  if (!SAVE.settings.sandbox) GAME.stash[id]--;
+  if (!SAVE.settings.sandbox) GAME.stash[id] = Math.max(0, GAME.stash[id] - n);
   sfx('click');
   HELD.tint = id === 'chillmaki' ? 0xcfe8c0 : id === 'shakimaki' ? 0xd0ecff : 0xd8d0c8;
   holdItem('smoke', cigarMesh(s), 3.2, function () {
-    takeSub(GAME.B, id); GAME.lock = false; logEvent('🚬 ' + s.name + ' を吸った');
+    takeSub(GAME.B, id, n); GAME.lock = false; logEvent('🚬 ' + s.name + ' を' + (n > 1 ? n + '本つづけて' : '') + '吸った'); if (n > 1) setTimeout(function () { puffSmoke(10 * Math.min(n, 4), HELD.tint); sfx('cough'); }, 300);
     var first = !SAVE.seenSubs[id]; SAVE.seenSubs[id] = 1; writeSave();
     if (GAME.B.F.na > 0.2 || Math.random() < 0.35) sfx('cough');
-    toast((first ? '🆕 ' : '') + s.name + ' をふかした。ふぅ…', 'good');
+    toast((first ? '🆕 ' : '') + s.name + (n > 1 ? ' を ' + n + ' 本つづけてふかした…' : ' をふかした。ふぅ…'), n >= 3 ? 'warn' : 'good');
   });
 }
 function actFrontDoor() {

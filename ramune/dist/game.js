@@ -9,7 +9,7 @@
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.5.1';
+var GAME_VERSION = '1.6.0';
 
 var ROOT, UI, CANVAS_HOST;
 
@@ -662,6 +662,73 @@ var COMBOS = [
   { id: 'worstmix', name: '最悪のちゃんぽん', need: [{ s: 'koflez' }, { s: 'nemurina' }, { c: 'alc' }], danger: 3,
     hint: 'コフレス錠 × ネムリナ × お酒', desc: '市販薬を何種類もお酒で流しこんだ。体のあちこちで警報が鳴っている。',
     f: function (m, s) { m.add.na += 0.5 * s; m.rrMul += 0.5 * s; m.ph.hr += 15 * s; m.add.de += 0.3 * s; } },
+
+  // ---- 大量に飲んだとき（まとめ飲み）----
+  { id: 'hv_psy', name: 'ラムネの向こう側', need: [{ c: 'psy', lv: 2.2 }], danger: 2, hint: '幻覚系を大量に', desc: '部屋も自分も、色と模様の洪水に溶けて消えた。こわさと美しさが同時に来る。',
+    f: function (m, s) { m.mul.ps += 0.3 * s; m.add.an += 0.4 * s; m.vis.kal += 0.8 * s; m.ph.hr += 10 * s; } },
+  { id: 'hv_up', name: '限界突破', need: [{ c: 'up', lv: 2.2 }], danger: 3, hint: 'アッパー系を大量に', desc: '心臓がリミッターを外した。胸が痛い。体が熱い。',
+    f: function (m, s) { m.ph.hr += 30 * s; m.ph.tp += 0.6 * s; m.add.an += 0.5 * s; m.irregular += 0.5 * s; } },
+  { id: 'hv_down', name: '眠りの国', need: [{ c: 'down', lv: 2.2 }], danger: 3, hint: 'ダウナー系を大量に', desc: '一度入ったら、なかなか出てこられない国。呼吸もゆっくりになっていく。',
+    f: function (m, s) { m.add.se += 0.5 * s; m.rrMul += 0.5 * s; } },
+  { id: 'hv_op', name: '白い沈黙', need: [{ c: 'op', lv: 2.0 }], danger: 3, hint: 'オピオイド系を大量に', desc: 'まっしろで、しずかで、あたたかい。呼吸の音だけがどんどん小さくなる。',
+    f: function (m, s) { m.add.se += 0.4 * s; m.rrMul += 0.8 * s; } },
+  { id: 'hv_dis', name: 'ラムネホール', need: [{ c: 'dis', lv: 2.2 }], danger: 2, hint: '解離系を大量に', desc: '体も部屋も消えて、自分が一点の光になった。動けない。',
+    f: function (m, s) { m.add.di += 0.8 * s; m.vis.kal += 0.6 * s; m.rrMul += 0.2 * s; } },
+  { id: 'hv_emp', name: '愛のメルトダウン', need: [{ c: 'emp', lv: 2.2 }], danger: 3, hint: 'ハート系を大量に', desc: '愛しすぎて、体の中の温度計がこわれた。',
+    f: function (m, s) { m.ph.tp += 1.2 * s; m.ph.hr += 15 * s; m.dehyd += 1.5 * s; m.add.na += 0.3 * s; } },
+  { id: 'hv_del', name: 'とばりの夜明け前', need: [{ c: 'del', lv: 2.0 }], danger: 3, hint: 'せん妄系を大量に', desc: '影の住人に囲まれて、自分がだれかも思い出せない。心臓と体温も危ない。',
+    f: function (m, s) { m.add.de += 0.6 * s; m.ph.hr += 25 * s; m.ph.tp += 0.5 * s; } },
+  { id: 'hv_gaba', name: 'ふにゃふにゃの底', need: [{ c: 'gaba', lv: 2.2 }], danger: 3, hint: 'ギャバ系を大量に', desc: '骨がなくなったみたいに力が入らない。呼吸も浅い。',
+    f: function (m, s) { m.add.di += 0.3 * s; m.add.se += 0.4 * s; m.rrMul += 0.5 * s; } },
+  { id: 'hv_chill', name: 'グリーンタイムワープ', need: [{ c: 'chill', lv: 2.2 }], danger: 1, hint: 'チル系を大量に', desc: '1秒が1時間。チルを通りこして、ぐるぐると不安になる。',
+    f: function (m, s) { m.add.an += 0.5 * s; m.add.na += 0.4 * s; m.vis.spin += 0.4 * s; } },
+  { id: 'hv_smk', name: 'ヤニクラ', need: [{ c: 'smk', lv: 2.5 }], danger: 1, hint: 'けむり系を大量に', desc: '吸いすぎて、目の前がぐらっと暗くなった。冷や汗と吐き気。',
+    f: function (m, s) { m.add.na += 0.6 * s; m.add.di += 0.2 * s; m.ph.hr += 10 * s; } },
+  { id: 'hv_otc', name: '市販薬オーバードーズ', need: [{ c: 'otc', lv: 2.2 }], danger: 3, hint: '市販薬系を大量に', desc: 'ドラッグストアの薬でも、量をこえれば命にかかわる。体のあちこちが悲鳴をあげている。',
+    f: function (m, s) { m.add.na += 0.6 * s; m.add.de += 0.4 * s; m.ph.hr += 25 * s; m.ph.tp += 0.4 * s; m.vis.flash += 0.3 * s; } },
+  { id: 'hv_alc', name: '急性アルコール中毒', need: [{ c: 'alc', lv: 4.0 }], danger: 3, hint: 'お酒を大量に', desc: '一気に飲みすぎた。意識も呼吸も危ない。現実でも毎年命を落とす人がいる。',
+    f: function (m, s) { m.rrMul += 0.4 * s; m.add.na += 0.4 * s; } },
+  { id: 'hv_zero', name: 'ラムネ食べすぎ', need: [{ s: 'zero', lv: 3.0 }], danger: 0, hint: 'ただのラムネを大量に', desc: 'ぶどう味のラムネを口いっぱいに。…ちょっと胸やけ。',
+    f: function (m, s) { m.add.eu += 0.1 * s; m.add.na += 0.15 * s; } },
+  { id: 'hv_itamin', name: '肝臓の悲鳴', need: [{ s: 'itamin', lv: 2.5 }], danger: 3, hint: 'イタミナインを大量に', desc: 'やっぱり何も感じない。それがいちばん怖い。肝臓は今、全力で悲鳴をあげている。',
+    f: function (m, s) { m.liver += 2 * s; m.add.na += 0.2 * s; } },
+  { id: 'hv_shakin', name: 'カフェイン中毒', need: [{ s: 'shakin', lv: 2.5 }], danger: 3, hint: 'シャキーンZを大量に', desc: '手のふるえが止まらない。心臓が胸から飛び出しそう。吐き気もひどい。',
+    f: function (m, s) { m.ph.hr += 40 * s; m.add.an += 0.6 * s; m.add.na += 0.5 * s; m.irregular += 0.6 * s; } },
+  { id: 'hv_koflez', name: 'せき止めの底', need: [{ s: 'koflez', lv: 2.5 }], danger: 3, hint: 'コフレス錠を大量に', desc: '体が遠すぎて戻れない。熱と吐き気とかゆみの底。',
+    f: function (m, s) { m.add.di += 0.6 * s; m.ph.hr += 20 * s; m.ph.tp += 0.6 * s; m.add.na += 0.4 * s; } },
+  { id: 'hv_sekitoru', name: 'シロップの海', need: [{ s: 'sekitoru', lv: 2.5 }], danger: 3, hint: 'セキトールS液を大量に', desc: 'あまいシロップの海でおぼれていく。心臓はどきどき、呼吸はゆっくり。',
+    f: function (m, s) { m.rrMul += 0.6 * s; m.add.se += 0.4 * s; m.ph.hr += 15 * s; } },
+  { id: 'hv_nemurina', name: '眠れない悪夢', need: [{ s: 'nemurina', lv: 2.5 }], danger: 3, hint: 'ネムリナを大量に', desc: '眠り薬のはずなのに、眠れないまま悪夢の中を歩きつづける。',
+    f: function (m, s) { m.add.de += 0.7 * s; m.ph.hr += 25 * s; m.ph.tp += 0.4 * s; } },
+  { id: 'hv_rocket', name: '大気圏突入', need: [{ s: 'rocket', lv: 2.5 }], danger: 3, hint: 'ストラトリンを大量に', desc: '打ち上げすぎて、燃えながら落ちてくる。',
+    f: function (m, s) { m.ph.hr += 35 * s; m.ph.tp += 0.5 * s; } },
+  { id: 'hv_prism', name: 'プリズムの彼方', need: [{ s: 'prism', lv: 2.5 }], danger: 2, hint: 'プリズマトリンを大量に', desc: '光そのものになった。数分間、名前も体もなかった。',
+    f: function (m, s) { m.mul.ps += 0.4 * s; m.add.di += 0.5 * s; m.vis.kal += 1.0 * s; } },
+  { id: 'hv_masshiro', name: '真っ白な世界', need: [{ s: 'masshiro', lv: 1.6 }], danger: 3, hint: 'ニヴェタニルを何粒も', desc: '小さな粒を何粒も。目の前が真っ白になっていく。',
+    f: function (m, s) { m.rrMul += 0.7 * s; m.add.se += 0.3 * s; } },
+  { id: 'hv_toro', name: 'ゼリーの海', need: [{ s: 'toro', lv: 2.0 }], danger: 3, hint: 'ジェリロキシンを何個も', desc: 'ちょっと増やしただけのつもりが、ゼリーの海に沈んだ。',
+    f: function (m, s) { m.add.se += 0.6 * s; m.rrMul += 0.5 * s; } },
+  { id: 'hv_velvet', name: '愛の暴走', need: [{ s: 'velvet', lv: 2.5 }], danger: 3, hint: 'ベルベチンを何個も', desc: '愛があふれすぎて、体温が止まらない。',
+    f: function (m, s) { m.ph.tp += 1.0 * s; m.ph.hr += 15 * s; m.dehyd += 1.2 * s; } },
+  // ---- 大量 × ほかのもの ----
+  { id: 'hv_opalc', name: '凍える夜', need: [{ c: 'op', lv: 1.6 }, { c: 'alc' }], danger: 3, hint: 'オピオイド系（大量）× お酒', desc: '体の芯まで冷えていく。息の白さも見えなくなる。',
+    f: function (m, s) { m.rrMul += 1.0 * s; } },
+  { id: 'hv_downalc', name: '二度と起きない夢', need: [{ c: 'down', lv: 1.8 }, { c: 'alc' }], danger: 3, hint: 'ダウナー系（大量）× お酒', desc: '深い眠りの、さらにその下へ。',
+    f: function (m, s) { m.rrMul += 0.8 * s; m.add.se += 0.4 * s; } },
+  { id: 'hv_upemp', name: '体温の限界', need: [{ c: 'up', lv: 1.8 }, { c: 'emp' }], danger: 3, hint: 'アッパー系（大量）× ハート系', desc: '踊りつづける体が、内側から燃えている。',
+    f: function (m, s) { m.ph.tp += 1.2 * s; m.ph.hr += 20 * s; } },
+  { id: 'hv_psydis', name: '帰り道のない宇宙', need: [{ c: 'psy', lv: 1.8 }, { c: 'dis' }], danger: 3, hint: '幻覚系（大量）× 解離系', desc: 'あまりに遠くまで来てしまった。帰り道が見えない。',
+    f: function (m, s) { m.add.di += 0.5 * s; m.add.an += 0.5 * s; m.vis.kal += 0.8 * s; } },
+  { id: 'hv_otcalc', name: '薬とお酒の濁流', need: [{ c: 'otc', lv: 1.8 }, { c: 'alc' }], danger: 3, hint: '市販薬系（大量）× お酒', desc: 'たくさんの薬をお酒で流しこんだ。体の中が濁流になっている。',
+    f: function (m, s) { m.add.na += 0.5 * s; m.rrMul += 0.5 * s; m.ph.hr += 15 * s; } },
+  { id: 'hv_chillpsy', name: '時間が止まった部屋', need: [{ c: 'chill', lv: 1.8 }, { c: 'psy' }], danger: 2, hint: 'チル系（大量）× 幻覚系', desc: '時計の針が止まり、部屋の模様だけが動きつづける。',
+    f: function (m, s) { m.mul.ps += 0.3 * s; m.add.an += 0.3 * s; m.vis.kal += 0.4 * s; } },
+  { id: 'hv_smkup', name: '心臓のドラム', need: [{ c: 'smk', lv: 1.8 }, { c: 'up' }], danger: 2, hint: 'けむり系（大量）× アッパー系', desc: '吸って、上がって、また吸う。心臓がドラムロール。',
+    f: function (m, s) { m.ph.hr += 25 * s; m.add.na += 0.2 * s; } },
+  { id: 'hv_gabaop', name: '完全停止', need: [{ c: 'gaba', lv: 1.6 }, { c: 'op' }], danger: 3, hint: 'ギャバ系（大量）× オピオイド系', desc: 'すべてがしずかに止まっていく。',
+    f: function (m, s) { m.rrMul += 1.0 * s; } },
+  { id: 'hv_delup', name: '暴れる影', need: [{ c: 'del', lv: 1.6 }, { c: 'up' }], danger: 3, hint: 'せん妄系（大量）× アッパー系', desc: '影の住人が暴れだし、自分も止まれない。心臓と体温が危ない。',
+    f: function (m, s) { m.add.de += 0.4 * s; m.ph.hr += 30 * s; m.ph.tp += 0.6 * s; } },
   { id: 'reset', name: '強制リセット', need: [], special: true, danger: 1,
     hint: 'ネガトキソン（リセット）× オピオイド系', desc: 'ぬくぬく系を一瞬で打ち消した。命は助かるが、反動で最悪の気分になる。' },
   { id: 'placebo', name: 'プラセボ効果', need: [], special: true, danger: 0,
@@ -725,14 +792,16 @@ function tailCurve(t, s) {
   return Math.sin(PI * (t - a) / (b - a));
 }
 
+// strength of one combination requirement. Heavy-dose needs (lv) stay at 0 until ~60% of the level.
+function needV(nd, val) { if (nd.lv) return clamp((val - nd.lv * 0.6) / (nd.lv * 0.4), 0, 1.5); return clamp(val / 0.7, 0, 1.5); }
 function bodyEvent(B, type, data) { B.events.push({ type: type, data: data || {} }); }
 
 // ---- intake -------------------------------------------------------------------
-function takeSub(B, id) {
-  var s = SUB[id]; if (!s) return;
-  B.doses.push({ s: id, t: 0, amt: 1, onsetSaid: false, peakSaid: false, fadeSaid: false });
-  if (!s.hidden) { B.stats.pills++; B.stats.taken[id] = (B.stats.taken[id] || 0) + 1; }
-  if (s.liver) B.liver = (B.liver || 0) + s.liver;
+function takeSub(B, id, n) {
+  var s = SUB[id]; if (!s) return; n = Math.max(1, n || 1);
+  B.doses.push({ s: id, t: 0, amt: n, onsetSaid: false, peakSaid: false, fadeSaid: false });
+  if (!s.hidden) { B.stats.pills += n; B.stats.taken[id] = (B.stats.taken[id] || 0) + n; B.stats.maxAtOnce = Math.max(B.stats.maxAtOnce || 0, n); }
+  if (s.liver) B.liver = (B.liver || 0) + s.liver * n;
   if (s.reset) {
     var had = 0;
     B.doses.forEach(function (d) { var ss = SUB[d.s]; if (ss.cls === 'op') { had += subCurve(d.t, ss) * d.amt; d.amt *= 0.04; } });
@@ -845,8 +914,7 @@ function bodyStep1(B, dt) {
     for (var ni = 0; ni < cb.need.length; ni++) {
       var nd = cb.need[ni], v;
       if (nd.distinct) { var n = distinct[nd.distinct] ? Object.keys(distinct[nd.distinct]).length : 0; v = n >= nd.n ? clamp((L[nd.distinct] || 0) / 1.0, 0, 1.5) : 0; }
-      else if (nd.s) v = clamp((Ls[nd.s] || 0) / 0.7, 0, 1.5);
-      else v = clamp((L[nd.c] || 0) / 0.7, 0, 1.5);
+      else v = needV(nd, nd.s ? (Ls[nd.s] || 0) : (L[nd.c] || 0));
       if (v < st) st = v;
     }
     B.comboS[cb.id] = st;
@@ -2824,6 +2892,7 @@ var UI_CSS = [
   '.rm-card .nm{font-size:11.5px;font-weight:900;line-height:1.25;min-height:2.5em;display:flex;align-items:center;justify-content:center}',
   '.rm-card .st{font-size:10px;opacity:.75}',
   '.rm-sec{font-size:14px;font-weight:900;margin:12px 2px 6px;opacity:.9}.rm-sec:first-child{margin-top:0}',
+  '.rm-qty{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05)}.rm-qty>span{font-size:13px;opacity:.75}.rm-qty .qv{font-family:"DotGothic16",monospace;font-size:26px;font-weight:400;min-width:36px;text-align:center}.rm-qty>.btn{width:44px;height:44px;padding:0;font-size:22px}.rm-qty .qs{display:flex;gap:6px;flex-wrap:wrap;width:100%}.rm-qty .qs .btn{padding:6px 10px;font-size:12px}',
   '.rm-card .nk{font-size:9.5px;opacity:.7;margin:-2px 0 2px;line-height:1.2}',
   '.rm-real{font-size:12.5px;line-height:1.55;padding:9px 11px;border-radius:12px;background:rgba(255,255,255,.06);border-left:4px solid var(--c,#fff)}',
   '.rm-card .cl{position:absolute;left:6px;top:6px;font-size:9px;padding:1px 5px;border-radius:6px;font-weight:900;color:#111}',
@@ -3061,25 +3130,46 @@ function predictedCombos(s) {
 function pendingClass(c) { // taken recently but not kicked in yet
   return GAME.B.doses.some(function (d) { var s = SUB[d.s]; return s.cls === c && d.t < s.pk; }) || (c === 'alc' && GAME.B.stom > 0.2);
 }
-function renderPillDetail(body, s) {
+function renderPillDetail(body, s, onBack) {
   setModalTitle(s.name);
-  var cl = CLASSES[s.cls], n = stockOf(s.id), B = GAME.B;
+  var cl = CLASSES[s.cls], n = stockOf(s.id), B = GAME.B, verb = s.smoke ? '吸う' : '飲む', unit = s.smoke ? '本' : s.shape === 'drop' && s.otc ? '回分' : '個';
+  var qty = Math.min(1, n) || 1;
   body.innerHTML = '';
   var d = el('div', 'rm-detail', '', body);
-  el('div', 'hd', '<img src="' + ramuneIcon(s, 168) + '"><div><span class="c" style="background:' + cl.col + ';font-size:14px">' + cl.icon + ' ' + esc(cl.name) + '</span><div class="t">' + esc(s.name) + '</div><div style="font-size:12px;opacity:.75">通称「' + esc(s.nick) + '」・刻印 ' + esc(s.imp) + '</div></div>', d);
+  el('div', 'hd', '<img src="' + ramuneIcon(s, 168) + '"><div><span class="c" style="background:' + cl.col + ';font-size:14px">' + cl.icon + ' ' + esc(cl.name) + '</span><div class="t">' + esc(s.name) + '</div><div style="font-size:12px;opacity:.75">通称「' + esc(s.nick) + '」' + (s.imp ? '・刻印 ' + esc(s.imp) : '') + '</div></div>', d);
   el('p', '', esc(s.desc), d);
   var rn = el('div', 'rm-real', '<b>現実では…</b> ' + esc(cl.real) + '<br><span style="opacity:.6">（' + esc(s.name) + ' は架空の名前です）</span>', d); rn.style.setProperty('--c', cl.col);
-  el('div', 'rm-kv', '<span>効きはじめ</span><b>約 ' + timeText(s.on) + '</b><span>ピーク</span><b>' + timeText(s.pk) + ' 〜 ' + timeText(s.pl) + '</b><span>効き目の長さ</span><b>約 ' + timeText(s.du) + '</b><span>手持ち</span><b>' + (SAVE.settings.sandbox ? '∞（サンドボックス）' : n + ' 個') + '</b>', d);
-  var taken = B.doses.filter(function (x) { return x.s === s.id; }).length;
-  var warn = [];
-  if (taken > 0) warn.push('すでに ' + taken + ' 個飲んでいる。効く前に重ねると強く効きすぎることがある。');
-  predictedCombos(s).forEach(function (cb) { if (cb.danger >= 2) warn.push('いま飲むと「' + cb.name + '」になりそう（' + ['安全', '注意', '危険', '命にかかわる'][cb.danger] + '）'); });
-  if (warn.length) el('div', 'rm-alert', '⚠ ' + warn.map(esc).join('<br>⚠ '), d);
+  el('div', 'rm-kv', '<span>効きはじめ</span><b>約 ' + timeText(s.on) + '</b><span>ピーク</span><b>' + timeText(s.pk) + ' 〜 ' + timeText(s.pl) + '</b><span>効き目の長さ</span><b>約 ' + timeText(s.du) + '</b><span>手持ち</span><b>' + (SAVE.settings.sandbox ? '∞（サンドボックス）' : n + ' ' + unit) + '</b>', d);
+  // quantity stepper
+  var qrow = el('div', 'rm-qty', '<span>' + verb + '数</span><button class="btn q-">−</button><b class="qv">1</b><button class="btn q+">＋</button><div class="qs"></div>', d);
+  var qs = qrow.querySelector('.qs');
+  [1, 2, 3, 5, 10].forEach(function (v) { var b = el('button', 'btn', v + unit, qs); onTap(b, function () { setQ(v); }); });
+  var warnBox = el('div', 'rm-alert', '', d);
   var row = el('div', 'rm-row', '', d);
-  var back = el('button', 'btn ghost', '← もどる', row); onTap(back, function () { sfx('ui'); renderPillGrid(body); });
-  var take = el('button', 'btn pri', s.smoke ? '吸う' : '飲む', row); take.style.flex = '1';
-  if (n <= 0) { take.disabled = true; take.textContent = 'もうない'; }
-  onTap(take, function () { if (stockOf(s.id) <= 0) return; closeModal(true); if (s.smoke) actSmoke(s.id); else actTakePill(s.id); });
+  var back = el('button', 'btn ghost', '← もどる', row); onTap(back, function () { sfx('ui'); if (onBack) onBack(); else renderPillGrid(body); });
+  var take = el('button', 'btn pri', verb, row); take.style.flex = '1';
+  var maxQ = SAVE.settings.sandbox ? 10 : Math.min(10, n);
+  onTap(qrow.querySelector('.q-'), function () { setQ(qty - 1); });
+  onTap(qrow.querySelector('.q\\+'), function () { setQ(qty + 1); });
+  function setQ(v) {
+    qty = clamp(v, 1, Math.max(1, maxQ)); sfx('ui');
+    qrow.querySelector('.qv').textContent = qty;
+    take.textContent = n <= 0 ? 'もうない' : qty > 1 ? qty + unit + 'まとめて' + verb : verb;
+    take.className = 'btn ' + (qty >= 3 ? 'warn' : 'pri');
+    var taken = B.doses.filter(function (x) { return x.s === s.id; }).reduce(function (a, x) { return a + x.amt; }, 0);
+    var warn = [];
+    if (qty >= 3) warn.push(qty + unit + 'まとめて' + verb + 'のはとても危険。効き目も副作用も何倍にもなる。');
+    else if (qty === 2) warn.push('2' + unit + 'まとめて。いつもより強く効く。');
+    if (taken > 0) warn.push('すでに ' + taken + ' ' + unit + verb + 'でいる。効く前に重ねると強く効きすぎることがある。');
+    predictedCombos(s).forEach(function (cb) { if (cb.danger >= 2) warn.push('いま' + verb + 'と「' + cb.name + '」になりそう（' + ['安全', '注意', '危険', '命にかかわる'][cb.danger] + '）'); });
+    var heavy = COMBOS.filter(function (cb) { return cb.need.length === 1 && cb.need[0].lv && SAVE.seenCombos[cb.id] && (cb.need[0].s === s.id || cb.need[0].c === s.cls) && qty >= cb.need[0].lv * 0.8; });
+    heavy.forEach(function (cb) { warn.push('この量だと「' + cb.name + '」になるかも（' + ['安全', '注意', '危険', '命にかかわる'][cb.danger] + '）'); });
+    warnBox.innerHTML = warn.length ? '⚠ ' + warn.map(esc).join('<br>⚠ ') : '';
+    warnBox.style.display = warn.length ? '' : 'none';
+  }
+  setQ(1);
+  if (n <= 0) take.disabled = true;
+  onTap(take, function () { if (stockOf(s.id) <= 0) return; var q = Math.min(qty, SAVE.settings.sandbox ? qty : stockOf(s.id)); closeModal(true); if (s.smoke) actSmoke(s.id, q); else actTakePill(s.id, q); });
 }
 
 // ---- drink menu ------------------------------------------------------------------
@@ -3188,7 +3278,7 @@ function startNight() {
   hideScreen(); closeModal(true);
   GAME.B = newBody();
   GAME.clock = START_CLOCK; setSpeed(1); GAME.paused = false; GAME.rest = null; GAME.lock = false; GAME.hist = []; GAME.histT = 0; GAME.monoT = 4;
-  GAME.stash = {}; SUBS.forEach(function (s) { if (!s.hidden) GAME.stash[s.id] = s.stock || 2; }); DRINKS.forEach(function (d) { GAME.stash[d.id] = d.stock; });
+  GAME.stash = {}; SUBS.forEach(function (s) { if (!s.hidden) GAME.stash[s.id] = (s.stock || 2) * 3; }); DRINKS.forEach(function (d) { GAME.stash[d.id] = d.stock; });
   GAME.fx.fade = 1;
   WORLD.cans.forEach(function (m) { RENDER.scene.remove(m); }); WORLD.cans = [];
   WORLD.lightMode = 0; WORLD.tvOn = true; AU.music = true; auVol();
@@ -3222,15 +3312,16 @@ function doInteract(it) {
   sfx('click');
   it.fn();
 }
-function actTakePill(id) {
-  var s = SUB[id]; if (GAME.lock) return;
+function actTakePill(id, n) {
+  var s = SUB[id]; if (GAME.lock) return; n = Math.max(1, n || 1);
   GAME.lock = true;
-  if (!SAVE.settings.sandbox) GAME.stash[id]--;
-  holdItem('pill', pillMesh(s), 1.25, function () {
-    takeSub(GAME.B, id); sfx('pill'); GAME.lock = false; logEvent('🍬 ' + s.name + '（' + s.nick + '）を飲んだ');
+  if (!SAVE.settings.sandbox) GAME.stash[id] = Math.max(0, GAME.stash[id] - n);
+  holdItem('pill', pillMesh(s), 1.25 + Math.min(n, 6) * 0.15, function () {
+    takeSub(GAME.B, id, n); sfx('pill'); if (n > 1) setTimeout(function () { sfx('pill'); }, 250); GAME.lock = false; logEvent('🍬 ' + s.name + '（' + s.nick + '）を' + (n > 1 ? n + '個まとめて' : '') + '飲んだ');
+    if (n >= 3) { say(pick(['…ちょっと多すぎたかも。', 'まとめて飲んじゃった…', 'のどに' + n + '個ひっかかってる気がする']), 3.5); }
     var first = !SAVE.seenSubs[id];
     SAVE.seenSubs[id] = 1; writeSave();
-    toast((first ? '🆕 ' : '') + s.name + '（' + s.nick + '）を口に入れた。カリッ。', 'good');
+    toast((first ? '🆕 ' : '') + s.name + '（' + s.nick + '）' + (n > 1 ? 'を ' + n + ' 個まとめて' : 'を') + '口に入れた。カリッ。', n >= 3 ? 'warn' : 'good');
     if (s.reset && !GAME.B.found.length) { }
   });
 }
@@ -3322,7 +3413,7 @@ function openMedMenu() {
       var it = el('div', 'rm-item' + (n <= 0 ? ' lock' : ''), '<img src="' + ramuneIcon(s, 88) + '"><div class="tx"><b>' + esc(s.name) + ' <span style="font-size:11px;opacity:.7">（' + esc(s.nick) + '）</span></b><small>' + esc(s.desc) + (taken ? '<br><span class="dg2">今夜すでに ' + taken + ' 回飲んでいる</span>' : '') + '</small></div>', l);
       var b = el('button', 'btn', n > 0 ? '飲む<br><small style="font-weight:500;opacity:.7">のこり' + (SAVE.settings.sandbox ? '∞' : n) + '</small>' : 'ない', it);
       if (n <= 0) b.disabled = true;
-      onTap(b, function () { closeModal(true); actTakePill(s.id); });
+      onTap(b, function () { renderPillDetail(MODAL.body, s, function () { openMedMenu(); }); });
     });
     el('div', 'rm-note', '現実で困ったとき：こころの健康相談統一ダイヤル 0570-064-556／救急車 119／迷ったら #7119（地域による）', body);
   });
@@ -3336,22 +3427,22 @@ function openSmokeMenu() {
       var it = el('div', 'rm-item' + (n <= 0 ? ' lock' : ''), '<img src="' + ramuneIcon(s, 88) + '"><div class="tx"><b>' + esc(s.name) + ' <span style="font-size:11px;color:' + cl.col + '">' + cl.icon + esc(cl.short) + '</span></b><small>' + esc(s.desc) + '<br><span style="opacity:.8">現実では… ' + esc(cl.real) + '</span></small></div>', l);
       var b = el('button', 'btn', n > 0 ? '吸う<br><small style="font-weight:500;opacity:.7">のこり' + (SAVE.settings.sandbox ? '∞' : n) + '</small>' : 'ない', it);
       if (n <= 0) b.disabled = true;
-      onTap(b, function () { closeModal(true); actSmoke(s.id); });
+      onTap(b, function () { renderPillDetail(MODAL.body, s, function () { openSmokeMenu(); }); });
     });
     el('div', 'rm-note', '※ すべて架空のはまきです。20歳未満の喫煙は法律で禁止されています。', body);
   });
 }
-function actSmoke(id) {
-  var s = SUB[id]; if (GAME.lock) return;
+function actSmoke(id, n) {
+  var s = SUB[id]; if (GAME.lock) return; n = Math.max(1, n || 1);
   GAME.lock = true;
-  if (!SAVE.settings.sandbox) GAME.stash[id]--;
+  if (!SAVE.settings.sandbox) GAME.stash[id] = Math.max(0, GAME.stash[id] - n);
   sfx('click');
   HELD.tint = id === 'chillmaki' ? 0xcfe8c0 : id === 'shakimaki' ? 0xd0ecff : 0xd8d0c8;
   holdItem('smoke', cigarMesh(s), 3.2, function () {
-    takeSub(GAME.B, id); GAME.lock = false; logEvent('🚬 ' + s.name + ' を吸った');
+    takeSub(GAME.B, id, n); GAME.lock = false; logEvent('🚬 ' + s.name + ' を' + (n > 1 ? n + '本つづけて' : '') + '吸った'); if (n > 1) setTimeout(function () { puffSmoke(10 * Math.min(n, 4), HELD.tint); sfx('cough'); }, 300);
     var first = !SAVE.seenSubs[id]; SAVE.seenSubs[id] = 1; writeSave();
     if (GAME.B.F.na > 0.2 || Math.random() < 0.35) sfx('cough');
-    toast((first ? '🆕 ' : '') + s.name + ' をふかした。ふぅ…', 'good');
+    toast((first ? '🆕 ' : '') + s.name + (n > 1 ? ' を ' + n + ' 本つづけてふかした…' : ' をふかした。ふぅ…'), n >= 3 ? 'warn' : 'good');
   });
 }
 function actFrontDoor() {
@@ -4348,6 +4439,7 @@ function comboMatches(a, b) {
       if (hit < 0) ok = false; else used[hit] = true;
       if (nd.distinct && a.id === b.id) ok = false;
     });
+    if (c.need.length === 1 && c.need[0].lv) { var nd0 = c.need[0]; if (a.id === b.id && (nd0.s ? a.sub === nd0.s : a.cls === nd0.c)) res.push(c); return; }
     if (ok && c.need.length <= 2) res.push(c);
   });
   return res;
@@ -4355,7 +4447,7 @@ function comboMatches(a, b) {
 function phoneChecker(body) {
   var items = checkerItems();
   PHONE_APP.ca = PHONE_APP.ca || items[0].id; PHONE_APP.cb = PHONE_APP.cb || 'alc';
-  el('p', '', '2つ選ぶと、この組み合わせで起きる飲み合わせを調べます。まだ見つけていないものは名前が隠れますが、危険度はわかります。', body);
+  el('p', '', '2つ選ぶと、この組み合わせで起きる飲み合わせを調べます。AとBに同じものを選ぶと「大量に飲んだとき」の結果がわかります。まだ見つけていないものは名前が隠れますが、危険度はわかります。', body);
   ['ca', 'cb'].forEach(function (k, i) {
     var r = el('div', 'rm-set', '<span>' + (i ? 'B' : 'A') + '</span>', body);
     var s = el('select', 'rm-select', null, r); s.id = 'rm-check-' + k;
@@ -4389,7 +4481,7 @@ function phoneTerm(body) {
   function run() { var v = inp.value.trim(); if (!v) return; termPrint('> ' + v, 'cmd'); try { runCommand(v); } catch (er) { termPrint('エラー：' + er.message, 'err'); } renderPhoneApp(); setTimeout(function () { var i2 = document.getElementById('rm-term-input'); if (i2 && !isTouchDevice()) i2.focus(); }, 0); }
 }
 var CMD_HELP = [
-  ['help', 'このリスト'], ['status', 'からだの状態を表示'], ['list', 'ラムネ・はまきのID一覧'], ['give <ID|all> [数]', '手持ちを増やす'], ['take <ID>', 'すぐに飲む・吸う'],
+  ['help', 'このリスト'], ['status', 'からだの状態を表示'], ['list', 'ラムネ・はまきのID一覧'], ['give <ID|all> [数]', '手持ちを増やす'], ['take <ID> [数]', 'すぐに飲む・吸う（数をまとめて）'],
   ['drink <ID|water>', 'すぐに飲む（ZER9 など）'], ['time <HH:MM>', 'その時刻まで時間を進める'], ['morning', '朝7:59まで進める'], ['speed <1|2|4|8>', '時間の速さ'],
   ['tp <room>', '部屋へワープ（main/balcony/toilet/hall/tatami/bath）'], ['light <0|1|2>', '照明（ふつう/ネオン/暗め）'], ['music <lofi|ambient|techno|citypop|off>', '曲を変える'],
   ['heal', 'からだをシラフに戻す（デバッグ）'], ['combos', 'いま効いている飲み合わせ'], ['unlock', '図鑑をすべて解放'], ['sandbox <on|off>', '無限モード'], ['calm <on|off>', '点滅・ゆれをおさえる'],
@@ -4407,7 +4499,7 @@ function runCommand(line) {
     case 'give': need(); var n = parseInt(a[2] || '3', 10) || 3;
       if (a[1] === 'all') { SUBS.concat(DRINKS).forEach(function (s) { if (!s.hidden) GAME.stash[s.id] = (GAME.stash[s.id] || 0) + n; }); termPrint('すべて +' + n); }
       else { var id = DRINK[a[1]] ? a[1] : findSub(a[1]).id; GAME.stash[id] = (GAME.stash[id] || 0) + n; termPrint(id + ' +' + n + '（手持ち ' + GAME.stash[id] + '）'); } break;
-    case 'take': need(); var s = findSub(a[1]); takeSub(B, s.id); SAVE.seenSubs[s.id] = 1; writeSave(); logEvent('⌨ コマンドで ' + s.name); termPrint(s.name + ' を摂取した'); break;
+    case 'take': need(); var s = findSub(a[1]), q = clamp(parseInt(a[2] || '1', 10) || 1, 1, 20); takeSub(B, s.id, q); SAVE.seenSubs[s.id] = 1; writeSave(); logEvent('⌨ コマンドで ' + s.name + ' ×' + q); termPrint(s.name + ' を ' + q + ' 個摂取した'); break;
     case 'drink': need(); if (a[1] === 'water') { drinkWater(B); termPrint('水を飲んだ'); } else { if (!DRINK[a[1]]) throw new Error('ID：z9lemon z9grape z9ume sour giga water'); drinkCan(B, a[1]); placeCanOnTable(DRINK[a[1]]); termPrint(DRINK[a[1]].name + ' を飲んだ'); } break;
     case 'time': need(); var m = /^(\d{1,2}):(\d{2})$/.exec(a[1] || ''); if (!m) throw new Error('time 03:30 のように入力'); var tgt = (+m[1]) * 60 + (+m[2]); if (tgt < 20 * 60) tgt += 1440; if (tgt <= GAME.clock) throw new Error('時間は戻せません'); tgt = Math.min(tgt, END_CLOCK - 1); var dm = tgt - GAME.clock; bodyStep(B, dm); GAME.clock = tgt; termPrint(fmtClock(tgt) + ' まで進めた（' + timeText(dm) + '）'); processEvents(); break;
     case 'morning': need(); runCommand('time 07:59'); break;

@@ -653,6 +653,7 @@ function comboMatches(a, b) {
       if (hit < 0) ok = false; else used[hit] = true;
       if (nd.distinct && a.id === b.id) ok = false;
     });
+    if (c.need.length === 1 && c.need[0].lv) { var nd0 = c.need[0]; if (a.id === b.id && (nd0.s ? a.sub === nd0.s : a.cls === nd0.c)) res.push(c); return; }
     if (ok && c.need.length <= 2) res.push(c);
   });
   return res;
@@ -660,7 +661,7 @@ function comboMatches(a, b) {
 function phoneChecker(body) {
   var items = checkerItems();
   PHONE_APP.ca = PHONE_APP.ca || items[0].id; PHONE_APP.cb = PHONE_APP.cb || 'alc';
-  el('p', '', '2つ選ぶと、この組み合わせで起きる飲み合わせを調べます。まだ見つけていないものは名前が隠れますが、危険度はわかります。', body);
+  el('p', '', '2つ選ぶと、この組み合わせで起きる飲み合わせを調べます。AとBに同じものを選ぶと「大量に飲んだとき」の結果がわかります。まだ見つけていないものは名前が隠れますが、危険度はわかります。', body);
   ['ca', 'cb'].forEach(function (k, i) {
     var r = el('div', 'rm-set', '<span>' + (i ? 'B' : 'A') + '</span>', body);
     var s = el('select', 'rm-select', null, r); s.id = 'rm-check-' + k;
@@ -694,7 +695,7 @@ function phoneTerm(body) {
   function run() { var v = inp.value.trim(); if (!v) return; termPrint('> ' + v, 'cmd'); try { runCommand(v); } catch (er) { termPrint('エラー：' + er.message, 'err'); } renderPhoneApp(); setTimeout(function () { var i2 = document.getElementById('rm-term-input'); if (i2 && !isTouchDevice()) i2.focus(); }, 0); }
 }
 var CMD_HELP = [
-  ['help', 'このリスト'], ['status', 'からだの状態を表示'], ['list', 'ラムネ・はまきのID一覧'], ['give <ID|all> [数]', '手持ちを増やす'], ['take <ID>', 'すぐに飲む・吸う'],
+  ['help', 'このリスト'], ['status', 'からだの状態を表示'], ['list', 'ラムネ・はまきのID一覧'], ['give <ID|all> [数]', '手持ちを増やす'], ['take <ID> [数]', 'すぐに飲む・吸う（数をまとめて）'],
   ['drink <ID|water>', 'すぐに飲む（ZER9 など）'], ['time <HH:MM>', 'その時刻まで時間を進める'], ['morning', '朝7:59まで進める'], ['speed <1|2|4|8>', '時間の速さ'],
   ['tp <room>', '部屋へワープ（main/balcony/toilet/hall/tatami/bath）'], ['light <0|1|2>', '照明（ふつう/ネオン/暗め）'], ['music <lofi|ambient|techno|citypop|off>', '曲を変える'],
   ['heal', 'からだをシラフに戻す（デバッグ）'], ['combos', 'いま効いている飲み合わせ'], ['unlock', '図鑑をすべて解放'], ['sandbox <on|off>', '無限モード'], ['calm <on|off>', '点滅・ゆれをおさえる'],
@@ -712,7 +713,7 @@ function runCommand(line) {
     case 'give': need(); var n = parseInt(a[2] || '3', 10) || 3;
       if (a[1] === 'all') { SUBS.concat(DRINKS).forEach(function (s) { if (!s.hidden) GAME.stash[s.id] = (GAME.stash[s.id] || 0) + n; }); termPrint('すべて +' + n); }
       else { var id = DRINK[a[1]] ? a[1] : findSub(a[1]).id; GAME.stash[id] = (GAME.stash[id] || 0) + n; termPrint(id + ' +' + n + '（手持ち ' + GAME.stash[id] + '）'); } break;
-    case 'take': need(); var s = findSub(a[1]); takeSub(B, s.id); SAVE.seenSubs[s.id] = 1; writeSave(); logEvent('⌨ コマンドで ' + s.name); termPrint(s.name + ' を摂取した'); break;
+    case 'take': need(); var s = findSub(a[1]), q = clamp(parseInt(a[2] || '1', 10) || 1, 1, 20); takeSub(B, s.id, q); SAVE.seenSubs[s.id] = 1; writeSave(); logEvent('⌨ コマンドで ' + s.name + ' ×' + q); termPrint(s.name + ' を ' + q + ' 個摂取した'); break;
     case 'drink': need(); if (a[1] === 'water') { drinkWater(B); termPrint('水を飲んだ'); } else { if (!DRINK[a[1]]) throw new Error('ID：z9lemon z9grape z9ume sour giga water'); drinkCan(B, a[1]); placeCanOnTable(DRINK[a[1]]); termPrint(DRINK[a[1]].name + ' を飲んだ'); } break;
     case 'time': need(); var m = /^(\d{1,2}):(\d{2})$/.exec(a[1] || ''); if (!m) throw new Error('time 03:30 のように入力'); var tgt = (+m[1]) * 60 + (+m[2]); if (tgt < 20 * 60) tgt += 1440; if (tgt <= GAME.clock) throw new Error('時間は戻せません'); tgt = Math.min(tgt, END_CLOCK - 1); var dm = tgt - GAME.clock; bodyStep(B, dm); GAME.clock = tgt; termPrint(fmtClock(tgt) + ' まで進めた（' + timeText(dm) + '）'); processEvents(); break;
     case 'morning': need(); runCommand('time 07:59'); break;

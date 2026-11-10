@@ -61,6 +61,7 @@ var UI_CSS = [
   '.rm-card .nm{font-size:11.5px;font-weight:900;line-height:1.25;min-height:2.5em;display:flex;align-items:center;justify-content:center}',
   '.rm-card .st{font-size:10px;opacity:.75}',
   '.rm-sec{font-size:14px;font-weight:900;margin:12px 2px 6px;opacity:.9}.rm-sec:first-child{margin-top:0}',
+  '.rm-qty{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05)}.rm-qty>span{font-size:13px;opacity:.75}.rm-qty .qv{font-family:"DotGothic16",monospace;font-size:26px;font-weight:400;min-width:36px;text-align:center}.rm-qty>.btn{width:44px;height:44px;padding:0;font-size:22px}.rm-qty .qs{display:flex;gap:6px;flex-wrap:wrap;width:100%}.rm-qty .qs .btn{padding:6px 10px;font-size:12px}',
   '.rm-card .nk{font-size:9.5px;opacity:.7;margin:-2px 0 2px;line-height:1.2}',
   '.rm-real{font-size:12.5px;line-height:1.55;padding:9px 11px;border-radius:12px;background:rgba(255,255,255,.06);border-left:4px solid var(--c,#fff)}',
   '.rm-card .cl{position:absolute;left:6px;top:6px;font-size:9px;padding:1px 5px;border-radius:6px;font-weight:900;color:#111}',
@@ -298,25 +299,46 @@ function predictedCombos(s) {
 function pendingClass(c) { // taken recently but not kicked in yet
   return GAME.B.doses.some(function (d) { var s = SUB[d.s]; return s.cls === c && d.t < s.pk; }) || (c === 'alc' && GAME.B.stom > 0.2);
 }
-function renderPillDetail(body, s) {
+function renderPillDetail(body, s, onBack) {
   setModalTitle(s.name);
-  var cl = CLASSES[s.cls], n = stockOf(s.id), B = GAME.B;
+  var cl = CLASSES[s.cls], n = stockOf(s.id), B = GAME.B, verb = s.smoke ? '吸う' : '飲む', unit = s.smoke ? '本' : s.shape === 'drop' && s.otc ? '回分' : '個';
+  var qty = Math.min(1, n) || 1;
   body.innerHTML = '';
   var d = el('div', 'rm-detail', '', body);
-  el('div', 'hd', '<img src="' + ramuneIcon(s, 168) + '"><div><span class="c" style="background:' + cl.col + ';font-size:14px">' + cl.icon + ' ' + esc(cl.name) + '</span><div class="t">' + esc(s.name) + '</div><div style="font-size:12px;opacity:.75">通称「' + esc(s.nick) + '」・刻印 ' + esc(s.imp) + '</div></div>', d);
+  el('div', 'hd', '<img src="' + ramuneIcon(s, 168) + '"><div><span class="c" style="background:' + cl.col + ';font-size:14px">' + cl.icon + ' ' + esc(cl.name) + '</span><div class="t">' + esc(s.name) + '</div><div style="font-size:12px;opacity:.75">通称「' + esc(s.nick) + '」' + (s.imp ? '・刻印 ' + esc(s.imp) : '') + '</div></div>', d);
   el('p', '', esc(s.desc), d);
   var rn = el('div', 'rm-real', '<b>現実では…</b> ' + esc(cl.real) + '<br><span style="opacity:.6">（' + esc(s.name) + ' は架空の名前です）</span>', d); rn.style.setProperty('--c', cl.col);
-  el('div', 'rm-kv', '<span>効きはじめ</span><b>約 ' + timeText(s.on) + '</b><span>ピーク</span><b>' + timeText(s.pk) + ' 〜 ' + timeText(s.pl) + '</b><span>効き目の長さ</span><b>約 ' + timeText(s.du) + '</b><span>手持ち</span><b>' + (SAVE.settings.sandbox ? '∞（サンドボックス）' : n + ' 個') + '</b>', d);
-  var taken = B.doses.filter(function (x) { return x.s === s.id; }).length;
-  var warn = [];
-  if (taken > 0) warn.push('すでに ' + taken + ' 個飲んでいる。効く前に重ねると強く効きすぎることがある。');
-  predictedCombos(s).forEach(function (cb) { if (cb.danger >= 2) warn.push('いま飲むと「' + cb.name + '」になりそう（' + ['安全', '注意', '危険', '命にかかわる'][cb.danger] + '）'); });
-  if (warn.length) el('div', 'rm-alert', '⚠ ' + warn.map(esc).join('<br>⚠ '), d);
+  el('div', 'rm-kv', '<span>効きはじめ</span><b>約 ' + timeText(s.on) + '</b><span>ピーク</span><b>' + timeText(s.pk) + ' 〜 ' + timeText(s.pl) + '</b><span>効き目の長さ</span><b>約 ' + timeText(s.du) + '</b><span>手持ち</span><b>' + (SAVE.settings.sandbox ? '∞（サンドボックス）' : n + ' ' + unit) + '</b>', d);
+  // quantity stepper
+  var qrow = el('div', 'rm-qty', '<span>' + verb + '数</span><button class="btn q-">−</button><b class="qv">1</b><button class="btn q+">＋</button><div class="qs"></div>', d);
+  var qs = qrow.querySelector('.qs');
+  [1, 2, 3, 5, 10].forEach(function (v) { var b = el('button', 'btn', v + unit, qs); onTap(b, function () { setQ(v); }); });
+  var warnBox = el('div', 'rm-alert', '', d);
   var row = el('div', 'rm-row', '', d);
-  var back = el('button', 'btn ghost', '← もどる', row); onTap(back, function () { sfx('ui'); renderPillGrid(body); });
-  var take = el('button', 'btn pri', s.smoke ? '吸う' : '飲む', row); take.style.flex = '1';
-  if (n <= 0) { take.disabled = true; take.textContent = 'もうない'; }
-  onTap(take, function () { if (stockOf(s.id) <= 0) return; closeModal(true); if (s.smoke) actSmoke(s.id); else actTakePill(s.id); });
+  var back = el('button', 'btn ghost', '← もどる', row); onTap(back, function () { sfx('ui'); if (onBack) onBack(); else renderPillGrid(body); });
+  var take = el('button', 'btn pri', verb, row); take.style.flex = '1';
+  var maxQ = SAVE.settings.sandbox ? 10 : Math.min(10, n);
+  onTap(qrow.querySelector('.q-'), function () { setQ(qty - 1); });
+  onTap(qrow.querySelector('.q\\+'), function () { setQ(qty + 1); });
+  function setQ(v) {
+    qty = clamp(v, 1, Math.max(1, maxQ)); sfx('ui');
+    qrow.querySelector('.qv').textContent = qty;
+    take.textContent = n <= 0 ? 'もうない' : qty > 1 ? qty + unit + 'まとめて' + verb : verb;
+    take.className = 'btn ' + (qty >= 3 ? 'warn' : 'pri');
+    var taken = B.doses.filter(function (x) { return x.s === s.id; }).reduce(function (a, x) { return a + x.amt; }, 0);
+    var warn = [];
+    if (qty >= 3) warn.push(qty + unit + 'まとめて' + verb + 'のはとても危険。効き目も副作用も何倍にもなる。');
+    else if (qty === 2) warn.push('2' + unit + 'まとめて。いつもより強く効く。');
+    if (taken > 0) warn.push('すでに ' + taken + ' ' + unit + verb + 'でいる。効く前に重ねると強く効きすぎることがある。');
+    predictedCombos(s).forEach(function (cb) { if (cb.danger >= 2) warn.push('いま' + verb + 'と「' + cb.name + '」になりそう（' + ['安全', '注意', '危険', '命にかかわる'][cb.danger] + '）'); });
+    var heavy = COMBOS.filter(function (cb) { return cb.need.length === 1 && cb.need[0].lv && SAVE.seenCombos[cb.id] && (cb.need[0].s === s.id || cb.need[0].c === s.cls) && qty >= cb.need[0].lv * 0.8; });
+    heavy.forEach(function (cb) { warn.push('この量だと「' + cb.name + '」になるかも（' + ['安全', '注意', '危険', '命にかかわる'][cb.danger] + '）'); });
+    warnBox.innerHTML = warn.length ? '⚠ ' + warn.map(esc).join('<br>⚠ ') : '';
+    warnBox.style.display = warn.length ? '' : 'none';
+  }
+  setQ(1);
+  if (n <= 0) take.disabled = true;
+  onTap(take, function () { if (stockOf(s.id) <= 0) return; var q = Math.min(qty, SAVE.settings.sandbox ? qty : stockOf(s.id)); closeModal(true); if (s.smoke) actSmoke(s.id, q); else actTakePill(s.id, q); });
 }
 
 // ---- drink menu ------------------------------------------------------------------
