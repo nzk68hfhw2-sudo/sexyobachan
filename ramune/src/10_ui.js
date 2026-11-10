@@ -60,6 +60,7 @@ var UI_CSS = [
   '.rm-card img{width:52px;height:52px;display:block;margin:0 auto 2px}',
   '.rm-card .nm{font-size:11.5px;font-weight:900;line-height:1.25;min-height:2.5em;display:flex;align-items:center;justify-content:center}',
   '.rm-card .st{font-size:10px;opacity:.75}',
+  '.rm-sec{font-size:14px;font-weight:900;margin:12px 2px 6px;opacity:.9}.rm-sec:first-child{margin-top:0}',
   '.rm-card .nk{font-size:9.5px;opacity:.7;margin:-2px 0 2px;line-height:1.2}',
   '.rm-real{font-size:12.5px;line-height:1.55;padding:9px 11px;border-radius:12px;background:rgba(255,255,255,.06);border-left:4px solid var(--c,#fff)}',
   '.rm-card .cl{position:absolute;left:6px;top:6px;font-size:9px;padding:1px 5px;border-radius:6px;font-weight:900;color:#111}',
@@ -265,14 +266,17 @@ function openPillMenu() {
 function renderPillGrid(body) {
   setModalTitle('ラムネケース');
   body.innerHTML = '';
-  var g = el('div', 'rm-grid', '', body);
-  SUBS.forEach(function (s) {
-    if (s.hidden || s.smoke || s.otc) return;
-    var n = stockOf(s.id), cl = CLASSES[s.cls];
-    var c = el('div', 'rm-card' + (n <= 0 ? ' empty' : ''), '<span class="cl" style="background:' + cl.col + '">' + cl.short + '</span><img src="' + ramuneIcon(s, 104) + '"><div class="nm">' + esc(s.name) + '</div><div class="nk">「' + esc(s.nick) + '」</div><div class="st">' + (SAVE.settings.sandbox ? '∞' : 'のこり ' + n) + '</div>', g);
-    onTap(c, function () { sfx('ui'); renderPillDetail(body, s); });
+  [['🍬 ラムネ', function (s) { return !s.smoke && !s.otc; }], ['🧴 市販薬（ドラッグストア）', function (s) { return s.otc; }], ['🚬 はまき', function (s) { return s.smoke; }]].forEach(function (sec) {
+    el('div', 'rm-sec', sec[0], body);
+    var g = el('div', 'rm-grid', '', body);
+    SUBS.forEach(function (s) {
+      if (s.hidden || !sec[1](s)) return;
+      var n = stockOf(s.id), cl = CLASSES[s.cls];
+      var c = el('div', 'rm-card' + (n <= 0 ? ' empty' : ''), '<span class="cl" style="background:' + cl.col + '">' + cl.short + '</span><img src="' + ramuneIcon(s, 104) + '"><div class="nm">' + esc(s.name) + '</div><div class="nk">「' + esc(s.nick) + '」</div><div class="st">' + (SAVE.settings.sandbox ? '∞' : 'のこり ' + n) + '</div>', g);
+      onTap(c, function () { sfx('ui'); renderPillDetail(body, s); });
+    });
   });
-  el('div', 'rm-note', '※ すべて架空のラムネです。カードをタップすると説明が見られます。', body);
+  el('div', 'rm-note', '※ すべて架空です。カードをタップすると説明が見られます。市販薬は洗面所の薬箱、はまきはベランダの葉巻ケースからも取れます。', body);
 }
 function timeText(m) { return m < 60 ? Math.round(m) + '分' : (m / 60).toFixed(m < 180 ? 1 : 0).replace('.0', '') + '時間'; }
 function predictedCombos(s) {
@@ -310,9 +314,9 @@ function renderPillDetail(body, s) {
   if (warn.length) el('div', 'rm-alert', '⚠ ' + warn.map(esc).join('<br>⚠ '), d);
   var row = el('div', 'rm-row', '', d);
   var back = el('button', 'btn ghost', '← もどる', row); onTap(back, function () { sfx('ui'); renderPillGrid(body); });
-  var take = el('button', 'btn pri', '飲む', row); take.style.flex = '1';
+  var take = el('button', 'btn pri', s.smoke ? '吸う' : '飲む', row); take.style.flex = '1';
   if (n <= 0) { take.disabled = true; take.textContent = 'もうない'; }
-  onTap(take, function () { if (stockOf(s.id) <= 0) return; closeModal(true); actTakePill(s.id); });
+  onTap(take, function () { if (stockOf(s.id) <= 0) return; closeModal(true); if (s.smoke) actSmoke(s.id); else actTakePill(s.id); });
 }
 
 // ---- drink menu ------------------------------------------------------------------
