@@ -1,15 +1,15 @@
-/*! RAMUNE NIGHT — game.js (single-file build). Fictional game. See source.txt */
+/*! キケンなラムネシミュレーター — game.js (single-file build). Fictional game. See source.txt */
 (function(){
 "use strict";
 
 // ===== 00_boot.js =====
 // ---------------------------------------------------------------------------
-// RAMUNE NIGHT（ラムネナイト）— 架空のラムネ＆チューハイ・シミュレーター
+// キケンなラムネシミュレーター — 架空のラムネ＆チューハイ・シミュレーター
 // これはフィクションのゲームです。登場する「ラムネ」はすべて架空のもので、
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.0.0';
+var GAME_VERSION = '1.1.0';
 
 var ROOT, UI, CANVAS_HOST;
 
@@ -22,7 +22,7 @@ function showFatal(title, detail) {
       d.style.cssText = 'position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 120px);z-index:2147483647;background:#1a0616;color:#ffe0f4;border:2px solid #e2a;padding:14px;font:13px/1.5 monospace;white-space:pre-wrap;border-radius:8px;max-height:60vh;overflow:auto;';
       (document.body || document.documentElement).appendChild(d);
     }
-    d.textContent = '[RAMUNE NIGHT] ' + title + '\n' + (detail || '') + '\nUA: ' + navigator.userAgent;
+    d.textContent = '[キケンなラムネシミュレーター] ' + title + '\n' + (detail || '') + '\nUA: ' + navigator.userAgent;
   } catch (e) {}
 }
 
@@ -1234,6 +1234,18 @@ function makeTextures() {
   c = mkCanvas(128, 128); g = c.getContext('2d'); g.fillStyle = '#8f8f8a'; g.fillRect(0, 0, 128, 128);
   for (y = 0; y < 128; y += 2) for (x = 0; x < 128; x += 2) { g.fillStyle = 'rgba(0,0,0,' + fbm(x * 0.08, y * 0.08, 3) * 0.25 + ')'; g.fillRect(x, y, 2, 2); }
   TEX.concrete = toTex(c, { repeat: [3, 2] });
+  // tatami
+  c = mkCanvas(256, 256); g = c.getContext('2d'); g.fillStyle = '#b8b47a'; g.fillRect(0, 0, 256, 256);
+  for (y = 0; y < 256; y += 2) { g.fillStyle = 'rgba(' + (Math.random() < 0.5 ? '90,90,40' : '230,225,170') + ',' + (0.15 + Math.random() * 0.2) + ')'; g.fillRect(0, y, 256, 1); }
+  g.fillStyle = '#2d3a2a'; g.fillRect(0, 0, 256, 10); g.fillRect(0, 246, 256, 10);
+  TEX.tatami = toTex(c, { repeat: [2, 2] });
+  c = mkCanvas(128, 256); g = c.getContext('2d'); g.fillStyle = '#efe6cf'; g.fillRect(0, 0, 128, 256);
+  for (i = 0; i < 6; i++) { g.strokeStyle = 'rgba(120,150,170,0.5)'; g.lineWidth = 2; g.beginPath(); g.arc(30 + i * 15, 70 + i * 22, 18, 0, PI); g.stroke(); }
+  g.fillStyle = '#2b2b2b'; g.beginPath(); g.arc(110, 128, 5, 0, TAU); g.fill(); g.strokeStyle = '#6b4a2a'; g.lineWidth = 6; g.strokeRect(0, 0, 128, 256);
+  TEX.fusuma = toTex(c);
+  c = mkCanvas(128, 256); g = c.getContext('2d'); g.fillStyle = '#f7f1e3'; g.fillRect(0, 0, 128, 256);
+  g.strokeStyle = '#7a5a3a'; g.lineWidth = 4; for (x = 0; x <= 128; x += 32) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 256); g.stroke(); } for (y = 0; y <= 256; y += 42) { g.beginPath(); g.moveTo(0, y); g.lineTo(128, y); g.stroke(); }
+  TEX.shoji = toTex(c);
   // ramune case label
   c = mkCanvas(256, 128); g = c.getContext('2d');
   var lg = g.createLinearGradient(0, 0, 256, 128); lg.addColorStop(0, '#7df9ff'); lg.addColorStop(0.5, '#c77dff'); lg.addColorStop(1, '#ff5fa8');
@@ -1269,7 +1281,7 @@ function posterCanvas(k) {
     var gr = g.createLinearGradient(0, 0, 0, 360); gr.addColorStop(0, '#1b0f3b'); gr.addColorStop(1, '#ff5fa8'); g.fillStyle = gr; g.fillRect(0, 0, 256, 360);
     g.fillStyle = '#ffd166'; g.beginPath(); g.arc(128, 200, 70, 0, TAU); g.fill();
     g.fillStyle = '#1b0f3b'; for (i = 0; i < 6; i++) g.fillRect(40, 190 + i * 14, 176, 5 + i);
-    g.fillStyle = '#7df9ff'; g.font = '900 34px sans-serif'; g.textAlign = 'center'; g.fillText('RAMUNE', 128, 64); g.fillText('NIGHT', 128, 102);
+    g.fillStyle = '#7df9ff'; g.font = '900 34px sans-serif'; g.textAlign = 'center'; g.fillText('DANGER', 128, 64); g.fillText('RAMUNE', 128, 102);
     g.font = '700 14px sans-serif'; g.fillStyle = '#fff'; g.fillText('ALL NIGHT LONG', 128, 320);
   } else if (k === 1) {
     g.fillStyle = '#f4e9d0'; g.fillRect(0, 0, 256, 360);
@@ -1423,9 +1435,10 @@ function buildWorld() {
   addCol(-3, 1.3, 2.45, 2.6); addCol(2.1, 3, 2.45, 2.6);
   // west / east
   addPlane(W, 5, 2.5, M.wall, -3, 1.25, 0, 0, PI / 2, 4); addCol(-3.1, -2.95, -2.6, 2.6);
-  addPlane(W, 5, 2.5, M.wall, 3, 1.25, 0, 0, -PI / 2, 4); addCol(2.95, 3.1, -2.6, 2.6);
+  M.wall2 = stdMat({ map: TEX.wall, roughness: 0.92, side: THREE.DoubleSide });
+  wallSeg(W, 3, -2.5, 3, 2.5, M.wall2, [[3.1, 4.0]]);
   // baseboards
-  [[0, 2.48, 6, 0.02, 0], [-2.98, 0, 0.02, 5, 0], [2.98, 0, 0.02, 5, 0]].forEach(function (b) { addBox(W, b[2] || 0.02, 0.08, b[3], M.white, b[0], 0, b[1]); });
+  [[0, 2.48, 6, 0.02, 0], [-2.98, 0, 0.02, 5, 0]].forEach(function (b) { addBox(W, b[2] || 0.02, 0.08, b[3], M.white, b[0], 0, b[1]); });
   // ceiling light
   var lampMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.36, 0.08, 24), new THREE.MeshBasicMaterial({ color: 0xfff4dc }));
   lampMesh.position.set(0, ROOM.h - 0.05, 0); W.add(lampMesh); WORLD.lampMesh = lampMesh;
@@ -1479,7 +1492,7 @@ function buildWorld() {
   var pillow = addBox(bed, 0.6, 0.12, 0.38, M.white, 2.35, 0.48, -2.1, { sx: 3, sz: 3 });
   var blanket = addBox(bed, 1.16, 0.08, 1.3, M.blanket, 2.35, 0.48, -0.95, { sx: 4, sz: 5 });
   addCol(1.75, 2.95, -2.5, -0.35);
-  WORLD.bedPos = new THREE.Vector3(2.35, 0.6, -1.4);
+  WORLD.bedPos = new THREE.Vector3(2.35, 0.6, -1.4); WORLD.bedMain = { pos: WORLD.bedPos.clone(), y: 0.85, exit: [1.5, -0.1, PI * 0.6] }; WORLD.bed = WORLD.bedMain;
   // floor lamp next to bed
   addBox(W, 0.28, 0.03, 0.28, M.black, 2.7, 0, 0.05);
   addBox(W, 0.03, 1.35, 0.03, M.black, 2.7, 0, 0.05);
@@ -1610,7 +1623,8 @@ function buildWorld() {
   addPlane(bath, 2.4, 1.8, M.ceil, 1.8, ROOM.h, 3.4, PI / 2, 0, 1);
   addPlane(bath, 2.4, 2.5, M.tile, 1.8, 1.25, 4.3, 0, PI, 3); addCol(0.6, 3, 4.25, 4.4);
   addPlane(bath, 1.8, 2.5, M.tile, 0.6, 1.25, 3.4, 0, PI / 2, 3); addCol(0.5, 0.65, 2.5, 4.3);
-  addPlane(bath, 1.8, 2.5, M.tile, 3.0, 1.25, 3.4, 0, -PI / 2, 3); addCol(2.95, 3.1, 2.5, 4.3);
+  addPlane(bath, 1.8, 2.5, M.tile, 2.99, 1.25, 3.4, 0, -PI / 2, 3); addCol(2.95, 3.1, 2.5, 4.3);
+  addPlane(bath, 1.8, 2.5, M.wall, 3.01, 1.25, 3.4, 0, PI / 2, 4);
   addPlane(bath, 0.7, 2.5, M.tile, 0.95, 1.25, 2.52, 0, 0, 3); addPlane(bath, 0.9, 2.5, M.tile, 2.55, 1.25, 2.52, 0, 0, 3); addPlane(bath, 0.8, 0.45, M.tile, 1.7, 2.275, 2.52, 0, 0, 3);
   // door frame
   addBox(W, 0.05, 2.05, 0.14, M.white, 1.3, 0, 2.5); addBox(W, 0.05, 2.05, 0.14, M.white, 2.1, 0, 2.5); addBox(W, 0.85, 0.05, 0.14, M.white, 1.7, 2.03, 2.5);
@@ -1634,7 +1648,7 @@ function buildWorld() {
   addBox(bath, 0.04, 0.5, 0.35, stdMat({ color: 0xffb3c7 }), 2.95, 0.9, 3.0);
 
   // ---- bed interaction / balcony interaction ----
-  addInter('bed', 'ベッド', '横になる', new THREE.Vector3(2.35, 0.6, -1.3), [bed], function () { openBedMenu(); });
+  addInter('bed', 'ベッド', '横になる', new THREE.Vector3(2.35, 0.6, -1.3), [bed], function () { WORLD.bed = WORLD.bedMain; openBedMenu(); });
   addInter('rail', 'ベランダの手すり', '夜風にあたる', new THREE.Vector3(-0.8, 1.05, -4.2), [], function () { toast('夜風がきもちいい…（ベランダにいると体温が下がり、吐き気が少しおさまる）'); });
 
   // ---- lights ----
@@ -1652,6 +1666,7 @@ function buildWorld() {
   var strip2 = strip.clone(); strip2.position.set(0, 2.42, -2.43); W.add(strip2);
   WORLD.strips = [strip, strip2];
 
+  buildHouse();
   buildCity();
   buildSky();
   buildHeld();
@@ -1832,6 +1847,170 @@ function placeCanOnTable(d) {
   RENDER.scene.add(m); WORLD.cans.push(m);
 }
 
+// ---- wall helper: a straight wall from (x0,z0) to (x1,z1) with door gaps [[s0,s1],...] measured along it ----
+function wallSeg(parent, x0, z0, x1, z1, mat, doors, o) {
+  o = o || {};
+  var len = Math.hypot(x1 - x0, z1 - z0), dx = (x1 - x0) / len, dz = (z1 - z0) / len, ang = -Math.atan2(z1 - z0, x1 - x0);
+  var H = ROOM.h, dh = o.doorH || 2.05, y0 = o.y0 || 0;
+  var pieces = [], cur = 0;
+  (doors || []).forEach(function (d) {
+    if (d[0] > cur) pieces.push([cur, d[0], y0, H]);
+    pieces.push([d[0], d[1], d[2] != null ? d[3] : dh, H]);
+    if (d[2] != null) pieces.push([d[0], d[1], y0, d[2]]); // window: wall below sill
+    cur = d[1];
+  });
+  if (cur < len) pieces.push([cur, len, y0, H]);
+  pieces.forEach(function (p) {
+    var w = p[1] - p[0], h = p[3] - p[2]; if (w <= 0.001 || h <= 0.001) return;
+    var c = (p[0] + p[1]) / 2;
+    var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h, Math.max(1, Math.ceil(w * 4)), Math.max(1, Math.ceil(h * 4))), mat);
+    m.position.set(x0 + dx * c, (p[2] + p[3]) / 2, z0 + dz * c); m.rotation.y = ang; parent.add(m);
+    if (p[2] < 1.0 && !o.noCol) {
+      var ax = x0 + dx * p[0], az = z0 + dz * p[0], bx = x0 + dx * p[1], bz = z0 + dz * p[1];
+      addCol(Math.min(ax, bx) - 0.06, Math.max(ax, bx) + 0.06, Math.min(az, bz) - 0.06, Math.max(az, bz) + 0.06);
+    }
+  });
+  // door frames
+  (doors || []).forEach(function (d) {
+    if (d[2] != null) return;
+    [d[0], d[1]].forEach(function (s) { var f = new THREE.Mesh(new THREE.BoxGeometry(0.05, dh, 0.14), WORLD.mats.white); f.position.set(x0 + dx * s, dh / 2, z0 + dz * s); f.rotation.y = ang; parent.add(f); });
+    var tp = new THREE.Mesh(new THREE.BoxGeometry(d[1] - d[0] + 0.05, 0.05, 0.14), WORLD.mats.white); var c = (d[0] + d[1]) / 2; tp.position.set(x0 + dx * c, dh, z0 + dz * c); tp.rotation.y = ang; parent.add(tp);
+  });
+}
+function floorRect(parent, x0, x1, z0, z1, mat, y) {
+  var m = addPlane(parent, x1 - x0, z1 - z0, mat, (x0 + x1) / 2, y || 0, (z0 + z1) / 2, -PI / 2, 0, 2); return m;
+}
+function ceilRect(parent, x0, x1, z0, z1) { return addPlane(parent, x1 - x0, z1 - z0, WORLD.mats.ceil, (x0 + x1) / 2, ROOM.h, (z0 + z1) / 2, PI / 2, 0, 1); }
+
+// areas of the house (for lights / hallucinations / outdoor check)
+var AREAS = [
+  { id: 'main', name: 'リビング', x0: -3, x1: 3, z0: -2.5, z1: 2.5 },
+  { id: 'balcony', name: 'ベランダ', x0: -2.45, x1: 0.85, z0: -4.25, z1: -2.5 },
+  { id: 'toilet', name: 'トイレ', x0: 0.6, x1: 3, z0: 2.5, z1: 4.3, light: [1.8, 2.3, 3.4, 0xf0f6ff] },
+  { id: 'hall', name: '廊下', x0: 3, x1: 4.4, z0: -2.5, z1: 4.3, light: [3.7, 2.3, 0.9, 0xffe6c0] },
+  { id: 'tatami', name: '和室', x0: 4.4, x1: 8, z0: -2.5, z1: 1.5, light: [6.2, 2.1, -0.5, 0xffc27a] },
+  { id: 'bath', name: 'お風呂', x0: 4.4, x1: 8, z0: 1.5, z1: 4.3, light: [6.0, 2.3, 2.9, 0xe8f4ff] }
+];
+function areaAt(x, z) {
+  for (var i = 0; i < AREAS.length; i++) { var a = AREAS[i]; if (x >= a.x0 - 0.05 && x <= a.x1 + 0.05 && z >= a.z0 - 0.05 && z <= a.z1 + 0.05) return a; }
+  return AREAS[0];
+}
+
+function buildHouse() {
+  var H = new THREE.Group(); WORLD.root.add(H); var M = WORLD.mats;
+  M.tatami = stdMat({ map: TEX.tatami, roughness: 0.95 });
+  M.fusuma = stdMat({ map: TEX.fusuma, roughness: 0.9 });
+  M.door = stdMat({ color: 0x3c3f46, roughness: 0.5, metalness: 0.4 });
+  M.bathTile = stdMat({ map: TEX.tile, roughness: 0.25, side: THREE.DoubleSide });
+  M.genkan = stdMat({ color: 0x6d6a66, roughness: 0.9 });
+  M.futon = stdMat({ color: 0xf3efe6, roughness: 0.95 });
+  M.kotatsu = stdMat({ color: 0xb0472f, roughness: 0.95 });
+  M.water = new THREE.MeshStandardMaterial({ color: 0x6fd3ff, emissive: 0x0a3550, roughness: 0.05, transparent: true, opacity: 0.75 });
+
+  // ---------- hallway x3..4.4, z-2.5..4.3 ----------
+  floorRect(H, 3, 4.4, -2.5, 3.6, M.floor);
+  floorRect(H, 3, 4.4, 3.6, 4.3, M.genkan, -0.12);
+  addBox(H, 1.4, 0.12, 0.05, M.darkWood, 3.7, -0.12, 3.6);
+  ceilRect(H, 3, 4.4, -2.5, 4.3);
+  wallSeg(H, 3, -2.5, 4.4, -2.5, M.wall2, []);                    // north end
+  wallSeg(H, 4.4, -2.5, 4.4, 4.3, M.wall2, [[2.3, 3.2], [4.8, 5.6]]); // doors to tatami / bath
+  wallSeg(H, 3, 4.3, 4.4, 4.3, M.wall2, [], { y0: -0.12 });
+  // front door
+  var fd = new THREE.Group(); H.add(fd);
+  addBox(fd, 0.9, 2.05, 0.06, M.door, 3.7, -0.12, 4.26);
+  addBox(fd, 0.04, 0.04, 0.16, M.metal, 4.0, 0.9, 4.2);
+  var peep = new THREE.Mesh(new THREE.CircleGeometry(0.012, 10), M.black); peep.position.set(3.7, 1.5, 4.225); peep.rotation.y = PI; fd.add(peep);
+  addInter('door', '玄関のドア', '外に出る', new THREE.Vector3(3.7, 1.0, 4.2), [fd], function () { actFrontDoor(); });
+  // shoe box, shoes, umbrella
+  addBox(H, 0.35, 0.9, 0.9, M.wood, 4.2, -0.12, 3.85, { col: true });
+  [[3.45, 3.9, 0xffffff], [3.6, 3.95, 0x222222]].forEach(function (s) { addBox(H, 0.11, 0.08, 0.27, stdMat({ color: s[2] }), s[0], -0.12, s[1]); addBox(H, 0.11, 0.08, 0.27, stdMat({ color: s[2] }), s[0] + 0.13, -0.12, s[1] + 0.02); });
+  var umb = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.8, 8), stdMat({ color: 0x2b6cb0 })); umb.position.set(3.15, 0.28, 4.15); umb.rotation.z = 0.15; H.add(umb);
+  // wall shelf with a photo frame, hallway lamp
+  addBox(H, 0.25, 0.03, 0.7, M.wood, 4.27, 1.0, 1.2);
+  var frame = addPlane(H, 0.2, 0.26, stdMat({ map: TEX.poster1 }), 4.38, 1.4, 1.2, 0, -PI / 2);
+  var hl = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 10), new THREE.MeshBasicMaterial({ color: 0xfff0d0 })); hl.position.set(3.7, 2.4, 0.9); H.add(hl);
+  var hl2 = hl.clone(); hl2.position.z = 3.3; H.add(hl2);
+
+  // ---------- tatami room x4.4..8, z-2.5..1.5 ----------
+  floorRect(H, 4.4, 8, -2.5, 1.5, M.tatami, 0.002);
+  ceilRect(H, 4.4, 8, -2.5, 1.5);
+  wallSeg(H, 4.4, -2.5, 8, -2.5, M.wall2, []);
+  wallSeg(H, 8, -2.5, 8, 1.5, M.wall2, [[0.7, 2.9, 0.85, 2.0]]); // window
+  wallSeg(H, 8, 1.5, 4.4, 1.5, M.wall2, []);
+  // window frame + glass + shoji
+  addBox(H, 0.12, 0.05, 2.2, M.wood, 8, 0.83, -0.7); addBox(H, 0.12, 0.05, 2.2, M.wood, 8, 1.98, -0.7);
+  var tg = addBox(H, 0.02, 1.15, 2.2, M.glass, 8.02, 0.85, -0.7); tg.renderOrder = 2;
+  for (var sj = 0; sj < 2; sj++) {
+    var sh = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 1.15), new THREE.MeshStandardMaterial({ map: TEX.shoji, transparent: true, opacity: 0.92, side: THREE.DoubleSide, emissive: 0x332211 }));
+    sh.position.set(7.95, 1.42, -1.65 + sj * 0.55); sh.rotation.y = -PI / 2; H.add(sh);
+  }
+  // oshiire (fusuma) on the north wall
+  for (var fu = 0; fu < 2; fu++) addPlane(H, 0.9, 1.75, M.fusuma, 6.6 + fu * 0.9, 0.95, -2.48, 0, 0);
+  addBox(H, 1.84, 0.04, 0.04, M.wood, 7.05, 1.82, -2.47); addCol(6.1, 7.95, -2.5, -2.35);
+  // futon
+  var fut = new THREE.Group(); H.add(fut);
+  addBox(fut, 1.0, 0.1, 2.0, M.futon, 5.2, 0.002, -1.35, { sx: 3, sz: 5 });
+  addBox(fut, 0.96, 0.08, 1.3, stdMat({ map: TEX.blanket, roughness: 0.95 }), 5.2, 0.1, -1.0, { sx: 3, sz: 4 });
+  addBox(fut, 0.5, 0.1, 0.3, M.white, 5.2, 0.1, -2.1, { sx: 2, sz: 2 });
+  WORLD.bedFuton = { pos: new THREE.Vector3(5.2, 0.2, -1.35), y: 0.42, exit: [5.9, 0.2, PI * 0.5] };
+  addInter('futon', 'ふとん', '横になる', new THREE.Vector3(5.2, 0.2, -1.2), [fut], function () { WORLD.bed = WORLD.bedFuton; openBedMenu(); });
+  // kotatsu with mikan
+  var kt = new THREE.Group(); H.add(kt);
+  addBox(kt, 1.35, 0.33, 1.35, M.kotatsu, 6.6, 0.002, 0.1, { sx: 3, sz: 3 });
+  addBox(kt, 1.0, 0.04, 1.0, M.wood, 6.6, 0.38, 0.1);
+  var bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.07, 0.06, 16), stdMat({ color: 0x2f2f6a })); bowl.position.set(6.6, 0.45, 0.1); kt.add(bowl);
+  var mikanMat = stdMat({ color: 0xff8a1c, roughness: 0.7 });
+  [[0, 0], [0.06, 0.04], [-0.05, 0.05], [0.01, -0.06]].forEach(function (p, i) { var mk = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 8), mikanMat); mk.scale.y = 0.8; mk.position.set(6.6 + p[0], 0.5 + (i === 3 ? 0.04 : 0), 0.1 + p[1]); kt.add(mk); });
+  addCol(5.92, 7.28, -0.58, 0.78);
+  addInter('kotatsu', 'こたつ', 'こたつに入る', new THREE.Vector3(6.6, 0.4, 0.1), [kt], function () { actKotatsu(); });
+  addInter('mikan', 'みかん', 'みかんを食べる', new THREE.Vector3(6.6, 0.5, 0.1), [bowl], function () { actMikan(); }, { reach: 2.0 });
+  [[6.6, -0.75], [7.45, 0.1], [6.6, 0.95]].forEach(function (p) { addBox(H, 0.5, 0.06, 0.5, stdMat({ color: 0x5b3a8c, roughness: 1 }), p[0], 0.002, p[1]); });
+  // paper lantern
+  var lan = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), new THREE.MeshStandardMaterial({ color: 0xfff1d6, emissive: 0xffc27a, emissiveIntensity: 1.0 })); lan.scale.y = 1.15; lan.position.set(6.2, 2.05, -0.5); H.add(lan);
+  addBox(H, 0.01, 0.2, 0.01, M.black, 6.2, 2.28, -0.5);
+  // small chest with a radio
+  addBox(H, 0.45, 0.6, 0.8, M.darkWood, 7.7, 0, 1.0, { col: true });
+  var radio = addBox(H, 0.3, 0.18, 0.15, stdMat({ color: 0xc9b38a }), 7.7, 0.6, 1.0);
+  addInter('radio', 'ラジオ', '音楽をつける/消す', new THREE.Vector3(7.7, 0.7, 1.0), [radio], function () { AU.music = !AU.music; auVol(); sfx('click'); toast(AU.music ? '音楽をつけた' : '音楽を止めた'); });
+
+  // ---------- bath area x4.4..8, z1.5..4.3 (脱衣所 x<5.8, 浴室 x>5.8) ----------
+  floorRect(H, 4.4, 5.8, 1.5, 4.3, M.floor);
+  floorRect(H, 5.8, 8, 1.5, 4.3, M.tile, 0.003);
+  ceilRect(H, 4.4, 8, 1.5, 4.3);
+  wallSeg(H, 4.4, 1.5, 8, 1.5, M.wall2, []);
+  wallSeg(H, 8, 1.5, 8, 4.3, M.bathTile, []);
+  wallSeg(H, 8, 4.3, 4.4, 4.3, M.wall2, []);
+  // glass partition with a gap
+  var gp = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.05), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.25, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false }));
+  gp.position.set(5.8, 1.02, 2.0); gp.rotation.y = PI / 2; H.add(gp); addCol(5.76, 5.84, 1.5, 2.5);
+  var gp2 = gp.clone(); gp2.position.z = 3.8; H.add(gp2); addCol(5.76, 5.84, 3.3, 4.3);
+  addBox(H, 0.05, 0.05, 2.8, M.metal, 5.8, 2.05, 2.9);
+  // washing machine & basin
+  var wm = new THREE.Group(); H.add(wm);
+  addBox(wm, 0.6, 0.85, 0.6, M.white, 4.75, 0, 3.95, { col: true });
+  var drum = new THREE.Mesh(new THREE.CircleGeometry(0.17, 24), stdMat({ color: 0x223344, roughness: 0.2, metalness: 0.5 })); drum.position.set(4.75, 0.5, 3.645); drum.rotation.y = PI; wm.add(drum);
+  addInter('washer', '洗濯機', 'のぞく', new THREE.Vector3(4.75, 0.6, 3.7), [wm], function () { actWasher(); });
+  addBox(H, 0.5, 0.82, 0.42, M.white, 5.05, 0, 1.75, { col: true });
+  var bsn = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.11, 0.1, 16), M.ceramic); bsn.position.set(5.05, 0.87, 1.75); H.add(bsn);
+  addPlane(H, 0.5, 0.6, new THREE.MeshStandardMaterial({ color: 0xa8b8c8, roughness: 0.05, metalness: 1.0 }), 5.05, 1.5, 1.52, 0, 0);
+  // bathtub
+  var tub = new THREE.Group(); H.add(tub);
+  addBox(tub, 1.7, 0.55, 0.06, M.white, 7.05, 0, 2.55); addBox(tub, 0.06, 0.55, 1.0, M.white, 6.2, 0, 2.05); addBox(tub, 1.7, 0.08, 1.0, M.white, 7.05, 0, 2.05);
+  var water = addPlane(tub, 1.6, 0.92, M.water, 7.05, 0.46, 2.03, -PI / 2, 0, 4); WORLD.bathWater = water;
+  addCol(6.15, 7.95, 1.5, 2.6);
+  addInter('tub', '湯船', 'お風呂に入る', new THREE.Vector3(7.05, 0.5, 2.1), [tub], function () { actBath(); });
+  // shower
+  var shw = new THREE.Group(); H.add(shw);
+  addBox(shw, 0.03, 1.2, 0.03, M.metal, 7.95, 0.8, 3.6);
+  var head = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.04, 14), M.metal); head.rotation.z = PI / 2; head.position.set(7.9, 2.0, 3.6); shw.add(head);
+  addBox(shw, 0.1, 0.06, 0.16, M.metal, 7.92, 1.0, 3.6);
+  addBox(H, 0.3, 0.25, 0.3, stdMat({ color: 0x7fd1c7 }), 7.3, 0, 3.7);
+  var spray = new THREE.Mesh(new THREE.ConeGeometry(0.25, 1.8, 12, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfefff, transparent: true, opacity: 0.25, emissive: 0x335577, depthWrite: false, side: THREE.DoubleSide }));
+  spray.position.set(7.75, 1.08, 3.6); spray.visible = false; H.add(spray); WORLD.spray = spray;
+  addInter('shower', 'シャワー', 'シャワーを浴びる', new THREE.Vector3(7.85, 1.3, 3.6), [shw], function () { actShower(); });
+  var bl = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.03, 0.5), new THREE.MeshBasicMaterial({ color: 0xf6fbff })); bl.position.set(6.0, 2.48, 2.9); H.add(bl);
+}
+
 
 // ===== 08_halluc.js =====
 // ---- hallucinations living in the 3D room -----------------------------------------
@@ -1895,6 +2074,7 @@ function updateHallucinations(dt, B, cam) {
     m.visible = fa > 0.01;
     if (!m.visible) return;
     var u = m.userData;
+    if (u.home.distanceTo(cp) > 4.2) { var ar = areaAt(cp.x, cp.z); u.home.set(rnd(ar.x0 + 0.3, ar.x1 - 0.3), rnd(0.6, 2.2), rnd(ar.z0 + 0.3, ar.z1 - 0.3)); }
     m.material.opacity = fa;
     m.position.set(u.home.x + Math.sin(t * u.sp + u.ph) * 0.5, u.home.y + Math.sin(t * u.sp * 1.3 + u.ph) * 0.25, u.home.z + Math.cos(t * u.sp * 0.8 + u.ph) * 0.5);
     m.rotation.x += u.rs.x * dt; m.rotation.y += u.rs.y * dt; m.rotation.z += u.rs.z * dt;
@@ -1904,6 +2084,7 @@ function updateHallucinations(dt, B, cam) {
   // hearts
   var ha = clamp(V.emp - 0.3, 0, 1) * 0.9;
   HAL.hearts.visible = ha > 0.01;
+  var har = areaAt(cp.x, cp.z); HAL.hearts.position.set((har.x0 + har.x1) / 2, 0, (har.z0 + har.z1) / 2);
   if (HAL.hearts.visible) {
     HAL.hearts.material.opacity = ha;
     var p = HAL.hearts.geometry.attributes.position;
@@ -1920,7 +2101,7 @@ function updateHallucinations(dt, B, cam) {
       if (u.cd <= 0 && Math.random() < 0.5 * da) {
         // spawn in peripheral vision
         var side = Math.random() < 0.5 ? -1 : 1, ang = Math.atan2(fwd.x, fwd.z) + side * rnd(0.9, 1.6), d = rnd(2.0, 3.6);
-        var x = clamp(cp.x + Math.sin(ang) * d, -2.6, 2.6), z = clamp(cp.z + Math.cos(ang) * d, -3.9, 4.0);
+        var sar = areaAt(cp.x, cp.z); var x = clamp(cp.x + Math.sin(ang) * d, sar.x0 + 0.3, sar.x1 - 0.3), z = clamp(cp.z + Math.cos(ang) * d, sar.z0 + 0.3, sar.z1 - 0.3);
         f.position.set(x, 0, z); f.lookAt(cp.x, 0, cp.z);
         f.visible = true; u.a = 0; u.life = rnd(4, 10);
       }
@@ -2051,7 +2232,7 @@ function collide(nx, nz, r) {
   }
   return [nx, nz];
 }
-function isOutdoor() { return PL.z < -2.55; }
+function isOutdoor() { return areaAt(PL.x, PL.z).id === 'balcony'; }
 function inBathroom() { return PL.z > 2.55; }
 
 function updatePlayer(dt, B, canMove) {
@@ -2090,7 +2271,7 @@ function updateCamera(dt, B) {
   var eye = 1.55 - Math.min(0.15, V.sed * 0.08);
   var y = lerp(eye, 0.28, PL.fall);
   var x = PL.x, z = PL.z;
-  if (PL.lie > 0.01) { x = lerp(x, WORLD.bedPos.x, PL.lie); z = lerp(z, WORLD.bedPos.z - 0.5, PL.lie); y = lerp(y, 0.85, PL.lie); }
+  if (PL.lie > 0.01) { var bd = WORLD.bed || WORLD.bedMain; x = lerp(x, bd.pos.x, PL.lie); z = lerp(z, bd.pos.z - 0.5, PL.lie); y = lerp(y, bd.y, PL.lie); }
   y += Math.sin(PL.bob) * 0.025 * (1 - PL.fall);
   // sway & jitter
   var roll = Math.sin(t * 0.7) * Math.min(1.5, V.drunk) * 0.07 * calm + Math.sin(t * 0.33) * V.dis * 0.08 * calm + PL.fall * 1.25 + V.spin * Math.sin(t * 0.4) * 0.12 * calm;
@@ -2185,6 +2366,9 @@ var UI_CSS = [
   '.btn{pointer-events:auto;cursor:pointer;border:none;outline:none;color:#fff;font-family:inherit;font-weight:900;border-radius:16px;padding:10px 14px;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.22);box-shadow:0 4px 18px rgba(0,0,0,.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-size:14px;transition:transform .08s}',
   '.btn:active{transform:scale(.95)}',
   '.btn.round{width:58px;height:58px;border-radius:50%;padding:0;font-size:24px;display:flex;align-items:center;justify-content:center}',
+  '.btn.round.speed{flex-direction:column;font-size:15px;line-height:1;gap:2px}.btn.round.speed b{font-size:15px;font-family:"DotGothic16",monospace;font-weight:400}',
+  '.rm-logo-pre{font-family:"Rampart One","Zen Maru Gothic",sans-serif;font-size:clamp(26px,8vw,48px);color:#ff3355;transform:rotate(-6deg);text-shadow:0 0 14px rgba(255,51,85,.7);margin-bottom:-4px}',
+  '.rm-logo span{font-size:.5em;display:inline-block;margin-top:6px}',
   '.btn.act{min-width:96px;height:72px;border-radius:22px;font-size:14px;background:linear-gradient(160deg,#ff5fa8,#b46bff);border-color:rgba(255,255,255,.5);line-height:1.2}',
   '.btn.act.off{opacity:.45;filter:grayscale(.6)}',
   '.btn.on{background:linear-gradient(160deg,#30c8ff,#7df9ff);color:#08203a}',
@@ -2241,8 +2425,8 @@ var UI_CSS = [
   '.rm-big b{display:block;font-family:"DotGothic16",monospace;font-size:24px;font-weight:400}.rm-big span{font-size:12px;opacity:.7}',
   '.rm-screen{position:absolute;inset:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:calc(var(--top-safe) + 4px) 18px var(--bot-safe)}',
   '.rm-screen.rm-title{background:radial-gradient(ellipse at center,rgba(8,4,20,.72) 0%,rgba(8,4,20,.45) 60%,rgba(8,4,20,.2) 100%)}',
-  '.rm-logo{font-family:"Rampart One","Zen Maru Gothic",sans-serif;font-size:clamp(40px,13vw,92px);line-height:.95;background:linear-gradient(90deg,#7df9ff,#ff5fa8,#ffe14d,#b46bff,#7df9ff);background-size:400% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rmShine 6s linear infinite;filter:drop-shadow(0 0 18px rgba(255,95,168,.5))}',
-  '.rm-logo-sub{font-size:15px;letter-spacing:.5em;margin:10px 0 4px;color:#ffd1e8;font-weight:900}',
+  '.rm-logo{font-family:"Rampart One","Zen Maru Gothic",sans-serif;font-size:clamp(56px,19vw,120px);line-height:.95;background:linear-gradient(90deg,#7df9ff,#ff5fa8,#ffe14d,#b46bff,#7df9ff);background-size:400% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rmShine 6s linear infinite;filter:drop-shadow(0 0 18px rgba(255,95,168,.5))}',
+  '.rm-logo-sub{font-size:11px;letter-spacing:.35em;margin:10px 0 4px;color:#ffd1e8;font-weight:900}',
   '.rm-menu{display:flex;flex-direction:column;gap:10px;margin-top:26px;width:min(80vw,300px)}',
   '.rm-note{font-size:11px;opacity:.6;margin-top:18px;line-height:1.6}',
   '.rm-card2{width:min(92vw,520px);max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;text-align:left;font-size:14px;line-height:1.7}',
@@ -2282,7 +2466,7 @@ function initUI() {
   HUD.btns = el('div', 'rm-btns', '', UI);
   var row = el('div', 'rm-row', '', HUD.btns);
   HUD.bPhone = el('button', 'btn round', '📱', row); onTap(HUD.bPhone, function () { openPhone(); });
-  HUD.bFF = el('button', 'btn round', '⏩', row); onTap(HUD.bFF, function () { toggleFF(); });
+  HUD.bFF = el('button', 'btn round speed', '▶<b>1x</b>', row); onTap(HUD.bFF, function () { toggleFF(); });
   HUD.bAct = el('button', 'btn act off', 'しらべる', HUD.btns); onTap(HUD.bAct, function () { if (FOCUS.it) doInteract(FOCUS.it); });
   showHUD(false);
 }
@@ -2317,7 +2501,7 @@ function updateUITimers(dt) {
 var _hudT = 0;
 function updateHUD(dt, B) {
   _hudT -= dt; if (_hudT > 0) return; _hudT = 0.2;
-  HUD.clock.innerHTML = fmtClock(GAME.clock) + '<small>' + (GAME.ff ? '⏩ 早送り中' : GAME.clock < 1440 ? 'よる' : GAME.clock < 1740 ? 'しんや' : 'あけがた') + '</small>';
+  HUD.clock.innerHTML = fmtClock(GAME.clock) + '<small>' + (GAME.speed > 1 ? '⏩ ' + GAME.speed + '倍速' : GAME.clock < 1440 ? 'よる' : GAME.clock < 1740 ? 'しんや' : 'あけがた') + '</small>';
   function setV(k, txt, lvl) { var d = HUD.v[k]; d.lastChild.textContent = txt; d.className = 'rm-vt' + (lvl === 2 ? ' bad' : lvl === 1 ? ' warn' : ''); }
   setV('hr', Math.round(B.hr), B.hr > 175 ? 2 : B.hr > 140 ? 1 : 0);
   setV('tp', B.tp.toFixed(1), B.tp > 39.5 ? 2 : B.tp > 38.3 ? 1 : 0);
@@ -2558,7 +2742,7 @@ function phoneSettings(body) {
     var row = el('div', 'rm-row', '', body); row.style.marginTop = '14px';
     var t1 = el('button', 'btn ghost', 'タイトルへ', row); onTap(t1, function () { closeModal(true); toTitle(); });
   }
-  el('div', 'rm-note', 'RAMUNE NIGHT v' + GAME_VERSION + ' ・ すべてフィクションです。', body);
+  el('div', 'rm-note', 'キケンなラムネシミュレーター v' + GAME_VERSION + ' ・ すべてフィクションです。', body);
 }
 
 // ---- full screens ------------------------------------------------------------------
@@ -2574,21 +2758,21 @@ function hideScreen() { if (SCREEN && SCREEN.parentNode) SCREEN.parentNode.remov
 // ===== 11_game.js =====
 // ---- game flow ---------------------------------------------------------------------
 var START_CLOCK = 20 * 60, END_CLOCK = 32 * 60; // 20:00 → 08:00 next morning
-var GAME = { mode: 'boot', clock: START_CLOCK, ff: false, paused: false, B: null, stash: {}, hist: [], histT: 0, monoT: 6, rest: null, lock: false, fx: { vomit: 0, gapT: 0, gap: 0, flashT: 0, flash: 0, fade: 0, white: 0, hue: 0 }, endT: 0 };
+var GAME = { mode: 'boot', clock: START_CLOCK, ff: false, speed: 1, paused: false, B: null, stash: {}, hist: [], histT: 0, monoT: 6, rest: null, lock: false, fx: { vomit: 0, gapT: 0, gap: 0, flashT: 0, flash: 0, fade: 0, white: 0, hue: 0 }, endT: 0 };
 var FAKE_BODY = null;
 
 function startNight() {
   hideScreen(); closeModal(true);
   GAME.B = newBody();
-  GAME.clock = START_CLOCK; GAME.ff = false; GAME.paused = false; GAME.rest = null; GAME.lock = false; GAME.hist = []; GAME.histT = 0; GAME.monoT = 4;
+  GAME.clock = START_CLOCK; setSpeed(1); GAME.paused = false; GAME.rest = null; GAME.lock = false; GAME.hist = []; GAME.histT = 0; GAME.monoT = 4;
   GAME.stash = {}; SUBS.forEach(function (s) { if (!s.hidden) GAME.stash[s.id] = s.stock || 2; }); DRINKS.forEach(function (d) { GAME.stash[d.id] = d.stock; });
   GAME.fx.fade = 1;
   WORLD.cans.forEach(function (m) { RENDER.scene.remove(m); }); WORLD.cans = [];
   WORLD.lightMode = 0; WORLD.tvOn = true; AU.music = true; auVol();
   resetPlayer();
   GAME.mode = 'play'; INPUT.enabled = true;
-  showHUD(true); HUD.bFF.className = 'btn round';
-  HUD.hint.innerHTML = isTouchDevice() || isMobile() ? '左側をドラッグで移動<br>右側をドラッグで見回す<br>モノをタップでしらべる' : 'WASD 移動 ・ ドラッグで見回す<br>クリック/E しらべる ・ F 早送り ・ Tab スマホ';
+  showHUD(true); setSpeed(1); WORLD.bed = WORLD.bedMain;
+  HUD.hint.innerHTML = isTouchDevice() || isMobile() ? '左側をドラッグで移動<br>右側をドラッグで見回す<br>モノをタップでしらべる' : 'WASD 移動 ・ ドラッグで見回す<br>クリック/E しらべる ・ F 速さ ・ Tab スマホ';
   setTimeout(function () { if (HUD.hint) HUD.hint.style.transition = 'opacity 2s'; HUD.hint.style.opacity = 0.0; }, 14000);
   HUD.hint.style.opacity = 0.55; HUD.hint.style.transition = '';
   SAVE.nights++; writeSave();
@@ -2597,10 +2781,16 @@ function startNight() {
   sfx('ui');
 }
 
+var SPEEDS = [1, 2, 4, 8];
+function setSpeed(v) {
+  GAME.speed = v; GAME.ff = v > 1;
+  if (HUD.bFF) { HUD.bFF.innerHTML = (v > 1 ? '⏩' : '▶') + '<b>' + v + 'x</b>'; HUD.bFF.className = 'btn round speed' + (v > 1 ? ' on' : ''); }
+}
 function toggleFF() {
   if (GAME.mode !== 'play') return;
-  GAME.ff = !GAME.ff; HUD.bFF.className = 'btn round' + (GAME.ff ? ' on' : '');
-  toast(GAME.ff ? '⏩ 時間を早送り中' : '▶ ふつうの速さ'); sfx('click');
+  var i = SPEEDS.indexOf(GAME.speed || 1);
+  setSpeed(SPEEDS[(i + 1) % SPEEDS.length]);
+  toast(GAME.speed > 1 ? '⏩ 時間の速さ ' + GAME.speed + '倍' : '▶ ふつうの速さ'); sfx('click');
 }
 
 // ---- actions -----------------------------------------------------------------------
@@ -2664,15 +2854,58 @@ function actMirror() {
   if (!out.length) out.push('いつもの自分だ。');
   say('（鏡）' + out.slice(0, 3).join(' '), 5);
 }
+function actFrontDoor() {
+  var B = GAME.B, high = B.bac > 0.05 || B.F.ps > 0.3 || B.F.di > 0.3 || B.F.de > 0.3 || B.F.se > 0.5 || B.F.st > 0.6;
+  sfx('door');
+  if (high) say('…いまの状態で外に出るのはやめておこう。今夜は家にいる。', 4);
+  else say('コンビニに行きたい気もするけど…今夜は家でのんびりしよう。', 4);
+}
+function actKotatsu() {
+  var B = GAME.B;
+  if (B.tp > 38.2) { say('あつい…こたつに入ったら余計に体温が上がりそう。', 3.5); return; }
+  say(pick(['こたつ…ぬくい…もう一生出られない…', 'こたつの中に、もうひとつの宇宙がある。', 'こたつ最高。']), 3.5);
+  if (B.F.ps > 0.5) toast('こたつ布団の模様がゆっくり回っている…');
+}
+function actMikan() {
+  var B = GAME.B;
+  B.hyd = Math.min(1, B.hyd + 0.06); B.naRelief = Math.max(B.naRelief, 0.12);
+  sfx('pill');
+  toast('みかんを食べた。甘ずっぱい。（水分が少しもどった）', 'good');
+  if (B.F.ps > 0.6) say('みかんの皮の中に、小さな太陽が入ってた…', 3.5);
+}
+function actWasher() {
+  var B = GAME.B;
+  if (B.F.ps > 0.5) say('ドラムの中で、銀河がぐるぐる回っている…', 3.5);
+  else if (B.F.de > 0.5) say('洗濯機の中から、だれかがこっちを見ている…？', 3.5);
+  else say('洗濯物がたまってる…明日やろう。', 3);
+}
+function riskyBath(B) { return B.bac > 0.06 || B.F.se > 0.45 || B.F.di > 0.45 || B.F.pa > 0.45 || B.F.de > 0.5 || B.con < 70; }
+function actBath() {
+  var B = GAME.B;
+  if (riskyBath(B)) { toast('⚠ 酔っている・ぼーっとしている時のお風呂は、眠って溺れる危険がある。シャワーにしておこう。', 'warn', 5); return; }
+  if (B.tp > 38.3 || (B.L.up || 0) > 0.4 || (B.L.emp || 0) > 0.4) { toast('⚠ 体温や心拍が上がっている時に湯船は危ない。ぬるめのシャワーにしておこう。', 'warn', 5); return; }
+  GAME.lock = true; sfx('water'); GAME.fx.fade = 0.9;
+  setTimeout(function () { bodyStep(B, 20); GAME.clock += 20; GAME.lock = false; toast('ゆっくりお風呂に入った。さっぱり。（20分経過）', 'good'); }, 1400);
+}
+function actShower() {
+  var B = GAME.B;
+  GAME.lock = true; WORLD.spray.visible = true; sfx('water'); sfx('flush');
+  setTimeout(function () {
+    WORLD.spray.visible = false; GAME.lock = false;
+    B.tp = Math.max(36.6, B.tp - 0.45); B.naRelief = Math.max(B.naRelief, 0.25); B.waterCool = Math.max(B.waterCool, 0.6);
+    bodyStep(B, 8); GAME.clock += 8;
+    toast('ぬるめのシャワーを浴びた。体の熱が少し引いた。', 'good');
+  }, 2000);
+}
 function startRest(min) {
   GAME.rest = { left: min, morning: min > 1000 };
-  GAME.B.onBed = true; GAME.ff = false; HUD.bFF.className = 'btn round';
+  GAME.B.onBed = true; setSpeed(1);
   say(min > 1000 ? 'おやすみなさい…' : 'ちょっとだけ…目をとじる…', 3);
 }
 function endRest(msg) {
   if (!GAME.rest) return;
   GAME.rest = null; GAME.B.onBed = false;
-  PL.x = 1.5; PL.z = -0.1; PL.yaw = PI * 0.6;
+  var ex = (WORLD.bed || WORLD.bedMain).exit; PL.x = ex[0]; PL.z = ex[1]; PL.yaw = ex[2];
   if (msg) toast(msg);
 }
 
@@ -2692,7 +2925,7 @@ function processEvents() {
         banner(isNew ? '🧪 NEW 飲み合わせ発見' : '🧪 飲み合わせ', cb.name, cb.desc, 'dg' + cb.danger);
         break;
       case 'vomit': if (GAME.fx.vomit <= 0) { GAME.fx.vomit = 1.4; sfx('vomit'); toast(B.unconscious ? '意識がないまま吐いてしまった！' : '耐えきれずに吐いてしまった…', 'warn'); } break;
-      case 'pass': toast('意識が…遠のいていく…', 'warn', 4); GAME.ff = false; HUD.bFF.className = 'btn round'; break;
+      case 'pass': toast('意識が…遠のいていく…', 'warn', 4); setSpeed(1); break;
       case 'wake': toast('…はっ。' + Math.max(1, Math.round(d.mins)) + '分くらい記憶がない。', 'warn', 4); break;
       case 'warn': toast('⚠ ' + d.msg, 'warn'); sfx('warn'); break;
       case 'dead': endNight('dead', d.cause); return;
@@ -2717,7 +2950,7 @@ function updatePlay(dt) {
   var B = GAME.B;
   if (!GAME.paused) {
     var rate = 1;
-    if (GAME.ff) rate = 8;
+    if (GAME.speed > 1) rate = GAME.speed;
     if (B.unconscious) rate = Math.max(rate, 5);
     if (GAME.rest) rate = 18;
     var gdt = dt * rate;
@@ -2836,6 +3069,9 @@ function updateWorldFX(dt) {
   W.spkLed.visible = AU.music;
   W.cones.forEach(function (c, i) { var s = AU.music ? 1 + Math.max(0, Math.sin(t * 8.2 * AU.p.tempo + i)) * 0.06 : 1; c.scale.set(s, s, 1); });
   W.fan.rotation.z += dt * 12;
+  var ar = GAME.mode === 'play' ? areaAt(PL.x, PL.z) : AREAS[2];
+  var rl = ar.light || AREAS[2].light;
+  if (W.roomLight !== rl) { W.roomLight = rl; Lt.bath.position.set(rl[0], rl[1], rl[2]); Lt.bath.color.setHex(rl[3]); Lt.bath.distance = ar.id === 'hall' ? 7 : 5.5; Lt.bath.intensity = ar.id === 'tatami' ? 0.9 : 0.75; }
   W.caseGlow.intensity = 0.2 + Math.sin(t * 2) * 0.08;
   // clock hands (follow the in-game clock, melt along with everything else)
   var cm = GAME.clock;
@@ -2847,7 +3083,7 @@ function updateWorldFX(dt) {
 function endNight(kind, cause) {
   if (GAME.mode !== 'play') return;
   var B = GAME.B;
-  GAME.mode = 'end'; INPUT.enabled = false; closeModal(true); showHUD(false); GAME.ff = false;
+  GAME.mode = 'end'; INPUT.enabled = false; closeModal(true); showHUD(false); setSpeed(1);
   HUD.sub.style.opacity = 0;
   B.onBed = false;
   if (document.pointerLockElement) try { document.exitPointerLock(); } catch (e) {}
@@ -2903,7 +3139,7 @@ function toTitle() {
   GAME.fx.dead = 0; GAME.fx.white = 0; GAME.fx.deadFade = GAME.fx.whiteFade = false; GAME.fx.fade = 0.8;
   GAME.clock = 23 * 60;
   WORLD.lightMode = 1; WORLD.tvOn = true;
-  var html = '<div class="rm-logo">RAMUNE<br>NIGHT</div><div class="rm-logo-sub">ラムネナイト</div>' +
+  var html = '<div class="rm-logo-pre">キケンな</div><div class="rm-logo">ラムネ<br><span>シミュレーター</span></div><div class="rm-logo-sub">DANGEROUS RAMUNE SIMULATOR</div>' +
     '<div style="font-size:13px;opacity:.85">架空のラムネとチューハイで過ごす、ひと晩のシミュレーター</div>' +
     '<div class="rm-menu"><button class="btn pri" id="rm-start">はじめる</button><button class="btn" id="rm-zukan">図鑑</button><button class="btn" id="rm-howto">あそびかた</button><button class="btn ghost" id="rm-set">設定</button></div>' +
     '<div class="rm-note">図鑑：ラムネ ' + Object.keys(SAVE.seenSubs).length + '/19 ・ 飲み合わせ ' + Object.keys(SAVE.seenCombos).length + '/' + COMBOS.length + (SAVE.best ? ' ・ ベスト ' + SAVE.best : '') + '<br>※ フィクションです。実在の薬物・製品とは関係ありません。</div>';
@@ -2929,8 +3165,8 @@ function showWarning() {
 }
 function showHowTo() {
   var html = '<div class="rm-card2"><h3>あそびかた</h3>' +
-    '<p>夜8時から朝8時まで、自分の部屋で好きにすごすゲームです。<br>テーブルの<b>ラムネケース</b>から架空のラムネを、<b>冷蔵庫</b>から ZER9（架空のチューハイ）を選んで、いろいろな効果と<b>飲み合わせ</b>を見つけよう。</p>' +
-    '<ul><li><b>移動</b>：画面の左側をドラッグ（PC：WASD）</li><li><b>見回す</b>：右側をドラッグ（PC：マウスでドラッグ）</li><li><b>しらべる</b>：モノをタップ、または右下のボタン（PC：クリック / E）</li><li><b>⏩</b>：時間を早送り（効き目が出るまで待つときに）</li><li><b>📱</b>：からだの状態・図鑑・設定・119</li></ul>' +
+    '<p>夜8時から朝8時まで、自分の家で好きにすごすゲームです。リビング・ベランダ・トイレのほか、廊下の先に玄関・和室・お風呂もあります。<br>テーブルの<b>ラムネケース</b>から架空のラムネを、<b>冷蔵庫</b>から ZER9（架空のチューハイ）を選んで、いろいろな効果と<b>飲み合わせ</b>を見つけよう。</p>' +
+    '<ul><li><b>移動</b>：画面の左側をドラッグ（PC：WASD）</li><li><b>見回す</b>：右側をドラッグ（PC：マウスでドラッグ）</li><li><b>しらべる</b>：モノをタップ、または右下のボタン（PC：クリック / E）</li><li><b>▶1x</b>：タップするたびに時間の速さが 1倍→2倍→4倍→8倍 と切り替わる（PC：F）</li><li><b>📱</b>：からだの状態・図鑑・設定・119</li></ul>' +
     '<p><b>ラムネの名前</b>：どれも医薬品っぽい名前と「通称」がついていますが、<b>すべて架空</b>です。</p><p><b>ラムネの系統</b>：🌈幻覚系　⚡アッパー系　💤ダウナー系　☁️ぬくぬく系（オピオイド系）　🪐解離系　💗ハート系　🌑とばり系　✨とくしゅ</p>' +
     '<p><b>からだに注意</b>：心拍・体温・呼吸が危険なところに入ると、画面が赤くなって「危険度」がたまります。100になると BAD END。<br>' +
     '水を飲む・ベランダで風にあたる・トイレで吐く・ネガトキソン（リセットラムネ）・119番などで切り抜けよう。</p>' +
@@ -2956,7 +3192,7 @@ var LOOP = { last: 0, t: 0, err: false };
 function boot() {
   setupPage(); loadSave();
   initUI();
-  showScreen('<div class="rm-logo" style="font-size:44px">RAMUNE<br>NIGHT</div><div id="rm-load" style="margin-top:14px;font-family:DotGothic16,monospace;opacity:.7">LOADING...</div>');
+  showScreen('<div class="rm-logo-pre">キケンな</div><div class="rm-logo" style="font-size:52px">ラムネ<br><span>シミュレーター</span></div><div id="rm-load" style="margin-top:14px;font-family:DotGothic16,monospace;opacity:.7">LOADING...</div>');
   loadThree(function () {
     try {
       initRenderer(); initInput();

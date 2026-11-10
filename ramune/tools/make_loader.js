@@ -15,7 +15,7 @@ function loader(list) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>RAMUNE NIGHT</title>
+<title>キケンなラムネシミュレーター</title>
 <style>
 html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden}
 #rml{position:fixed;left:16px;right:16px;top:45%;color:#ffb3dc;font:16px monospace;text-align:center;letter-spacing:.15em}

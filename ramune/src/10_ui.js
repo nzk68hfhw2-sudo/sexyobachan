@@ -25,6 +25,9 @@ var UI_CSS = [
   '.btn{pointer-events:auto;cursor:pointer;border:none;outline:none;color:#fff;font-family:inherit;font-weight:900;border-radius:16px;padding:10px 14px;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.22);box-shadow:0 4px 18px rgba(0,0,0,.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-size:14px;transition:transform .08s}',
   '.btn:active{transform:scale(.95)}',
   '.btn.round{width:58px;height:58px;border-radius:50%;padding:0;font-size:24px;display:flex;align-items:center;justify-content:center}',
+  '.btn.round.speed{flex-direction:column;font-size:15px;line-height:1;gap:2px}.btn.round.speed b{font-size:15px;font-family:"DotGothic16",monospace;font-weight:400}',
+  '.rm-logo-pre{font-family:"Rampart One","Zen Maru Gothic",sans-serif;font-size:clamp(26px,8vw,48px);color:#ff3355;transform:rotate(-6deg);text-shadow:0 0 14px rgba(255,51,85,.7);margin-bottom:-4px}',
+  '.rm-logo span{font-size:.5em;display:inline-block;margin-top:6px}',
   '.btn.act{min-width:96px;height:72px;border-radius:22px;font-size:14px;background:linear-gradient(160deg,#ff5fa8,#b46bff);border-color:rgba(255,255,255,.5);line-height:1.2}',
   '.btn.act.off{opacity:.45;filter:grayscale(.6)}',
   '.btn.on{background:linear-gradient(160deg,#30c8ff,#7df9ff);color:#08203a}',
@@ -81,8 +84,8 @@ var UI_CSS = [
   '.rm-big b{display:block;font-family:"DotGothic16",monospace;font-size:24px;font-weight:400}.rm-big span{font-size:12px;opacity:.7}',
   '.rm-screen{position:absolute;inset:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:calc(var(--top-safe) + 4px) 18px var(--bot-safe)}',
   '.rm-screen.rm-title{background:radial-gradient(ellipse at center,rgba(8,4,20,.72) 0%,rgba(8,4,20,.45) 60%,rgba(8,4,20,.2) 100%)}',
-  '.rm-logo{font-family:"Rampart One","Zen Maru Gothic",sans-serif;font-size:clamp(40px,13vw,92px);line-height:.95;background:linear-gradient(90deg,#7df9ff,#ff5fa8,#ffe14d,#b46bff,#7df9ff);background-size:400% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rmShine 6s linear infinite;filter:drop-shadow(0 0 18px rgba(255,95,168,.5))}',
-  '.rm-logo-sub{font-size:15px;letter-spacing:.5em;margin:10px 0 4px;color:#ffd1e8;font-weight:900}',
+  '.rm-logo{font-family:"Rampart One","Zen Maru Gothic",sans-serif;font-size:clamp(56px,19vw,120px);line-height:.95;background:linear-gradient(90deg,#7df9ff,#ff5fa8,#ffe14d,#b46bff,#7df9ff);background-size:400% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rmShine 6s linear infinite;filter:drop-shadow(0 0 18px rgba(255,95,168,.5))}',
+  '.rm-logo-sub{font-size:11px;letter-spacing:.35em;margin:10px 0 4px;color:#ffd1e8;font-weight:900}',
   '.rm-menu{display:flex;flex-direction:column;gap:10px;margin-top:26px;width:min(80vw,300px)}',
   '.rm-note{font-size:11px;opacity:.6;margin-top:18px;line-height:1.6}',
   '.rm-card2{width:min(92vw,520px);max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;text-align:left;font-size:14px;line-height:1.7}',
@@ -122,7 +125,7 @@ function initUI() {
   HUD.btns = el('div', 'rm-btns', '', UI);
   var row = el('div', 'rm-row', '', HUD.btns);
   HUD.bPhone = el('button', 'btn round', '📱', row); onTap(HUD.bPhone, function () { openPhone(); });
-  HUD.bFF = el('button', 'btn round', '⏩', row); onTap(HUD.bFF, function () { toggleFF(); });
+  HUD.bFF = el('button', 'btn round speed', '▶<b>1x</b>', row); onTap(HUD.bFF, function () { toggleFF(); });
   HUD.bAct = el('button', 'btn act off', 'しらべる', HUD.btns); onTap(HUD.bAct, function () { if (FOCUS.it) doInteract(FOCUS.it); });
   showHUD(false);
 }
@@ -157,7 +160,7 @@ function updateUITimers(dt) {
 var _hudT = 0;
 function updateHUD(dt, B) {
   _hudT -= dt; if (_hudT > 0) return; _hudT = 0.2;
-  HUD.clock.innerHTML = fmtClock(GAME.clock) + '<small>' + (GAME.ff ? '⏩ 早送り中' : GAME.clock < 1440 ? 'よる' : GAME.clock < 1740 ? 'しんや' : 'あけがた') + '</small>';
+  HUD.clock.innerHTML = fmtClock(GAME.clock) + '<small>' + (GAME.speed > 1 ? '⏩ ' + GAME.speed + '倍速' : GAME.clock < 1440 ? 'よる' : GAME.clock < 1740 ? 'しんや' : 'あけがた') + '</small>';
   function setV(k, txt, lvl) { var d = HUD.v[k]; d.lastChild.textContent = txt; d.className = 'rm-vt' + (lvl === 2 ? ' bad' : lvl === 1 ? ' warn' : ''); }
   setV('hr', Math.round(B.hr), B.hr > 175 ? 2 : B.hr > 140 ? 1 : 0);
   setV('tp', B.tp.toFixed(1), B.tp > 39.5 ? 2 : B.tp > 38.3 ? 1 : 0);
@@ -398,7 +401,7 @@ function phoneSettings(body) {
     var row = el('div', 'rm-row', '', body); row.style.marginTop = '14px';
     var t1 = el('button', 'btn ghost', 'タイトルへ', row); onTap(t1, function () { closeModal(true); toTitle(); });
   }
-  el('div', 'rm-note', 'RAMUNE NIGHT v' + GAME_VERSION + ' ・ すべてフィクションです。', body);
+  el('div', 'rm-note', 'キケンなラムネシミュレーター v' + GAME_VERSION + ' ・ すべてフィクションです。', body);
 }
 
 // ---- full screens ------------------------------------------------------------------

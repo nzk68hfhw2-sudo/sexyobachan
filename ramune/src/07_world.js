@@ -69,9 +69,10 @@ function buildWorld() {
   addCol(-3, 1.3, 2.45, 2.6); addCol(2.1, 3, 2.45, 2.6);
   // west / east
   addPlane(W, 5, 2.5, M.wall, -3, 1.25, 0, 0, PI / 2, 4); addCol(-3.1, -2.95, -2.6, 2.6);
-  addPlane(W, 5, 2.5, M.wall, 3, 1.25, 0, 0, -PI / 2, 4); addCol(2.95, 3.1, -2.6, 2.6);
+  M.wall2 = stdMat({ map: TEX.wall, roughness: 0.92, side: THREE.DoubleSide });
+  wallSeg(W, 3, -2.5, 3, 2.5, M.wall2, [[3.1, 4.0]]);
   // baseboards
-  [[0, 2.48, 6, 0.02, 0], [-2.98, 0, 0.02, 5, 0], [2.98, 0, 0.02, 5, 0]].forEach(function (b) { addBox(W, b[2] || 0.02, 0.08, b[3], M.white, b[0], 0, b[1]); });
+  [[0, 2.48, 6, 0.02, 0], [-2.98, 0, 0.02, 5, 0]].forEach(function (b) { addBox(W, b[2] || 0.02, 0.08, b[3], M.white, b[0], 0, b[1]); });
   // ceiling light
   var lampMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.36, 0.08, 24), new THREE.MeshBasicMaterial({ color: 0xfff4dc }));
   lampMesh.position.set(0, ROOM.h - 0.05, 0); W.add(lampMesh); WORLD.lampMesh = lampMesh;
@@ -125,7 +126,7 @@ function buildWorld() {
   var pillow = addBox(bed, 0.6, 0.12, 0.38, M.white, 2.35, 0.48, -2.1, { sx: 3, sz: 3 });
   var blanket = addBox(bed, 1.16, 0.08, 1.3, M.blanket, 2.35, 0.48, -0.95, { sx: 4, sz: 5 });
   addCol(1.75, 2.95, -2.5, -0.35);
-  WORLD.bedPos = new THREE.Vector3(2.35, 0.6, -1.4);
+  WORLD.bedPos = new THREE.Vector3(2.35, 0.6, -1.4); WORLD.bedMain = { pos: WORLD.bedPos.clone(), y: 0.85, exit: [1.5, -0.1, PI * 0.6] }; WORLD.bed = WORLD.bedMain;
   // floor lamp next to bed
   addBox(W, 0.28, 0.03, 0.28, M.black, 2.7, 0, 0.05);
   addBox(W, 0.03, 1.35, 0.03, M.black, 2.7, 0, 0.05);
@@ -256,7 +257,8 @@ function buildWorld() {
   addPlane(bath, 2.4, 1.8, M.ceil, 1.8, ROOM.h, 3.4, PI / 2, 0, 1);
   addPlane(bath, 2.4, 2.5, M.tile, 1.8, 1.25, 4.3, 0, PI, 3); addCol(0.6, 3, 4.25, 4.4);
   addPlane(bath, 1.8, 2.5, M.tile, 0.6, 1.25, 3.4, 0, PI / 2, 3); addCol(0.5, 0.65, 2.5, 4.3);
-  addPlane(bath, 1.8, 2.5, M.tile, 3.0, 1.25, 3.4, 0, -PI / 2, 3); addCol(2.95, 3.1, 2.5, 4.3);
+  addPlane(bath, 1.8, 2.5, M.tile, 2.99, 1.25, 3.4, 0, -PI / 2, 3); addCol(2.95, 3.1, 2.5, 4.3);
+  addPlane(bath, 1.8, 2.5, M.wall, 3.01, 1.25, 3.4, 0, PI / 2, 4);
   addPlane(bath, 0.7, 2.5, M.tile, 0.95, 1.25, 2.52, 0, 0, 3); addPlane(bath, 0.9, 2.5, M.tile, 2.55, 1.25, 2.52, 0, 0, 3); addPlane(bath, 0.8, 0.45, M.tile, 1.7, 2.275, 2.52, 0, 0, 3);
   // door frame
   addBox(W, 0.05, 2.05, 0.14, M.white, 1.3, 0, 2.5); addBox(W, 0.05, 2.05, 0.14, M.white, 2.1, 0, 2.5); addBox(W, 0.85, 0.05, 0.14, M.white, 1.7, 2.03, 2.5);
@@ -280,7 +282,7 @@ function buildWorld() {
   addBox(bath, 0.04, 0.5, 0.35, stdMat({ color: 0xffb3c7 }), 2.95, 0.9, 3.0);
 
   // ---- bed interaction / balcony interaction ----
-  addInter('bed', 'ベッド', '横になる', new THREE.Vector3(2.35, 0.6, -1.3), [bed], function () { openBedMenu(); });
+  addInter('bed', 'ベッド', '横になる', new THREE.Vector3(2.35, 0.6, -1.3), [bed], function () { WORLD.bed = WORLD.bedMain; openBedMenu(); });
   addInter('rail', 'ベランダの手すり', '夜風にあたる', new THREE.Vector3(-0.8, 1.05, -4.2), [], function () { toast('夜風がきもちいい…（ベランダにいると体温が下がり、吐き気が少しおさまる）'); });
 
   // ---- lights ----
@@ -298,6 +300,7 @@ function buildWorld() {
   var strip2 = strip.clone(); strip2.position.set(0, 2.42, -2.43); W.add(strip2);
   WORLD.strips = [strip, strip2];
 
+  buildHouse();
   buildCity();
   buildSky();
   buildHeld();
@@ -476,4 +479,168 @@ function placeCanOnTable(d) {
   m.position.set(p.x + rnd(-0.02, 0.02), p.y + (d.alc > 1.5 ? 0.085 : 0.061), p.z + rnd(-0.02, 0.02));
   if (Math.random() < 0.25 && WORLD.cans.length > 3) { m.rotation.z = PI / 2; m.position.y = p.y + 0.033; m.rotation.y = rnd(0, TAU); }
   RENDER.scene.add(m); WORLD.cans.push(m);
+}
+
+// ---- wall helper: a straight wall from (x0,z0) to (x1,z1) with door gaps [[s0,s1],...] measured along it ----
+function wallSeg(parent, x0, z0, x1, z1, mat, doors, o) {
+  o = o || {};
+  var len = Math.hypot(x1 - x0, z1 - z0), dx = (x1 - x0) / len, dz = (z1 - z0) / len, ang = -Math.atan2(z1 - z0, x1 - x0);
+  var H = ROOM.h, dh = o.doorH || 2.05, y0 = o.y0 || 0;
+  var pieces = [], cur = 0;
+  (doors || []).forEach(function (d) {
+    if (d[0] > cur) pieces.push([cur, d[0], y0, H]);
+    pieces.push([d[0], d[1], d[2] != null ? d[3] : dh, H]);
+    if (d[2] != null) pieces.push([d[0], d[1], y0, d[2]]); // window: wall below sill
+    cur = d[1];
+  });
+  if (cur < len) pieces.push([cur, len, y0, H]);
+  pieces.forEach(function (p) {
+    var w = p[1] - p[0], h = p[3] - p[2]; if (w <= 0.001 || h <= 0.001) return;
+    var c = (p[0] + p[1]) / 2;
+    var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h, Math.max(1, Math.ceil(w * 4)), Math.max(1, Math.ceil(h * 4))), mat);
+    m.position.set(x0 + dx * c, (p[2] + p[3]) / 2, z0 + dz * c); m.rotation.y = ang; parent.add(m);
+    if (p[2] < 1.0 && !o.noCol) {
+      var ax = x0 + dx * p[0], az = z0 + dz * p[0], bx = x0 + dx * p[1], bz = z0 + dz * p[1];
+      addCol(Math.min(ax, bx) - 0.06, Math.max(ax, bx) + 0.06, Math.min(az, bz) - 0.06, Math.max(az, bz) + 0.06);
+    }
+  });
+  // door frames
+  (doors || []).forEach(function (d) {
+    if (d[2] != null) return;
+    [d[0], d[1]].forEach(function (s) { var f = new THREE.Mesh(new THREE.BoxGeometry(0.05, dh, 0.14), WORLD.mats.white); f.position.set(x0 + dx * s, dh / 2, z0 + dz * s); f.rotation.y = ang; parent.add(f); });
+    var tp = new THREE.Mesh(new THREE.BoxGeometry(d[1] - d[0] + 0.05, 0.05, 0.14), WORLD.mats.white); var c = (d[0] + d[1]) / 2; tp.position.set(x0 + dx * c, dh, z0 + dz * c); tp.rotation.y = ang; parent.add(tp);
+  });
+}
+function floorRect(parent, x0, x1, z0, z1, mat, y) {
+  var m = addPlane(parent, x1 - x0, z1 - z0, mat, (x0 + x1) / 2, y || 0, (z0 + z1) / 2, -PI / 2, 0, 2); return m;
+}
+function ceilRect(parent, x0, x1, z0, z1) { return addPlane(parent, x1 - x0, z1 - z0, WORLD.mats.ceil, (x0 + x1) / 2, ROOM.h, (z0 + z1) / 2, PI / 2, 0, 1); }
+
+// areas of the house (for lights / hallucinations / outdoor check)
+var AREAS = [
+  { id: 'main', name: 'リビング', x0: -3, x1: 3, z0: -2.5, z1: 2.5 },
+  { id: 'balcony', name: 'ベランダ', x0: -2.45, x1: 0.85, z0: -4.25, z1: -2.5 },
+  { id: 'toilet', name: 'トイレ', x0: 0.6, x1: 3, z0: 2.5, z1: 4.3, light: [1.8, 2.3, 3.4, 0xf0f6ff] },
+  { id: 'hall', name: '廊下', x0: 3, x1: 4.4, z0: -2.5, z1: 4.3, light: [3.7, 2.3, 0.9, 0xffe6c0] },
+  { id: 'tatami', name: '和室', x0: 4.4, x1: 8, z0: -2.5, z1: 1.5, light: [6.2, 2.1, -0.5, 0xffc27a] },
+  { id: 'bath', name: 'お風呂', x0: 4.4, x1: 8, z0: 1.5, z1: 4.3, light: [6.0, 2.3, 2.9, 0xe8f4ff] }
+];
+function areaAt(x, z) {
+  for (var i = 0; i < AREAS.length; i++) { var a = AREAS[i]; if (x >= a.x0 - 0.05 && x <= a.x1 + 0.05 && z >= a.z0 - 0.05 && z <= a.z1 + 0.05) return a; }
+  return AREAS[0];
+}
+
+function buildHouse() {
+  var H = new THREE.Group(); WORLD.root.add(H); var M = WORLD.mats;
+  M.tatami = stdMat({ map: TEX.tatami, roughness: 0.95 });
+  M.fusuma = stdMat({ map: TEX.fusuma, roughness: 0.9 });
+  M.door = stdMat({ color: 0x3c3f46, roughness: 0.5, metalness: 0.4 });
+  M.bathTile = stdMat({ map: TEX.tile, roughness: 0.25, side: THREE.DoubleSide });
+  M.genkan = stdMat({ color: 0x6d6a66, roughness: 0.9 });
+  M.futon = stdMat({ color: 0xf3efe6, roughness: 0.95 });
+  M.kotatsu = stdMat({ color: 0xb0472f, roughness: 0.95 });
+  M.water = new THREE.MeshStandardMaterial({ color: 0x6fd3ff, emissive: 0x0a3550, roughness: 0.05, transparent: true, opacity: 0.75 });
+
+  // ---------- hallway x3..4.4, z-2.5..4.3 ----------
+  floorRect(H, 3, 4.4, -2.5, 3.6, M.floor);
+  floorRect(H, 3, 4.4, 3.6, 4.3, M.genkan, -0.12);
+  addBox(H, 1.4, 0.12, 0.05, M.darkWood, 3.7, -0.12, 3.6);
+  ceilRect(H, 3, 4.4, -2.5, 4.3);
+  wallSeg(H, 3, -2.5, 4.4, -2.5, M.wall2, []);                    // north end
+  wallSeg(H, 4.4, -2.5, 4.4, 4.3, M.wall2, [[2.3, 3.2], [4.8, 5.6]]); // doors to tatami / bath
+  wallSeg(H, 3, 4.3, 4.4, 4.3, M.wall2, [], { y0: -0.12 });
+  // front door
+  var fd = new THREE.Group(); H.add(fd);
+  addBox(fd, 0.9, 2.05, 0.06, M.door, 3.7, -0.12, 4.26);
+  addBox(fd, 0.04, 0.04, 0.16, M.metal, 4.0, 0.9, 4.2);
+  var peep = new THREE.Mesh(new THREE.CircleGeometry(0.012, 10), M.black); peep.position.set(3.7, 1.5, 4.225); peep.rotation.y = PI; fd.add(peep);
+  addInter('door', '玄関のドア', '外に出る', new THREE.Vector3(3.7, 1.0, 4.2), [fd], function () { actFrontDoor(); });
+  // shoe box, shoes, umbrella
+  addBox(H, 0.35, 0.9, 0.9, M.wood, 4.2, -0.12, 3.85, { col: true });
+  [[3.45, 3.9, 0xffffff], [3.6, 3.95, 0x222222]].forEach(function (s) { addBox(H, 0.11, 0.08, 0.27, stdMat({ color: s[2] }), s[0], -0.12, s[1]); addBox(H, 0.11, 0.08, 0.27, stdMat({ color: s[2] }), s[0] + 0.13, -0.12, s[1] + 0.02); });
+  var umb = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.8, 8), stdMat({ color: 0x2b6cb0 })); umb.position.set(3.15, 0.28, 4.15); umb.rotation.z = 0.15; H.add(umb);
+  // wall shelf with a photo frame, hallway lamp
+  addBox(H, 0.25, 0.03, 0.7, M.wood, 4.27, 1.0, 1.2);
+  var frame = addPlane(H, 0.2, 0.26, stdMat({ map: TEX.poster1 }), 4.38, 1.4, 1.2, 0, -PI / 2);
+  var hl = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 10), new THREE.MeshBasicMaterial({ color: 0xfff0d0 })); hl.position.set(3.7, 2.4, 0.9); H.add(hl);
+  var hl2 = hl.clone(); hl2.position.z = 3.3; H.add(hl2);
+
+  // ---------- tatami room x4.4..8, z-2.5..1.5 ----------
+  floorRect(H, 4.4, 8, -2.5, 1.5, M.tatami, 0.002);
+  ceilRect(H, 4.4, 8, -2.5, 1.5);
+  wallSeg(H, 4.4, -2.5, 8, -2.5, M.wall2, []);
+  wallSeg(H, 8, -2.5, 8, 1.5, M.wall2, [[0.7, 2.9, 0.85, 2.0]]); // window
+  wallSeg(H, 8, 1.5, 4.4, 1.5, M.wall2, []);
+  // window frame + glass + shoji
+  addBox(H, 0.12, 0.05, 2.2, M.wood, 8, 0.83, -0.7); addBox(H, 0.12, 0.05, 2.2, M.wood, 8, 1.98, -0.7);
+  var tg = addBox(H, 0.02, 1.15, 2.2, M.glass, 8.02, 0.85, -0.7); tg.renderOrder = 2;
+  for (var sj = 0; sj < 2; sj++) {
+    var sh = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 1.15), new THREE.MeshStandardMaterial({ map: TEX.shoji, transparent: true, opacity: 0.92, side: THREE.DoubleSide, emissive: 0x332211 }));
+    sh.position.set(7.95, 1.42, -1.65 + sj * 0.55); sh.rotation.y = -PI / 2; H.add(sh);
+  }
+  // oshiire (fusuma) on the north wall
+  for (var fu = 0; fu < 2; fu++) addPlane(H, 0.9, 1.75, M.fusuma, 6.6 + fu * 0.9, 0.95, -2.48, 0, 0);
+  addBox(H, 1.84, 0.04, 0.04, M.wood, 7.05, 1.82, -2.47); addCol(6.1, 7.95, -2.5, -2.35);
+  // futon
+  var fut = new THREE.Group(); H.add(fut);
+  addBox(fut, 1.0, 0.1, 2.0, M.futon, 5.2, 0.002, -1.35, { sx: 3, sz: 5 });
+  addBox(fut, 0.96, 0.08, 1.3, stdMat({ map: TEX.blanket, roughness: 0.95 }), 5.2, 0.1, -1.0, { sx: 3, sz: 4 });
+  addBox(fut, 0.5, 0.1, 0.3, M.white, 5.2, 0.1, -2.1, { sx: 2, sz: 2 });
+  WORLD.bedFuton = { pos: new THREE.Vector3(5.2, 0.2, -1.35), y: 0.42, exit: [5.9, 0.2, PI * 0.5] };
+  addInter('futon', 'ふとん', '横になる', new THREE.Vector3(5.2, 0.2, -1.2), [fut], function () { WORLD.bed = WORLD.bedFuton; openBedMenu(); });
+  // kotatsu with mikan
+  var kt = new THREE.Group(); H.add(kt);
+  addBox(kt, 1.35, 0.33, 1.35, M.kotatsu, 6.6, 0.002, 0.1, { sx: 3, sz: 3 });
+  addBox(kt, 1.0, 0.04, 1.0, M.wood, 6.6, 0.38, 0.1);
+  var bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.07, 0.06, 16), stdMat({ color: 0x2f2f6a })); bowl.position.set(6.6, 0.45, 0.1); kt.add(bowl);
+  var mikanMat = stdMat({ color: 0xff8a1c, roughness: 0.7 });
+  [[0, 0], [0.06, 0.04], [-0.05, 0.05], [0.01, -0.06]].forEach(function (p, i) { var mk = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 8), mikanMat); mk.scale.y = 0.8; mk.position.set(6.6 + p[0], 0.5 + (i === 3 ? 0.04 : 0), 0.1 + p[1]); kt.add(mk); });
+  addCol(5.92, 7.28, -0.58, 0.78);
+  addInter('kotatsu', 'こたつ', 'こたつに入る', new THREE.Vector3(6.6, 0.4, 0.1), [kt], function () { actKotatsu(); });
+  addInter('mikan', 'みかん', 'みかんを食べる', new THREE.Vector3(6.6, 0.5, 0.1), [bowl], function () { actMikan(); }, { reach: 2.0 });
+  [[6.6, -0.75], [7.45, 0.1], [6.6, 0.95]].forEach(function (p) { addBox(H, 0.5, 0.06, 0.5, stdMat({ color: 0x5b3a8c, roughness: 1 }), p[0], 0.002, p[1]); });
+  // paper lantern
+  var lan = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), new THREE.MeshStandardMaterial({ color: 0xfff1d6, emissive: 0xffc27a, emissiveIntensity: 1.0 })); lan.scale.y = 1.15; lan.position.set(6.2, 2.05, -0.5); H.add(lan);
+  addBox(H, 0.01, 0.2, 0.01, M.black, 6.2, 2.28, -0.5);
+  // small chest with a radio
+  addBox(H, 0.45, 0.6, 0.8, M.darkWood, 7.7, 0, 1.0, { col: true });
+  var radio = addBox(H, 0.3, 0.18, 0.15, stdMat({ color: 0xc9b38a }), 7.7, 0.6, 1.0);
+  addInter('radio', 'ラジオ', '音楽をつける/消す', new THREE.Vector3(7.7, 0.7, 1.0), [radio], function () { AU.music = !AU.music; auVol(); sfx('click'); toast(AU.music ? '音楽をつけた' : '音楽を止めた'); });
+
+  // ---------- bath area x4.4..8, z1.5..4.3 (脱衣所 x<5.8, 浴室 x>5.8) ----------
+  floorRect(H, 4.4, 5.8, 1.5, 4.3, M.floor);
+  floorRect(H, 5.8, 8, 1.5, 4.3, M.tile, 0.003);
+  ceilRect(H, 4.4, 8, 1.5, 4.3);
+  wallSeg(H, 4.4, 1.5, 8, 1.5, M.wall2, []);
+  wallSeg(H, 8, 1.5, 8, 4.3, M.bathTile, []);
+  wallSeg(H, 8, 4.3, 4.4, 4.3, M.wall2, []);
+  // glass partition with a gap
+  var gp = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.05), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.25, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false }));
+  gp.position.set(5.8, 1.02, 2.0); gp.rotation.y = PI / 2; H.add(gp); addCol(5.76, 5.84, 1.5, 2.5);
+  var gp2 = gp.clone(); gp2.position.z = 3.8; H.add(gp2); addCol(5.76, 5.84, 3.3, 4.3);
+  addBox(H, 0.05, 0.05, 2.8, M.metal, 5.8, 2.05, 2.9);
+  // washing machine & basin
+  var wm = new THREE.Group(); H.add(wm);
+  addBox(wm, 0.6, 0.85, 0.6, M.white, 4.75, 0, 3.95, { col: true });
+  var drum = new THREE.Mesh(new THREE.CircleGeometry(0.17, 24), stdMat({ color: 0x223344, roughness: 0.2, metalness: 0.5 })); drum.position.set(4.75, 0.5, 3.645); drum.rotation.y = PI; wm.add(drum);
+  addInter('washer', '洗濯機', 'のぞく', new THREE.Vector3(4.75, 0.6, 3.7), [wm], function () { actWasher(); });
+  addBox(H, 0.5, 0.82, 0.42, M.white, 5.05, 0, 1.75, { col: true });
+  var bsn = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.11, 0.1, 16), M.ceramic); bsn.position.set(5.05, 0.87, 1.75); H.add(bsn);
+  addPlane(H, 0.5, 0.6, new THREE.MeshStandardMaterial({ color: 0xa8b8c8, roughness: 0.05, metalness: 1.0 }), 5.05, 1.5, 1.52, 0, 0);
+  // bathtub
+  var tub = new THREE.Group(); H.add(tub);
+  addBox(tub, 1.7, 0.55, 0.06, M.white, 7.05, 0, 2.55); addBox(tub, 0.06, 0.55, 1.0, M.white, 6.2, 0, 2.05); addBox(tub, 1.7, 0.08, 1.0, M.white, 7.05, 0, 2.05);
+  var water = addPlane(tub, 1.6, 0.92, M.water, 7.05, 0.46, 2.03, -PI / 2, 0, 4); WORLD.bathWater = water;
+  addCol(6.15, 7.95, 1.5, 2.6);
+  addInter('tub', '湯船', 'お風呂に入る', new THREE.Vector3(7.05, 0.5, 2.1), [tub], function () { actBath(); });
+  // shower
+  var shw = new THREE.Group(); H.add(shw);
+  addBox(shw, 0.03, 1.2, 0.03, M.metal, 7.95, 0.8, 3.6);
+  var head = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.04, 14), M.metal); head.rotation.z = PI / 2; head.position.set(7.9, 2.0, 3.6); shw.add(head);
+  addBox(shw, 0.1, 0.06, 0.16, M.metal, 7.92, 1.0, 3.6);
+  addBox(H, 0.3, 0.25, 0.3, stdMat({ color: 0x7fd1c7 }), 7.3, 0, 3.7);
+  var spray = new THREE.Mesh(new THREE.ConeGeometry(0.25, 1.8, 12, 1, true), new THREE.MeshStandardMaterial({ color: 0xcfefff, transparent: true, opacity: 0.25, emissive: 0x335577, depthWrite: false, side: THREE.DoubleSide }));
+  spray.position.set(7.75, 1.08, 3.6); spray.visible = false; H.add(spray); WORLD.spray = spray;
+  addInter('shower', 'シャワー', 'シャワーを浴びる', new THREE.Vector3(7.85, 1.3, 3.6), [shw], function () { actShower(); });
+  var bl = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.03, 0.5), new THREE.MeshBasicMaterial({ color: 0xf6fbff })); bl.position.set(6.0, 2.48, 2.9); H.add(bl);
 }

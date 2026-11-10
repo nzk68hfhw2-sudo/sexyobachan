@@ -136,6 +136,18 @@ function makeTextures() {
   c = mkCanvas(128, 128); g = c.getContext('2d'); g.fillStyle = '#8f8f8a'; g.fillRect(0, 0, 128, 128);
   for (y = 0; y < 128; y += 2) for (x = 0; x < 128; x += 2) { g.fillStyle = 'rgba(0,0,0,' + fbm(x * 0.08, y * 0.08, 3) * 0.25 + ')'; g.fillRect(x, y, 2, 2); }
   TEX.concrete = toTex(c, { repeat: [3, 2] });
+  // tatami
+  c = mkCanvas(256, 256); g = c.getContext('2d'); g.fillStyle = '#b8b47a'; g.fillRect(0, 0, 256, 256);
+  for (y = 0; y < 256; y += 2) { g.fillStyle = 'rgba(' + (Math.random() < 0.5 ? '90,90,40' : '230,225,170') + ',' + (0.15 + Math.random() * 0.2) + ')'; g.fillRect(0, y, 256, 1); }
+  g.fillStyle = '#2d3a2a'; g.fillRect(0, 0, 256, 10); g.fillRect(0, 246, 256, 10);
+  TEX.tatami = toTex(c, { repeat: [2, 2] });
+  c = mkCanvas(128, 256); g = c.getContext('2d'); g.fillStyle = '#efe6cf'; g.fillRect(0, 0, 128, 256);
+  for (i = 0; i < 6; i++) { g.strokeStyle = 'rgba(120,150,170,0.5)'; g.lineWidth = 2; g.beginPath(); g.arc(30 + i * 15, 70 + i * 22, 18, 0, PI); g.stroke(); }
+  g.fillStyle = '#2b2b2b'; g.beginPath(); g.arc(110, 128, 5, 0, TAU); g.fill(); g.strokeStyle = '#6b4a2a'; g.lineWidth = 6; g.strokeRect(0, 0, 128, 256);
+  TEX.fusuma = toTex(c);
+  c = mkCanvas(128, 256); g = c.getContext('2d'); g.fillStyle = '#f7f1e3'; g.fillRect(0, 0, 128, 256);
+  g.strokeStyle = '#7a5a3a'; g.lineWidth = 4; for (x = 0; x <= 128; x += 32) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 256); g.stroke(); } for (y = 0; y <= 256; y += 42) { g.beginPath(); g.moveTo(0, y); g.lineTo(128, y); g.stroke(); }
+  TEX.shoji = toTex(c);
   // ramune case label
   c = mkCanvas(256, 128); g = c.getContext('2d');
   var lg = g.createLinearGradient(0, 0, 256, 128); lg.addColorStop(0, '#7df9ff'); lg.addColorStop(0.5, '#c77dff'); lg.addColorStop(1, '#ff5fa8');
@@ -171,7 +183,7 @@ function posterCanvas(k) {
     var gr = g.createLinearGradient(0, 0, 0, 360); gr.addColorStop(0, '#1b0f3b'); gr.addColorStop(1, '#ff5fa8'); g.fillStyle = gr; g.fillRect(0, 0, 256, 360);
     g.fillStyle = '#ffd166'; g.beginPath(); g.arc(128, 200, 70, 0, TAU); g.fill();
     g.fillStyle = '#1b0f3b'; for (i = 0; i < 6; i++) g.fillRect(40, 190 + i * 14, 176, 5 + i);
-    g.fillStyle = '#7df9ff'; g.font = '900 34px sans-serif'; g.textAlign = 'center'; g.fillText('RAMUNE', 128, 64); g.fillText('NIGHT', 128, 102);
+    g.fillStyle = '#7df9ff'; g.font = '900 34px sans-serif'; g.textAlign = 'center'; g.fillText('DANGER', 128, 64); g.fillText('RAMUNE', 128, 102);
     g.font = '700 14px sans-serif'; g.fillStyle = '#fff'; g.fillText('ALL NIGHT LONG', 128, 320);
   } else if (k === 1) {
     g.fillStyle = '#f4e9d0'; g.fillRect(0, 0, 256, 360);

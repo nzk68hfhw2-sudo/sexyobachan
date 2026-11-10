@@ -3,7 +3,7 @@ var LOOP = { last: 0, t: 0, err: false };
 function boot() {
   setupPage(); loadSave();
   initUI();
-  showScreen('<div class="rm-logo" style="font-size:44px">RAMUNE<br>NIGHT</div><div id="rm-load" style="margin-top:14px;font-family:DotGothic16,monospace;opacity:.7">LOADING...</div>');
+  showScreen('<div class="rm-logo-pre">キケンな</div><div class="rm-logo" style="font-size:52px">ラムネ<br><span>シミュレーター</span></div><div id="rm-load" style="margin-top:14px;font-family:DotGothic16,monospace;opacity:.7">LOADING...</div>');
   loadThree(function () {
     try {
       initRenderer(); initInput();

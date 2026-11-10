@@ -1,20 +1,20 @@
 // ---- game flow ---------------------------------------------------------------------
 var START_CLOCK = 20 * 60, END_CLOCK = 32 * 60; // 20:00 → 08:00 next morning
-var GAME = { mode: 'boot', clock: START_CLOCK, ff: false, paused: false, B: null, stash: {}, hist: [], histT: 0, monoT: 6, rest: null, lock: false, fx: { vomit: 0, gapT: 0, gap: 0, flashT: 0, flash: 0, fade: 0, white: 0, hue: 0 }, endT: 0 };
+var GAME = { mode: 'boot', clock: START_CLOCK, ff: false, speed: 1, paused: false, B: null, stash: {}, hist: [], histT: 0, monoT: 6, rest: null, lock: false, fx: { vomit: 0, gapT: 0, gap: 0, flashT: 0, flash: 0, fade: 0, white: 0, hue: 0 }, endT: 0 };
 var FAKE_BODY = null;
 
 function startNight() {
   hideScreen(); closeModal(true);
   GAME.B = newBody();
-  GAME.clock = START_CLOCK; GAME.ff = false; GAME.paused = false; GAME.rest = null; GAME.lock = false; GAME.hist = []; GAME.histT = 0; GAME.monoT = 4;
+  GAME.clock = START_CLOCK; setSpeed(1); GAME.paused = false; GAME.rest = null; GAME.lock = false; GAME.hist = []; GAME.histT = 0; GAME.monoT = 4;
   GAME.stash = {}; SUBS.forEach(function (s) { if (!s.hidden) GAME.stash[s.id] = s.stock || 2; }); DRINKS.forEach(function (d) { GAME.stash[d.id] = d.stock; });
   GAME.fx.fade = 1;
   WORLD.cans.forEach(function (m) { RENDER.scene.remove(m); }); WORLD.cans = [];
   WORLD.lightMode = 0; WORLD.tvOn = true; AU.music = true; auVol();
   resetPlayer();
   GAME.mode = 'play'; INPUT.enabled = true;
-  showHUD(true); HUD.bFF.className = 'btn round';
-  HUD.hint.innerHTML = isTouchDevice() || isMobile() ? '左側をドラッグで移動<br>右側をドラッグで見回す<br>モノをタップでしらべる' : 'WASD 移動 ・ ドラッグで見回す<br>クリック/E しらべる ・ F 早送り ・ Tab スマホ';
+  showHUD(true); setSpeed(1); WORLD.bed = WORLD.bedMain;
+  HUD.hint.innerHTML = isTouchDevice() || isMobile() ? '左側をドラッグで移動<br>右側をドラッグで見回す<br>モノをタップでしらべる' : 'WASD 移動 ・ ドラッグで見回す<br>クリック/E しらべる ・ F 速さ ・ Tab スマホ';
   setTimeout(function () { if (HUD.hint) HUD.hint.style.transition = 'opacity 2s'; HUD.hint.style.opacity = 0.0; }, 14000);
   HUD.hint.style.opacity = 0.55; HUD.hint.style.transition = '';
   SAVE.nights++; writeSave();
@@ -23,10 +23,16 @@ function startNight() {
   sfx('ui');
 }
 
+var SPEEDS = [1, 2, 4, 8];
+function setSpeed(v) {
+  GAME.speed = v; GAME.ff = v > 1;
+  if (HUD.bFF) { HUD.bFF.innerHTML = (v > 1 ? '⏩' : '▶') + '<b>' + v + 'x</b>'; HUD.bFF.className = 'btn round speed' + (v > 1 ? ' on' : ''); }
+}
 function toggleFF() {
   if (GAME.mode !== 'play') return;
-  GAME.ff = !GAME.ff; HUD.bFF.className = 'btn round' + (GAME.ff ? ' on' : '');
-  toast(GAME.ff ? '⏩ 時間を早送り中' : '▶ ふつうの速さ'); sfx('click');
+  var i = SPEEDS.indexOf(GAME.speed || 1);
+  setSpeed(SPEEDS[(i + 1) % SPEEDS.length]);
+  toast(GAME.speed > 1 ? '⏩ 時間の速さ ' + GAME.speed + '倍' : '▶ ふつうの速さ'); sfx('click');
 }
 
 // ---- actions -----------------------------------------------------------------------
@@ -90,15 +96,58 @@ function actMirror() {
   if (!out.length) out.push('いつもの自分だ。');
   say('（鏡）' + out.slice(0, 3).join(' '), 5);
 }
+function actFrontDoor() {
+  var B = GAME.B, high = B.bac > 0.05 || B.F.ps > 0.3 || B.F.di > 0.3 || B.F.de > 0.3 || B.F.se > 0.5 || B.F.st > 0.6;
+  sfx('door');
+  if (high) say('…いまの状態で外に出るのはやめておこう。今夜は家にいる。', 4);
+  else say('コンビニに行きたい気もするけど…今夜は家でのんびりしよう。', 4);
+}
+function actKotatsu() {
+  var B = GAME.B;
+  if (B.tp > 38.2) { say('あつい…こたつに入ったら余計に体温が上がりそう。', 3.5); return; }
+  say(pick(['こたつ…ぬくい…もう一生出られない…', 'こたつの中に、もうひとつの宇宙がある。', 'こたつ最高。']), 3.5);
+  if (B.F.ps > 0.5) toast('こたつ布団の模様がゆっくり回っている…');
+}
+function actMikan() {
+  var B = GAME.B;
+  B.hyd = Math.min(1, B.hyd + 0.06); B.naRelief = Math.max(B.naRelief, 0.12);
+  sfx('pill');
+  toast('みかんを食べた。甘ずっぱい。（水分が少しもどった）', 'good');
+  if (B.F.ps > 0.6) say('みかんの皮の中に、小さな太陽が入ってた…', 3.5);
+}
+function actWasher() {
+  var B = GAME.B;
+  if (B.F.ps > 0.5) say('ドラムの中で、銀河がぐるぐる回っている…', 3.5);
+  else if (B.F.de > 0.5) say('洗濯機の中から、だれかがこっちを見ている…？', 3.5);
+  else say('洗濯物がたまってる…明日やろう。', 3);
+}
+function riskyBath(B) { return B.bac > 0.06 || B.F.se > 0.45 || B.F.di > 0.45 || B.F.pa > 0.45 || B.F.de > 0.5 || B.con < 70; }
+function actBath() {
+  var B = GAME.B;
+  if (riskyBath(B)) { toast('⚠ 酔っている・ぼーっとしている時のお風呂は、眠って溺れる危険がある。シャワーにしておこう。', 'warn', 5); return; }
+  if (B.tp > 38.3 || (B.L.up || 0) > 0.4 || (B.L.emp || 0) > 0.4) { toast('⚠ 体温や心拍が上がっている時に湯船は危ない。ぬるめのシャワーにしておこう。', 'warn', 5); return; }
+  GAME.lock = true; sfx('water'); GAME.fx.fade = 0.9;
+  setTimeout(function () { bodyStep(B, 20); GAME.clock += 20; GAME.lock = false; toast('ゆっくりお風呂に入った。さっぱり。（20分経過）', 'good'); }, 1400);
+}
+function actShower() {
+  var B = GAME.B;
+  GAME.lock = true; WORLD.spray.visible = true; sfx('water'); sfx('flush');
+  setTimeout(function () {
+    WORLD.spray.visible = false; GAME.lock = false;
+    B.tp = Math.max(36.6, B.tp - 0.45); B.naRelief = Math.max(B.naRelief, 0.25); B.waterCool = Math.max(B.waterCool, 0.6);
+    bodyStep(B, 8); GAME.clock += 8;
+    toast('ぬるめのシャワーを浴びた。体の熱が少し引いた。', 'good');
+  }, 2000);
+}
 function startRest(min) {
   GAME.rest = { left: min, morning: min > 1000 };
-  GAME.B.onBed = true; GAME.ff = false; HUD.bFF.className = 'btn round';
+  GAME.B.onBed = true; setSpeed(1);
   say(min > 1000 ? 'おやすみなさい…' : 'ちょっとだけ…目をとじる…', 3);
 }
 function endRest(msg) {
   if (!GAME.rest) return;
   GAME.rest = null; GAME.B.onBed = false;
-  PL.x = 1.5; PL.z = -0.1; PL.yaw = PI * 0.6;
+  var ex = (WORLD.bed || WORLD.bedMain).exit; PL.x = ex[0]; PL.z = ex[1]; PL.yaw = ex[2];
   if (msg) toast(msg);
 }
 
@@ -118,7 +167,7 @@ function processEvents() {
         banner(isNew ? '🧪 NEW 飲み合わせ発見' : '🧪 飲み合わせ', cb.name, cb.desc, 'dg' + cb.danger);
         break;
       case 'vomit': if (GAME.fx.vomit <= 0) { GAME.fx.vomit = 1.4; sfx('vomit'); toast(B.unconscious ? '意識がないまま吐いてしまった！' : '耐えきれずに吐いてしまった…', 'warn'); } break;
-      case 'pass': toast('意識が…遠のいていく…', 'warn', 4); GAME.ff = false; HUD.bFF.className = 'btn round'; break;
+      case 'pass': toast('意識が…遠のいていく…', 'warn', 4); setSpeed(1); break;
       case 'wake': toast('…はっ。' + Math.max(1, Math.round(d.mins)) + '分くらい記憶がない。', 'warn', 4); break;
       case 'warn': toast('⚠ ' + d.msg, 'warn'); sfx('warn'); break;
       case 'dead': endNight('dead', d.cause); return;
@@ -143,7 +192,7 @@ function updatePlay(dt) {
   var B = GAME.B;
   if (!GAME.paused) {
     var rate = 1;
-    if (GAME.ff) rate = 8;
+    if (GAME.speed > 1) rate = GAME.speed;
     if (B.unconscious) rate = Math.max(rate, 5);
     if (GAME.rest) rate = 18;
     var gdt = dt * rate;
@@ -262,6 +311,9 @@ function updateWorldFX(dt) {
   W.spkLed.visible = AU.music;
   W.cones.forEach(function (c, i) { var s = AU.music ? 1 + Math.max(0, Math.sin(t * 8.2 * AU.p.tempo + i)) * 0.06 : 1; c.scale.set(s, s, 1); });
   W.fan.rotation.z += dt * 12;
+  var ar = GAME.mode === 'play' ? areaAt(PL.x, PL.z) : AREAS[2];
+  var rl = ar.light || AREAS[2].light;
+  if (W.roomLight !== rl) { W.roomLight = rl; Lt.bath.position.set(rl[0], rl[1], rl[2]); Lt.bath.color.setHex(rl[3]); Lt.bath.distance = ar.id === 'hall' ? 7 : 5.5; Lt.bath.intensity = ar.id === 'tatami' ? 0.9 : 0.75; }
   W.caseGlow.intensity = 0.2 + Math.sin(t * 2) * 0.08;
   // clock hands (follow the in-game clock, melt along with everything else)
   var cm = GAME.clock;
@@ -273,7 +325,7 @@ function updateWorldFX(dt) {
 function endNight(kind, cause) {
   if (GAME.mode !== 'play') return;
   var B = GAME.B;
-  GAME.mode = 'end'; INPUT.enabled = false; closeModal(true); showHUD(false); GAME.ff = false;
+  GAME.mode = 'end'; INPUT.enabled = false; closeModal(true); showHUD(false); setSpeed(1);
   HUD.sub.style.opacity = 0;
   B.onBed = false;
   if (document.pointerLockElement) try { document.exitPointerLock(); } catch (e) {}
@@ -329,7 +381,7 @@ function toTitle() {
   GAME.fx.dead = 0; GAME.fx.white = 0; GAME.fx.deadFade = GAME.fx.whiteFade = false; GAME.fx.fade = 0.8;
   GAME.clock = 23 * 60;
   WORLD.lightMode = 1; WORLD.tvOn = true;
-  var html = '<div class="rm-logo">RAMUNE<br>NIGHT</div><div class="rm-logo-sub">ラムネナイト</div>' +
+  var html = '<div class="rm-logo-pre">キケンな</div><div class="rm-logo">ラムネ<br><span>シミュレーター</span></div><div class="rm-logo-sub">DANGEROUS RAMUNE SIMULATOR</div>' +
     '<div style="font-size:13px;opacity:.85">架空のラムネとチューハイで過ごす、ひと晩のシミュレーター</div>' +
     '<div class="rm-menu"><button class="btn pri" id="rm-start">はじめる</button><button class="btn" id="rm-zukan">図鑑</button><button class="btn" id="rm-howto">あそびかた</button><button class="btn ghost" id="rm-set">設定</button></div>' +
     '<div class="rm-note">図鑑：ラムネ ' + Object.keys(SAVE.seenSubs).length + '/19 ・ 飲み合わせ ' + Object.keys(SAVE.seenCombos).length + '/' + COMBOS.length + (SAVE.best ? ' ・ ベスト ' + SAVE.best : '') + '<br>※ フィクションです。実在の薬物・製品とは関係ありません。</div>';
@@ -355,8 +407,8 @@ function showWarning() {
 }
 function showHowTo() {
   var html = '<div class="rm-card2"><h3>あそびかた</h3>' +
-    '<p>夜8時から朝8時まで、自分の部屋で好きにすごすゲームです。<br>テーブルの<b>ラムネケース</b>から架空のラムネを、<b>冷蔵庫</b>から ZER9（架空のチューハイ）を選んで、いろいろな効果と<b>飲み合わせ</b>を見つけよう。</p>' +
-    '<ul><li><b>移動</b>：画面の左側をドラッグ（PC：WASD）</li><li><b>見回す</b>：右側をドラッグ（PC：マウスでドラッグ）</li><li><b>しらべる</b>：モノをタップ、または右下のボタン（PC：クリック / E）</li><li><b>⏩</b>：時間を早送り（効き目が出るまで待つときに）</li><li><b>📱</b>：からだの状態・図鑑・設定・119</li></ul>' +
+    '<p>夜8時から朝8時まで、自分の家で好きにすごすゲームです。リビング・ベランダ・トイレのほか、廊下の先に玄関・和室・お風呂もあります。<br>テーブルの<b>ラムネケース</b>から架空のラムネを、<b>冷蔵庫</b>から ZER9（架空のチューハイ）を選んで、いろいろな効果と<b>飲み合わせ</b>を見つけよう。</p>' +
+    '<ul><li><b>移動</b>：画面の左側をドラッグ（PC：WASD）</li><li><b>見回す</b>：右側をドラッグ（PC：マウスでドラッグ）</li><li><b>しらべる</b>：モノをタップ、または右下のボタン（PC：クリック / E）</li><li><b>▶1x</b>：タップするたびに時間の速さが 1倍→2倍→4倍→8倍 と切り替わる（PC：F）</li><li><b>📱</b>：からだの状態・図鑑・設定・119</li></ul>' +
     '<p><b>ラムネの名前</b>：どれも医薬品っぽい名前と「通称」がついていますが、<b>すべて架空</b>です。</p><p><b>ラムネの系統</b>：🌈幻覚系　⚡アッパー系　💤ダウナー系　☁️ぬくぬく系（オピオイド系）　🪐解離系　💗ハート系　🌑とばり系　✨とくしゅ</p>' +
     '<p><b>からだに注意</b>：心拍・体温・呼吸が危険なところに入ると、画面が赤くなって「危険度」がたまります。100になると BAD END。<br>' +
     '水を飲む・ベランダで風にあたる・トイレで吐く・ネガトキソン（リセットラムネ）・119番などで切り抜けよう。</p>' +

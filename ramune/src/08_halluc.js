@@ -59,6 +59,7 @@ function updateHallucinations(dt, B, cam) {
     m.visible = fa > 0.01;
     if (!m.visible) return;
     var u = m.userData;
+    if (u.home.distanceTo(cp) > 4.2) { var ar = areaAt(cp.x, cp.z); u.home.set(rnd(ar.x0 + 0.3, ar.x1 - 0.3), rnd(0.6, 2.2), rnd(ar.z0 + 0.3, ar.z1 - 0.3)); }
     m.material.opacity = fa;
     m.position.set(u.home.x + Math.sin(t * u.sp + u.ph) * 0.5, u.home.y + Math.sin(t * u.sp * 1.3 + u.ph) * 0.25, u.home.z + Math.cos(t * u.sp * 0.8 + u.ph) * 0.5);
     m.rotation.x += u.rs.x * dt; m.rotation.y += u.rs.y * dt; m.rotation.z += u.rs.z * dt;
@@ -68,6 +69,7 @@ function updateHallucinations(dt, B, cam) {
   // hearts
   var ha = clamp(V.emp - 0.3, 0, 1) * 0.9;
   HAL.hearts.visible = ha > 0.01;
+  var har = areaAt(cp.x, cp.z); HAL.hearts.position.set((har.x0 + har.x1) / 2, 0, (har.z0 + har.z1) / 2);
   if (HAL.hearts.visible) {
     HAL.hearts.material.opacity = ha;
     var p = HAL.hearts.geometry.attributes.position;
@@ -84,7 +86,7 @@ function updateHallucinations(dt, B, cam) {
       if (u.cd <= 0 && Math.random() < 0.5 * da) {
         // spawn in peripheral vision
         var side = Math.random() < 0.5 ? -1 : 1, ang = Math.atan2(fwd.x, fwd.z) + side * rnd(0.9, 1.6), d = rnd(2.0, 3.6);
-        var x = clamp(cp.x + Math.sin(ang) * d, -2.6, 2.6), z = clamp(cp.z + Math.cos(ang) * d, -3.9, 4.0);
+        var sar = areaAt(cp.x, cp.z); var x = clamp(cp.x + Math.sin(ang) * d, sar.x0 + 0.3, sar.x1 - 0.3), z = clamp(cp.z + Math.cos(ang) * d, sar.z0 + 0.3, sar.z1 - 0.3);
         f.position.set(x, 0, z); f.lookAt(cp.x, 0, cp.z);
         f.visible = true; u.a = 0; u.life = rnd(4, 10);
       }

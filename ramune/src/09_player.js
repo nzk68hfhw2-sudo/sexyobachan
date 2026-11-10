@@ -86,7 +86,7 @@ function collide(nx, nz, r) {
   }
   return [nx, nz];
 }
-function isOutdoor() { return PL.z < -2.55; }
+function isOutdoor() { return areaAt(PL.x, PL.z).id === 'balcony'; }
 function inBathroom() { return PL.z > 2.55; }
 
 function updatePlayer(dt, B, canMove) {
@@ -125,7 +125,7 @@ function updateCamera(dt, B) {
   var eye = 1.55 - Math.min(0.15, V.sed * 0.08);
   var y = lerp(eye, 0.28, PL.fall);
   var x = PL.x, z = PL.z;
-  if (PL.lie > 0.01) { x = lerp(x, WORLD.bedPos.x, PL.lie); z = lerp(z, WORLD.bedPos.z - 0.5, PL.lie); y = lerp(y, 0.85, PL.lie); }
+  if (PL.lie > 0.01) { var bd = WORLD.bed || WORLD.bedMain; x = lerp(x, bd.pos.x, PL.lie); z = lerp(z, bd.pos.z - 0.5, PL.lie); y = lerp(y, bd.y, PL.lie); }
   y += Math.sin(PL.bob) * 0.025 * (1 - PL.fall);
   // sway & jitter
   var roll = Math.sin(t * 0.7) * Math.min(1.5, V.drunk) * 0.07 * calm + Math.sin(t * 0.33) * V.dis * 0.08 * calm + PL.fall * 1.25 + V.spin * Math.sin(t * 0.4) * 0.12 * calm;

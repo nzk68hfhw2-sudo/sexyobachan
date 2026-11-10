@@ -1,10 +1,10 @@
 // ---------------------------------------------------------------------------
-// RAMUNE NIGHT（ラムネナイト）— 架空のラムネ＆チューハイ・シミュレーター
+// キケンなラムネシミュレーター — 架空のラムネ＆チューハイ・シミュレーター
 // これはフィクションのゲームです。登場する「ラムネ」はすべて架空のもので、
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.0.0';
+var GAME_VERSION = '1.1.0';
 
 var ROOT, UI, CANVAS_HOST;
 
@@ -17,7 +17,7 @@ function showFatal(title, detail) {
       d.style.cssText = 'position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 120px);z-index:2147483647;background:#1a0616;color:#ffe0f4;border:2px solid #e2a;padding:14px;font:13px/1.5 monospace;white-space:pre-wrap;border-radius:8px;max-height:60vh;overflow:auto;';
       (document.body || document.documentElement).appendChild(d);
     }
-    d.textContent = '[RAMUNE NIGHT] ' + title + '\n' + (detail || '') + '\nUA: ' + navigator.userAgent;
+    d.textContent = '[キケンなラムネシミュレーター] ' + title + '\n' + (detail || '') + '\nUA: ' + navigator.userAgent;
   } catch (e) {}
 }
 
