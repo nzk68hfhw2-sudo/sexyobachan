@@ -3,6 +3,7 @@
 const fs = require('fs'), path = require('path');
 const sha = process.argv[2]; if (!sha) { console.error('need sha'); process.exit(1); }
 const repo = 'nzk68hfhw2-sudo/sexyobachan', p = 'ramune/dist/game.js';
+const ICON = 'https://cdn.jsdelivr.net/gh/' + repo + '@' + sha + '/ramune/dist/icons/';
 const urls = [
   'https://cdn.jsdelivr.net/gh/' + repo + '@' + sha + '/' + p,
   'https://fastly.jsdelivr.net/gh/' + repo + '@' + sha + '/' + p,
@@ -16,6 +17,8 @@ function loader(list) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>キケンなラムネシミュレーター</title>
+<link rel="icon" type="image/png" href="${ICON}favicon-64.png">
+<link rel="apple-touch-icon" href="${ICON}apple-touch-icon-180.png">
 <style>
 html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden}
 #rml{position:fixed;left:16px;right:16px;top:45%;color:#ffb3dc;font:16px monospace;text-align:center;letter-spacing:.15em}
