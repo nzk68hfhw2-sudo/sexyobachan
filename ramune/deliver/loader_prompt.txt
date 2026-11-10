@@ -18,7 +18,7 @@ html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden}
 <div id="rme"></div>
 <script>
 (function(){
-var U=["https://cdn.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@f5ec4e46d16fc79f52e53d8a1c9daca67116ee43/ramune/dist/game.js","https://fastly.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@f5ec4e46d16fc79f52e53d8a1c9daca67116ee43/ramune/dist/game.js","https://cdn.statically.io/gh/nzk68hfhw2-sudo/sexyobachan/f5ec4e46d16fc79f52e53d8a1c9daca67116ee43/ramune/dist/game.js","https://rawcdn.githack.com/nzk68hfhw2-sudo/sexyobachan/f5ec4e46d16fc79f52e53d8a1c9daca67116ee43/ramune/dist/game.js"];
+var U=["https://cdn.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@08c22a5fd940d547443221362da771acb5a978ac/ramune/dist/game.js","https://fastly.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@08c22a5fd940d547443221362da771acb5a978ac/ramune/dist/game.js","https://cdn.statically.io/gh/nzk68hfhw2-sudo/sexyobachan/08c22a5fd940d547443221362da771acb5a978ac/ramune/dist/game.js","https://rawcdn.githack.com/nzk68hfhw2-sudo/sexyobachan/08c22a5fd940d547443221362da771acb5a978ac/ramune/dist/game.js"];
 var i=0,done=false,tried=[];
 function show(t,d){var e=document.getElementById('rme');e.style.display='block';e.textContent='[読み込みエラー] '+t+'\n'+(d||'')+'\n\n試したURL:\n'+tried.join('\n')+'\nオンライン: '+(navigator.onLine?'はい':'いいえ');var l=document.getElementById('rml');if(l)l.style.display='none';}
 function next(){
