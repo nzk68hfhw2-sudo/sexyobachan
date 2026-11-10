@@ -4,7 +4,7 @@
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.7.0';
+var GAME_VERSION = '1.7.1';
 
 var ROOT, UI, CANVAS_HOST;
 
@@ -49,7 +49,7 @@ function setupPage() {
     ROOT.addEventListener(n, stop, { passive: false });
   });
   document.addEventListener('gesturestart', stop, { passive: false });
-  ROOT.addEventListener('touchmove', function (e) { if (!e.target.closest || !e.target.closest('.rm-scroll')) e.preventDefault(); }, { passive: false });
+  ROOT.addEventListener('touchmove', function (e) { if (!e.target.closest || !e.target.closest('.rm-scroll,.rm-card2')) e.preventDefault(); }, { passive: false });
   var lastTouchEnd = 0;
   ROOT.addEventListener('touchend', function (e) {
     var t = Date.now();

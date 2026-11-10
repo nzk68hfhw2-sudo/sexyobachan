@@ -9,7 +9,7 @@
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.7.0';
+var GAME_VERSION = '1.7.1';
 
 var ROOT, UI, CANVAS_HOST;
 
@@ -54,7 +54,7 @@ function setupPage() {
     ROOT.addEventListener(n, stop, { passive: false });
   });
   document.addEventListener('gesturestart', stop, { passive: false });
-  ROOT.addEventListener('touchmove', function (e) { if (!e.target.closest || !e.target.closest('.rm-scroll')) e.preventDefault(); }, { passive: false });
+  ROOT.addEventListener('touchmove', function (e) { if (!e.target.closest || !e.target.closest('.rm-scroll,.rm-card2')) e.preventDefault(); }, { passive: false });
   var lastTouchEnd = 0;
   ROOT.addEventListener('touchend', function (e) {
     var t = Date.now();
@@ -2927,7 +2927,8 @@ var UI_CSS = [
   '.rm-logo-sub{font-size:12px;letter-spacing:.3em;margin:12px 0 0;color:#7df9ff;font-weight:900}',
   '.rm-menu{display:flex;flex-direction:column;gap:10px;margin-top:26px;width:min(80vw,300px)}',
   '.rm-note{font-size:11px;opacity:.6;margin-top:18px;line-height:1.6}',
-  '.rm-card2{width:min(92vw,520px);max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;text-align:left;font-size:14px;line-height:1.7}',
+  '.rm-endbtns{position:sticky;bottom:-18px;margin:16px -18px -18px!important;padding:12px 18px calc(14px + env(safe-area-inset-bottom,0px));width:auto!important;background:linear-gradient(180deg,rgba(22,12,44,0),rgba(22,12,44,.97) 30%);flex-direction:row!important}.rm-endbtns .btn{flex:1}',
+  '.rm-card2{overscroll-behavior:contain;width:min(92vw,520px);max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;text-align:left;font-size:14px;line-height:1.7}',
   '.rm-card2 h3{margin:0 0 8px;font-size:18px}',
   '.rm-card2 ul{padding-left:1.2em;margin:6px 0}',
   '.rm-set{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);font-size:14px}',
@@ -3742,7 +3743,7 @@ function showEnding() {
     '<div style="font-size:13px;text-align:left;line-height:1.8"><b>見つけた飲み合わせ：</b>' + foundHtml + '</div>' +
     (GAME.regret && GAME.regret.length ? '<div style="font-size:13px;text-align:left;line-height:1.7;margin-top:8px"><b>📱 朝になって見返したスマホ：</b><br>' + GAME.regret.slice(-5).map(esc).join('<br>') + '<br><span style="opacity:.7">…そっとアプリを閉じた。</span></div>' : '') +
     (note ? '<div class="rm-alert" style="margin-top:12px;text-align:left">' + esc(note) + '</div>' : '') +
-    '<div class="rm-menu" style="margin:16px auto 0"><button class="btn pri" id="rm-again">もう一晩</button><button class="btn ghost" id="rm-title">タイトルへ</button></div>' +
+    '<div class="rm-menu rm-endbtns"><button class="btn pri" id="rm-again">もう一晩</button><button class="btn ghost" id="rm-title">タイトルへ</button></div>' +
     '<div class="rm-note">これはフィクションのゲームです。登場するラムネ・お酒はすべて架空のものです。</div></div>';
   showScreen(html);
   onTap(document.getElementById('rm-again'), function () { GAME.fx.dead = 0; GAME.fx.white = 0; GAME.fx.deadFade = GAME.fx.whiteFade = false; startNight(); });

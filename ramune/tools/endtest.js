@@ -1,0 +1,22 @@
+const run = require('./shot.js');
+(async () => {
+  const { b, page, logs } = await run({ viewport: { width: 390, height: 700 }, touch: true });
+  await page.waitForFunction(() => window.__rmReady, null, { timeout: 120000 });
+  const ev = c => page.evaluate(c => JSON.stringify(window.__rmEval(c)), c);
+  await page.waitForTimeout(1500); await page.tap('#rm-ok'); await page.waitForTimeout(400); await page.tap('#rm-start'); await page.waitForTimeout(1500);
+  await ev('endTutorial(false);GAME.B.found=["hv_zero","placebo","hv_smk","hv_chill"];GAME.regret=["a","b","c"];endNight("ambulance");1');
+  await page.waitForTimeout(4000);
+  await page.screenshot({ path: process.env.S + '/j0_end.png' });
+  const cdp = await page.context().newCDPSession(page);
+  const T = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(p => ({ x: p[0], y: p[1], id: 1 })) });
+  console.log('before', await ev('document.querySelector(".rm-card2").scrollTop'));
+  await T('touchStart', [[195, 500]]); for (let i = 1; i <= 10; i++) { await T('touchMove', [[195, 500 - i * 30]]); await page.waitForTimeout(16); } await T('touchEnd', []);
+  await page.waitForTimeout(500);
+  console.log('after', await ev('document.querySelector(".rm-card2").scrollTop'));
+  const r = JSON.parse(await ev('JSON.stringify(document.getElementById("rm-again").getBoundingClientRect())'));
+  console.log('again btn', r.top|0, r.bottom|0, 'viewport 700');
+  await page.tap('#rm-again'); await page.waitForTimeout(1000);
+  console.log('mode', await ev('GAME.mode'));
+  console.log(logs.slice(0, 10).join('\n'));
+  await b.close();
+})();

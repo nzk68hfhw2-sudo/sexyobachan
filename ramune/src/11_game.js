@@ -455,7 +455,7 @@ function showEnding() {
     '<div style="font-size:13px;text-align:left;line-height:1.8"><b>見つけた飲み合わせ：</b>' + foundHtml + '</div>' +
     (GAME.regret && GAME.regret.length ? '<div style="font-size:13px;text-align:left;line-height:1.7;margin-top:8px"><b>📱 朝になって見返したスマホ：</b><br>' + GAME.regret.slice(-5).map(esc).join('<br>') + '<br><span style="opacity:.7">…そっとアプリを閉じた。</span></div>' : '') +
     (note ? '<div class="rm-alert" style="margin-top:12px;text-align:left">' + esc(note) + '</div>' : '') +
-    '<div class="rm-menu" style="margin:16px auto 0"><button class="btn pri" id="rm-again">もう一晩</button><button class="btn ghost" id="rm-title">タイトルへ</button></div>' +
+    '<div class="rm-menu rm-endbtns"><button class="btn pri" id="rm-again">もう一晩</button><button class="btn ghost" id="rm-title">タイトルへ</button></div>' +
     '<div class="rm-note">これはフィクションのゲームです。登場するラムネ・お酒はすべて架空のものです。</div></div>';
   showScreen(html);
   onTap(document.getElementById('rm-again'), function () { GAME.fx.dead = 0; GAME.fx.white = 0; GAME.fx.deadFade = GAME.fx.whiteFade = false; startNight(); });
