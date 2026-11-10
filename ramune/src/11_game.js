@@ -132,6 +132,20 @@ function actMirror() {
   if (!out.length) out.push('いつもの自分だ。');
   say('（鏡）' + out.slice(0, 3).join(' '), 5);
 }
+function openMedMenu() {
+  openModal('薬箱（ドラッグストアの薬）', function (body) {
+    el('div', 'rm-alert', '⚠ ここにある薬はすべて架空です。現実の市販薬でも、決められた量をこえて飲む（オーバードーズ）と命にかかわります。つらいときは、ひとりで抱えずに相談を。', body);
+    var l = el('div', 'rm-list', '', body); l.style.marginTop = '10px';
+    SUBS.filter(function (s) { return s.otc; }).forEach(function (s) {
+      var n = stockOf(s.id), taken = GAME.B.doses.filter(function (d) { return d.s === s.id; }).length;
+      var it = el('div', 'rm-item' + (n <= 0 ? ' lock' : ''), '<img src="' + ramuneIcon(s, 88) + '"><div class="tx"><b>' + esc(s.name) + ' <span style="font-size:11px;opacity:.7">（' + esc(s.nick) + '）</span></b><small>' + esc(s.desc) + (taken ? '<br><span class="dg2">今夜すでに ' + taken + ' 回飲んでいる</span>' : '') + '</small></div>', l);
+      var b = el('button', 'btn', n > 0 ? '飲む<br><small style="font-weight:500;opacity:.7">のこり' + (SAVE.settings.sandbox ? '∞' : n) + '</small>' : 'ない', it);
+      if (n <= 0) b.disabled = true;
+      onTap(b, function () { closeModal(true); actTakePill(s.id); });
+    });
+    el('div', 'rm-note', '現実で困ったとき：こころの健康相談統一ダイヤル 0570-064-556／救急車 119／迷ったら #7119（地域による）', body);
+  });
+}
 function openSmokeMenu() {
   var B = GAME.B;
   openModal('葉巻ケース', function (body) {
@@ -425,6 +439,7 @@ function showEnding() {
     var sc = I.score;
     rank = sc < 600 ? 'しずかな夜' : sc < 1600 ? 'ゆるい夜' : sc < 3200 ? 'たのしい夜' : sc < 5200 ? '最高の夜' : '伝説の夜';
     if (S.cans >= 6 || S.pills >= 6) note = 'からだは正直。今日は一日、水を飲んでゆっくり休もう。';
+    if ((B.liver || 0) >= 3) { title = '朝は来たけど…'; sub = '数日後、体がだるくて病院へ行くと、肝臓の数値がひどく悪くなっていた。'; rank = '沈黙の臓器'; note = '解熱鎮痛薬などの飲みすぎは、その場では何も感じなくても肝臓を壊すことがあります。お酒と重なるとさらに危険です。'; }
   }
   var foundHtml = I.found.length ? I.found.map(function (id) { var c = COMBO[id]; return '<span class="dg' + c.danger + '">🧪' + esc(c.name) + '</span>'; }).join('　') : 'なし';
   var html = '<div class="rm-card2 rm-end" style="text-align:center">' +

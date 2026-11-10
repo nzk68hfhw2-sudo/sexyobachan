@@ -638,7 +638,14 @@ function buildHouse() {
   var wm = new THREE.Group(); H.add(wm);
   addBox(wm, 0.6, 0.85, 0.6, M.white, 4.75, 0, 3.95, { col: true });
   var drum = new THREE.Mesh(new THREE.CircleGeometry(0.17, 24), stdMat({ color: 0x223344, roughness: 0.2, metalness: 0.5 })); drum.position.set(4.75, 0.5, 3.645); drum.rotation.y = PI; wm.add(drum);
-  addInter('washer', '洗濯機', 'のぞく', new THREE.Vector3(4.75, 0.6, 3.7), [wm], function () { actWasher(); });
+  // medicine box on top of the washing machine
+  var mb = new THREE.Group(); H.add(mb);
+  addBox(mb, 0.36, 0.2, 0.24, stdMat({ color: 0xf4f4f4, roughness: 0.5 }), 4.72, 0.85, 3.98);
+  var crossM = new THREE.MeshBasicMaterial({ color: 0x2ecc71 });
+  var cr1 = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.03), crossM); cr1.position.set(4.72, 0.95, 3.859); cr1.rotation.y = PI; mb.add(cr1);
+  var cr2 = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.1), crossM); cr2.position.set(4.72, 0.95, 3.858); cr2.rotation.y = PI; mb.add(cr2);
+  addInter('medbox', '薬箱', '市販薬を見る', new THREE.Vector3(4.72, 0.95, 3.9), [mb], function () { openMedMenu(); }, { reach: 2.2 });
+  addInter('washer', '洗濯機', 'のぞく', new THREE.Vector3(4.75, 0.5, 3.7), [drum], function () { actWasher(); });
   addBox(H, 0.5, 0.82, 0.42, M.white, 5.05, 0, 1.75, { col: true });
   var bsn = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.11, 0.1, 16), M.ceramic); bsn.position.set(5.05, 0.87, 1.75); H.add(bsn);
   addPlane(H, 0.5, 0.6, new THREE.MeshStandardMaterial({ color: 0xa8b8c8, roughness: 0.05, metalness: 1.0 }), 5.05, 1.5, 1.52, 0, 0);

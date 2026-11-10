@@ -1,7 +1,7 @@
 // ---- body simulation (pure logic, no DOM / no three.js) ------------------------
 var CH = ['eu', 'st', 'se', 'ps', 'di', 'de', 'em', 'an', 'na', 'pa'];
 var BOOSTABLE = { psy: 1, emp: 1, up: 1, del: 1 };
-var DRUG_CLASSES = ['psy', 'up', 'down', 'op', 'dis', 'emp', 'del', 'gaba', 'chill', 'smk'];
+var DRUG_CLASSES = ['psy', 'up', 'down', 'op', 'dis', 'emp', 'del', 'gaba', 'chill', 'smk', 'otc'];
 
 function newBody() {
   var F = {}; CH.forEach(function (c) { F[c] = 0; });
@@ -38,6 +38,7 @@ function takeSub(B, id) {
   var s = SUB[id]; if (!s) return;
   B.doses.push({ s: id, t: 0, amt: 1, onsetSaid: false, peakSaid: false, fadeSaid: false });
   if (!s.hidden) { B.stats.pills++; B.stats.taken[id] = (B.stats.taken[id] || 0) + 1; }
+  if (s.liver) B.liver = (B.liver || 0) + s.liver;
   if (s.reset) {
     var had = 0;
     B.doses.forEach(function (d) { var ss = SUB[d.s]; if (ss.cls === 'op') { had += subCurve(d.t, ss) * d.amt; d.amt *= 0.04; } });
@@ -138,7 +139,7 @@ function bodyStep1(B, dt) {
   L.alc = b / 0.06;
 
   // ---- combinations ----
-  var m = { mul: {}, add: {}, ph: { hr: 0, tp: 0, rr: 0 }, rrMul: 1, mask: { alc: 0, op: 0 }, vis: { kal: 0, gap: 0, spin: 0, flash: 0 }, irregular: 0, dehyd: 0 };
+  var m = { liver: 0, mul: {}, add: {}, ph: { hr: 0, tp: 0, rr: 0 }, rrMul: 1, mask: { alc: 0, op: 0 }, vis: { kal: 0, gap: 0, spin: 0, flash: 0 }, irregular: 0, dehyd: 0 };
   CH.forEach(function (c) { m.mul[c] = 1; m.add[c] = 0; });
   var activeClasses = 0;
   DRUG_CLASSES.concat(['alc']).forEach(function (c) { if ((L[c] || 0) > 0.3) activeClasses++; });
@@ -179,6 +180,7 @@ function bodyStep1(B, dt) {
   if (B.socialT > 0) { B.socialT -= dt; F.an -= 0.3; F.eu += 0.12; }
   CH.forEach(function (c) { if (F[c] < 0) F[c] = 0; });
   P.hr += m.ph.hr; P.tp += m.ph.tp;
+  if (m.liver > 0) B.liver = (B.liver || 0) + m.liver * dt * 0.008;
 
   // irregular heart (coaster)
   B.irrT -= dt;

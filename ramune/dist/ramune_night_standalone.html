@@ -19,7 +19,7 @@
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.4.0';
+var GAME_VERSION = '1.5.0';
 
 var ROOT, UI, CANVAS_HOST;
 
@@ -203,6 +203,7 @@ var CLASSES = {
   gaba: { name: 'ギャバ系（ガバペンチノイド系）', short: 'ギャバ', col: '#9ad0ff', icon: '💊', real: '現実のこの種の薬は、ふらつき・転倒や、オピオイド・お酒などほかの鎮静系と重なったときの呼吸抑制が問題になり、乱用や依存も報告されています。' },
   chill: { name: 'チル系（はまき）', short: 'チル', col: '#7ccf6a', icon: '🌿', real: '現実の大麻などは、不安発作・判断力の低下・事故の原因になり、日本では所持も使用も法律で禁止されています。' },
   smk: { name: 'けむり系（タバコ系）', short: 'けむり', col: '#b08a64', icon: '🚬', real: '現実のタバコ・葉巻は依存性が強く、がんや心臓病の原因になります。20歳未満の喫煙は法律で禁止されています。' },
+  otc: { name: '市販薬系（ドラッグストア）', short: '市販薬', col: '#ffd6a5', icon: '🧴', real: '市販薬でも、決められた量をこえて飲むと（オーバードーズ）、意識障害・けいれん・肝臓や心臓の障害など命にかかわることがあります。つらいときは一人で抱えず、相談窓口（こころの健康相談統一ダイヤル 0570-064-556 など）や医療機関へ。' },
   etc: { name: 'とくしゅ', short: 'とくしゅ', col: '#e8e8e8', icon: '✨', real: '現実では、薬どうし・薬とお酒の組み合わせで予想外の強い作用が出ることがあります。' },
   alc: { name: 'お酒', short: 'お酒', col: '#d8f060', icon: '🍋', real: 'お酒は20歳になってから。短時間の大量飲酒は急性アルコール中毒の原因になります。' }
 };
@@ -276,6 +277,28 @@ var SUBS = [
   { id: 'shakimaki', name: 'シャキシャキはまき', nick: 'しびれるけむり', imp: '', cls: 'up', smoke: true, col: '#e8f6ff', col2: '#29b6ff', shape: 'cigar',
     on: 1, pk: 3, pl: 15, du: 45, fx: { st: 1.1, eu: 0.6, an: 0.35 }, ph: { hr: 38, tp: 0.4, rr: 3 }, tail: { eu: -0.5, an: 0.4, se: 0.3 }, stock: 2,
     desc: '青白いけむりのはまき。ひと口で目がギンギンになるが、15分もすると落ちてくる。何本も吸いたくなるのが危ないところ。' },
+  // ---- 市販薬（洗面所の薬箱・すべて架空） ----
+  { id: 'koflez', name: 'コフレス錠', nick: 'せき止め錠', imp: 'CF', cls: 'otc', otc: true, col: '#ffe7b0', col2: '#ff9f43', shape: 'round',
+    on: 40, pk: 100, pl: 200, du: 400, fx: { di: 0.7, na: 0.45, ps: 0.2, eu: 0.25, an: 0.15 }, ph: { hr: 15, tp: 0.3, rr: -1 }, tail: { an: 0.25, na: 0.15 }, stock: 4,
+    desc: '黄色い小粒のせき止め（架空）。決められた量をこえると、体がふわっと遠くなり、ひどく気持ち悪くなる。かゆみと吐き気がつらい。' },
+  { id: 'sekitoru', name: 'セキトールS液', nick: 'せき止めシロップ', imp: '', cls: 'otc', otc: true, col: '#b0413e', col2: '#ffc2c2', shape: 'drop',
+    on: 30, pk: 70, pl: 160, du: 330, fx: { pa: 0.5, st: 0.4, se: 0.3, de: 0.2, na: 0.35, eu: 0.35 }, ph: { hr: 22, rr: -2.5, tp: 0.2 }, tail: { an: 0.35, se: 0.3 }, stock: 3,
+    desc: '赤いせき止めシロップ（架空）。ぬくぬくとシャキシャキとぼんやりが同時に来る、ちぐはぐな感覚。心臓はどきどきするのに呼吸はゆっくりになる。' },
+  { id: 'shakin', name: 'シャキーンZ', nick: '眠気ざまし錠', imp: 'SZ', cls: 'otc', otc: true, col: '#fff36b', col2: '#3d3d3d', shape: 'round',
+    on: 20, pk: 50, pl: 150, du: 300, fx: { st: 0.6, an: 0.35, na: 0.2 }, ph: { hr: 30, tp: 0.2, rr: 2 }, tail: { se: 0.35, an: 0.2, eu: -0.2 }, stock: 4,
+    desc: 'カフェインたっぷりの眠気ざまし（架空）。飲みすぎると手がふるえて、心臓がばくばくして、吐き気が来る。' },
+  { id: 'hanasukki', name: 'ハナスッキリ錠', nick: '鼻炎薬', imp: 'HS', cls: 'otc', otc: true, col: '#bde0fe', col2: '#ffffff', shape: 'gem',
+    on: 30, pk: 70, pl: 180, du: 360, fx: { se: 0.5, de: 0.3, na: 0.1 }, ph: { hr: 10, tp: 0.2 }, dehyd: 0.8, stock: 3,
+    desc: '鼻水どめ（架空）。ぼーっとして口がからからに。量が多いと、いないはずのものが見えてくる。' },
+  { id: 'nemurina', name: 'ネムリナ', nick: '睡眠改善薬', imp: 'NM', cls: 'otc', otc: true, col: '#cdb4db', col2: '#ffffff', shape: 'moon',
+    on: 30, pk: 70, pl: 200, du: 420, fx: { se: 0.7, de: 0.4, an: 0.1 }, ph: { hr: 12, tp: 0.2, rr: -1 }, dehyd: 0.6, stock: 3,
+    desc: 'ドラッグストアの眠り薬（架空）。ふつうはただ眠くなるだけ。量が多いと眠れないまま悪夢の中をさまよう。' },
+  { id: 'norimonon', name: 'ノリモノン', nick: '酔い止め', imp: 'NR', cls: 'otc', otc: true, col: '#a0e7e5', col2: '#ffffff', shape: 'tiny',
+    on: 30, pk: 60, pl: 180, du: 360, fx: { se: 0.3, de: 0.45, na: -0.2 }, ph: { hr: 14, tp: 0.3 }, dehyd: 0.8, stock: 3,
+    desc: '乗り物酔いの薬（架空）。吐き気は少しおさまるが、量が多いと口がからからで、部屋に知らないものが増えていく。' },
+  { id: 'itamin', name: 'イタミナイン', nick: '痛み止め', imp: 'IN', cls: 'otc', otc: true, liver: 1, col: '#ffffff', col2: '#e0e0e0', shape: 'round',
+    on: 30, pk: 60, pl: 180, du: 300, fx: { pa: 0.15, eu: 0.05 }, ph: {}, stock: 4,
+    desc: '熱さましと痛み止め（架空）。飲みすぎてもほとんど何も感じない。…でも、肝臓は静かにダメージを受けている。' },
   // ---- とばり系 ----
   { id: 'tobari', name: 'ノクスベリン', nick: 'よるのとばりラムネ', imp: 'NX', cls: 'del', col: '#1b1b24', col2: '#6a00ff', shape: 'round',
     on: 60, pk: 180, pl: 330, du: 720, fx: { de: 1.2, se: 0.35, an: 0.4, na: 0.1, ps: 0.1 }, ph: { hr: 30, tp: 0.6 }, dehyd: 1.0, stock: 2,
@@ -566,6 +589,89 @@ var COMBOS = [
   { id: 'shadowcradle', name: '影のゆりかご', need: [{ c: 'del' }, { c: 'op' }], danger: 2,
     hint: 'せん妄系 × オピオイド系', desc: '影の住人にゆらされながら、ゆっくり沈んでいく。',
     f: function (m, s) { m.add.de += 0.3 * s; m.add.se += 0.2 * s; m.rrMul += 0.2 * s; } },
+
+  // ---- 市販薬の飲み合わせ ----
+  { id: 'otcmix', name: '市販薬ちゃんぽん', need: [{ distinct: 'otc', n: 2 }], danger: 2,
+    hint: '市販薬系 × 別の市販薬系', desc: '何種類もの薬が体の中でぶつかりあう。どれが何をしているのか、もうわからない。',
+    f: function (m, s) { m.add.na += 0.3 * s; m.add.de += 0.2 * s; m.ph.hr += 10 * s; } },
+  { id: 'coughsour', name: 'せき止めサワー', need: [{ s: 'sekitoru' }, { c: 'alc' }], danger: 3,
+    hint: 'セキトールS液 × お酒', desc: 'シロップとお酒で、ぬくぬくした眠気の底へ。呼吸がどんどん遅くなる。',
+    f: function (m, s) { m.add.se += 0.4 * s; m.rrMul += 0.7 * s; } },
+  { id: 'koflezdrunk', name: 'ぐらぐら解離酔い', need: [{ s: 'koflez' }, { c: 'alc' }], danger: 2,
+    hint: 'コフレス錠 × お酒', desc: '体が遠いうえに、部屋がぐらぐら揺れる。だいたい吐く。',
+    f: function (m, s) { m.add.na += 0.6 * s; m.add.di += 0.3 * s; m.vis.spin += 0.5 * s; } },
+  { id: 'koflezpsy', name: 'せき止めトリップ', need: [{ s: 'koflez' }, { c: 'psy' }], danger: 2,
+    hint: 'コフレス錠 × 幻覚系', desc: '幻覚がゆがんで、不安が強くなる。気持ち悪さも倍。',
+    f: function (m, s) { m.mul.ps += 0.3 * s; m.add.an += 0.3 * s; m.add.na += 0.2 * s; } },
+  { id: 'koflezboost', name: '危険な増幅', need: [{ s: 'koflez' }, { s: 'booster' }], danger: 3,
+    hint: 'コフレス錠 × アンプリフェン（ブースター）', desc: '増幅がせき止め錠と最悪の反応を起こす。体温と心拍が暴走する。',
+    f: function (m, s) { m.ph.tp += 1.5 * s; m.ph.hr += 30 * s; m.add.an += 0.5 * s; } },
+  { id: 'koflezemp', name: 'ほてりの嵐', need: [{ s: 'koflez' }, { c: 'emp' }], danger: 3,
+    hint: 'コフレス錠 × ハート系', desc: 'ハートとせき止めが重なって、体の中に熱の嵐が起きる。',
+    f: function (m, s) { m.ph.tp += 1.1 * s; m.ph.hr += 18 * s; m.add.na += 0.2 * s; } },
+  { id: 'doubledis', name: 'ダブル解離', need: [{ s: 'koflez' }, { c: 'dis' }], danger: 2,
+    hint: 'コフレス錠 × 解離系', desc: '体からはなれすぎて、戻り道がわからない。呼吸も少し浅くなる。',
+    f: function (m, s) { m.add.di += 0.5 * s; m.rrMul += 0.3 * s; } },
+  { id: 'koflezsleep', name: 'ぐるぐる悪夢', need: [{ s: 'koflez' }, { s: 'nemurina' }], danger: 2,
+    hint: 'コフレス錠 × ネムリナ', desc: '体はとおく、頭の中は悪夢。目を閉じても開けても同じ景色。',
+    f: function (m, s) { m.add.de += 0.4 * s; m.add.di += 0.2 * s; m.ph.hr += 10 * s; } },
+  { id: 'syrupop', name: 'せき止めぬくぬく', need: [{ s: 'sekitoru' }, { c: 'op' }], danger: 3,
+    hint: 'セキトールS液 × オピオイド系', desc: 'ぬくぬくにぬくぬくを足した。呼吸が止まりかける。',
+    f: function (m, s) { m.add.se += 0.4 * s; m.rrMul += 0.9 * s; } },
+  { id: 'heavysyrup', name: '重いシロップ', need: [{ s: 'sekitoru' }, { c: 'down' }], danger: 2,
+    hint: 'セキトールS液 × ダウナー系', desc: '体がシロップにつかったみたいに重い。呼吸もゆっくり。',
+    f: function (m, s) { m.add.se += 0.4 * s; m.rrMul += 0.5 * s; } },
+  { id: 'dokisyrup', name: 'どきどきシロップ', need: [{ s: 'sekitoru' }, { c: 'up' }], danger: 2,
+    hint: 'セキトールS液 × アッパー系', desc: 'シロップのどきどきにアッパーが重なって、心臓が休まらない。',
+    f: function (m, s) { m.ph.hr += 25 * s; m.add.an += 0.3 * s; m.irregular += 0.4 * s; } },
+  { id: 'caffhell', name: 'カフェイン地獄', need: [{ s: 'shakin' }, { c: 'up' }], danger: 2,
+    hint: 'シャキーンZ × アッパー系', desc: '眠気ざましにアッパー。手はふるえ、心臓は早鐘、胃はきりきり。',
+    f: function (m, s) { m.ph.hr += 30 * s; m.add.an += 0.4 * s; m.add.na += 0.2 * s; } },
+  { id: 'awakedrunk', name: '目覚めた酔っぱらい', need: [{ s: 'shakin' }, { c: 'alc' }], danger: 1,
+    hint: 'シャキーンZ × お酒', desc: '眠気だけ消えて、酔いはそのまま。気づかずに飲みすぎる。',
+    f: function (m, s) { m.mask.alc += 0.35 * s; m.ph.hr += 8 * s; } },
+  { id: 'cafffest', name: 'カフェインまつり', need: [{ s: 'shakin' }, { s: 'gigafx' }], danger: 2,
+    hint: 'シャキーンZ × ギガボルト', desc: 'カフェインをカフェインで流しこむ。夜明けまで目がつぶれない。',
+    f: function (m, s) { m.ph.hr += 20 * s; m.add.an += 0.3 * s; m.add.na += 0.2 * s; } },
+  { id: 'dokilove', name: 'どきどきラブ', need: [{ s: 'shakin' }, { c: 'emp' }], danger: 2,
+    hint: 'シャキーンZ × ハート系', desc: '恋のどきどきなのか、カフェインのどきどきなのか。体温も上がる。',
+    f: function (m, s) { m.ph.hr += 15 * s; m.ph.tp += 0.4 * s; } },
+  { id: 'donyori', name: 'どんより酔い', need: [{ s: 'hanasukki' }, { c: 'alc' }], danger: 2,
+    hint: 'ハナスッキリ錠 × お酒', desc: '少しのお酒で、頭に雲がかかる。まぶたも呼吸も重い。',
+    f: function (m, s) { m.add.se += 0.5 * s; m.rrMul += 0.3 * s; } },
+  { id: 'tobariplus', name: 'とばり増量', need: [{ c: 'otc' }, { c: 'del' }], danger: 2,
+    hint: '市販薬系 × せん妄系', desc: '影の住人が倍に増えた。部屋の中がぎゅうぎゅう。',
+    f: function (m, s) { m.add.de += 0.5 * s; m.ph.hr += 10 * s; } },
+  { id: 'sleepswamp', name: 'ねむり沼', need: [{ s: 'nemurina' }, { c: 'alc' }], danger: 3,
+    hint: 'ネムリナ × お酒', desc: 'お酒で眠り薬が深く効く。沼の底から戻ってこられないかも。',
+    f: function (m, s) { m.add.se += 0.6 * s; m.rrMul += 0.5 * s; } },
+  { id: 'sleepop', name: 'ねむりぬくぬく', need: [{ s: 'nemurina' }, { c: 'op' }], danger: 3,
+    hint: 'ネムリナ × オピオイド系', desc: '眠り薬とぬくぬくで、呼吸のことを忘れてしまう。',
+    f: function (m, s) { m.add.se += 0.4 * s; m.rrMul += 0.6 * s; } },
+  { id: 'sleepdown', name: 'ねむりの重ねがけ', need: [{ c: 'otc' }, { c: 'down' }], danger: 2,
+    hint: '市販薬系 × ダウナー系', desc: '市販薬とダウナーで、鎮静が重なる。',
+    f: function (m, s) { m.add.se += 0.3 * s; m.rrMul += 0.3 * s; } },
+  { id: 'motionpsy', name: '酔い止めトリップ', need: [{ s: 'norimonon' }, { c: 'psy' }], danger: 1,
+    hint: 'ノリモノン × 幻覚系', desc: '吐き気はおさまるけど、幻覚の中に知らない人がまざってくる。',
+    f: function (m, s) { m.add.de += 0.3 * s; m.add.na -= 0.2 * s; } },
+  { id: 'gurari', name: 'ぐらり', need: [{ s: 'norimonon' }, { c: 'alc' }], danger: 1,
+    hint: 'ノリモノン × お酒', desc: '酔い止めを飲んだのに、別の意味で酔う。',
+    f: function (m, s) { m.add.se += 0.3 * s; m.add.de += 0.15 * s; } },
+  { id: 'silentliver', name: '沈黙の臓器', need: [{ s: 'itamin' }, { c: 'alc' }], danger: 2,
+    hint: 'イタミナイン × お酒', desc: '何も感じない。でも肝臓には二重の負担がかかっている。症状が出るのは、たいてい何日もあと。',
+    f: function (m, s) { m.liver += s; } },
+  { id: 'coldstack', name: 'かぜ薬の重ねのみ', need: [{ s: 'itamin' }, { s: 'sekitoru' }], danger: 2,
+    hint: 'イタミナイン × セキトールS液', desc: 'かぜ薬を何種類も重ねると、同じ成分を知らずに飲みすぎることがある。',
+    f: function (m, s) { m.liver += 0.6 * s; m.add.na += 0.15 * s; } },
+  { id: 'otcgaba', name: 'ふらふら市販薬', need: [{ c: 'otc' }, { c: 'gaba' }], danger: 2,
+    hint: '市販薬系 × ギャバ系', desc: '足がもつれて、まっすぐ立てない。呼吸も浅くなる。',
+    f: function (m, s) { m.add.di += 0.3 * s; m.rrMul += 0.3 * s; } },
+  { id: 'otcchill', name: 'ゆるいせき止め', need: [{ c: 'otc' }, { c: 'chill' }], danger: 1,
+    hint: '市販薬系 × チル系', desc: 'ぼんやりにぼんやりが重なって、ソファから動けない。',
+    f: function (m, s) { m.add.se += 0.3 * s; m.add.na += 0.15 * s; } },
+  { id: 'worstmix', name: '最悪のちゃんぽん', need: [{ s: 'koflez' }, { s: 'nemurina' }, { c: 'alc' }], danger: 3,
+    hint: 'コフレス錠 × ネムリナ × お酒', desc: '市販薬を何種類もお酒で流しこんだ。体のあちこちで警報が鳴っている。',
+    f: function (m, s) { m.add.na += 0.5 * s; m.rrMul += 0.5 * s; m.ph.hr += 15 * s; m.add.de += 0.3 * s; } },
   { id: 'reset', name: '強制リセット', need: [], special: true, danger: 1,
     hint: 'ネガトキソン（リセット）× オピオイド系', desc: 'ぬくぬく系を一瞬で打ち消した。命は助かるが、反動で最悪の気分になる。' },
   { id: 'placebo', name: 'プラセボ効果', need: [], special: true, danger: 0,
@@ -599,7 +705,7 @@ var EFFECT_NAMES = { eu: '多幸感', st: '覚醒', se: '鎮静', ps: '幻覚', 
 // ---- body simulation (pure logic, no DOM / no three.js) ------------------------
 var CH = ['eu', 'st', 'se', 'ps', 'di', 'de', 'em', 'an', 'na', 'pa'];
 var BOOSTABLE = { psy: 1, emp: 1, up: 1, del: 1 };
-var DRUG_CLASSES = ['psy', 'up', 'down', 'op', 'dis', 'emp', 'del', 'gaba', 'chill', 'smk'];
+var DRUG_CLASSES = ['psy', 'up', 'down', 'op', 'dis', 'emp', 'del', 'gaba', 'chill', 'smk', 'otc'];
 
 function newBody() {
   var F = {}; CH.forEach(function (c) { F[c] = 0; });
@@ -636,6 +742,7 @@ function takeSub(B, id) {
   var s = SUB[id]; if (!s) return;
   B.doses.push({ s: id, t: 0, amt: 1, onsetSaid: false, peakSaid: false, fadeSaid: false });
   if (!s.hidden) { B.stats.pills++; B.stats.taken[id] = (B.stats.taken[id] || 0) + 1; }
+  if (s.liver) B.liver = (B.liver || 0) + s.liver;
   if (s.reset) {
     var had = 0;
     B.doses.forEach(function (d) { var ss = SUB[d.s]; if (ss.cls === 'op') { had += subCurve(d.t, ss) * d.amt; d.amt *= 0.04; } });
@@ -736,7 +843,7 @@ function bodyStep1(B, dt) {
   L.alc = b / 0.06;
 
   // ---- combinations ----
-  var m = { mul: {}, add: {}, ph: { hr: 0, tp: 0, rr: 0 }, rrMul: 1, mask: { alc: 0, op: 0 }, vis: { kal: 0, gap: 0, spin: 0, flash: 0 }, irregular: 0, dehyd: 0 };
+  var m = { liver: 0, mul: {}, add: {}, ph: { hr: 0, tp: 0, rr: 0 }, rrMul: 1, mask: { alc: 0, op: 0 }, vis: { kal: 0, gap: 0, spin: 0, flash: 0 }, irregular: 0, dehyd: 0 };
   CH.forEach(function (c) { m.mul[c] = 1; m.add[c] = 0; });
   var activeClasses = 0;
   DRUG_CLASSES.concat(['alc']).forEach(function (c) { if ((L[c] || 0) > 0.3) activeClasses++; });
@@ -777,6 +884,7 @@ function bodyStep1(B, dt) {
   if (B.socialT > 0) { B.socialT -= dt; F.an -= 0.3; F.eu += 0.12; }
   CH.forEach(function (c) { if (F[c] < 0) F[c] = 0; });
   P.hr += m.ph.hr; P.tp += m.ph.tp;
+  if (m.liver > 0) B.liver = (B.liver || 0) + m.liver * dt * 0.008;
 
   // irregular heart (coaster)
   B.irrT -= dt;
@@ -2250,7 +2358,14 @@ function buildHouse() {
   var wm = new THREE.Group(); H.add(wm);
   addBox(wm, 0.6, 0.85, 0.6, M.white, 4.75, 0, 3.95, { col: true });
   var drum = new THREE.Mesh(new THREE.CircleGeometry(0.17, 24), stdMat({ color: 0x223344, roughness: 0.2, metalness: 0.5 })); drum.position.set(4.75, 0.5, 3.645); drum.rotation.y = PI; wm.add(drum);
-  addInter('washer', '洗濯機', 'のぞく', new THREE.Vector3(4.75, 0.6, 3.7), [wm], function () { actWasher(); });
+  // medicine box on top of the washing machine
+  var mb = new THREE.Group(); H.add(mb);
+  addBox(mb, 0.36, 0.2, 0.24, stdMat({ color: 0xf4f4f4, roughness: 0.5 }), 4.72, 0.85, 3.98);
+  var crossM = new THREE.MeshBasicMaterial({ color: 0x2ecc71 });
+  var cr1 = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.03), crossM); cr1.position.set(4.72, 0.95, 3.859); cr1.rotation.y = PI; mb.add(cr1);
+  var cr2 = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.1), crossM); cr2.position.set(4.72, 0.95, 3.858); cr2.rotation.y = PI; mb.add(cr2);
+  addInter('medbox', '薬箱', '市販薬を見る', new THREE.Vector3(4.72, 0.95, 3.9), [mb], function () { openMedMenu(); }, { reach: 2.2 });
+  addInter('washer', '洗濯機', 'のぞく', new THREE.Vector3(4.75, 0.5, 3.7), [drum], function () { actWasher(); });
   addBox(H, 0.5, 0.82, 0.42, M.white, 5.05, 0, 1.75, { col: true });
   var bsn = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.11, 0.1, 16), M.ceramic); bsn.position.set(5.05, 0.87, 1.75); H.add(bsn);
   addPlane(H, 0.5, 0.6, new THREE.MeshStandardMaterial({ color: 0xa8b8c8, roughness: 0.05, metalness: 1.0 }), 5.05, 1.5, 1.52, 0, 0);
@@ -2925,7 +3040,7 @@ function renderPillGrid(body) {
   body.innerHTML = '';
   var g = el('div', 'rm-grid', '', body);
   SUBS.forEach(function (s) {
-    if (s.hidden || s.smoke) return;
+    if (s.hidden || s.smoke || s.otc) return;
     var n = stockOf(s.id), cl = CLASSES[s.cls];
     var c = el('div', 'rm-card' + (n <= 0 ? ' empty' : ''), '<span class="cl" style="background:' + cl.col + '">' + cl.short + '</span><img src="' + ramuneIcon(s, 104) + '"><div class="nm">' + esc(s.name) + '</div><div class="nk">「' + esc(s.nick) + '」</div><div class="st">' + (SAVE.settings.sandbox ? '∞' : 'のこり ' + n) + '</div>', g);
     onTap(c, function () { sfx('ui'); renderPillDetail(body, s); });
@@ -3203,6 +3318,20 @@ function actMirror() {
   if (F.em > 0.6) out.push('…今日の自分、けっこうかわいいじゃん。');
   if (!out.length) out.push('いつもの自分だ。');
   say('（鏡）' + out.slice(0, 3).join(' '), 5);
+}
+function openMedMenu() {
+  openModal('薬箱（ドラッグストアの薬）', function (body) {
+    el('div', 'rm-alert', '⚠ ここにある薬はすべて架空です。現実の市販薬でも、決められた量をこえて飲む（オーバードーズ）と命にかかわります。つらいときは、ひとりで抱えずに相談を。', body);
+    var l = el('div', 'rm-list', '', body); l.style.marginTop = '10px';
+    SUBS.filter(function (s) { return s.otc; }).forEach(function (s) {
+      var n = stockOf(s.id), taken = GAME.B.doses.filter(function (d) { return d.s === s.id; }).length;
+      var it = el('div', 'rm-item' + (n <= 0 ? ' lock' : ''), '<img src="' + ramuneIcon(s, 88) + '"><div class="tx"><b>' + esc(s.name) + ' <span style="font-size:11px;opacity:.7">（' + esc(s.nick) + '）</span></b><small>' + esc(s.desc) + (taken ? '<br><span class="dg2">今夜すでに ' + taken + ' 回飲んでいる</span>' : '') + '</small></div>', l);
+      var b = el('button', 'btn', n > 0 ? '飲む<br><small style="font-weight:500;opacity:.7">のこり' + (SAVE.settings.sandbox ? '∞' : n) + '</small>' : 'ない', it);
+      if (n <= 0) b.disabled = true;
+      onTap(b, function () { closeModal(true); actTakePill(s.id); });
+    });
+    el('div', 'rm-note', '現実で困ったとき：こころの健康相談統一ダイヤル 0570-064-556／救急車 119／迷ったら #7119（地域による）', body);
+  });
 }
 function openSmokeMenu() {
   var B = GAME.B;
@@ -3497,6 +3626,7 @@ function showEnding() {
     var sc = I.score;
     rank = sc < 600 ? 'しずかな夜' : sc < 1600 ? 'ゆるい夜' : sc < 3200 ? 'たのしい夜' : sc < 5200 ? '最高の夜' : '伝説の夜';
     if (S.cans >= 6 || S.pills >= 6) note = 'からだは正直。今日は一日、水を飲んでゆっくり休もう。';
+    if ((B.liver || 0) >= 3) { title = '朝は来たけど…'; sub = '数日後、体がだるくて病院へ行くと、肝臓の数値がひどく悪くなっていた。'; rank = '沈黙の臓器'; note = '解熱鎮痛薬などの飲みすぎは、その場では何も感じなくても肝臓を壊すことがあります。お酒と重なるとさらに危険です。'; }
   }
   var foundHtml = I.found.length ? I.found.map(function (id) { var c = COMBO[id]; return '<span class="dg' + c.danger + '">🧪' + esc(c.name) + '</span>'; }).join('　') : 'なし';
   var html = '<div class="rm-card2 rm-end" style="text-align:center">' +
@@ -3844,7 +3974,7 @@ function phoneHome(body) {
 // ---- 🫀 body (enhanced) ----
 function phoneBody(body) {
   var B = GAME.B;
-  el('div', 'rm-big', '<div><b>' + Math.round(B.hr) + '</b><span>心拍（回/分）</span></div><div><b>' + B.tp.toFixed(1) + '℃</b><span>体温</span></div><div><b>' + B.rr.toFixed(1) + '</b><span>呼吸（回/分）</span></div><div><b>' + Math.round(B.con) + '%</b><span>意識</span></div><div><b>' + Math.round(B.hyd * 100) + '%</b><span>水分</span></div><div><b>' + B.bac.toFixed(3) + '%</b><span>血中アルコール（架空）</span></div><div><b>' + Math.round(B.danger) + '</b><span>危険度（100で終わり）</span></div><div><b>' + MOOD_NAME[moodKey(B)] + '</b><span>いまの状態</span></div>', body);
+  el('div', 'rm-big', '<div><b>' + Math.round(B.hr) + '</b><span>心拍（回/分）</span></div><div><b>' + B.tp.toFixed(1) + '℃</b><span>体温</span></div><div><b>' + B.rr.toFixed(1) + '</b><span>呼吸（回/分）</span></div><div><b>' + Math.round(B.con) + '%</b><span>意識</span></div><div><b>' + Math.round(B.hyd * 100) + '%</b><span>水分</span></div><div><b>' + B.bac.toFixed(3) + '%</b><span>血中アルコール（架空）</span></div><div><b>' + Math.round(B.danger) + '</b><span>危険度（100で終わり）</span></div><div><b>' + MOOD_NAME[moodKey(B)] + '</b><span>いまの状態</span></div>' + ((B.liver || 0) > 0.3 ? '<div><b class="' + (B.liver >= 3 ? 'dg3' : B.liver >= 1.5 ? 'dg2' : 'dg1') + '">' + (B.liver >= 3 ? '危険' : B.liver >= 1.5 ? '注意' : '少し') + '</b><span>肝臓への負担（自覚なし）</span></div>' : ''), body);
   var cv = el('canvas', 'rm-graph', '', body); cv.width = 600; cv.height = 180; cv.style.marginTop = '10px';
   drawHistory(cv);
   el('div', 'rm-note', '— 心拍（ピンク）・体温（オレンジ）・呼吸（水色）・危険度（赤）', body).style.marginTop = '4px';
@@ -4313,6 +4443,8 @@ function phoneHelp(body) {
   if (B.bac > 0.15) tips.push('飲みすぎ：もうお酒は飲まない。ダウナー系・オピオイド系・ギャバ系と合わせない。');
   if (B.hyd < 0.45) tips.push('水分不足：水かスポーツドリンク。');
   if (B.F.an > 0.6) tips.push('不安が強い：明るい部屋で、だれかに電話する。ひとりで抱えない。');
+  if ((B.liver || 0) >= 1.5) tips.push('痛み止めの飲みすぎ：いま症状がなくても肝臓に負担がかかっている。これ以上飲まない。現実なら早めに医療機関へ。');
+  var otcN = B.doses.filter(function (d) { return SUB[d.s].otc; }).length; if (otcN >= 3) tips.push('市販薬を何回も飲んでいる：これ以上飲まない。現実なら中毒110番や医療機関に相談を。');
   var d = el('div', 'rm-detail', '', body);
   el('p', '', '具合がおかしいとき、だれかが倒れているときは、ためらわずに助けを呼ぼう。<b>このゲームの中でも、現実でも。</b>', d);
   el('div', 'rm-alert', '<b>いまのあなたへのアドバイス</b><br>' + (tips.length ? tips.map(esc).join('<br>') : 'いまは大きな問題はなさそう。水を飲んで、無理をしないで。'), d);
@@ -4321,7 +4453,7 @@ function phoneHelp(body) {
   var c = el('button', 'btn', '📞 友達に助けを求める', d);
   onTap(c, function () { phoneNav('call'); });
   el('div', 'rm-kv', '<span>呼吸が弱い</span><b>リセットラムネ（オピオイド系だけに効く）／119</b><span>体温が高い</span><b>水・シャワー・ベランダの風・アイス</b><span>吐き気</span><b>トイレで吐く</b><span>心拍が速い</span><b>じっと休む・水を飲む</b><span>不安</span><b>だれかと話す</b>', d);
-  el('div', 'rm-note', '現実で困ったとき：救急車 119／迷ったら 救急安心センター #7119（地域による）', body);
+  el('div', 'rm-note', '現実で困ったとき：救急車 119／迷ったら 救急安心センター #7119（地域による）／こころの健康相談統一ダイヤル 0570-064-556', body);
 }
 
 

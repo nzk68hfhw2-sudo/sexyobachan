@@ -267,7 +267,7 @@ function renderPillGrid(body) {
   body.innerHTML = '';
   var g = el('div', 'rm-grid', '', body);
   SUBS.forEach(function (s) {
-    if (s.hidden || s.smoke) return;
+    if (s.hidden || s.smoke || s.otc) return;
     var n = stockOf(s.id), cl = CLASSES[s.cls];
     var c = el('div', 'rm-card' + (n <= 0 ? ' empty' : ''), '<span class="cl" style="background:' + cl.col + '">' + cl.short + '</span><img src="' + ramuneIcon(s, 104) + '"><div class="nm">' + esc(s.name) + '</div><div class="nk">「' + esc(s.nick) + '」</div><div class="st">' + (SAVE.settings.sandbox ? '∞' : 'のこり ' + n) + '</div>', g);
     onTap(c, function () { sfx('ui'); renderPillDetail(body, s); });

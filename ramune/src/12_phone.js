@@ -273,7 +273,7 @@ function phoneHome(body) {
 // ---- 🫀 body (enhanced) ----
 function phoneBody(body) {
   var B = GAME.B;
-  el('div', 'rm-big', '<div><b>' + Math.round(B.hr) + '</b><span>心拍（回/分）</span></div><div><b>' + B.tp.toFixed(1) + '℃</b><span>体温</span></div><div><b>' + B.rr.toFixed(1) + '</b><span>呼吸（回/分）</span></div><div><b>' + Math.round(B.con) + '%</b><span>意識</span></div><div><b>' + Math.round(B.hyd * 100) + '%</b><span>水分</span></div><div><b>' + B.bac.toFixed(3) + '%</b><span>血中アルコール（架空）</span></div><div><b>' + Math.round(B.danger) + '</b><span>危険度（100で終わり）</span></div><div><b>' + MOOD_NAME[moodKey(B)] + '</b><span>いまの状態</span></div>', body);
+  el('div', 'rm-big', '<div><b>' + Math.round(B.hr) + '</b><span>心拍（回/分）</span></div><div><b>' + B.tp.toFixed(1) + '℃</b><span>体温</span></div><div><b>' + B.rr.toFixed(1) + '</b><span>呼吸（回/分）</span></div><div><b>' + Math.round(B.con) + '%</b><span>意識</span></div><div><b>' + Math.round(B.hyd * 100) + '%</b><span>水分</span></div><div><b>' + B.bac.toFixed(3) + '%</b><span>血中アルコール（架空）</span></div><div><b>' + Math.round(B.danger) + '</b><span>危険度（100で終わり）</span></div><div><b>' + MOOD_NAME[moodKey(B)] + '</b><span>いまの状態</span></div>' + ((B.liver || 0) > 0.3 ? '<div><b class="' + (B.liver >= 3 ? 'dg3' : B.liver >= 1.5 ? 'dg2' : 'dg1') + '">' + (B.liver >= 3 ? '危険' : B.liver >= 1.5 ? '注意' : '少し') + '</b><span>肝臓への負担（自覚なし）</span></div>' : ''), body);
   var cv = el('canvas', 'rm-graph', '', body); cv.width = 600; cv.height = 180; cv.style.marginTop = '10px';
   drawHistory(cv);
   el('div', 'rm-note', '— 心拍（ピンク）・体温（オレンジ）・呼吸（水色）・危険度（赤）', body).style.marginTop = '4px';
@@ -742,6 +742,8 @@ function phoneHelp(body) {
   if (B.bac > 0.15) tips.push('飲みすぎ：もうお酒は飲まない。ダウナー系・オピオイド系・ギャバ系と合わせない。');
   if (B.hyd < 0.45) tips.push('水分不足：水かスポーツドリンク。');
   if (B.F.an > 0.6) tips.push('不安が強い：明るい部屋で、だれかに電話する。ひとりで抱えない。');
+  if ((B.liver || 0) >= 1.5) tips.push('痛み止めの飲みすぎ：いま症状がなくても肝臓に負担がかかっている。これ以上飲まない。現実なら早めに医療機関へ。');
+  var otcN = B.doses.filter(function (d) { return SUB[d.s].otc; }).length; if (otcN >= 3) tips.push('市販薬を何回も飲んでいる：これ以上飲まない。現実なら中毒110番や医療機関に相談を。');
   var d = el('div', 'rm-detail', '', body);
   el('p', '', '具合がおかしいとき、だれかが倒れているときは、ためらわずに助けを呼ぼう。<b>このゲームの中でも、現実でも。</b>', d);
   el('div', 'rm-alert', '<b>いまのあなたへのアドバイス</b><br>' + (tips.length ? tips.map(esc).join('<br>') : 'いまは大きな問題はなさそう。水を飲んで、無理をしないで。'), d);
@@ -750,5 +752,5 @@ function phoneHelp(body) {
   var c = el('button', 'btn', '📞 友達に助けを求める', d);
   onTap(c, function () { phoneNav('call'); });
   el('div', 'rm-kv', '<span>呼吸が弱い</span><b>リセットラムネ（オピオイド系だけに効く）／119</b><span>体温が高い</span><b>水・シャワー・ベランダの風・アイス</b><span>吐き気</span><b>トイレで吐く</b><span>心拍が速い</span><b>じっと休む・水を飲む</b><span>不安</span><b>だれかと話す</b>', d);
-  el('div', 'rm-note', '現実で困ったとき：救急車 119／迷ったら 救急安心センター #7119（地域による）', body);
+  el('div', 'rm-note', '現実で困ったとき：救急車 119／迷ったら 救急安心センター #7119（地域による）／こころの健康相談統一ダイヤル 0570-064-556', body);
 }
