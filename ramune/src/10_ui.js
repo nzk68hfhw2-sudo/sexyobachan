@@ -92,6 +92,7 @@ var UI_CSS = [
   '.rm-screen.rm-title{background:radial-gradient(ellipse at center,rgba(8,4,20,.88) 0%,rgba(8,4,20,.7) 60%,rgba(8,4,20,.45) 100%)}',
   '.rm-title-card{padding:18px 16px 16px;border-radius:26px;background:rgba(12,6,28,.82);border:2px solid rgba(255,255,255,.18);box-shadow:0 0 40px rgba(255,95,168,.25);width:min(92vw,460px)}',
   '.rm-sound{margin-top:12px;padding:9px 16px;border-radius:999px;background:rgba(10,6,24,.88);border:2px solid #ffe14d;color:#fff;font-size:14px;font-weight:900;line-height:1.4;max-width:92vw;box-shadow:0 0 18px rgba(255,225,77,.35)}',
+  '.rm-pxlogo{display:block;width:min(84vw,430px);height:auto;margin:0 auto;image-rendering:pixelated;image-rendering:crisp-edges;filter:drop-shadow(0 0 14px rgba(255,79,163,.55))}',
   '.rm-title-lead{font-size:14px;font-weight:700;color:#fff;margin-top:8px;line-height:1.5}',
   '.rm-logo{font-family:"Zen Maru Gothic",sans-serif;font-weight:900;font-size:clamp(60px,19vw,112px);line-height:1;color:#fff;text-shadow:0 0 1px #000,4px 4px 0 #ff5fa8,8px 8px 0 #6a3cff,0 0 30px rgba(125,249,255,.45)}',
   '.rm-logo-sub{font-size:12px;letter-spacing:.3em;margin:12px 0 0;color:#7df9ff;font-weight:900}',
