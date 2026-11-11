@@ -34,10 +34,24 @@
     px(x, y, c);
   }
   // red glow behind the pill
-  disc(64, 46 + OY, 38, function (x, y, d) { if (dith(x, y, (1 - d) * 0.55)) px(x, y, d < 0.55 ? '#4a0f2c' : '#2f0b2a'); });
+  // hypnotic halo: concentric wavy rings, dark & saturated, fading out
+  var RING = ['#8a1550', '#8a4a12', '#7a6a12', '#127a4a', '#12687a', '#4a1a8a'];
+  disc(64, 46 + OY, 40, function (x, y, d, dx, dy) {
+    var a = Math.atan2(dy, dx), r = Math.sqrt(dx * dx + dy * dy) + Math.sin(a * 7) * 1.2;
+    var band = Math.floor(r / 3), fade = 1 - d * d;
+    if (band % 2 === 0) { if (dith(x, y, fade * 0.95)) px(x, y, RING[(band / 2) % RING.length]); }
+    else if (dith(x, y, fade * 0.7)) px(x, y, '#150820');
+  });
   // stars / dust
   for (var i = 0; i < 40; i++) { var sx = (rng() * N) | 0, sy = (rng() * 70) | 0; px(sx, sy, rng() < 0.3 ? C.cyan2 : '#6b5a86'); }
 
+  // ---- falling pills (background rain) ----
+  var RAIN = ['#ff4fa3', '#4fe3ff', '#ffd23f', '#3fe08a', '#b07cff', '#f6f2ff'];
+  for (var i = 0; i < 46; i++) {
+    var rx = (rng() * N) | 0, ry = (rng() * 100) | 0, rc = RAIN[(rng() * RAIN.length) | 0];
+    if (rng() < 0.5) { px(rx, ry, rc); px(rx + 1, ry, rc); px(rx, ry + 1, rc); px(rx + 1, ry + 1, rc); }
+    else { px(rx, ry, rc); px(rx + 1, ry + 1, rc); px(rx + 2, ry + 2, '#ffffff'); }
+  }
   // ---- shadow people (behind) ----
   function shadow(cx, top, h, hat) {
     for (var y = 0; y < h; y++) {
@@ -95,7 +109,8 @@
   // veins
   [[-12, 0], [-11, -1], [-10, -1], [-9, -2], [-11, 1], [-10, 2], [11, 0], [10, 1], [9, 1], [8, 2], [10, -1], [9, -2]].forEach(function (p) { px(EX + p[0], EY + p[1], C.red); });
   disc(EX + 1, EY, 6, function (x, y, d) { px(x, y, d > 0.7 ? C.blood : C.red); });
-  disc(EX + 1, EY, 3, function (x, y) { px(x, y, C.k); });
+  disc(EX + 1, EY, 3.6, function (x, y) { px(x, y, C.k); });
+  for (var sa = 0; sa < 15; sa += 0.25) { var sr = sa * 0.42; px(Math.round(EX + 1 + Math.cos(sa) * sr), Math.round(EY + Math.sin(sa) * sr), sa < 7 ? '#ff4fa3' : C.red); }
   px(EX - 1, EY - 2, C.white); px(EX - 2, EY - 2, C.white); px(EX - 1, EY - 3, C.white);
   // eyelid lashes
   [-10, -5, 0, 5, 10].forEach(function (lx, i) { px(EX + lx, EY - 9, C.k); px(EX + lx + (i < 2 ? -1 : i > 2 ? 1 : 0), EY - 10, C.k); });
@@ -108,11 +123,32 @@
   function tablet(x, y, c1, c2) { disc(x, y, 4.5, function (xx, yy, d) { px(xx, yy, d > 0.75 ? c2 : c1); }); px(x - 2, y - 2, C.white); px(x - 1, y - 3, C.white); px(x - 2, y, c2); px(x - 1, y, c2); px(x, y, c2); px(x + 1, y, c2); }
   function star(x, y) { var P = [[0, -4], [-1, -3], [0, -3], [1, -3], [-1, -2], [0, -2], [1, -2], [-4, -1], [-3, -1], [-2, -1], [-1, -1], [0, -1], [1, -1], [2, -1], [3, -1], [4, -1], [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0], [-2, 1], [-1, 1], [0, 1], [1, 1], [2, 1], [-3, 2], [-2, 2], [2, 2], [3, 2], [-3, 3], [3, 3]]; P.forEach(function (p) { px(x + p[0], y + p[1], C.yel); }); px(x - 1, y - 2, C.white); }
   capsule(26, 68 + OY);
-  tablet(98, 66 + OY, C.vio, '#4a1c9a');
+  // tipped medicine bottle (right), mouth facing left, spilling pills
+  (function () {
+    var bx = 104, by = 60 + OY;
+    rect(bx, by, 22, 15, C.k); rect(bx + 1, by + 1, 20, 13, '#f0e9ff'); rect(bx + 1, by + 11, 20, 3, '#c9bfe0'); rect(bx + 1, by + 1, 20, 2, '#ffffff');
+    rect(bx - 3, by + 2, 4, 11, C.k); rect(bx - 2, by + 3, 3, 9, '#e6defa');           // shoulder
+    rect(bx - 6, by + 4, 4, 7, C.k); rect(bx - 5, by + 5, 3, 5, '#d8cfee');            // neck
+    rect(bx - 12, by + 3, 7, 9, C.k); rect(bx - 11, by + 4, 5, 7, C.red); rect(bx - 11, by + 4, 5, 1, '#ff6b8a'); // cap (off, lying open)
+    for (var k = 0; k < 4; k++) px(bx - 10 + k, by + 7, C.blood);
+    rect(bx + 4, by + 4, 14, 7, C.red); rect(bx + 5, by + 5, 12, 5, '#ff6b8a');       // label
+    rect(bx + 10, by + 5, 1, 5, '#fff'); px(bx + 10, by + 9, '#ff6b8a'); px(bx + 10, by + 8, '#fff'); px(bx + 10, by + 9, '#fff'); px(bx + 10, by + 8, '#ff6b8a');
+    var bx2 = bx - 6;
+    var spill = [[bx2 - 6, by + 12, '#ff4fa3'], [bx2 - 12, by + 14, '#4fe3ff'], [bx2 - 4, by + 17, '#ffd23f'], [bx2 - 17, by + 17, '#3fe08a'], [bx2 - 11, by + 20, '#b07cff'], [bx2 + 3, by + 18, '#f6f2ff']];
+    spill.forEach(function (q) { tablet(q[0], q[1], q[2], '#1a0a24'); });
+  })();
+  // blister sheet fragment (top-left)
+  (function () {
+    var x0 = 2, y0 = 14;
+    rect(x0, y0, 26, 17, C.k); rect(x0 + 1, y0 + 1, 24, 15, '#b9c0cf');
+    for (var yy = 0; yy < 15; yy++) for (var xx = 0; xx < 24; xx++) if (dith(x0 + xx, y0 + yy, 0.25)) px(x0 + 1 + xx, y0 + 1 + yy, '#e9edf6');
+    [[x0 + 7, y0 + 8, '#ff4fa3'], [x0 + 18, y0 + 8, '#4fe3ff']].forEach(function (q) { disc(q[0], q[1], 5, function (xx, yy, d) { px(xx, yy, d > 0.8 ? '#6b7489' : q[2]); }); px(q[0] - 2, q[1] - 2, '#fff'); px(q[0] - 1, q[1] - 3, '#fff'); });
+    rect(x0 + 12, y0 + 1, 1, 15, '#6b7489');
+  })();
   star(36, 28 + OY);
   tablet(94, 26 + OY, C.bone, '#9c937a');
   tablet(14, 50 + OY, C.cyan, '#2bb3d6');
-  capsule(100, 46 + OY);
+  capsule(104, 42 + OY);
 
   // ---- text (rendered with the pixel font, alpha-thresholded so edges stay crisp) ----
   // render big in a heavy font, shrink onto the pixel grid, threshold -> solid pixel letters
@@ -141,11 +177,14 @@
   }
   if (art) {
     // "キケンな" dripping red
+    for (var yy = 1; yy < 22; yy++) for (var xx = 22; xx < 106; xx++) if (dith(xx, yy, 0.75)) px(xx, yy, C.k);
     var K = pixText('キケンな', 3, 16, function (x, t) { return t > 0.7 ? C.blood : C.red; }, C.k, { thr: 92 });
     var bottoms = {}; K.blocks.forEach(function (q) { if (!bottoms[q[0]] || q[1] > bottoms[q[0]]) bottoms[q[0]] = q[1]; });
     Object.keys(bottoms).forEach(function (x) { x = +x; if (rng() < 0.3) { var L = 2 + ((rng() * 6) | 0); for (var k = 1; k <= L; k++) px(x, bottoms[x] + k, k === L ? C.red : C.blood); px(x, bottoms[x] + L + 1, C.k); } });
     // "ラムネ" big (x2), white with glitch
-    pixText('ラムネ', 77, 28, function (x, t) { return t > 0.8 ? '#cfc6e6' : C.white; }, C.k, { glitch: true });
+    var RM = pixText('ラムネ', 77, 28, function (x, t) { return t > 0.8 ? '#cfc6e6' : C.white; }, C.k, { glitch: true });
+    var rb = {}; RM.blocks.forEach(function (q) { if (!rb[q[0]] || q[1] > rb[q[0]]) rb[q[0]] = q[1]; });
+    Object.keys(rb).forEach(function (x) { x = +x; if (rng() < 0.16 && rb[x] < 106) { var L = 1 + ((rng() * 3) | 0); for (var k = 1; k <= L; k++) px(x, rb[x] + k, k === L ? C.pink : C.pink2); } });
     // "シミュレーター" in a capsule (native size)
     var CY = 109;
     rect(5, CY, 118, 18, C.k);
