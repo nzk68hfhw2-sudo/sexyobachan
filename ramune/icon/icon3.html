@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Maru+Gothic:wght@900&display=block">
+<style>html,body{margin:0;background:transparent}canvas{display:block}</style>
+</head><body>
+<canvas id="out" width="1024" height="1024"></canvas>
+<script>
+// Pixel-art icon: drawn on a 128x128 grid, upscaled x8 with CRT touches.
+// mode via location.hash: round | square | notext
+(async function () {
+  await document.fonts.load('16px "DotGothic16"', 'キケンなラムネシミュレーター'); await document.fonts.load('900 100px "Zen Maru Gothic"', 'キケンなラムネシミュレーター');
+  await document.fonts.ready;
+  var mode = (location.hash || '#round').slice(1);
+  var N = 128, S = 8;
+  var lo = document.createElement('canvas'); lo.width = lo.height = N;
+  var g = lo.getContext('2d'); g.imageSmoothingEnabled = false;
+  var rng = (function (s) { return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; })(626);
+  var C = { k: '#06030b', bg0: '#0d0618', bg1: '#1c0b2b', bg2: '#33102f', red: '#d01c3f', blood: '#7e0c22', pink: '#ff4fa3', pink2: '#ffa3cf', cyan: '#4fe3ff', cyan2: '#b7f6ff', white: '#f6f2ff', bone: '#e6dfc8', yel: '#ffd23f', gray: '#3b3550', vio: '#7a3cff', dark: '#120a1c' };
+  function px(x, y, c) { if (x < 0 || y < 0 || x >= N || y >= N) return; g.fillStyle = c; g.fillRect(x | 0, y | 0, 1, 1); }
+  function rect(x, y, w, h, c) { g.fillStyle = c; g.fillRect(x, y, w, h); }
+  var BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+  function dith(x, y, t) { return t * 16 > BAYER[y & 3][x & 3] + 0.5; }
+  function disc(cx, cy, r, fn) { for (var y = Math.floor(cy - r); y <= cy + r; y++) for (var x = Math.floor(cx - r); x <= cx + r; x++) { var dx = x + 0.5 - cx, dy = y + 0.5 - cy; if (dx * dx + dy * dy <= r * r) fn(x, y, Math.sqrt(dx * dx + dy * dy) / r, dx, dy); } }
+  var art = mode !== 'notext';
+  var OY = art ? 0 : 10; // shift art down when there is no text
+
+  // ---- background: dithered vertical gradient + vignette ----
+  for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) {
+    var t = y / N, c = C.bg0;
+    if (dith(x, y, Math.min(1, t * 1.6))) c = C.bg1;
+    if (t > 0.55 && dith(x, y, (t - 0.55) * 2.2)) c = C.bg2;
+    var dx = (x - 64) / 64, dy = (y - 60) / 64, v = dx * dx + dy * dy;
+    if (v > 0.75 && dith(x, y, (v - 0.75) * 1.6)) c = C.k;
+    px(x, y, c);
+  }
+  // red glow behind the pill
+  disc(64, 46 + OY, 38, function (x, y, d) { if (dith(x, y, (1 - d) * 0.55)) px(x, y, d < 0.55 ? '#4a0f2c' : '#2f0b2a'); });
+  // stars / dust
+  for (var i = 0; i < 40; i++) { var sx = (rng() * N) | 0, sy = (rng() * 70) | 0; px(sx, sy, rng() < 0.3 ? C.cyan2 : '#6b5a86'); }
+
+  // ---- shadow people (behind) ----
+  function shadow(cx, top, h, hat) {
+    for (var y = 0; y < h; y++) {
+      var w = y < 12 ? 0 : Math.round(5 + (y - 12) / (h - 12) * 8);
+      for (var x = -w; x <= w; x++) px(cx + x, top + y, C.k);
+    }
+    disc(cx, top + 6, 6, function (x, y) { px(x, y, C.k); });
+    if (hat) { rect(cx - 8, top - 1, 17, 2, C.k); rect(cx - 5, top - 7, 11, 6, C.k); }
+    // rim light
+    for (var y = 12; y < h; y++) { var w2 = Math.round(5 + (y - 12) / (h - 12) * 8); px(cx - w2 - 1, top + y, '#2a1640'); }
+    // eyes
+    px(cx - 3, top + 6, C.red); px(cx - 2, top + 6, '#ff5a6e'); px(cx + 2, top + 6, C.red); px(cx + 3, top + 6, '#ff5a6e');
+  }
+  shadow(18, 26 + OY, 62, true);
+  shadow(110, 32 + OY, 56, false);
+  shadow(96, 44 + OY, 40, false);
+
+  // ---- hazard tape (pixel) ----
+  function tape(x0, y0, len, dir) {
+    for (var k = 0; k < len; k++) for (var w = 0; w < 6; w++) {
+      var x = x0 + k, y = y0 + Math.round(k * dir) + w;
+      px(x, y, ((k + w * (dir < 0 ? -1 : 1)) >> 2) % 2 ? C.yel : '#16120a');
+    }
+  }
+  tape(-4, 84 + OY - (art ? 0 : 6), 46, -0.5);
+
+  // ---- main pill with an eye ----
+  var PX = 64, PY = 46 + OY, PR = 21;
+  // drips (behind outline, pink liquid)
+  [[-12, 12], [-4, 20], [5, 9], [13, 15], [-17, 5]].forEach(function (d) {
+    var x = PX + d[0], y0 = PY + Math.round(Math.sqrt(PR * PR - d[0] * d[0])) - 2;
+    for (var y = 0; y < d[1]; y++) { px(x, y0 + y, C.pink); px(x + 1, y0 + y, y > d[1] - 3 ? C.pink : C.pink2); }
+    px(x - 1, y0 + d[1] - 1, C.pink); px(x + 2, y0 + d[1] - 1, C.pink); px(x, y0 + d[1], C.pink); px(x + 1, y0 + d[1], C.pink);
+    px(x, y0 + d[1] - 2, C.white);
+  });
+  disc(PX, PY, PR + 1, function (x, y) { px(x, y, C.k); });
+  disc(PX, PY, PR, function (x, y, d, dx, dy) {
+    // two-tone tablet: cyan top / pink bottom with dithered seam
+    var t = (dy / PR + 1) / 2, c = dith(x, y, (t - 0.35) * 3) ? C.pink : C.cyan;
+    if (d > 0.82) c = c === C.cyan ? '#2bb3d6' : '#d93a86';
+    if (dx < -6 && dy < -6 && d < 0.8 && dith(x, y, 0.4)) c = c === C.cyan ? C.cyan2 : C.pink2;
+    px(x, y, c);
+  });
+  // highlight
+  [[-14, -13], [-13, -14], [-12, -15], [-15, -11], [-11, -15], [-14, -12]].forEach(function (p) { px(PX + p[0], PY + p[1], C.white); });
+  // cracks
+  [[8, -20], [9, -19], [9, -18], [10, -17], [11, -17], [11, -16], [12, -15], [10, -16], [13, -14], [14, -13], [-20, 4], [-19, 5], [-18, 5], [-17, 6], [-16, 6]].forEach(function (p) { px(PX + p[0], PY + p[1], C.dark); });
+  // the eye
+  var EX = PX, EY = PY + 1;
+  for (var y = -8; y <= 8; y++) for (var x = -14; x <= 14; x++) {
+    var e = (x * x) / (14 * 14) + (y * y) / (8 * 8);
+    if (e <= 1.08) px(EX + x, EY + y, C.k);
+    if (e <= 0.86) px(EX + x, EY + y, (y > 3 && dith(EX + x, EY + y, 0.4)) ? '#d9cfd8' : C.white);
+  }
+  // veins
+  [[-12, 0], [-11, -1], [-10, -1], [-9, -2], [-11, 1], [-10, 2], [11, 0], [10, 1], [9, 1], [8, 2], [10, -1], [9, -2]].forEach(function (p) { px(EX + p[0], EY + p[1], C.red); });
+  disc(EX + 1, EY, 6, function (x, y, d) { px(x, y, d > 0.7 ? C.blood : C.red); });
+  disc(EX + 1, EY, 3, function (x, y) { px(x, y, C.k); });
+  px(EX - 1, EY - 2, C.white); px(EX - 2, EY - 2, C.white); px(EX - 1, EY - 3, C.white);
+  // eyelid lashes
+  [-10, -5, 0, 5, 10].forEach(function (lx, i) { px(EX + lx, EY - 9, C.k); px(EX + lx + (i < 2 ? -1 : i > 2 ? 1 : 0), EY - 10, C.k); });
+
+  // ---- scattered pills ----
+  function capsule(x, y) { // diagonal capsule red/white
+    for (var i = 0; i < 9; i++) for (var w = 0; w < 4; w++) { var c = i < 4 ? C.red : C.white; if (w === 0) c = i < 4 ? '#ff6b8a' : '#ffffff'; if (w === 3) c = i < 4 ? C.blood : '#b8b0c8'; px(x + i + w, y - i + w, c); }
+    px(x - 1, y + 1, C.k); px(x + 12, y - 8, C.k);
+  }
+  function tablet(x, y, c1, c2) { disc(x, y, 4.5, function (xx, yy, d) { px(xx, yy, d > 0.75 ? c2 : c1); }); px(x - 2, y - 2, C.white); px(x - 1, y - 3, C.white); px(x - 2, y, c2); px(x - 1, y, c2); px(x, y, c2); px(x + 1, y, c2); }
+  function star(x, y) { var P = [[0, -4], [-1, -3], [0, -3], [1, -3], [-1, -2], [0, -2], [1, -2], [-4, -1], [-3, -1], [-2, -1], [-1, -1], [0, -1], [1, -1], [2, -1], [3, -1], [4, -1], [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0], [-2, 1], [-1, 1], [0, 1], [1, 1], [2, 1], [-3, 2], [-2, 2], [2, 2], [3, 2], [-3, 3], [3, 3]]; P.forEach(function (p) { px(x + p[0], y + p[1], C.yel); }); px(x - 1, y - 2, C.white); }
+  capsule(26, 68 + OY);
+  tablet(98, 66 + OY, C.vio, '#4a1c9a');
+  star(36, 28 + OY);
+  tablet(94, 26 + OY, C.bone, '#9c937a');
+  tablet(14, 50 + OY, C.cyan, '#2bb3d6');
+  capsule(100, 46 + OY);
+
+  // ---- text (rendered with the pixel font, alpha-thresholded so edges stay crisp) ----
+  // render big in a heavy font, shrink onto the pixel grid, threshold -> solid pixel letters
+  function glyphMask(str, hpx, thr) {
+    var Z = 8, fs = Math.round(hpx * Z * 1.16);
+    var big = document.createElement('canvas'); big.width = 140 * Z; big.height = (hpx + 6) * Z;
+    var bg2 = big.getContext('2d'); bg2.font = '900 ' + fs + 'px "Zen Maru Gothic"'; bg2.textBaseline = 'middle'; bg2.fillStyle = '#fff';
+    var w = bg2.measureText(str).width; bg2.fillText(str, 2 * Z, big.height / 2);
+    var sm = document.createElement('canvas'); sm.width = 140; sm.height = hpx + 6;
+    var sg = sm.getContext('2d'); sg.imageSmoothingEnabled = true; sg.imageSmoothingQuality = 'high'; sg.drawImage(big, 0, 0, sm.width, sm.height);
+    var d = sg.getImageData(0, 0, sm.width, sm.height).data, mask = [], maxX = 0, minY = 99, maxY = 0;
+    for (var y = 0; y < sm.height; y++) for (var x = 0; x < sm.width; x++) if (d[(y * sm.width + x) * 4 + 3] > (thr || 105)) { mask.push([x, y]); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
+    var minX = 999; mask.forEach(function (m) { minX = Math.min(minX, m[0]); });
+    mask.forEach(function (m) { m[0] -= minX; });
+    return { m: mask, w: maxX - minX + 1, y0: minY, h: maxY - minY + 1 };
+  }
+  // draws text on the 128 grid: every font pixel becomes a sc x sc block
+  function pixText(str, top, hpx, color, outline, opts) {
+    opts = opts || {}; var sc = 1;
+    var G = glyphMask(str, hpx, opts.thr), left = Math.round(64 - G.w / 2), blocks = [], set = {};
+    G.m.forEach(function (m) { for (var by = 0; by < sc; by++) for (var bx = 0; bx < sc; bx++) { var x = left + m[0] * sc + bx, y = top + (m[1] - G.y0) * sc + by; blocks.push([x, y, m[1] - G.y0]); set[x + ',' + y] = 1; } });
+    if (outline) blocks.forEach(function (q) { for (var oy = -1; oy <= 1; oy++) for (var ox = -1; ox <= 1; ox++) if (!set[(q[0] + ox) + ',' + (q[1] + oy)]) px(q[0] + ox, q[1] + oy, outline); });
+    if (opts.glitch) { blocks.forEach(function (q) { if (!set[(q[0] - 1) + ',' + q[1]]) px(q[0] - 1, q[1], C.cyan); }); blocks.forEach(function (q) { if (!set[(q[0] + 1) + ',' + q[1]]) px(q[0] + 1, q[1], C.pink); }); }
+    blocks.forEach(function (q) { px(q[0], q[1], typeof color === 'function' ? color(q[0], q[2] / G.h) : color); });
+    return { blocks: blocks, h: G.h * sc };
+  }
+  if (art) {
+    // "キケンな" dripping red
+    var K = pixText('キケンな', 3, 16, function (x, t) { return t > 0.7 ? C.blood : C.red; }, C.k, { thr: 92 });
+    var bottoms = {}; K.blocks.forEach(function (q) { if (!bottoms[q[0]] || q[1] > bottoms[q[0]]) bottoms[q[0]] = q[1]; });
+    Object.keys(bottoms).forEach(function (x) { x = +x; if (rng() < 0.3) { var L = 2 + ((rng() * 6) | 0); for (var k = 1; k <= L; k++) px(x, bottoms[x] + k, k === L ? C.red : C.blood); px(x, bottoms[x] + L + 1, C.k); } });
+    // "ラムネ" big (x2), white with glitch
+    pixText('ラムネ', 77, 28, function (x, t) { return t > 0.8 ? '#cfc6e6' : C.white; }, C.k, { glitch: true });
+    // "シミュレーター" in a capsule (native size)
+    var CY = 109;
+    rect(5, CY, 118, 18, C.k);
+    rect(7, CY + 1, 57, 16, C.red); rect(64, CY + 1, 57, 16, C.white);
+    rect(8, CY + 2, 54, 2, '#ff6b8a'); rect(65, CY + 2, 54, 2, '#ffffff'); rect(7, CY + 15, 57, 2, C.blood); rect(64, CY + 15, 57, 2, '#b8b0c8');
+    [[5, CY], [6, CY], [5, CY + 1], [5, CY + 17], [6, CY + 17], [5, CY + 16], [122, CY], [121, CY], [122, CY + 1], [122, CY + 17], [121, CY + 17], [122, CY + 16]].forEach(function (p) { px(p[0], p[1], C.bg2); });
+    pixText('シミュレーター', CY + 3, 12, function (x) { return x < 64 ? C.white : C.red; }, null, { thr: 95 });
+  }
+  // ---- static noise ----
+  for (var i = 0; i < 160; i++) { var nx = (rng() * N) | 0, ny = (rng() * N) | 0; if (rng() < 0.5) px(nx, ny, 'rgba(255,255,255,0.18)'); else px(nx, ny, 'rgba(0,0,0,0.35)'); }
+  // glitch strip
+  var gy = art ? 60 : 64; var row = g.getImageData(0, gy, N, 2); g.putImageData(row, 3, gy);
+
+  // ---- upscale x8 + CRT touches ----
+  var out = document.getElementById('out'), o = out.getContext('2d');
+  o.clearRect(0, 0, 1024, 1024);
+  o.save();
+  if (mode !== 'square') { o.beginPath(); var r = 224; o.moveTo(r, 0); o.arcTo(1024, 0, 1024, 1024, r); o.arcTo(1024, 1024, 0, 1024, r); o.arcTo(0, 1024, 0, 0, r); o.arcTo(0, 0, 1024, 0, r); o.closePath(); o.clip(); }
+  o.imageSmoothingEnabled = false;
+  o.drawImage(lo, 0, 0, 1024, 1024);
+  // soft bloom of bright pixels
+  o.globalCompositeOperation = 'lighter'; o.globalAlpha = 0.22; o.filter = 'blur(10px)'; o.drawImage(lo, 0, 0, 1024, 1024); o.filter = 'none'; o.globalAlpha = 1; o.globalCompositeOperation = 'source-over';
+  // scanlines
+  o.fillStyle = 'rgba(0,0,0,0.22)'; for (var y = 0; y < 1024; y += 4) o.fillRect(0, y + 2, 1024, 2);
+  // pixel grid hint
+  o.fillStyle = 'rgba(0,0,0,0.08)'; for (var x = 0; x < 1024; x += 8) o.fillRect(x, 0, 1, 1024);
+  // inner frame (pixel border)
+  o.strokeStyle = 'rgba(255,79,163,0.55)'; o.lineWidth = 16; if (mode !== 'square') { o.beginPath(); var r2 = 224; o.moveTo(r2, 0); o.arcTo(1024, 0, 1024, 1024, r2); o.arcTo(1024, 1024, 0, 1024, r2); o.arcTo(0, 1024, 0, 0, r2); o.arcTo(0, 0, 1024, 0, r2); o.closePath(); o.stroke(); }
+  o.restore();
+  window.__done = true;
+})();
+</script>
+</body></html>

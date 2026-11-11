@@ -47,7 +47,7 @@
 
 ## アイコン
 - `dist/icons/icon-1024.png`（角丸・ロゴ入り）／`icon-1024-square.png`（正方形・ストア用）／`icon-512.png`／`icon-192.png`／`apple-touch-icon-180.png`／`icon-notext-1024.png`（文字なし）／`favicon-64.png`
-- 元データは `icon/icon2.html`（`node icon/render.js` で書き出し。旧デザインは `icon/icon.html`）
+- 元データは `icon/icon3.html`（ドット絵版。`node icon/render3.js` で書き出し）。旧デザインは `icon/icon2.html`（錠剤シート版）・`icon/icon.html`（初代）
 
 ## ファイル
 - 名前：どのラムネにも医薬品風の名前（例：ルミセルジン）とストリート風の通称（例：ゆめいろラムネ）、錠剤の刻印がありますが、**すべて架空**です。系統ごとに「現実では…」の注意を表示します。
