@@ -7,8 +7,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>キケンなラムネシミュレーター</title>
-<link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@21e0965ad08c67ae15b28f4a1f3266bace715179/ramune/dist/icons/favicon-64.png">
-<link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@21e0965ad08c67ae15b28f4a1f3266bace715179/ramune/dist/icons/apple-touch-icon-180.png">
+<link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@2d5bf7b40eec6eed2cca5eb347ef86ce57c88e90/ramune/dist/icons/favicon-64.png">
+<link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@2d5bf7b40eec6eed2cca5eb347ef86ce57c88e90/ramune/dist/icons/apple-touch-icon-180.png">
 <style>
 html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden}
 #rml{position:fixed;left:16px;right:16px;top:45%;color:#ffb3dc;font:16px monospace;text-align:center;letter-spacing:.15em}
@@ -20,7 +20,7 @@ html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden}
 <div id="rme"></div>
 <script>
 (function(){
-var U=["https://cdn.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@21e0965ad08c67ae15b28f4a1f3266bace715179/ramune/dist/game.js","https://fastly.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@21e0965ad08c67ae15b28f4a1f3266bace715179/ramune/dist/game.js","https://cdn.statically.io/gh/nzk68hfhw2-sudo/sexyobachan/21e0965ad08c67ae15b28f4a1f3266bace715179/ramune/dist/game.js","https://rawcdn.githack.com/nzk68hfhw2-sudo/sexyobachan/21e0965ad08c67ae15b28f4a1f3266bace715179/ramune/dist/game.js"];
+var U=["https://cdn.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@2d5bf7b40eec6eed2cca5eb347ef86ce57c88e90/ramune/dist/game.js","https://fastly.jsdelivr.net/gh/nzk68hfhw2-sudo/sexyobachan@2d5bf7b40eec6eed2cca5eb347ef86ce57c88e90/ramune/dist/game.js","https://cdn.statically.io/gh/nzk68hfhw2-sudo/sexyobachan/2d5bf7b40eec6eed2cca5eb347ef86ce57c88e90/ramune/dist/game.js","https://rawcdn.githack.com/nzk68hfhw2-sudo/sexyobachan/2d5bf7b40eec6eed2cca5eb347ef86ce57c88e90/ramune/dist/game.js"];
 var i=0,done=false,tried=[];
 function show(t,d){var e=document.getElementById('rme');e.style.display='block';e.textContent='[読み込みエラー] '+t+'\n'+(d||'')+'\n\n試したURL:\n'+tried.join('\n')+'\nオンライン: '+(navigator.onLine?'はい':'いいえ');var l=document.getElementById('rml');if(l)l.style.display='none';}
 function next(){
