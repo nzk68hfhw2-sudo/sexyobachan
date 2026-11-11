@@ -1,9 +1,9 @@
 // node render.js -> renders icon variants into ramune/dist/icons
 const { chromium } = require('playwright'), path = require('path'), fs = require('fs');
 (async () => {
-  const out = path.join(__dirname, '..', 'dist', 'icons'); fs.mkdirSync(out, { recursive: true });
+  const out = process.env.ICON_OUT || path.join(__dirname, '..', 'dist', 'icons'); fs.mkdirSync(out, { recursive: true });
   const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1024, height: 1024 }, deviceScaleFactor: 1 });
-  await p.goto('file://' + path.join(__dirname, 'icon.html'));
+  await p.goto('file://' + path.join(__dirname, process.env.ICON_SRC || 'icon2.html'));
   await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(800);
   console.log('font ok:', await p.evaluate(() => document.fonts.check('900 100px "Zen Maru Gothic"', 'ラムネ')));
   const shot = async (cls, file, size) => {

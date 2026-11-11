@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&family=DotGothic16&display=block">
+<style>
+html,body{margin:0;background:transparent}
+#icon{position:relative;width:1024px;height:1024px;overflow:hidden;font-family:"Zen Maru Gothic",sans-serif}
+#icon.round{border-radius:230px}
+/* psychedelic background: swirl rays + glows + vignette */
+.bg{position:absolute;inset:0;background:
+  radial-gradient(circle at 50% 42%,rgba(255,80,170,.55) 0%,rgba(255,80,170,0) 46%),
+  radial-gradient(circle at 12% 88%,rgba(90,240,255,.45) 0%,rgba(90,240,255,0) 38%),
+  radial-gradient(circle at 92% 8%,rgba(190,110,255,.6) 0%,rgba(190,110,255,0) 40%),
+  linear-gradient(160deg,#3a0d6e 0%,#1b0838 55%,#0a0318 100%)}
+.rays{position:absolute;left:50%;top:42%;width:1800px;height:1800px;margin:-900px 0 0 -900px;opacity:.22;
+  background:repeating-conic-gradient(from 0deg,#ff5fa8 0deg 6deg,transparent 6deg 15deg,#7df9ff 15deg 18deg,transparent 18deg 30deg);
+  -webkit-mask:radial-gradient(circle,#000 8%,transparent 62%);mask:radial-gradient(circle,#000 8%,transparent 62%)}
+.dots{position:absolute;inset:0;opacity:.18;background-image:radial-gradient(circle,#fff 1.6px,transparent 2px);background-size:22px 22px;
+  -webkit-mask:linear-gradient(180deg,transparent 0%,#000 55%,#000 100%);mask:linear-gradient(180deg,transparent 0%,#000 55%,#000 100%)}
+.vig{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,transparent 55%,rgba(5,0,15,.65) 100%)}
+.rim{position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 10px rgba(255,95,168,.55),inset 0 0 60px rgba(255,95,168,.45)}
+svg{position:absolute;inset:0}
+.tag{position:absolute;left:50%;top:54px;transform:translateX(-50%) rotate(-5deg);background:#ff2d55;color:#fff;font-weight:900;font-size:92px;line-height:1;padding:16px 42px 24px;border-radius:28px;
+  box-shadow:0 12px 0 #7d0b20,0 0 70px rgba(255,45,85,.8);white-space:nowrap}
+.tag:before{content:"";position:absolute;inset:9px;border:5px dashed rgba(255,255,255,.55);border-radius:20px}
+.main{position:absolute;left:0;right:0;top:612px;text-align:center;font-weight:900;font-size:262px;line-height:1;color:#fff;letter-spacing:-.02em;
+  text-shadow:-6px 0 0 rgba(0,255,255,.75),6px 0 0 rgba(255,0,140,.75),0 0 2px #000,12px 12px 0 #ff2d7a,22px 22px 0 #5b2cff,0 0 80px rgba(255,95,168,.6)}
+/* subtitle styled as a capsule: half red / half white */
+.cap{position:absolute;left:50%;top:876px;transform:translateX(-50%);display:flex;border-radius:999px;overflow:hidden;
+  box-shadow:0 10px 0 rgba(0,0,0,.45),0 0 50px rgba(125,249,255,.55),inset 0 -10px 20px rgba(0,0,0,.25);border:6px solid #fff}
+.cap span{font-weight:900;font-size:80px;line-height:1;padding:14px 26px 22px;white-space:nowrap}
+.cap .l{background:linear-gradient(180deg,#ff6b8a,#e0123f);color:#fff}
+.cap .r{background:linear-gradient(180deg,#ffffff,#d9dff0);color:#3a0d6e}
+.cap:after{content:"";position:absolute;left:30px;right:30px;top:10px;height:22px;border-radius:20px;background:rgba(255,255,255,.45)}
+.notext .main,.notext .cap,.notext .tag{display:none}
+.notext svg{transform:translate(0,92px) scale(1.18);transform-origin:512px 420px}
+</style></head><body>
+<div id="icon" class="round">
+  <div class="bg"></div><div class="rays"></div><div class="dots"></div>
+  <svg width="1024" height="1024" viewBox="0 0 1024 1024">
+    <defs>
+      <linearGradient id="foil" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#f4f6fb"/><stop offset=".25" stop-color="#b9c0cf"/><stop offset=".45" stop-color="#ffffff"/><stop offset=".62" stop-color="#9aa3b6"/><stop offset=".85" stop-color="#e9edf6"/><stop offset="1" stop-color="#8c94a8"/>
+      </linearGradient>
+      <linearGradient id="holo" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#ff7ad9" stop-opacity=".35"/><stop offset=".33" stop-color="#7df9ff" stop-opacity=".3"/><stop offset=".66" stop-color="#ffe14d" stop-opacity=".3"/><stop offset="1" stop-color="#b46bff" stop-opacity=".35"/>
+      </linearGradient>
+      <radialGradient id="dome" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".25" stop-color="#fff" stop-opacity=".25"/><stop offset=".7" stop-color="#cfe7ff" stop-opacity=".12"/><stop offset="1" stop-color="#7a8aa8" stop-opacity=".45"/></radialGradient>
+      <radialGradient id="tP" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="#ffb3dc"/><stop offset="1" stop-color="#ff2d7a"/></radialGradient>
+      <radialGradient id="tC" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="#b3fbff"/><stop offset="1" stop-color="#14b8d6"/></radialGradient>
+      <radialGradient id="tY" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="#fff2a8"/><stop offset="1" stop-color="#ff9f1c"/></radialGradient>
+      <radialGradient id="tV" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="#e2c2ff"/><stop offset="1" stop-color="#7a2bd6"/></radialGradient>
+      <radialGradient id="tG" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="#c9ffb8"/><stop offset="1" stop-color="#2fae5a"/></radialGradient>
+      <radialGradient id="tW" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#f3f3f7"/><stop offset="1" stop-color="#b8bdd0"/></radialGradient>
+      <linearGradient id="capR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8aa6"/><stop offset="1" stop-color="#d0103a"/></linearGradient>
+      <linearGradient id="capW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#c9cfe0"/></linearGradient>
+      <linearGradient id="capB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fe9ff"/><stop offset="1" stop-color="#1679c9"/></linearGradient>
+      <linearGradient id="capY" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff59a"/><stop offset="1" stop-color="#f2b705"/></linearGradient>
+      <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="12" flood-color="#0a0318" flood-opacity=".7"/></filter>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <pattern id="hz" width="70" height="70" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="35" height="70" fill="#ffd60a"/><rect x="35" width="35" height="70" fill="#141414"/></pattern>
+      <!-- reusable tablets -->
+      <g id="round"><circle r="38" fill="currentColor"/><circle r="38" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="3"/><line x1="-26" y1="0" x2="26" y2="0" stroke="#000" stroke-opacity=".18" stroke-width="5" stroke-linecap="round"/><ellipse cx="-12" cy="-16" rx="14" ry="7" fill="#fff" opacity=".75" transform="rotate(-25 -12 -16)"/></g>
+      <g id="star"><path d="M0 -42 L12 -13 43 -12 19 8 27 39 0 22 -27 39 -19 8 -43 -12 -12 -13Z" fill="currentColor" stroke="#fff" stroke-opacity=".7" stroke-width="3" stroke-linejoin="round"/><ellipse cx="-8" cy="-14" rx="9" ry="5" fill="#fff" opacity=".7"/></g>
+      <g id="heart"><path d="M0 30 C-50 -6 -56 -46 -27 -54 C-12 -58 0 -46 0 -34 C0 -46 12 -58 27 -54 C56 -46 50 -6 0 30Z" fill="currentColor" stroke="#fff" stroke-opacity=".7" stroke-width="3"/><ellipse cx="-20" cy="-36" rx="10" ry="6" fill="#fff" opacity=".7" transform="rotate(-30 -20 -36)"/></g>
+      <g id="hexa"><path d="M0 -40 L35 -20 35 20 0 40 -35 20 -35 -20Z" fill="currentColor" stroke="#fff" stroke-opacity=".7" stroke-width="3"/><path d="M-20 -22 L0 -33 18 -23" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="5" stroke-linecap="round"/></g>
+    </defs>
+
+    <!-- background sparkles -->
+    <g fill="#fff">
+      <path opacity=".9" d="M140 330 l9 25 25 9 -25 9 -9 25 -9 -25 -25 -9 25 -9z"/><path opacity=".8" d="M900 360 l7 19 19 7 -19 7 -7 19 -7 -19 -19 -7 19 -7z"/>
+      <path opacity=".7" d="M820 140 l6 16 16 6 -16 6 -6 16 -6 -16 -16 -6 16 -6z"/><circle cx="210" cy="190" r="4" opacity=".8"/><circle cx="960" cy="560" r="4" opacity=".7"/><circle cx="60" cy="600" r="3" opacity=".7"/><circle cx="760" cy="600" r="3" opacity=".6"/>
+    </g>
+
+    <!-- hazard tapes in two corners -->
+    <g transform="rotate(-32 140 830)" opacity=".95"><rect x="-260" y="790" width="760" height="76" fill="url(#hz)"/><text x="40" y="842" font-family="DotGothic16" font-size="34" fill="#ff2d55" opacity="0">.</text></g>
+    <g transform="rotate(-32 900 210)" opacity=".95"><rect x="640" y="172" width="760" height="76" fill="url(#hz)"/></g>
+
+    <!-- spilled pills behind the sheet -->
+    <g filter="url(#shadow)">
+      <g transform="translate(118 520) rotate(-50)"><rect x="-70" y="-28" width="70" height="56" rx="28" fill="url(#capR)"/><rect x="0" y="-28" width="70" height="56" rx="28" fill="url(#capW)"/><rect x="-6" y="-28" width="12" height="56" fill="url(#capW)"/><rect x="-55" y="-20" width="110" height="10" rx="5" fill="#fff" opacity=".55"/></g>
+      <g transform="translate(905 540) rotate(52)"><rect x="-62" y="-24" width="62" height="48" rx="24" fill="url(#capB)"/><rect x="0" y="-24" width="62" height="48" rx="24" fill="url(#capY)"/><rect x="-6" y="-24" width="12" height="48" fill="url(#capY)"/><rect x="-48" y="-17" width="96" height="8" rx="4" fill="#fff" opacity=".55"/></g>
+    </g>
+
+    <!-- BLISTER PACK -->
+    <g transform="translate(512 392) rotate(-9)" filter="url(#shadow)">
+      <rect x="-320" y="-185" width="640" height="370" rx="44" fill="url(#foil)"/>
+      <rect x="-320" y="-185" width="640" height="370" rx="44" fill="url(#holo)"/>
+      <rect x="-306" y="-171" width="612" height="342" rx="34" fill="none" stroke="#ffffff" stroke-opacity=".7" stroke-width="4"/>
+      <!-- perforation -->
+      <line x1="-300" y1="0" x2="300" y2="0" stroke="#5b6378" stroke-width="4" stroke-dasharray="12 10" opacity=".55"/>
+      <line x1="0" y1="-170" x2="0" y2="170" stroke="#5b6378" stroke-width="4" stroke-dasharray="12 10" opacity=".35"/>
+      <!-- foil print -->
+      <text x="-292" y="-148" font-family="DotGothic16" font-size="26" fill="#3a0d6e" opacity=".75">RAMUNE ×8</text>
+      <text x="292" y="168" font-family="DotGothic16" font-size="24" fill="#3a0d6e" opacity=".7" text-anchor="end">LOT 0626 · FICTION</text>
+      <!-- bubbles: 2 rows x 4 -->
+      <g id="bubbles">
+        <g transform="translate(-225 -82)"><circle r="62" fill="#cfd6e6" opacity=".55"/><path d="M0 -42 L12 -13 43 -12 19 8 27 39 0 22 -27 39 -19 8 -43 -12 -12 -13Z" fill="url(#tY)" stroke="#fff" stroke-opacity=".75" stroke-width="3" stroke-linejoin="round"/><ellipse cx="-8" cy="-16" rx="9" ry="5" fill="#fff" opacity=".8"/><circle r="62" fill="url(#dome)"/><circle r="62" fill="none" stroke="#fff" stroke-width="5" opacity=".9"/></g>
+        <g transform="translate(-75 -82)"><circle r="62" fill="#cfd6e6" opacity=".55"/><g fill="url(#tP)"><circle r="38" fill="url(#tP)"/></g><text y="10" font-family="DotGothic16" font-size="28" text-anchor="middle" fill="#7d0b40" opacity=".7">LV</text><ellipse cx="-12" cy="-16" rx="14" ry="7" fill="#fff" opacity=".75" transform="rotate(-25 -12 -16)"/><circle r="62" fill="url(#dome)"/><circle r="62" fill="none" stroke="#fff" stroke-width="5" opacity=".9"/></g>
+        <!-- popped bubble: torn foil, empty -->
+        <g transform="translate(75 -82)"><circle r="62" fill="#cfd6e6" opacity=".55"/><circle r="56" fill="#f2f4fa"/><path d="M41.9 0.0 L48.5 12.0 L36.2 19.0 L37.4 33.2 L24.9 36.1 L17.7 46.8 L4.9 40.1 L-6.0 49.6 L-15.3 40.4 L-28.4 41.1 L-31.6 28.0 L-44.3 23.2 L-39.2 9.7 L-50.0 0.0 L-41.8 -10.3 L-44.3 -23.2 L-30.1 -26.7 L-28.4 -41.1 L-15.1 -39.8 L-6.0 -49.6 L4.9 -40.1 L17.7 -46.8 L23.0 -33.4 L37.4 -33.2 L37.7 -19.8 L48.5 -12.0Z" fill="#1d1830"/><path d="M41.9 0.0 L48.5 12.0 L36.2 19.0 L37.4 33.2 L24.9 36.1 L17.7 46.8 L4.9 40.1 L-6.0 49.6 L-15.3 40.4 L-28.4 41.1 L-31.6 28.0 L-44.3 23.2 L-39.2 9.7 L-50.0 0.0 L-41.8 -10.3 L-44.3 -23.2 L-30.1 -26.7 L-28.4 -41.1 L-15.1 -39.8 L-6.0 -49.6 L4.9 -40.1 L17.7 -46.8 L23.0 -33.4 L37.4 -33.2 L37.7 -19.8 L48.5 -12.0Z" fill="none" stroke="#8c94a8" stroke-width="2"/><circle r="56" fill="none" stroke="#fff" stroke-width="4" opacity=".9"/><path d="M-14 -46 Q0 -60 16 -50 L6 -38Z" fill="#ffffff" stroke="#9aa3b6" stroke-width="2"/></g>
+        <g transform="translate(225 -82)"><circle r="62" fill="#cfd6e6" opacity=".55"/><g transform="scale(.95)"><path d="M0 30 C-50 -6 -56 -46 -27 -54 C-12 -58 0 -46 0 -34 C0 -46 12 -58 27 -54 C56 -46 50 -6 0 30Z" fill="url(#tP)" stroke="#fff" stroke-opacity=".7" stroke-width="3" transform="translate(0 10)"/></g><circle r="62" fill="url(#dome)"/><circle r="62" fill="none" stroke="#fff" stroke-width="5" opacity=".9"/></g>
+        <g transform="translate(-225 82)"><circle r="62" fill="#cfd6e6" opacity=".55"/><path d="M0 -40 L35 -20 35 20 0 40 -35 20 -35 -20Z" fill="url(#tC)" stroke="#fff" stroke-opacity=".7" stroke-width="3"/><circle r="62" fill="url(#dome)"/><circle r="62" fill="none" stroke="#fff" stroke-width="5" opacity=".9"/></g>
+        <g transform="translate(-75 82)"><circle r="62" fill="#cfd6e6" opacity=".55"/><circle r="38" fill="url(#tV)"/><text y="10" font-family="DotGothic16" font-size="28" text-anchor="middle" fill="#2a0a55" opacity=".7">LM</text><circle r="62" fill="url(#dome)"/><circle r="62" fill="none" stroke="#fff" stroke-width="5" opacity=".9"/></g>
+        <g transform="translate(75 82)"><circle r="62" fill="#cfd6e6" opacity=".55"/><circle r="38" fill="url(#tG)"/><line x1="-26" y1="0" x2="26" y2="0" stroke="#0b4020" stroke-opacity=".35" stroke-width="5" stroke-linecap="round"/><circle r="62" fill="url(#dome)"/><circle r="62" fill="none" stroke="#fff" stroke-width="5" opacity=".9"/></g>
+        <g transform="translate(225 82)"><circle r="62" fill="#cfd6e6" opacity=".55"/><g transform="rotate(-35)"><rect x="-44" y="-20" width="44" height="40" rx="20" fill="url(#capR)"/><rect x="0" y="-20" width="44" height="40" rx="20" fill="url(#capW)"/><rect x="-4" y="-20" width="8" height="40" fill="url(#capW)"/></g><circle r="62" fill="url(#dome)"/><circle r="62" fill="none" stroke="#fff" stroke-width="5" opacity=".9"/></g>
+      </g>
+      <!-- warning sticker -->
+      <g transform="translate(286 -150) rotate(14)" filter="url(#glow)">
+        <circle r="62" fill="#ffd60a" stroke="#141414" stroke-width="8"/>
+        <path d="M0 -36 L34 26 -34 26Z" fill="#141414"/><rect x="-5" y="-14" width="10" height="24" rx="5" fill="#ffd60a"/><circle cy="18" r="5.5" fill="#ffd60a"/>
+      </g>
+    </g>
+
+    <!-- the popped tablet, in front -->
+    <g filter="url(#shadow)">
+      <g transform="translate(560 640) rotate(18)"><circle r="44" fill="url(#tC)"/><circle r="44" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="3"/><text y="11" font-family="DotGothic16" font-size="30" text-anchor="middle" fill="#064a5c" opacity=".75">FT</text><ellipse cx="-14" cy="-18" rx="15" ry="7" fill="#fff" opacity=".8" transform="rotate(-25 -14 -18)"/></g>
+      <g transform="translate(250 600) rotate(-14) scale(.85)"><path d="M0 -42 L12 -13 43 -12 19 8 27 39 0 22 -27 39 -19 8 -43 -12 -12 -13Z" fill="url(#tP)" stroke="#fff" stroke-opacity=".7" stroke-width="3" stroke-linejoin="round"/></g>
+    </g>
+    <!-- soda bubbles -->
+    <g fill="none" stroke="#bff8ff" stroke-width="4" opacity=".75">
+      <circle cx="820" cy="660" r="14"/><circle cx="850" cy="620" r="8"/><circle cx="180" cy="660" r="11"/><circle cx="150" cy="620" r="6"/><circle cx="930" cy="430" r="7"/>
+    </g>
+  </svg>
+  <div class="vig"></div>
+  <div class="tag">キケンな</div>
+  <div class="main">ラムネ</div>
+  <div class="cap"><span class="l">シミュ</span><span class="r">レーター</span></div>
+  <div class="rim"></div>
+</div>
+</body></html>
