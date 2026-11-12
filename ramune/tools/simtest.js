@@ -77,3 +77,5 @@ RUN('itamin x5',[[0,'sub','itamin',5]]);
 RUN('chill x3',[[0,'sub','chillmaki',3]]);
 RUN('fuyuu x3',[[0,'sub','fuyuu',3]]);
 RUN('koflez x4',[[0,'sub','koflez',4]]);
+RUN('heart+rocket',[[0,'sub','heart'],[0,'sub','rocket']]);
+RUN('heart+rocket late',[[0,'sub','heart'],[60,'sub','rocket']]);

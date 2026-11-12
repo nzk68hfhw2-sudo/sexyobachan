@@ -19,7 +19,7 @@
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.8.1';
+var GAME_VERSION = '1.8.2';
 
 var ROOT, UI, CANVAS_HOST;
 
@@ -930,7 +930,7 @@ function bodyStep1(B, dt) {
     B.comboS[cb.id] = st;
     if (st > 0.15) {
       cb.f(m, st);
-      if (st > 0.6) { B.comboT[cb.id] = (B.comboT[cb.id] || 0) + dt; if (B.comboT[cb.id] > 3) discover(B, cb.id); }
+      if (st > 0.45) { B.comboT[cb.id] = (B.comboT[cb.id] || 0) + dt; if (B.comboT[cb.id] > 2) discover(B, cb.id); }
     }
   }
   if (B.placeboAt && B.t >= B.placeboAt) { B.placeboAt = 0; discover(B, 'placebo'); F.eu += 0.1; }
@@ -3145,7 +3145,7 @@ function updateHUD(dt, B) {
   HUD.feel.innerHTML = fl.map(function (f) { return '<div><div class="b"><i style="width:' + clamp(f[1] / 1.6 * 100, 4, 100) + '%;background:' + cols[f[0]] + '"></i></div>' + EFFECT_NAMES[f[0]] + '</div>'; }).join('');
   // active combinations
   var act = COMBOS.filter(function (c) { return !c.special && (B.comboS[c.id] || 0) > 0.45; }).sort(function (a, b) { return b.danger - a.danger; }).slice(0, 4);
-  HUD.combos.innerHTML = act.map(function (c) { var known = SAVE.seenCombos[c.id]; return '<div class="dg' + c.danger + '">🧪 ' + (known ? esc(c.name) : '？？？') + '</div>'; }).join('');
+  HUD.combos.innerHTML = act.map(function (c) { var known = SAVE.seenCombos[c.id]; return '<div class="dg' + c.danger + '">🧪 ' + (known ? esc(c.name) : '？？？（' + esc(c.hint) + '）') + '</div>'; }).join('');
   // phone screen texture on table
   drawPhoneScreen(fmtClock(GAME.clock), totalUnread() > 0);
 }

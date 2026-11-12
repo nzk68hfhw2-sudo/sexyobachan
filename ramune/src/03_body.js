@@ -159,7 +159,7 @@ function bodyStep1(B, dt) {
     B.comboS[cb.id] = st;
     if (st > 0.15) {
       cb.f(m, st);
-      if (st > 0.6) { B.comboT[cb.id] = (B.comboT[cb.id] || 0) + dt; if (B.comboT[cb.id] > 3) discover(B, cb.id); }
+      if (st > 0.45) { B.comboT[cb.id] = (B.comboT[cb.id] || 0) + dt; if (B.comboT[cb.id] > 2) discover(B, cb.id); }
     }
   }
   if (B.placeboAt && B.t >= B.placeboAt) { B.placeboAt = 0; discover(B, 'placebo'); F.eu += 0.1; }

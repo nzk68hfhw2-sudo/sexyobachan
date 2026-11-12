@@ -239,7 +239,7 @@ function updateHUD(dt, B) {
   HUD.feel.innerHTML = fl.map(function (f) { return '<div><div class="b"><i style="width:' + clamp(f[1] / 1.6 * 100, 4, 100) + '%;background:' + cols[f[0]] + '"></i></div>' + EFFECT_NAMES[f[0]] + '</div>'; }).join('');
   // active combinations
   var act = COMBOS.filter(function (c) { return !c.special && (B.comboS[c.id] || 0) > 0.45; }).sort(function (a, b) { return b.danger - a.danger; }).slice(0, 4);
-  HUD.combos.innerHTML = act.map(function (c) { var known = SAVE.seenCombos[c.id]; return '<div class="dg' + c.danger + '">🧪 ' + (known ? esc(c.name) : '？？？') + '</div>'; }).join('');
+  HUD.combos.innerHTML = act.map(function (c) { var known = SAVE.seenCombos[c.id]; return '<div class="dg' + c.danger + '">🧪 ' + (known ? esc(c.name) : '？？？（' + esc(c.hint) + '）') + '</div>'; }).join('');
   // phone screen texture on table
   drawPhoneScreen(fmtClock(GAME.clock), totalUnread() > 0);
 }
