@@ -20,6 +20,8 @@ function shapePoints(shape) {
     case 'bolt': pts = [[0.2, 1], [-0.6, -0.1], [-0.05, -0.1], [-0.3, -1], [0.6, 0.15], [0.05, 0.15]]; break;
     case 'cross': pts = [[-0.3, 1], [0.3, 1], [0.3, 0.3], [1, 0.3], [1, -0.3], [0.3, -0.3], [0.3, -1], [-0.3, -1], [-0.3, -0.3], [-1, -0.3], [-1, 0.3], [-0.3, 0.3]]; break;
     case 'tiny': pts = circ(24, 0.6); break;
+    case 'packet': pts = [[0, 1], [1, 0], [0, -1], [-1, 0]]; break;
+    case 'stamp': pts = [[-0.85, 0.85], [0.85, 0.85], [0.85, -0.85], [-0.85, -0.85]]; break;
     case 'cigar':
       for (i = 0; i <= 10; i++) { a = -PI / 2 + i / 10 * PI; pts.push([0.85 + Math.cos(a) * 0.17, Math.sin(a) * 0.17]); }
       for (i = 0; i <= 10; i++) { a = PI / 2 + i / 10 * PI; pts.push([-0.95 + Math.cos(a) * 0.06, Math.sin(a) * 0.15]); }
@@ -44,6 +46,8 @@ function ramuneIcon(s, size) {
   var key = s.id + size; if (ICON_CACHE[key]) return ICON_CACHE[key];
   var c = mkCanvas(size, size), g = c.getContext('2d'), m = size / 2;
   var r = size * 0.36;
+  if (s.form === 'powder') return (ICON_CACHE[key] = powderIcon(s, size));
+  if (s.form === 'paper') return (ICON_CACHE[key] = paperIcon(s, size));
   g.save();
   g.shadowColor = s.col2; g.shadowBlur = size * 0.12;
   var gr = g.createRadialGradient(m - r * 0.35, m - r * 0.4, r * 0.1, m, m, r * 1.2);
@@ -272,4 +276,39 @@ function drawPhoneScreen(clock, notif) {
   g.fillStyle = '#fff'; g.font = '700 16px sans-serif'; g.textAlign = 'center'; g.fillText(clock, 32, 34);
   if (notif) { g.fillStyle = 'rgba(255,255,255,0.85)'; roundRect(g, 5, 52, 54, 22, 5); g.fill(); g.fillStyle = '#d53369'; g.font = '700 9px sans-serif'; g.fillText('通知 1件', 32, 66); }
   TEX.phone.needsUpdate = true;
+}
+
+// powder: a folded medicine paper (薬包紙) with a small heap of coloured powder
+function powderIcon(s, size) {
+  var c = mkCanvas(size, size), g = c.getContext('2d'), m = size / 2, r = size * 0.42;
+  g.save(); g.translate(m, m * 1.05); g.rotate(PI / 4);
+  g.fillStyle = '#f7f5ef'; g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = size * 0.015;
+  g.fillRect(-r * 0.7, -r * 0.7, r * 1.4, r * 1.4); g.strokeRect(-r * 0.7, -r * 0.7, r * 1.4, r * 1.4);
+  g.strokeStyle = 'rgba(0,0,0,0.1)'; g.beginPath(); g.moveTo(-r * 0.7, -r * 0.7); g.lineTo(r * 0.7, r * 0.7); g.moveTo(r * 0.7, -r * 0.7); g.lineTo(-r * 0.7, r * 0.7); g.stroke();
+  g.restore();
+  var gr = g.createRadialGradient(m - r * 0.15, m - r * 0.05, r * 0.05, m, m + r * 0.1, r * 0.6);
+  gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.35, s.col); gr.addColorStop(1, s.col2);
+  g.fillStyle = gr; g.beginPath(); g.ellipse(m, m + r * 0.18, r * 0.52, r * 0.3, 0, PI, 0); g.ellipse(m, m + r * 0.18, r * 0.52, r * 0.12, 0, 0, PI); g.fill();
+  for (var i = 0; i < 14; i++) { g.fillStyle = i % 3 ? s.col : '#ffffff'; g.fillRect(m + (Math.random() - 0.5) * r * 1.2, m + r * 0.25 + Math.random() * r * 0.25, size * 0.018, size * 0.018); }
+  if (s.id === 'hoshiko') for (var k = 0; k < 6; k++) { g.fillStyle = '#fff'; var x = m + (Math.random() - 0.5) * r, y = m + (Math.random() - 0.3) * r * 0.6; g.fillRect(x, y - size * 0.02, size * 0.008, size * 0.04); g.fillRect(x - size * 0.02, y, size * 0.04, size * 0.008); }
+  return c.toDataURL();
+}
+// paper: a perforated stamp with a printed motif
+function paperIcon(s, size) {
+  var c = mkCanvas(size, size), g = c.getContext('2d'), m = size / 2, h = size * 0.34;
+  g.save(); g.translate(m, m); g.rotate(-0.12);
+  g.shadowColor = 'rgba(0,0,0,0.4)'; g.shadowBlur = size * 0.05;
+  g.fillStyle = '#fbf8f0'; g.fillRect(-h, -h, h * 2, h * 2); g.shadowBlur = 0;
+  g.fillStyle = 'rgba(0,0,0,0.0)';
+  for (var i = -h; i <= h; i += size * 0.05) { g.clearRect(i - size * 0.012, -h - size * 0.012, size * 0.024, size * 0.024); g.clearRect(i - size * 0.012, h - size * 0.012, size * 0.024, size * 0.024); g.clearRect(-h - size * 0.012, i - size * 0.012, size * 0.024, size * 0.024); g.clearRect(h - size * 0.012, i - size * 0.012, size * 0.024, size * 0.024); }
+  var ih = h * 0.8, gr = g.createLinearGradient(-ih, -ih, ih, ih); gr.addColorStop(0, s.col); gr.addColorStop(1, s.col2);
+  g.fillStyle = gr; g.fillRect(-ih, -ih, ih * 2, ih * 2);
+  g.fillStyle = '#fff'; g.strokeStyle = '#fff'; g.lineWidth = size * 0.03;
+  if (s.art === 'rainbow') { ['#ff5a5a', '#ffd23f', '#3fe08a', '#4fe3ff', '#b46bff'].forEach(function (cc, k) { g.strokeStyle = cc; g.beginPath(); g.arc(0, ih * 0.5, ih * (0.95 - k * 0.15), PI, TAU); g.stroke(); }); }
+  else if (s.art === 'cat') { g.beginPath(); g.arc(0, ih * 0.1, ih * 0.55, 0, TAU); g.fill(); g.beginPath(); g.moveTo(-ih * 0.5, -ih * 0.15); g.lineTo(-ih * 0.35, -ih * 0.7); g.lineTo(-ih * 0.1, -ih * 0.4); g.moveTo(ih * 0.5, -ih * 0.15); g.lineTo(ih * 0.35, -ih * 0.7); g.lineTo(ih * 0.1, -ih * 0.4); g.fill(); g.fillStyle = '#333'; g.fillRect(-ih * 0.28, 0, ih * 0.1, ih * 0.14); g.fillRect(ih * 0.18, 0, ih * 0.1, ih * 0.14); }
+  else if (s.art === 'window') { g.strokeRect(-ih * 0.6, -ih * 0.6, ih * 1.2, ih * 1.2); g.beginPath(); g.moveTo(0, -ih * 0.6); g.lineTo(0, ih * 0.6); g.moveTo(-ih * 0.6, 0); g.lineTo(ih * 0.6, 0); g.stroke(); }
+  else if (s.art === 'moon') { g.beginPath(); g.arc(0, 0, ih * 0.55, 0, TAU); g.fill(); g.fillStyle = s.col; g.beginPath(); g.arc(ih * 0.25, -ih * 0.15, ih * 0.5, 0, TAU); g.fill(); }
+  else if (s.art === 'rocket') { g.beginPath(); g.moveTo(0, -ih * 0.75); g.quadraticCurveTo(ih * 0.35, -ih * 0.3, ih * 0.22, ih * 0.4); g.lineTo(-ih * 0.22, ih * 0.4); g.quadraticCurveTo(-ih * 0.35, -ih * 0.3, 0, -ih * 0.75); g.fill(); g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(-ih * 0.15, ih * 0.45); g.lineTo(0, ih * 0.8); g.lineTo(ih * 0.15, ih * 0.45); g.fill(); }
+  g.restore();
+  return c.toDataURL();
 }

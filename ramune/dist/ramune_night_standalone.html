@@ -19,7 +19,7 @@
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.8.4';
+var GAME_VERSION = '1.9.0';
 
 var ROOT, UI, CANVAS_HOST;
 
@@ -299,6 +299,38 @@ var SUBS = [
   { id: 'itamin', name: 'イタミナイン', nick: '痛み止め', imp: 'IN', cls: 'otc', otc: true, liver: 1, col: '#ffffff', col2: '#e0e0e0', shape: 'round',
     on: 30, pk: 60, pl: 180, du: 300, fx: { pa: 0.15, eu: 0.05 }, ph: {}, stock: 4,
     desc: '熱さましと痛み止め（架空）。飲みすぎてもほとんど何も感じない。…でも、肝臓は静かにダメージを受けている。' },
+  // ---- 粉（薬包紙に包んだ粉末ラムネ・なめて使う）----
+  { id: 'shuwako', name: 'スパークリン', nick: 'シュワシュワ粉', imp: '', cls: 'up', form: 'powder', col: '#7fd7ff', col2: '#e8fbff', shape: 'packet',
+    on: 3, pk: 10, pl: 35, du: 90, fx: { st: 1.2, eu: 0.8, an: 0.3 }, ph: { hr: 32, tp: 0.5, rr: 3 }, tail: { eu: -0.6, an: 0.45, se: 0.35 }, stock: 3,
+    desc: '舌の上でパチパチはじける水色の粉。すぐに目がさえて、1時間ちょっとで一気に落ちる。' },
+  { id: 'hoshiko', name: 'アストラリン', nick: 'ほしくず粉', imp: '', cls: 'psy', form: 'powder', col: '#ffe8a3', col2: '#b46bff', shape: 'packet',
+    on: 20, pk: 50, pl: 150, du: 260, fx: { ps: 1.15, eu: 0.45, an: 0.25, na: 0.15 }, ph: { hr: 14, tp: 0.3 }, stock: 3,
+    desc: 'きらきら光る金色の粉。なめると、まぶたの裏に星くずが降ってくる。' },
+  { id: 'momoko', name: 'ピーチェン', nick: 'ももいろ粉', imp: '', cls: 'emp', form: 'powder', col: '#ffb3cf', col2: '#ff5fa8', shape: 'packet',
+    on: 15, pk: 40, pl: 90, du: 180, fx: { em: 1.1, eu: 0.95, st: 0.35 }, ph: { hr: 26, tp: 0.85, rr: 2 }, tail: { eu: -0.55, an: 0.25 }, dehyd: 1.4, stock: 3,
+    desc: '桃の香りのピンクの粉。すぐに胸があたたかくなる。ハート系より早く効いて、早く切れる。' },
+  { id: 'nemuko', name: 'スリーパ', nick: 'ねむり粉', imp: '', cls: 'down', form: 'powder', col: '#c9c3ff', col2: '#4b4ba8', shape: 'packet',
+    on: 10, pk: 30, pl: 120, du: 240, fx: { se: 1.0, an: -0.5, eu: 0.2 }, ph: { hr: -8, rr: -3 }, stock: 2,
+    desc: 'ラベンダー色のさらさらした粉。なめるとすぐにまぶたが重くなる。お酒とは合わない。' },
+  { id: 'fuwako', name: 'エアリーナ', nick: 'ふわり粉', imp: '', cls: 'dis', form: 'powder', col: '#d6fff3', col2: '#5e7bff', shape: 'packet',
+    on: 3, pk: 10, pl: 25, du: 60, fx: { di: 1.1, se: 0.25, eu: 0.3, na: 0.2 }, ph: { hr: 8, rr: -1 }, stock: 3,
+    desc: 'ミントの香りの白い粉。体がふわっと浮いて、手足が遠くなる。すぐ切れる。' },
+  // ---- 紙（舌にのせる、絵柄入りの小さな紙）----
+  { id: 'nijikami', name: 'ルミペーパー', nick: 'にじいろ紙', imp: '', cls: 'psy', form: 'paper', col: '#ff7ad9', col2: '#7df9ff', shape: 'stamp', art: 'rainbow',
+    on: 45, pk: 120, pl: 360, du: 660, fx: { ps: 1.4, eu: 0.4, an: 0.3, di: 0.2 }, ph: { hr: 14, tp: 0.3 }, stock: 2,
+    desc: '虹の絵が刷られた小さな紙。効きはじめは遅いが、一度効くと朝まで続く、とても長い幻覚。' },
+  { id: 'nekokami', name: 'ミャウシート', nick: 'ねこの紙', imp: '', cls: 'psy', form: 'paper', col: '#ffd166', col2: '#ff8c42', shape: 'stamp', art: 'cat',
+    on: 40, pk: 90, pl: 200, du: 380, fx: { ps: 0.8, em: 0.4, eu: 0.65 }, ph: { hr: 10, tp: 0.2 }, stock: 3,
+    desc: 'ねこの顔が刷られた紙。やさしい幻覚で、部屋中のものがねこに見えてくる。' },
+  { id: 'madokami', name: 'ウィンドペーパー', nick: 'まど紙', imp: '', cls: 'dis', form: 'paper', col: '#a0e7ff', col2: '#2b6cb0', shape: 'stamp', art: 'window',
+    on: 35, pk: 90, pl: 180, du: 320, fx: { di: 0.8, ps: 0.6, eu: 0.3, an: 0.15 }, ph: { hr: 10, rr: -1 }, stock: 2,
+    desc: '窓の絵が刷られた紙。窓の向こうに、もうひとつの部屋が見えてくる。' },
+  { id: 'yumekami', name: 'ドリーミン', nick: 'ゆめ紙', imp: '', cls: 'del', form: 'paper', col: '#3a2a6e', col2: '#ffe14d', shape: 'stamp', art: 'moon',
+    on: 50, pk: 140, pl: 300, du: 520, fx: { de: 0.65, ps: 0.5, se: 0.25, an: 0.3 }, ph: { hr: 20, tp: 0.4 }, dehyd: 0.8, stock: 2,
+    desc: '三日月の絵が刷られた紙。起きたまま夢を見て、夢の住人と話しはじめる。' },
+  { id: 'rocketkami', name: 'ジェットシート', nick: 'ロケット紙', imp: '', cls: 'up', form: 'paper', col: '#ff5a5a', col2: '#ffd23f', shape: 'stamp', art: 'rocket',
+    on: 25, pk: 60, pl: 160, du: 260, fx: { st: 0.9, eu: 0.55, an: 0.25 }, ph: { hr: 28, tp: 0.4, rr: 2 }, tail: { eu: -0.35, an: 0.3, se: 0.3 }, stock: 3,
+    desc: 'ロケットの絵が刷られた紙。じわじわ上がって、長く飛ぶ。' },
   // ---- とばり系 ----
   { id: 'tobari', name: 'ノクスベリン', nick: 'よるのとばりラムネ', imp: 'NX', cls: 'del', col: '#1b1b24', col2: '#6a00ff', shape: 'round',
     on: 60, pk: 180, pl: 330, du: 720, fx: { de: 1.2, se: 0.35, an: 0.4, na: 0.1, ps: 0.1 }, ph: { hr: 30, tp: 0.6 }, dehyd: 1.0, stock: 2,
@@ -739,6 +771,70 @@ var COMBOS = [
     f: function (m, s) { m.rrMul += 1.0 * s; } },
   { id: 'hv_delup', name: '暴れる影', need: [{ c: 'del', lv: 1.6 }, { c: 'up' }], danger: 3, hint: 'せん妄系（大量）× アッパー系', desc: '影の住人が暴れだし、自分も止まれない。心臓と体温が危ない。',
     f: function (m, s) { m.add.de += 0.4 * s; m.ph.hr += 30 * s; m.ph.tp += 0.6 * s; } },
+
+  // ---- 粉と紙の飲み合わせ ----
+  { id: 'powdermix', name: '粉まみれ', need: [{ fdistinct: 'powder', n: 2 }], danger: 2, hint: '粉 × 別の粉', desc: '何種類もの粉をなめた。舌も頭もざらざらする。心臓もせわしない。',
+    f: function (m, s) { m.ph.hr += 15 * s; m.add.na += 0.25 * s; m.add.an += 0.2 * s; } },
+  { id: 'paperstack', name: '紙の束', need: [{ fdistinct: 'paper', n: 2 }], danger: 2, hint: '紙 × 別の紙', desc: '絵柄がまざりあって、部屋が絵本のページみたいにめくれていく。',
+    f: function (m, s) { m.mul.ps += 0.35 * s; m.add.an += 0.3 * s; m.vis.kal += 0.4 * s; } },
+  { id: 'paperpowder', name: '紙と粉', need: [{ f: 'powder' }, { f: 'paper' }], danger: 2, hint: '粉 × 紙', desc: 'なめて、のせて。効きはじめの早さがちがう2つが、時間差で押し寄せる。',
+    f: function (m, s) { m.add.eu += 0.25 * s; m.add.an += 0.25 * s; m.ph.hr += 4 * s; } },
+  { id: 'sparkhigh', name: '火花ハイボール', need: [{ s: 'shuwako' }, { c: 'alc' }], danger: 2, hint: 'スパークリン（シュワ粉）× お酒', desc: 'パチパチする粉をチューハイで流しこむ。酔いがかくれて、心臓は全力疾走。',
+    f: function (m, s) { m.mask.alc += 0.45 * s; m.ph.hr += 10 * s; } },
+  { id: 'meteor', name: '流星群', need: [{ s: 'shuwako' }, { c: 'psy' }], danger: 2, hint: 'スパークリン（シュワ粉）× 幻覚系', desc: '幻覚の中を、光の粒が流れ星みたいに走っていく。',
+    f: function (m, s) { m.mul.ps += 0.3 * s; m.add.an += 0.25 * s; m.ph.hr += 5 * s; } },
+  { id: 'stardust', name: '星屑の海', need: [{ s: 'hoshiko' }, { c: 'psy', lv: 1.4 }], danger: 2, hint: 'アストラリン（ほしくず粉）× ほかの幻覚系もたっぷり', desc: '床が星屑の海になり、泳げそうな気がしてくる。',
+    f: function (m, s) { m.mul.ps += 0.35 * s; m.vis.kal += 0.5 * s; } },
+  { id: 'starlove', name: '流れ星の告白', need: [{ s: 'hoshiko' }, { c: 'emp' }], danger: 1, hint: 'アストラリン（ほしくず粉）× ハート系', desc: '星が降るたびに、だれかに好きと言いたくなる。',
+    f: function (m, s) { m.add.em += 0.3 * s; m.add.eu += 0.25 * s; } },
+  { id: 'peachstorm', name: 'もも色の嵐', need: [{ s: 'momoko' }, { c: 'up' }], danger: 3, hint: 'ピーチェン（ももいろ粉）× アッパー系', desc: '甘い香りのまま、体温と心拍が一気に上がる。',
+    f: function (m, s) { m.ph.tp += 1.1 * s; m.ph.hr += 20 * s; m.dehyd += 1.2 * s; } },
+  { id: 'peachsour', name: 'ももサワー', need: [{ s: 'momoko' }, { c: 'alc' }], danger: 1, hint: 'ピーチェン（ももいろ粉）× お酒', desc: 'もも味のサワーみたいに飲みやすい。水分がどんどん抜けていく。',
+    f: function (m, s) { m.add.eu += 0.2 * s; m.dehyd += 1.0 * s; } },
+  { id: 'lullaby', name: '粉の子守唄', need: [{ s: 'nemuko' }, { c: 'alc' }], danger: 3, hint: 'スリーパ（ねむり粉）× お酒', desc: 'お酒といっしょだと、子守唄が止まらない。呼吸もゆっくりになっていく。',
+    f: function (m, s) { m.add.se += 0.5 * s; m.rrMul += 0.6 * s; } },
+  { id: 'sleepnuku', name: 'ねむり粉ぬくぬく', need: [{ s: 'nemuko' }, { c: 'op' }], danger: 3, hint: 'スリーパ（ねむり粉）× オピオイド系', desc: 'ねむり粉とぬくぬくで、深い眠りの底へ。呼吸が止まりかける。',
+    f: function (m, s) { m.add.se += 0.4 * s; m.rrMul += 0.8 * s; } },
+  { id: 'skywalk', name: '空中散歩', need: [{ s: 'fuwako' }, { c: 'psy' }], danger: 2, hint: 'エアリーナ（ふわり粉）× 幻覚系', desc: '色の雲の上を、ふわふわ歩いている。',
+    f: function (m, s) { m.add.di += 0.35 * s; m.mul.ps += 0.2 * s; } },
+  { id: 'wobblepowder', name: 'ぐらぐら粉', need: [{ s: 'fuwako' }, { c: 'alc' }], danger: 2, hint: 'エアリーナ（ふわり粉）× お酒', desc: '浮いているのか落ちているのか。とにかく気持ち悪い。',
+    f: function (m, s) { m.add.na += 0.6 * s; m.add.di += 0.2 * s; m.vis.spin += 0.5 * s; } },
+  { id: 'beyondrainbow', name: '虹の向こう', need: [{ s: 'nijikami' }, { s: 'yumeiro' }], danger: 2, hint: 'ルミペーパー（にじいろ紙）× ルミセルジン（ゆめいろ）', desc: '虹を2つ重ねたら、虹の向こう側に出てしまった。',
+    f: function (m, s) { m.mul.ps += 0.4 * s; m.add.an += 0.3 * s; m.vis.kal += 0.6 * s; } },
+  { id: 'rainbowlift', name: '七色エレベーター', need: [{ s: 'nijikami' }, { c: 'dis' }], danger: 2, hint: 'ルミペーパー（にじいろ紙）× 解離系', desc: '七色の光のエレベーターで、体を置いたまま上へ上へ。',
+    f: function (m, s) { m.add.di += 0.35 * s; m.mul.ps += 0.3 * s; m.vis.kal += 0.7 * s; } },
+  { id: 'endlessrainbow', name: '終わらない虹', need: [{ s: 'nijikami' }, { s: 'booster' }], danger: 3, hint: 'ルミペーパー（にじいろ紙）× アンプリフェン（ブースター）', desc: 'ただでさえ長い虹が、ブースターでさらに引きのばされる。朝になっても終わらない。',
+    f: function (m, s) { m.mul.ps += 0.35 * s; m.add.an += 0.45 * s; m.ph.hr += 15 * s; } },
+  { id: 'catfriend', name: 'ねこと仲良し', need: [{ s: 'nekokami' }, { c: 'emp' }], danger: 1, hint: 'ミャウシート（ねこの紙）× ハート系', desc: '部屋中のねこ（たぶんクッション）と仲良くなった。',
+    f: function (m, s) { m.add.em += 0.3 * s; m.add.eu += 0.3 * s; } },
+  { id: 'catnap', name: 'ねこのひるね', need: [{ s: 'nekokami' }, { c: 'chill' }], danger: 0, hint: 'ミャウシート（ねこの紙）× チル系', desc: 'ねこみたいに丸くなって、ごろごろしたい。',
+    f: function (m, s) { m.add.eu += 0.25 * s; m.add.se += 0.2 * s; } },
+  { id: 'windowspace', name: '窓の外の宇宙', need: [{ s: 'madokami' }, { c: 'psy' }], danger: 2, hint: 'ウィンドペーパー（まど紙）× 幻覚系', desc: 'ベランダの窓の外が、まるごと宇宙につながった。',
+    f: function (m, s) { m.mul.ps += 0.3 * s; m.add.di += 0.3 * s; m.vis.kal += 0.4 * s; } },
+  { id: 'windowshadow', name: '窓の向こうの影', need: [{ s: 'madokami' }, { c: 'del' }], danger: 2, hint: 'ウィンドペーパー（まど紙）× せん妄系', desc: '窓の向こうの部屋に、だれかが住んでいる。こっちを見ている。',
+    f: function (m, s) { m.add.de += 0.4 * s; m.add.an += 0.35 * s; } },
+  { id: 'nightmarebottom', name: '悪夢の底', need: [{ s: 'yumekami' }, { c: 'down' }], danger: 2, hint: 'ドリーミン（ゆめ紙）× ダウナー系', desc: '眠いのに、夢の住人がしつこく話しかけてくる。呼吸も重い。',
+    f: function (m, s) { m.add.de += 0.35 * s; m.add.se += 0.3 * s; m.rrMul += 0.3 * s; } },
+  { id: 'dreamborder', name: '夢と現実の境目', need: [{ s: 'yumekami' }, { c: 'psy' }], danger: 2, hint: 'ドリーミン（ゆめ紙）× 幻覚系', desc: 'どこまでが夢で、どこからが部屋なのか、もうわからない。',
+    f: function (m, s) { m.add.de += 0.3 * s; m.mul.ps += 0.3 * s; m.add.an += 0.3 * s; } },
+  { id: 'stratosphere', name: '成層圏', need: [{ s: 'rocketkami' }, { distinct: 'up', n: 2 }], danger: 2, hint: 'ジェットシート（ロケット紙）× 別のアッパー系', desc: 'ロケットを重ねて、成層圏まで打ち上がる。心臓が持たない。',
+    f: function (m, s) { m.ph.hr += 20 * s; m.add.an += 0.3 * s; } },
+  { id: 'rocketsake', name: 'ロケット酒', need: [{ s: 'rocketkami' }, { c: 'alc' }], danger: 2, hint: 'ジェットシート（ロケット紙）× お酒', desc: '酔っているのに眠くならない。気づくと缶が並んでいる。',
+    f: function (m, s) { m.mask.alc += 0.4 * s; m.ph.hr += 12 * s; } },
+  { id: 'papersmoke', name: '紙とけむり', need: [{ f: 'paper' }, { c: 'chill' }], danger: 1, hint: '紙 × チル系', desc: 'けむりの中で絵柄が動きだす。',
+    f: function (m, s) { m.mul.ps += 0.2 * s; m.add.eu += 0.2 * s; } },
+  { id: 'powdersmoke', name: '粉とけむり', need: [{ f: 'powder' }, { c: 'smk' }], danger: 1, hint: '粉 × けむり系', desc: '粉をなめて、ベランダで一服。むせる。',
+    f: function (m, s) { m.add.na += 0.3 * s; m.ph.hr += 8 * s; } },
+  { id: 'kitchenlab', name: '台所の実験', need: [{ f: 'powder' }, { c: 'otc' }], danger: 2, hint: '粉 × 市販薬系', desc: '粉と市販薬をまぜた。なにが起きるかだれにもわからない。体が悲鳴をあげる。',
+    f: function (m, s) { m.add.na += 0.4 * s; m.ph.hr += 15 * s; m.add.de += 0.2 * s; } },
+  { id: 'paperotc', name: '紙とくすり箱', need: [{ f: 'paper' }, { c: 'otc' }], danger: 1, hint: '紙 × 市販薬系', desc: '紙の絵柄が、薬箱の中で動きまわる。',
+    f: function (m, s) { m.add.de += 0.25 * s; m.add.na += 0.2 * s; } },
+  { id: 'hv_powder', name: '粉の嵐', need: [{ f: 'powder', lv: 2.2 }], danger: 3, hint: '粉を大量に', desc: '粉をまとめてなめすぎた。体のあちこちが同時に悲鳴をあげている。',
+    f: function (m, s) { m.ph.hr += 25 * s; m.add.an += 0.4 * s; m.add.na += 0.4 * s; } },
+  { id: 'hv_paper', name: '紙の迷宮', need: [{ f: 'paper', lv: 2.2 }], danger: 3, hint: '紙を大量に', desc: '紙を何枚も舌にのせた。迷宮の出口が見つからない。',
+    f: function (m, s) { m.mul.ps += 0.4 * s; m.add.an += 0.5 * s; m.vis.kal += 0.8 * s; m.ph.hr += 15 * s; } },
+  { id: 'partyend', name: 'パーティーの終わり', need: [{ f: 'paper' }, { f: 'powder' }, { c: 'alc' }], danger: 3, hint: '紙 × 粉 × お酒', desc: '紙も粉もお酒も。楽しい時間のあとに、最悪の朝が待っている。',
+    f: function (m, s) { m.add.na += 0.45 * s; m.rrMul += 0.25 * s; m.add.an += 0.3 * s; } },
   { id: 'reset', name: '強制リセット', need: [], special: true, danger: 1,
     hint: 'ネガトキソン（リセット）× オピオイド系', desc: 'ぬくぬく系を一瞬で打ち消した。命は助かるが、反動で最悪の気分になる。' },
   { id: 'placebo', name: 'プラセボ効果', need: [], special: true, danger: 0,
@@ -864,7 +960,7 @@ function bodyStep(B, dt) {
 
 function bodyStep1(B, dt) {
   B.t += dt;
-  var F = {}, P = { hr: 0, tp: 0, rr: 0 }, rrDep = 0, L = {}, Ls = {}, distinct = {}, seBy = {}, dehyd = 0;
+  var F = {}, P = { hr: 0, tp: 0, rr: 0 }, rrDep = 0, L = {}, Ls = {}, Lf = {}, distinct = {}, distinctF = {}, seBy = {}, dehyd = 0;
   CH.forEach(function (c) { F[c] = 0; });
 
   // booster level first (it changes others)
@@ -885,6 +981,7 @@ function bodyStep1(B, dt) {
     var lvl = c * amt * tolF * mul;
     L[s.cls] = (L[s.cls] || 0) + lvl;
     Ls[s.id] = (Ls[s.id] || 0) + lvl;
+    if (s.form) { Lf[s.form] = (Lf[s.form] || 0) + lvl; if (lvl > 0.25) { distinctF[s.form] = distinctF[s.form] || {}; distinctF[s.form][s.id] = 1; } }
     if (lvl > 0.25 && !s.hidden) { distinct[s.cls] = distinct[s.cls] || {}; distinct[s.cls][s.id] = 1; }
     if (s.id === 'gigafx' && lvl > 0.25) { distinct.up = distinct.up || {}; distinct.up.gigafx = 1; }
     for (var ch in s.fx) { F[ch] += s.fx[ch] * lvl; if (ch === 'se') seBy[s.cls] = (seBy[s.cls] || 0) + s.fx[ch] * lvl; }
@@ -924,7 +1021,8 @@ function bodyStep1(B, dt) {
     for (var ni = 0; ni < cb.need.length; ni++) {
       var nd = cb.need[ni], v;
       if (nd.distinct) { var n = distinct[nd.distinct] ? Object.keys(distinct[nd.distinct]).length : 0; v = n >= nd.n ? clamp((L[nd.distinct] || 0) / 1.0, 0, 1.5) : 0; }
-      else v = needV(nd, nd.s ? (Ls[nd.s] || 0) : (L[nd.c] || 0));
+      else if (nd.fdistinct) { var nf = distinctF[nd.fdistinct] ? Object.keys(distinctF[nd.fdistinct]).length : 0; v = nf >= nd.n ? clamp((Lf[nd.fdistinct] || 0) / 1.0, 0, 1.5) : 0; }
+      else v = needV(nd, nd.f ? (Lf[nd.f] || 0) : nd.s ? (Ls[nd.s] || 0) : (L[nd.c] || 0));
       if (v < st) st = v;
     }
     B.comboS[cb.id] = st;
@@ -1534,6 +1632,8 @@ function shapePoints(shape) {
     case 'bolt': pts = [[0.2, 1], [-0.6, -0.1], [-0.05, -0.1], [-0.3, -1], [0.6, 0.15], [0.05, 0.15]]; break;
     case 'cross': pts = [[-0.3, 1], [0.3, 1], [0.3, 0.3], [1, 0.3], [1, -0.3], [0.3, -0.3], [0.3, -1], [-0.3, -1], [-0.3, -0.3], [-1, -0.3], [-1, 0.3], [-0.3, 0.3]]; break;
     case 'tiny': pts = circ(24, 0.6); break;
+    case 'packet': pts = [[0, 1], [1, 0], [0, -1], [-1, 0]]; break;
+    case 'stamp': pts = [[-0.85, 0.85], [0.85, 0.85], [0.85, -0.85], [-0.85, -0.85]]; break;
     case 'cigar':
       for (i = 0; i <= 10; i++) { a = -PI / 2 + i / 10 * PI; pts.push([0.85 + Math.cos(a) * 0.17, Math.sin(a) * 0.17]); }
       for (i = 0; i <= 10; i++) { a = PI / 2 + i / 10 * PI; pts.push([-0.95 + Math.cos(a) * 0.06, Math.sin(a) * 0.15]); }
@@ -1558,6 +1658,8 @@ function ramuneIcon(s, size) {
   var key = s.id + size; if (ICON_CACHE[key]) return ICON_CACHE[key];
   var c = mkCanvas(size, size), g = c.getContext('2d'), m = size / 2;
   var r = size * 0.36;
+  if (s.form === 'powder') return (ICON_CACHE[key] = powderIcon(s, size));
+  if (s.form === 'paper') return (ICON_CACHE[key] = paperIcon(s, size));
   g.save();
   g.shadowColor = s.col2; g.shadowBlur = size * 0.12;
   var gr = g.createRadialGradient(m - r * 0.35, m - r * 0.4, r * 0.1, m, m, r * 1.2);
@@ -1786,6 +1888,41 @@ function drawPhoneScreen(clock, notif) {
   g.fillStyle = '#fff'; g.font = '700 16px sans-serif'; g.textAlign = 'center'; g.fillText(clock, 32, 34);
   if (notif) { g.fillStyle = 'rgba(255,255,255,0.85)'; roundRect(g, 5, 52, 54, 22, 5); g.fill(); g.fillStyle = '#d53369'; g.font = '700 9px sans-serif'; g.fillText('通知 1件', 32, 66); }
   TEX.phone.needsUpdate = true;
+}
+
+// powder: a folded medicine paper (薬包紙) with a small heap of coloured powder
+function powderIcon(s, size) {
+  var c = mkCanvas(size, size), g = c.getContext('2d'), m = size / 2, r = size * 0.42;
+  g.save(); g.translate(m, m * 1.05); g.rotate(PI / 4);
+  g.fillStyle = '#f7f5ef'; g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = size * 0.015;
+  g.fillRect(-r * 0.7, -r * 0.7, r * 1.4, r * 1.4); g.strokeRect(-r * 0.7, -r * 0.7, r * 1.4, r * 1.4);
+  g.strokeStyle = 'rgba(0,0,0,0.1)'; g.beginPath(); g.moveTo(-r * 0.7, -r * 0.7); g.lineTo(r * 0.7, r * 0.7); g.moveTo(r * 0.7, -r * 0.7); g.lineTo(-r * 0.7, r * 0.7); g.stroke();
+  g.restore();
+  var gr = g.createRadialGradient(m - r * 0.15, m - r * 0.05, r * 0.05, m, m + r * 0.1, r * 0.6);
+  gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.35, s.col); gr.addColorStop(1, s.col2);
+  g.fillStyle = gr; g.beginPath(); g.ellipse(m, m + r * 0.18, r * 0.52, r * 0.3, 0, PI, 0); g.ellipse(m, m + r * 0.18, r * 0.52, r * 0.12, 0, 0, PI); g.fill();
+  for (var i = 0; i < 14; i++) { g.fillStyle = i % 3 ? s.col : '#ffffff'; g.fillRect(m + (Math.random() - 0.5) * r * 1.2, m + r * 0.25 + Math.random() * r * 0.25, size * 0.018, size * 0.018); }
+  if (s.id === 'hoshiko') for (var k = 0; k < 6; k++) { g.fillStyle = '#fff'; var x = m + (Math.random() - 0.5) * r, y = m + (Math.random() - 0.3) * r * 0.6; g.fillRect(x, y - size * 0.02, size * 0.008, size * 0.04); g.fillRect(x - size * 0.02, y, size * 0.04, size * 0.008); }
+  return c.toDataURL();
+}
+// paper: a perforated stamp with a printed motif
+function paperIcon(s, size) {
+  var c = mkCanvas(size, size), g = c.getContext('2d'), m = size / 2, h = size * 0.34;
+  g.save(); g.translate(m, m); g.rotate(-0.12);
+  g.shadowColor = 'rgba(0,0,0,0.4)'; g.shadowBlur = size * 0.05;
+  g.fillStyle = '#fbf8f0'; g.fillRect(-h, -h, h * 2, h * 2); g.shadowBlur = 0;
+  g.fillStyle = 'rgba(0,0,0,0.0)';
+  for (var i = -h; i <= h; i += size * 0.05) { g.clearRect(i - size * 0.012, -h - size * 0.012, size * 0.024, size * 0.024); g.clearRect(i - size * 0.012, h - size * 0.012, size * 0.024, size * 0.024); g.clearRect(-h - size * 0.012, i - size * 0.012, size * 0.024, size * 0.024); g.clearRect(h - size * 0.012, i - size * 0.012, size * 0.024, size * 0.024); }
+  var ih = h * 0.8, gr = g.createLinearGradient(-ih, -ih, ih, ih); gr.addColorStop(0, s.col); gr.addColorStop(1, s.col2);
+  g.fillStyle = gr; g.fillRect(-ih, -ih, ih * 2, ih * 2);
+  g.fillStyle = '#fff'; g.strokeStyle = '#fff'; g.lineWidth = size * 0.03;
+  if (s.art === 'rainbow') { ['#ff5a5a', '#ffd23f', '#3fe08a', '#4fe3ff', '#b46bff'].forEach(function (cc, k) { g.strokeStyle = cc; g.beginPath(); g.arc(0, ih * 0.5, ih * (0.95 - k * 0.15), PI, TAU); g.stroke(); }); }
+  else if (s.art === 'cat') { g.beginPath(); g.arc(0, ih * 0.1, ih * 0.55, 0, TAU); g.fill(); g.beginPath(); g.moveTo(-ih * 0.5, -ih * 0.15); g.lineTo(-ih * 0.35, -ih * 0.7); g.lineTo(-ih * 0.1, -ih * 0.4); g.moveTo(ih * 0.5, -ih * 0.15); g.lineTo(ih * 0.35, -ih * 0.7); g.lineTo(ih * 0.1, -ih * 0.4); g.fill(); g.fillStyle = '#333'; g.fillRect(-ih * 0.28, 0, ih * 0.1, ih * 0.14); g.fillRect(ih * 0.18, 0, ih * 0.1, ih * 0.14); }
+  else if (s.art === 'window') { g.strokeRect(-ih * 0.6, -ih * 0.6, ih * 1.2, ih * 1.2); g.beginPath(); g.moveTo(0, -ih * 0.6); g.lineTo(0, ih * 0.6); g.moveTo(-ih * 0.6, 0); g.lineTo(ih * 0.6, 0); g.stroke(); }
+  else if (s.art === 'moon') { g.beginPath(); g.arc(0, 0, ih * 0.55, 0, TAU); g.fill(); g.fillStyle = s.col; g.beginPath(); g.arc(ih * 0.25, -ih * 0.15, ih * 0.5, 0, TAU); g.fill(); }
+  else if (s.art === 'rocket') { g.beginPath(); g.moveTo(0, -ih * 0.75); g.quadraticCurveTo(ih * 0.35, -ih * 0.3, ih * 0.22, ih * 0.4); g.lineTo(-ih * 0.22, ih * 0.4); g.quadraticCurveTo(-ih * 0.35, -ih * 0.3, 0, -ih * 0.75); g.fill(); g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(-ih * 0.15, ih * 0.45); g.lineTo(0, ih * 0.8); g.lineTo(ih * 0.15, ih * 0.45); g.fill(); }
+  g.restore();
+  return c.toDataURL();
 }
 
 
@@ -2221,6 +2358,11 @@ function buildHeld() {
   var light = new THREE.PointLight(0xffffff, 0.6, 0.8); light.position.set(0, 0.1, 0.2); HELD.g.add(light);
 }
 function pillMesh(s) {
+  if (s.form) { // powder packet / paper stamp: a flat card showing its icon
+    var tex = new THREE.TextureLoader().load(ramuneIcon(s, 128)); tex.encoding = THREE.sRGBEncoding;
+    var card = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.05, side: THREE.DoubleSide }));
+    card.scale.setScalar(0.024); return card;
+  }
   var pts = shapePoints(s.shape);
   var shp = new THREE.Shape(); pts.forEach(function (p, i) { if (i) shp.lineTo(p[0], p[1]); else shp.moveTo(p[0], p[1]); });
   if (s.shape === 'ring') { var hole = new THREE.Path(); hole.absarc(0, 0, 0.45, 0, TAU, true); shp.holes.push(hole); }
@@ -3194,7 +3336,7 @@ function openPillMenu() {
 function renderPillGrid(body) {
   setModalTitle('ラムネケース');
   body.innerHTML = '';
-  [['🍬 ラムネ', function (s) { return !s.smoke && !s.otc; }], ['🧴 市販薬（ドラッグストア）', function (s) { return s.otc; }], ['🚬 はまき', function (s) { return s.smoke; }]].forEach(function (sec) {
+  [['🍬 ラムネ', function (s) { return !s.smoke && !s.otc && !s.form; }], ['🧂 粉（なめる）', function (s) { return s.form === 'powder'; }], ['📄 紙（舌にのせる）', function (s) { return s.form === 'paper'; }], ['🧴 市販薬（ドラッグストア）', function (s) { return s.otc; }], ['🚬 はまき', function (s) { return s.smoke; }]].forEach(function (sec) {
     el('div', 'rm-sec', sec[0], body);
     var g = el('div', 'rm-grid', '', body);
     SUBS.forEach(function (s) {
@@ -3228,7 +3370,7 @@ function pendingClass(c) { // taken recently but not kicked in yet
 }
 function renderPillDetail(body, s, onBack) {
   setModalTitle(s.name);
-  var cl = CLASSES[s.cls], n = stockOf(s.id), B = GAME.B, verb = s.smoke ? '吸う' : '飲む', unit = s.smoke ? '本' : s.shape === 'drop' && s.otc ? '回分' : '個';
+  var cl = CLASSES[s.cls], n = stockOf(s.id), B = GAME.B, verb = s.smoke ? '吸う' : s.form === 'powder' ? 'なめる' : s.form === 'paper' ? '舌にのせる' : '飲む', unit = s.smoke ? '本' : s.form === 'powder' ? '包' : s.form === 'paper' ? '枚' : s.shape === 'drop' && s.otc ? '回分' : '個';
   var qty = Math.min(1, n) || 1;
   body.innerHTML = '';
   var d = el('div', 'rm-detail', '', body);
@@ -3451,7 +3593,8 @@ function actTakePill(id, n) {
     if (n >= 3) { say(pick(['…ちょっと多すぎたかも。', 'まとめて飲んじゃった…', 'のどに' + n + '個ひっかかってる気がする']), 3.5); }
     var first = !SAVE.seenSubs[id];
     SAVE.seenSubs[id] = 1; writeSave();
-    toast((first ? '🆕 ' : '') + s.name + '（' + s.nick + '）' + (n > 1 ? 'を ' + n + ' 個まとめて' : 'を') + '口に入れた。カリッ。', n >= 3 ? 'warn' : 'good');
+    var how = s.form === 'powder' ? ['包', 'なめた。ざらっ。'] : s.form === 'paper' ? ['枚', '舌にのせた。じわっ。'] : ['個', '口に入れた。カリッ。'];
+    toast((first ? '🆕 ' : '') + s.name + '（' + s.nick + '）' + (n > 1 ? 'を ' + n + ' ' + how[0] + 'まとめて' : 'を') + how[1], n >= 3 ? 'warn' : 'good');
     if (s.reset && !GAME.B.found.length) { }
   });
 }

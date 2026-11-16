@@ -52,7 +52,8 @@ function actTakePill(id, n) {
     if (n >= 3) { say(pick(['…ちょっと多すぎたかも。', 'まとめて飲んじゃった…', 'のどに' + n + '個ひっかかってる気がする']), 3.5); }
     var first = !SAVE.seenSubs[id];
     SAVE.seenSubs[id] = 1; writeSave();
-    toast((first ? '🆕 ' : '') + s.name + '（' + s.nick + '）' + (n > 1 ? 'を ' + n + ' 個まとめて' : 'を') + '口に入れた。カリッ。', n >= 3 ? 'warn' : 'good');
+    var how = s.form === 'powder' ? ['包', 'なめた。ざらっ。'] : s.form === 'paper' ? ['枚', '舌にのせた。じわっ。'] : ['個', '口に入れた。カリッ。'];
+    toast((first ? '🆕 ' : '') + s.name + '（' + s.nick + '）' + (n > 1 ? 'を ' + n + ' ' + how[0] + 'まとめて' : 'を') + how[1], n >= 3 ? 'warn' : 'good');
     if (s.reset && !GAME.B.found.length) { }
   });
 }

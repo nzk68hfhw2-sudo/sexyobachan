@@ -288,7 +288,7 @@ function openPillMenu() {
 function renderPillGrid(body) {
   setModalTitle('ラムネケース');
   body.innerHTML = '';
-  [['🍬 ラムネ', function (s) { return !s.smoke && !s.otc; }], ['🧴 市販薬（ドラッグストア）', function (s) { return s.otc; }], ['🚬 はまき', function (s) { return s.smoke; }]].forEach(function (sec) {
+  [['🍬 ラムネ', function (s) { return !s.smoke && !s.otc && !s.form; }], ['🧂 粉（なめる）', function (s) { return s.form === 'powder'; }], ['📄 紙（舌にのせる）', function (s) { return s.form === 'paper'; }], ['🧴 市販薬（ドラッグストア）', function (s) { return s.otc; }], ['🚬 はまき', function (s) { return s.smoke; }]].forEach(function (sec) {
     el('div', 'rm-sec', sec[0], body);
     var g = el('div', 'rm-grid', '', body);
     SUBS.forEach(function (s) {
@@ -322,7 +322,7 @@ function pendingClass(c) { // taken recently but not kicked in yet
 }
 function renderPillDetail(body, s, onBack) {
   setModalTitle(s.name);
-  var cl = CLASSES[s.cls], n = stockOf(s.id), B = GAME.B, verb = s.smoke ? '吸う' : '飲む', unit = s.smoke ? '本' : s.shape === 'drop' && s.otc ? '回分' : '個';
+  var cl = CLASSES[s.cls], n = stockOf(s.id), B = GAME.B, verb = s.smoke ? '吸う' : s.form === 'powder' ? 'なめる' : s.form === 'paper' ? '舌にのせる' : '飲む', unit = s.smoke ? '本' : s.form === 'powder' ? '包' : s.form === 'paper' ? '枚' : s.shape === 'drop' && s.otc ? '回分' : '個';
   var qty = Math.min(1, n) || 1;
   body.innerHTML = '';
   var d = el('div', 'rm-detail', '', body);

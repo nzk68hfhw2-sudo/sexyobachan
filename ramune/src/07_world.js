@@ -429,6 +429,11 @@ function buildHeld() {
   var light = new THREE.PointLight(0xffffff, 0.6, 0.8); light.position.set(0, 0.1, 0.2); HELD.g.add(light);
 }
 function pillMesh(s) {
+  if (s.form) { // powder packet / paper stamp: a flat card showing its icon
+    var tex = new THREE.TextureLoader().load(ramuneIcon(s, 128)); tex.encoding = THREE.sRGBEncoding;
+    var card = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.05, side: THREE.DoubleSide }));
+    card.scale.setScalar(0.024); return card;
+  }
   var pts = shapePoints(s.shape);
   var shp = new THREE.Shape(); pts.forEach(function (p, i) { if (i) shp.lineTo(p[0], p[1]); else shp.moveTo(p[0], p[1]); });
   if (s.shape === 'ring') { var hole = new THREE.Path(); hole.absarc(0, 0, 0.45, 0, TAU, true); shp.holes.push(hole); }

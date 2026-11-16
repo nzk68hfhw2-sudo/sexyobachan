@@ -153,12 +153,14 @@ document.getElementById('viewGrid').innerHTML = SHOTS.map(function (s) {
 
 // ---- items ----
 var CLS_ORDER = ['psy', 'up', 'down', 'op', 'dis', 'emp', 'del', 'gaba', 'chill', 'smk', 'otc', 'etc', 'alc'];
+var FORM_LABEL = { powder: '🧂 粉（なめる）', paper: '📄 紙（舌にのせる）' };
 var items = D.subs.map(function (s) { return Object.assign({ kind: 'sub' }, s); });
+items.forEach(function (i) { if (i.form) i.formLabel = FORM_LABEL[i.form]; });
 D.drinks.forEach(function (d) { items.push({ kind: 'drink', id: d.id, name: d.name, nick: d.sub, cls: d.alc > 0 ? 'alc' : 'up', desc: d.desc, icon: d.icon, alc: d.alc }); });
 var clsFilter = 'all';
 function chipHTML(key, label, col, pressed) { return '<button type="button" class="chip" data-k="' + key + '" aria-pressed="' + pressed + '">' + (col ? '<span class="dot" style="background:' + col + '"></span>' : '') + esc(label) + '</button>'; }
 function renderClsChips() {
-  var html = chipHTML('all', 'ぜんぶ', null, clsFilter === 'all');
+  var html = chipHTML('all', 'ぜんぶ', null, clsFilter === 'all') + chipHTML('f:powder', '🧂 粉', '#f7f5ef', clsFilter === 'f:powder') + chipHTML('f:paper', '📄 紙', '#fbf8f0', clsFilter === 'f:paper');
   CLS_ORDER.forEach(function (k) { var c = D.classes[k]; if (!c) return; if (!items.some(function (i) { return i.cls === k; })) return; html += chipHTML(k, c.icon + ' ' + c.short, c.col, clsFilter === k); });
   var el = document.getElementById('clsChips'); el.innerHTML = html;
   el.querySelectorAll('.chip').forEach(function (b) { b.onclick = function () { clsFilter = b.dataset.k; renderClsChips(); renderItems(); }; });
@@ -178,7 +180,7 @@ function timeline(s) {
     '<div class="tlk"><span>0</span><span>3時間</span><span>6時間</span><span>9時間</span><span>12時間</span></div>';
 }
 function renderItems() {
-  var list = items.filter(function (i) { return clsFilter === 'all' || i.cls === clsFilter; });
+  var list = items.filter(function (i) { return clsFilter === 'all' || i.cls === clsFilter || (clsFilter.indexOf('f:') === 0 && i.form === clsFilter.slice(2)); });
   document.getElementById('itemCount').textContent = list.length + ' / ' + items.length + ' 種類';
   document.getElementById('itemGrid').innerHTML = list.map(function (s) {
     var c = D.classes[s.cls] || { col: '#fff', name: '', icon: '' };

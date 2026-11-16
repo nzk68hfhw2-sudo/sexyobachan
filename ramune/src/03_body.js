@@ -93,7 +93,7 @@ function bodyStep(B, dt) {
 
 function bodyStep1(B, dt) {
   B.t += dt;
-  var F = {}, P = { hr: 0, tp: 0, rr: 0 }, rrDep = 0, L = {}, Ls = {}, distinct = {}, seBy = {}, dehyd = 0;
+  var F = {}, P = { hr: 0, tp: 0, rr: 0 }, rrDep = 0, L = {}, Ls = {}, Lf = {}, distinct = {}, distinctF = {}, seBy = {}, dehyd = 0;
   CH.forEach(function (c) { F[c] = 0; });
 
   // booster level first (it changes others)
@@ -114,6 +114,7 @@ function bodyStep1(B, dt) {
     var lvl = c * amt * tolF * mul;
     L[s.cls] = (L[s.cls] || 0) + lvl;
     Ls[s.id] = (Ls[s.id] || 0) + lvl;
+    if (s.form) { Lf[s.form] = (Lf[s.form] || 0) + lvl; if (lvl > 0.25) { distinctF[s.form] = distinctF[s.form] || {}; distinctF[s.form][s.id] = 1; } }
     if (lvl > 0.25 && !s.hidden) { distinct[s.cls] = distinct[s.cls] || {}; distinct[s.cls][s.id] = 1; }
     if (s.id === 'gigafx' && lvl > 0.25) { distinct.up = distinct.up || {}; distinct.up.gigafx = 1; }
     for (var ch in s.fx) { F[ch] += s.fx[ch] * lvl; if (ch === 'se') seBy[s.cls] = (seBy[s.cls] || 0) + s.fx[ch] * lvl; }
@@ -153,7 +154,8 @@ function bodyStep1(B, dt) {
     for (var ni = 0; ni < cb.need.length; ni++) {
       var nd = cb.need[ni], v;
       if (nd.distinct) { var n = distinct[nd.distinct] ? Object.keys(distinct[nd.distinct]).length : 0; v = n >= nd.n ? clamp((L[nd.distinct] || 0) / 1.0, 0, 1.5) : 0; }
-      else v = needV(nd, nd.s ? (Ls[nd.s] || 0) : (L[nd.c] || 0));
+      else if (nd.fdistinct) { var nf = distinctF[nd.fdistinct] ? Object.keys(distinctF[nd.fdistinct]).length : 0; v = nf >= nd.n ? clamp((Lf[nd.fdistinct] || 0) / 1.0, 0, 1.5) : 0; }
+      else v = needV(nd, nd.f ? (Lf[nd.f] || 0) : nd.s ? (Ls[nd.s] || 0) : (L[nd.c] || 0));
       if (v < st) st = v;
     }
     B.comboS[cb.id] = st;

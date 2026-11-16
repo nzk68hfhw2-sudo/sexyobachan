@@ -13,7 +13,7 @@ const OUT = path.join(__dirname, '..', 'gallery');
   await page.click('#rm-ok'); await page.waitForTimeout(500); await page.click('#rm-start'); await page.waitForTimeout(1500);
   // data
   const data = await ev(`(function(){
-    var subs = SUBS.filter(function(s){return !s.hidden}).map(function(s){return {id:s.id,name:s.name,nick:s.nick,imp:s.imp||'',cls:s.cls,smoke:!!s.smoke,otc:!!s.otc,on:s.on,pk:s.pk,pl:s.pl,du:s.du,fx:s.fx,ph:s.ph,desc:s.desc,icon:ramuneIcon(s,128)}});
+    var subs = SUBS.filter(function(s){return !s.hidden}).map(function(s){return {id:s.id,name:s.name,nick:s.nick,imp:s.imp||'',cls:s.cls,smoke:!!s.smoke,otc:!!s.otc,form:s.form||'',on:s.on,pk:s.pk,pl:s.pl,du:s.du,fx:s.fx,ph:s.ph,desc:s.desc,icon:ramuneIcon(s,128)}});
     var classes = {}; for (var k in CLASSES) classes[k] = {name:CLASSES[k].name, short:CLASSES[k].short, col:CLASSES[k].col, icon:CLASSES[k].icon, real:CLASSES[k].real||''};
     var drinks = DRINKS.map(function(d){return {id:d.id,name:d.name,sub:d.sub,desc:d.desc,alc:d.alc,icon:canIcon(d,128)}});
     var combos = COMBOS.map(function(c){return {id:c.id,name:c.name,hint:c.hint,desc:c.desc,danger:c.danger,classes:(c.need||[]).map(function(n){return n.c||n.distinct||(SUB[n.s]?SUB[n.s].cls:'')}),heavy:(c.need||[]).some(function(n){return n.lv}),special:!!c.special}});
