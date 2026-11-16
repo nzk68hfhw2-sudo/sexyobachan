@@ -1,0 +1,232 @@
+<title>キケンなラムネ図鑑</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+/* Layout: one long night-screen scroll — views gallery, item cards with timelines, filterable combo ledger. Single dark look by choice (matches the game). */
+:root {
+  color-scheme: dark;
+  --bg: #0d0618; --panel: #1a0d2e; --panel2: #24123d; --line: rgba(255,255,255,.12);
+  --fg: #f6f2ff; --dim: #b9aed6; --pink: #ff4fa3; --cyan: #4fe3ff; --yel: #ffd23f;
+  --d0: #7dffb0; --d1: #ffe14d; --d2: #ff9f1c; --d3: #ff3355;
+  --pix: "DotGothic16", ui-monospace, monospace; --body: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px;
+  background-image: radial-gradient(circle at 15% 0%, rgba(255,79,163,.18), transparent 40%), radial-gradient(circle at 90% 10%, rgba(79,227,255,.12), transparent 40%); background-attachment: fixed; }
+.wrap { max-width: 1100px; margin: 0 auto; }
+header { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+header img { width: 84px; height: 84px; border-radius: 20px; image-rendering: pixelated; box-shadow: 0 0 24px rgba(255,79,163,.45); }
+h1 { font-family: var(--pix); font-weight: 400; font-size: clamp(30px, 6vw, 46px); line-height: 1.1; margin: 0; text-wrap: balance;
+  text-shadow: -2px 0 rgba(79,227,255,.8), 2px 0 rgba(255,79,163,.8); }
+.sub { color: var(--dim); margin: 2px 0 0; font-size: 14px; }
+.note { font-size: 13px; color: var(--dim); background: rgba(255,255,255,.05); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin: 14px 0 6px; }
+nav.jump { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 4px; }
+nav.jump a { font-family: var(--pix); color: var(--fg); text-decoration: none; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); }
+nav.jump a:hover, nav.jump a:focus-visible { border-color: var(--pink); outline: none; }
+h2 { font-family: var(--pix); font-weight: 400; font-size: 26px; margin: 34px 0 4px; letter-spacing: .02em; }
+h2 small { font-family: var(--body); font-size: 13px; color: var(--dim); margin-left: 8px; letter-spacing: 0; }
+.lead { color: var(--dim); margin: 0 0 14px; max-width: 65ch; }
+
+/* views gallery */
+.views { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.view { margin: 0; background: var(--panel); border-radius: 14px; overflow: hidden; border: 1px solid var(--line); }
+.view img { display: block; width: 100%; aspect-ratio: 16/10; object-fit: cover; }
+.view figcaption { padding: 8px 12px 10px; font-size: 13px; }
+.view figcaption b { font-family: var(--pix); font-weight: 400; font-size: 16px; display: block; }
+
+/* chips */
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; }
+.chip { font: inherit; font-size: 13px; font-weight: 700; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.chip:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.chip .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+
+/* item cards */
+.items { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.item { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; border-top: 4px solid var(--c, var(--pink)); }
+.item .hd { display: flex; gap: 12px; align-items: center; }
+.item .hd img { width: 64px; height: 64px; flex: 0 0 auto; }
+.item .nm { font-weight: 900; font-size: 18px; line-height: 1.25; }
+.item .nk { font-size: 12px; color: var(--dim); }
+.badge { display: inline-block; font-size: 11px; font-weight: 900; padding: 1px 8px; border-radius: 999px; color: #120a20; background: var(--c); margin-top: 4px; }
+.item p { margin: 0; font-size: 14px; }
+.tl { position: relative; height: 22px; border-radius: 6px; background: rgba(255,255,255,.06); overflow: hidden; }
+.tl i { position: absolute; top: 0; bottom: 0; }
+.tl .lbl { position: absolute; right: 6px; top: 1px; font-family: var(--pix); font-size: 12px; color: var(--fg); text-shadow: 0 1px 2px #000; }
+.tlk { display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; margin-top: -6px; }
+.fx { display: grid; grid-template-columns: 5.5em 1fr 2.6em; gap: 3px 8px; align-items: center; font-size: 12px; }
+.fx .b { height: 7px; border-radius: 4px; background: rgba(255,255,255,.08); overflow: hidden; }
+.fx .b i { display: block; height: 100%; border-radius: 4px; }
+.fx .v { font-family: var(--pix); text-align: right; font-variant-numeric: tabular-nums; }
+.ph { display: flex; gap: 6px; flex-wrap: wrap; }
+.ph span { font-size: 12px; padding: 2px 8px; border-radius: 8px; background: rgba(255,255,255,.06); font-variant-numeric: tabular-nums; }
+details { font-size: 13px; color: var(--dim); }
+details summary { cursor: pointer; color: var(--fg); font-weight: 700; }
+.combos-of { font-size: 12px; color: var(--dim); }
+.combos-of b { color: var(--fg); }
+
+/* combos ledger */
+.tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.tools input { flex: 1 1 220px; min-width: 0; font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; }
+.count { font-family: var(--pix); color: var(--dim); font-size: 14px; }
+.ledger { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; }
+.cb { background: var(--panel); border: 1px solid var(--line); border-left: 6px solid var(--dc); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+.cb .t { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; flex-wrap: wrap; }
+.cb .t b { font-size: 16px; }
+.cb .lv { font-size: 11px; font-weight: 900; padding: 1px 8px; border-radius: 999px; background: var(--dc); color: #120a20; white-space: nowrap; }
+.cb .h { font-size: 12px; color: var(--cyan); margin-top: 2px; }
+.cb p { margin: 4px 0 0; font-size: 13.5px; }
+.empty { color: var(--dim); padding: 20px; text-align: center; }
+footer { margin-top: 40px; font-size: 12px; color: var(--dim); border-top: 1px solid var(--line); padding-top: 14px; }
+@media (prefers-reduced-motion: no-preference) { .item, .cb, .view { transition: border-color .15s; } .item:hover, .view:hover { border-color: rgba(255,79,163,.6); } }
+</style>
+
+<div class="wrap">
+  <header>
+    <img src="img/icon.png" alt="">
+    <div>
+      <h1>キケンなラムネ図鑑</h1>
+      <p class="sub">キケンなラムネシミュレーターに出てくる、すべてのアイテムと飲み合わせ</p>
+    </div>
+  </header>
+  <div class="note">これはゲームの中のフィクションです。ラムネ・はまき・市販薬・お酒の名前と効果はすべて架空で、実在の薬物・製品とは関係ありません。数値はゲーム内の目安で、現実の薬の量や時間とは無関係です。</div>
+  <nav class="jump" aria-label="ページ内リンク"><a href="#views">見え方</a><a href="#items">アイテム</a><a href="#combos">飲み合わせ</a></nav>
+
+  <section id="views">
+    <h2>見え方ギャラリー<small>ゲーム画面そのまま</small></h2>
+    <p class="lead">系統ごとに、部屋の見え方がこう変わります。いずれも効き目がピークのときのゲーム画面です。</p>
+    <div class="views" id="viewGrid"></div>
+  </section>
+
+  <section id="items">
+    <h2>アイテム<small id="itemCount"></small></h2>
+    <p class="lead">バーの色の部分が効いている時間です（濃い部分がピーク）。効果は1個あたりの強さで、まとめて飲むとその分強くなります。</p>
+    <div class="chips" id="clsChips" role="group" aria-label="系統でしぼりこむ"></div>
+    <div class="items" id="itemGrid"></div>
+  </section>
+
+  <section id="combos">
+    <h2>飲み合わせ<small id="comboTotal"></small></h2>
+    <p class="lead">組み合わせると効果が変わります。左の色は危険度です。</p>
+    <div class="tools">
+      <input id="comboSearch" type="search" placeholder="名前・系統で探す（例：お酒、深海）" aria-label="飲み合わせを探す">
+      <span class="count" id="comboCount"></span>
+    </div>
+    <div class="chips" id="dangerChips" role="group" aria-label="危険度でしぼりこむ"></div>
+    <div class="ledger" id="comboList"></div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+var D = __DATA__;
+var SHOTS = __SHOTS__;
+var VIEW_NOTE = {
+  sober: 'なにも飲んでいない、いつもの部屋。',
+  psy: '壁が呼吸し、色が波打ち、幾何学の浮遊物が漂う。',
+  psy2: '量が多いと部屋ごと万華鏡に溶ける。天井は星空に。',
+  up: 'くっきり、ぎらぎら。視界がわずかに震える。',
+  down: 'ぼんやりとにじみ、まぶたが落ちてくる。',
+  op: 'あたたかくかすんで、色が抜けていく。',
+  dis: '体を抜け出して、自分の背中を後ろから見ている。',
+  emp: 'ピンクの光とハートが舞い、なにもかもがやさしい。',
+  del: '暗く汚れた視界に、影の住人と虫が現れる。',
+  gaba: 'ふわっとにじみ、足元がゆらぐ。',
+  chill: 'ゆるい色ずれと、少しの幻覚。',
+  otc: 'ぼやけてゆがみ、気持ち悪さがにじむ。',
+  alc: '二重に見えて、部屋ごとゆらゆら揺れる。',
+  kal: '幻覚系×解離系。万華鏡のトンネルを上昇していく。',
+  danger: '体が危ないときは、画面のふちが赤く脈打つ。'
+};
+var FX_ORDER = ['eu', 'st', 'se', 'ps', 'di', 'de', 'em', 'pa', 'an', 'na'];
+var FX_COL = { eu: '#ffe14d', st: '#30c8ff', se: '#6a7dff', ps: '#b46bff', di: '#7af0c8', de: '#8a8a9a', em: '#ff5fa8', pa: '#ffb347', an: '#ff3355', na: '#9be15d' };
+var DANGER = ['安全', '注意', '危険', '命にかかわる'];
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function tt(m) { return m < 60 ? Math.round(m) + '分' : (m / 60).toFixed(m < 180 ? 1 : 0).replace('.0', '') + '時間'; }
+
+// ---- views ----
+document.getElementById('viewGrid').innerHTML = SHOTS.map(function (s) {
+  return '<figure class="view"><img loading="lazy" src="img/' + s.id + '.jpg" alt="' + esc(s.label) + 'のときのゲーム画面"><figcaption><b>' + esc(s.label) + '</b>' + esc(VIEW_NOTE[s.id] || '') + '</figcaption></figure>';
+}).join('');
+
+// ---- items ----
+var CLS_ORDER = ['psy', 'up', 'down', 'op', 'dis', 'emp', 'del', 'gaba', 'chill', 'smk', 'otc', 'etc', 'alc'];
+var items = D.subs.map(function (s) { return Object.assign({ kind: 'sub' }, s); });
+D.drinks.forEach(function (d) { items.push({ kind: 'drink', id: d.id, name: d.name, nick: d.sub, cls: d.alc > 0 ? 'alc' : 'up', desc: d.desc, icon: d.icon, alc: d.alc }); });
+var clsFilter = 'all';
+function chipHTML(key, label, col, pressed) { return '<button type="button" class="chip" data-k="' + key + '" aria-pressed="' + pressed + '">' + (col ? '<span class="dot" style="background:' + col + '"></span>' : '') + esc(label) + '</button>'; }
+function renderClsChips() {
+  var html = chipHTML('all', 'ぜんぶ', null, clsFilter === 'all');
+  CLS_ORDER.forEach(function (k) { var c = D.classes[k]; if (!c) return; if (!items.some(function (i) { return i.cls === k; })) return; html += chipHTML(k, c.icon + ' ' + c.short, c.col, clsFilter === k); });
+  var el = document.getElementById('clsChips'); el.innerHTML = html;
+  el.querySelectorAll('.chip').forEach(function (b) { b.onclick = function () { clsFilter = b.dataset.k; renderClsChips(); renderItems(); }; });
+}
+function combosFor(item) {
+  if (item.kind !== 'sub') return D.combos.filter(function (c) { return item.cls === 'alc' && c.classes.indexOf('alc') >= 0 && !c.heavy; }).length;
+  return D.combos.filter(function (c) { return c.classes.indexOf(item.cls) >= 0; }).length;
+}
+function timeline(s) {
+  var MAX = 720, w = function (m) { return Math.min(100, m / MAX * 100); };
+  var col = (D.classes[s.cls] || {}).col || '#fff';
+  return '<div class="tl" aria-label="効きはじめ' + tt(s.on) + '、ピーク' + tt(s.pk) + '〜' + tt(s.pl) + '、長さ' + tt(s.du) + '">' +
+    '<i style="left:' + w(s.on) + '%;width:' + (w(s.pk) - w(s.on)) + '%;background:' + col + ';opacity:.45"></i>' +
+    '<i style="left:' + w(s.pk) + '%;width:' + Math.max(0.6, w(s.pl) - w(s.pk)) + '%;background:' + col + '"></i>' +
+    '<i style="left:' + w(s.pl) + '%;width:' + (w(s.du) - w(s.pl)) + '%;background:' + col + ';opacity:.45"></i>' +
+    '<span class="lbl">' + tt(s.du) + '</span></div>' +
+    '<div class="tlk"><span>0</span><span>3時間</span><span>6時間</span><span>9時間</span><span>12時間</span></div>';
+}
+function renderItems() {
+  var list = items.filter(function (i) { return clsFilter === 'all' || i.cls === clsFilter; });
+  document.getElementById('itemCount').textContent = list.length + ' / ' + items.length + ' 種類';
+  document.getElementById('itemGrid').innerHTML = list.map(function (s) {
+    var c = D.classes[s.cls] || { col: '#fff', name: '', icon: '' };
+    var html = '<article class="item" style="--c:' + c.col + '"><div class="hd"><img src="' + s.icon + '" alt=""><div style="min-width:0"><div class="nm">' + esc(s.name) + '</div><div class="nk">' + (s.kind === 'sub' ? '通称「' + esc(s.nick) + '」' + (s.imp ? '・刻印 ' + esc(s.imp) : '') : esc(s.nick)) + '</div><span class="badge">' + c.icon + ' ' + esc(c.name) + '</span></div></div>';
+    html += '<p>' + esc(s.desc) + '</p>';
+    if (s.kind === 'sub') {
+      html += timeline(s);
+      var fx = FX_ORDER.filter(function (k) { return s.fx[k]; });
+      if (fx.length) html += '<div class="fx">' + fx.map(function (k) { var v = s.fx[k]; return '<span>' + esc(D.effects[k]) + '</span><div class="b"><i style="width:' + Math.min(100, Math.abs(v) / 1.8 * 100) + '%;background:' + (v < 0 ? '#5a6a8a' : FX_COL[k]) + '"></i></div><span class="v">' + (v > 0 ? '+' : '') + v + '</span>'; }).join('') + '</div>';
+      var ph = [];
+      if (s.ph.hr) ph.push('心拍 ' + (s.ph.hr > 0 ? '+' : '') + s.ph.hr);
+      if (s.ph.tp) ph.push('体温 ' + (s.ph.tp > 0 ? '+' : '') + s.ph.tp + '℃');
+      if (s.ph.rr) ph.push('呼吸 ' + (s.ph.rr > 0 ? '+' : '') + s.ph.rr);
+      if (ph.length) html += '<div class="ph">' + ph.map(function (p) { return '<span>' + p + '</span>'; }).join('') + '</div>';
+    } else if (s.alc > 0) {
+      html += '<div class="ph"><span>お酒 ' + s.alc + ' 杯ぶん</span></div>';
+    }
+    html += '<div class="combos-of">この系統がからむ飲み合わせ：<b>' + combosFor(s) + '</b> 種</div>';
+    if (c.real) html += '<details><summary>現実では…</summary>' + esc(c.real) + '</details>';
+    return html + '</article>';
+  }).join('');
+}
+renderClsChips(); renderItems();
+
+// ---- combos ----
+var dFilter = 'all', query = '';
+document.getElementById('comboTotal').textContent = D.combos.length + ' 種';
+function renderDangerChips() {
+  var html = chipHTML('all', 'ぜんぶ', null, dFilter === 'all');
+  [3, 2, 1, 0].forEach(function (d) { html += chipHTML(String(d), DANGER[d], 'var(--d' + d + ')', dFilter === String(d)); });
+  html += chipHTML('heavy', '大量に飲んだとき', '#b46bff', dFilter === 'heavy');
+  var el = document.getElementById('dangerChips'); el.innerHTML = html;
+  el.querySelectorAll('.chip').forEach(function (b) { b.onclick = function () { dFilter = b.dataset.k; renderDangerChips(); renderCombos(); }; });
+}
+function renderCombos() {
+  var q = query.trim();
+  var list = D.combos.filter(function (c) {
+    if (dFilter === 'heavy' && !c.heavy) return false;
+    if (dFilter !== 'all' && dFilter !== 'heavy' && String(c.danger) !== dFilter) return false;
+    if (q && (c.name + c.hint + c.desc).indexOf(q) < 0) return false;
+    return true;
+  }).sort(function (a, b) { return b.danger - a.danger; });
+  document.getElementById('comboCount').textContent = list.length + ' 件';
+  document.getElementById('comboList').innerHTML = list.length ? list.map(function (c) {
+    return '<article class="cb" style="--dc:var(--d' + c.danger + ')"><div class="t"><b>' + esc(c.name) + '</b><span class="lv">' + DANGER[c.danger] + '</span></div><div class="h">' + esc(c.hint) + '</div><p>' + esc(c.desc) + '</p></article>';
+  }).join('') : '<div class="empty">見つかりませんでした。別のことばで探してみてください。</div>';
+}
+document.getElementById('comboSearch').addEventListener('input', function (e) { query = e.target.value; renderCombos(); });
+renderDangerChips(); renderCombos();
+document.getElementById('foot').innerHTML = 'キケンなラムネシミュレーター v' + esc(D.version) + ' の図鑑 ・ すべてフィクションです ・ お酒は20歳になってから ・ 具合が悪いときは迷わず119番';
+</script>

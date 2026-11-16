@@ -9,7 +9,7 @@
 // 実在の薬物・製品とは一切関係ありません。
 // ---------------------------------------------------------------------------
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.8.2';
+var GAME_VERSION = '1.8.3';
 
 var ROOT, UI, CANVAS_HOST;
 
@@ -3693,6 +3693,7 @@ function updateTripVisuals(dt, B) {
   P.uSpin.value = Math.min(1.5, VS.spin + Math.max(0, VS.drunk - 1.1) * 0.6) * calm;
   P.uCalm.value = SAVE.settings.calm ? 1 : 0;
   GAME.fx.hue += dt * VS.psy * 0.08 * calm;
+  if (VS.psy < 0.12) { var hueHome = Math.round(GAME.fx.hue / TAU) * TAU; GAME.fx.hue = damp(GAME.fx.hue, hueHome, 0.8, dt); } // drift back to normal colours after a trip
   P.uHue.value = GAME.fx.hue;
   P.uRed.value = clamp(VS.red * 1.4, 0, 1);
   // eyelids: nodding off when sedated, closing when unconscious/resting
