@@ -65,6 +65,9 @@ var UI_CSS = [
   '.rm-card .st{font-size:10px;opacity:.75}',
   '.rm-sec{font-size:14px;font-weight:900;margin:12px 2px 6px;opacity:.9}.rm-sec:first-child{margin-top:0}',
   '.rm-qty{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05)}.rm-qty>span{font-size:13px;opacity:.75}.rm-qty .qv{font-family:"DotGothic16",monospace;font-size:26px;font-weight:400;min-width:36px;text-align:center}.rm-qty>.btn{width:44px;height:44px;padding:0;font-size:22px}.rm-qty .qs{display:flex;gap:6px;flex-wrap:wrap;width:100%}.rm-qty .qs .btn{padding:6px 10px;font-size:12px}',
+  '.rm-zkitem .rm-zkarrow{margin-left:auto;font-size:12px;opacity:.6;padding-left:6px}.rm-zk{display:flex;flex-direction:column;gap:8px;padding:10px 12px;margin:-4px 0 4px;border-radius:0 0 14px 14px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-top:none}',
+  '.rm-zkfx{display:grid;grid-template-columns:5.2em 1fr 2.6em;gap:3px 8px;align-items:center;font-size:12px}.rm-zkfx .b{height:7px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden}.rm-zkfx .b i{display:block;height:100%;border-radius:4px}.rm-zkfx em{font-style:normal;text-align:right;font-family:"DotGothic16",monospace}',
+  '.rm-zkph{display:flex;gap:6px;flex-wrap:wrap}.rm-zkph span{font-size:12px;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.08)}.rm-zkrel{font-size:12px;line-height:1.6;opacity:.9}',
   '.rm-card .nk{font-size:9.5px;opacity:.7;margin:-2px 0 2px;line-height:1.2}',
   '.rm-real{font-size:12.5px;line-height:1.55;padding:9px 11px;border-radius:12px;background:rgba(255,255,255,.06);border-left:4px solid var(--c,#fff)}',
   '.rm-card .cl{position:absolute;left:6px;top:6px;font-size:9px;padding:1px 5px;border-radius:6px;font-weight:900;color:#111}',
@@ -400,23 +403,54 @@ function drawHistory(cv) {
   }
   line('hr', 40, 220, '#ff5fa8'); line('tp', 35.5, 42, '#ff9f1c'); line('rr', 0, 30, '#7df9ff'); line('d', 0, 100, '#ff1744');
 }
+var ZK_FX = ['eu', 'st', 'se', 'ps', 'di', 'de', 'em', 'pa', 'an', 'na'];
+var ZK_COL = { eu: '#ffe14d', st: '#30c8ff', se: '#6a7dff', ps: '#b46bff', di: '#7af0c8', de: '#8a8a9a', em: '#ff5fa8', pa: '#ffb347', an: '#ff3355', na: '#9be15d' };
+function zkTabs(body, cur) {
+  var t = el('div', 'rm-tabs', '', body);
+  [['zukan', '🍬 ラムネ図鑑'], ['combo', '🧪 飲み合わせ図鑑']].forEach(function (d) {
+    var b = el('div', 'rm-tab' + (cur === d[0] ? ' on' : ''), d[1], t);
+    onTap(b, function () { if (cur !== d[0]) phoneNav(d[0]); });
+  });
+}
+function zkDetail(s) {
+  var html = '<div class="rm-zk">';
+  html += '<div class="rm-kv"><span>効きはじめ</span><b>約 ' + timeText(s.on) + '</b><span>ピーク</span><b>' + timeText(s.pk) + ' 〜 ' + timeText(s.pl) + '</b><span>効き目の長さ</span><b>約 ' + timeText(s.du) + '</b></div>';
+  var fx = ZK_FX.filter(function (k) { return s.fx[k]; });
+  if (fx.length) html += '<div class="rm-zkfx">' + fx.map(function (k) { var v = s.fx[k]; return '<span>' + EFFECT_NAMES[k] + '</span><div class="b"><i style="width:' + Math.min(100, Math.abs(v) / 1.8 * 100) + '%;background:' + (v < 0 ? '#5a6a8a' : ZK_COL[k]) + '"></i></div><em>' + (v > 0 ? '+' : '') + v + '</em>'; }).join('') + '</div>';
+  var ph = []; if (s.ph.hr) ph.push('心拍 ' + (s.ph.hr > 0 ? '+' : '') + s.ph.hr); if (s.ph.tp) ph.push('体温 ' + (s.ph.tp > 0 ? '+' : '') + s.ph.tp + '℃'); if (s.ph.rr) ph.push('呼吸 ' + (s.ph.rr > 0 ? '+' : '') + s.ph.rr);
+  if (ph.length) html += '<div class="rm-zkph">' + ph.map(function (p) { return '<span>' + p + '</span>'; }).join('') + '</div>';
+  var rel = COMBOS.filter(function (c) { return !c.special && c.need.some(function (n) { return n.s === s.id || n.c === s.cls || n.distinct === s.cls; }); });
+  var known = rel.filter(function (c) { return SAVE.seenCombos[c.id]; });
+  html += '<div class="rm-zkrel">この系統がからむ飲み合わせ ' + rel.length + ' 種' + (known.length ? '：' + known.slice(0, 12).map(function (c) { return '<span class="dg' + c.danger + '">' + esc(c.name) + '</span>'; }).join('、') + (known.length > 12 ? ' ほか' : '') : '') + '</div>';
+  html += '<div class="rm-real" style="--c:' + CLASSES[s.cls].col + '"><b>現実では…</b> ' + esc(CLASSES[s.cls].real || '') + '</div>';
+  return html + '</div>';
+}
 function phoneZukan(body) {
-  var seen = Object.keys(SAVE.seenSubs).length, total = SUBS.filter(function (s) { return !s.hidden; }).length;
-  el('div', 'rm-note', '見つけたラムネ ' + seen + ' / ' + total, body).style.margin = '0 0 8px';
-  var l = el('div', 'rm-list', '', body);
-  SUBS.forEach(function (s) {
-    if (s.hidden) return;
-    var ok = SAVE.seenSubs[s.id];
-    el('div', 'rm-item' + (ok ? '' : ' lock'), '<img src="' + ramuneIcon(s, 88) + '" style="' + (ok ? '' : 'filter:brightness(0) opacity(.5)') + '"><div class="tx"><b>' + (ok ? esc(s.name) + ' <span style="font-size:11px;opacity:.7">「' + esc(s.nick) + '」</span>' : '？？？') + ' <span style="font-size:11px;color:' + CLASSES[s.cls].col + '">' + CLASSES[s.cls].icon + esc(CLASSES[s.cls].short) + '</span></b><small>' + (ok ? esc(s.desc) + '<br>効きはじめ 約' + timeText(s.on) + ' ／ 長さ 約' + timeText(s.du) + '<br><span style="opacity:.8">現実では… ' + esc(CLASSES[s.cls].real) + '</span>' : 'まだ飲んだことがない') + '</small></div>', l);
+  var list = SUBS.filter(function (s) { return !s.hidden; });
+  var seen = list.filter(function (s) { return SAVE.seenSubs[s.id]; }).length;
+  zkTabs(body, 'zukan');
+  el('div', 'rm-note', '見つけたアイテム ' + seen + ' / ' + list.length + '　・　タップすると効果が見られます', body).style.margin = '0 0 6px';
+  var l = el('div', 'rm-list', '', body); l.style.marginTop = '8px';
+  list.forEach(function (s) {
+    var ok = SAVE.seenSubs[s.id], cl = CLASSES[s.cls];
+    var it = el('div', 'rm-item tap rm-zkitem' + (ok ? '' : ' lock'), '<img src="' + ramuneIcon(s, 88) + '" style="' + (ok ? '' : 'filter:brightness(0) opacity(.5)') + '"><div class="tx"><b>' + (ok ? esc(s.name) + ' <span style="font-size:11px;opacity:.7">「' + esc(s.nick) + '」</span>' : '？？？') + ' <span style="font-size:11px;color:' + cl.col + '">' + cl.icon + esc(cl.short) + '</span></b><small>' + (ok ? esc(s.desc) : 'まだ使ったことがない') + '</small></div><span class="rm-zkarrow">' + (ok ? '▼' : '') + '</span>', l);
+    if (!ok) return;
+    var det = null;
+    onTap(it, function () {
+      sfx('ui');
+      if (det) { det.remove(); det = null; it.querySelector('.rm-zkarrow').textContent = '▼'; return; }
+      det = el('div', '', zkDetail(s), null); it.parentNode.insertBefore(det, it.nextSibling); it.querySelector('.rm-zkarrow').textContent = '▲';
+    });
   });
 }
 function phoneCombo(body) {
+  zkTabs(body, 'combo');
   var seen = Object.keys(SAVE.seenCombos).length;
-  el('div', 'rm-note', '見つけた飲み合わせ ' + seen + ' / ' + COMBOS.length + '　（色：<span class="dg0">安全</span>・<span class="dg1">注意</span>・<span class="dg2">危険</span>・<span class="dg3">命にかかわる</span>）', body).style.margin = '0 0 8px';
-  var l = el('div', 'rm-list', '', body);
-  COMBOS.forEach(function (cb) {
+  el('div', 'rm-note', '見つけた飲み合わせ ' + seen + ' / ' + COMBOS.length + '　（色：<span class="dg0">安全</span>・<span class="dg1">注意</span>・<span class="dg2">危険</span>・<span class="dg3">命にかかわる</span>）', body).style.margin = '0 0 6px';
+  var l = el('div', 'rm-list', '', body); l.style.marginTop = '8px';
+  COMBOS.slice().sort(function (a, b) { return b.danger - a.danger; }).forEach(function (cb) {
     var ok = SAVE.seenCombos[cb.id];
-    el('div', 'rm-item' + (ok ? '' : ' lock'), '<div class="tx"><b class="dg' + cb.danger + '">' + (ok ? '🧪 ' + esc(cb.name) : '？？？') + '</b><small>' + esc(cb.hint) + (ok ? '<br>' + esc(cb.desc) : '') + '</small></div>', l);
+    el('div', 'rm-item' + (ok ? '' : ' lock'), '<div class="tx"><b class="dg' + cb.danger + '">' + (ok ? '🧪 ' + esc(cb.name) : '？？？') + '　<span style="font-size:11px">' + ['安全', '注意', '危険', '命にかかわる'][cb.danger] + '</span></b><small>' + esc(cb.hint) + (ok ? '<br>' + esc(cb.desc) : '') + '</small></div>', l);
   });
 }
 function phoneSettings(body) {
