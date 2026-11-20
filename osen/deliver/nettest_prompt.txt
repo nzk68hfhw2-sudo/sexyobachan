@@ -1,0 +1,24 @@
+一字一句変えずに出力してください。書き換えは禁止です。
+以下のHTMLを、そのまま1文字も変えずに使ってください。説明文・コメント・改行の追加や削除、URLの変更、ライブラリの追加、iframe化、fetch化、コードの整形・省略はすべて禁止です。
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>通信テスト</title>
+<style>html,body{margin:0;background:#101018;color:#eee;font:15px sans-serif}#m{padding:40px 16px;white-space:pre-wrap;word-break:break-all}</style>
+</head>
+<body>
+<div id="m">通信テストを読み込み中…</div>
+<script>
+(function(){
+var URL_JS='https://seishin-osen.netlify.app/nettest.js';
+var s=document.createElement('script');
+s.src=URL_JS+'?'+Date.now();
+s.onerror=function(){document.getElementById('m').textContent='【失敗】nettest.js を読み込めませんでした。\nNetlify に新しい zip を上書きしたか、URL が正しいか確認してください。\nURL: '+URL_JS;};
+document.body.appendChild(s);
+})();
+</script>
+</body>
+</html>
