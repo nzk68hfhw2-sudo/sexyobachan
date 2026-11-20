@@ -6,7 +6,7 @@ var NET = { on: false, ok: false, T: null, room: '', pid: '', peers: {}, muted: 
 var ROOM_MAX = 6;
 // ---- 通信の「口」：Firebase ----
 function fbTransport(url) {
-  var fb = window.__osenFirebase; if (!fb) throw new Error('Firebase の部品がありません');
+  var fb = (typeof globalThis !== 'undefined' ? globalThis : window).__osenFirebase; if (!fb) throw new Error('Firebase の部品がありません');
   var app = fb.apps.filter(function (a) { return a.name === 'osen'; })[0] || fb.initializeApp({ databaseURL: url }, 'osen');
   var db = app.database(), base = 'osen/v1/';
   function R(p) { return db.ref(base + p); }
@@ -92,7 +92,11 @@ function enterRoom(room) {
   NET.T.on(base + 'e', 'child_added', onEvent, 40);
   NET.T.on(base + 'pol', 'value', function (k, v) { if (typeof v === 'number') { NET.polBase = v; G.pol = v + NET.polDelta; } });
   NET.T.once(base + 'pol').then(function (v) { if (typeof v !== 'number') NET.T.set(base + 'pol', Math.round(G.pol)); });
-  NET.T.once(base + 'i').then(function (all) { NET.applying = true; for (var k in (all || {})) applyItemState(k, all[k]); NET.applying = false; });
+  NET.T.once(base + 'i').then(function (all) {
+    NET.applying = true; for (var k in (all || {})) applyItemState(k, all[k]); NET.applying = false;
+    var upd = function (k, v) { if (!v || v.by === NET.pid) return; var it = findNetItem(k); if (it && (it === ITEMS.held || !it.body.sleep)) { if (it) it.pendState = v; return; } NET.applying = true; applyItemState(k, v); NET.applying = false; };
+    NET.T.on(base + 'i', 'child_changed', upd); NET.T.on(base + 'i', 'child_added', upd);
+  });
   sysMsg('同時プレイ：町「' + room + '」に入りました。ほかの人と同じ町です。');
   logMsg('sys', 'ほかの人とは　定型文・スタンプ・身ぶりで　話せます。⚙設定で　ミュートできます。');
 }
@@ -146,7 +150,8 @@ function onEvent(key, e) {
       case 'ges': if (pr && GESTURES.some(function (g2) { return g2.id === d.g; })) pr.gesture = { id: d.g, t: 0 }; break;
       case 'skill': if (pr && !NET.muted) logMsg('sys', who + 'が　とくぎを使った。'); break;
       case 'grab': { var it = findNetItem(d.i); if (it) { if (it === ITEMS.held) { ITEMS.held = null; sysMsg('ほかの人と同時に持とうとしました。ゆずりました。'); } it.heldBy = e.by; it.body.sleep = true; } break; }
-      case 'rel': { var it2 = findNetItem(d.i); if (!it2 && validType(d.ty) && d.i.indexOf('x_') === 0) { it2 = spawnItem(d.ty, d.x, d.y, d.z, d.yw, { scale: d.s }); it2.netKey = d.i; it2.spawned = true; }
+      case 'rel': { var it2 = findNetItem(d.i); if (!it2 && validType(d.ty)) { var df = d.i.indexOf('d_') === 0 ? PROP_DEFS.filter(function (q) { return q.id === d.i.slice(2); })[0] : null; it2 = spawnItem(d.ty, d.x, d.y, d.z, d.yw, { scale: d.s, def: df }); it2.netKey = d.i; if (!df) it2.spawned = true; }
+        if (pr && pr.holding === d.i) pr.holding = '';
         if (it2) { it2.heldBy = null; var b = it2.body; b.pos.set(d.x, d.y, d.z); b.vel.set(d.vx || 0, d.vy || 0, d.vz || 0); b.yaw = d.yw || 0; b.scale = clamp(d.s || 1, 0.3, 4); bodyExt(b); b.thrownT = (d.vx || d.vz) ? 2 : 1; wake(it2); it2.lastBy = e.by; it2.lastT = G.t; it2.ownSettle = false; } break; }
       case 'spawn': { if (findNetItem(d.i) || !validType(d.ty)) break; var n = spawnItem(d.ty, d.x, d.y - 0.2, d.z, 0, { scale: d.s || 1, awake: true }); n.netKey = d.i; n.spawned = true; n.body.vel.set(d.vx || 0, d.vy || 0, d.vz || 0); n.lastBy = e.by; n.lastT = G.t; break; }
       case 'gone': { var g3 = findNetItem(d.i); if (g3) { if (g3 === ITEMS.held) ITEMS.held = null; removeItem(g3); } break; }
@@ -209,7 +214,8 @@ NET.update = function (dt) {
   NET.sendT -= dt; if (NET.sendT <= 0) { NET.sendT = 0.25; if (NET.ok) writeMe(false); }
   updatePeers(dt);
   // 自分が動かした物が止まったら、最後の位置を記録（あとから来た人用）
-  for (var i = 0; i < ITEMS.list.length; i++) { var it = ITEMS.list[i]; if (it.ownSettle && it.body.sleep && it !== ITEMS.held) { it.ownSettle = false; itemState(it); } }
+  for (var i = 0; i < ITEMS.list.length; i++) { var it = ITEMS.list[i]; if (it.ownSettle && it.body.sleep && it !== ITEMS.held) { it.ownSettle = false; itemState(it); }
+    if (it.pendState && (it.body.sleep || G.t - (it.lastT || 0) > 6) && it !== ITEMS.held) { var ps = it.pendState; it.pendState = null; NET.applying = true; applyItemState(it.netKey, ps); NET.applying = false; } }
   // 町の汚染率をみんなで足す
   NET.polT -= dt; if (NET.polT <= 0 && NET.ok) { NET.polT = 3; if (Math.abs(NET.polDelta) > 0.01) { var dd = NET.polDelta; NET.polDelta = 0; NET.T.txnAdd('rooms/' + NET.room + '/pol', dd); } }
   // 古い自分の出来事を消す（量を少なくする）
@@ -238,9 +244,9 @@ function loadNotes() {
     }).catch(function () {});
   } catch (e) {}
 }
-function postNote(kind, extra) {
+function postNote(kind, extra, silent) {
   if (!NET_DB_URL || NET_DB_URL === 'local') return false;
-  if (Date.now() - NOTES.lastPost < 20000 || NOTES.posted > 30) { sysMsg('ひとことは　少し時間をあけて下さい。'); return false; }
+  if (Date.now() - NOTES.lastPost < 20000 || NOTES.posted > 30) { if (!silent) sysMsg('ひとことは　少し時間をあけて下さい。'); return false; }
   NOTES.lastPost = Date.now(); NOTES.posted++;
   var d = { x: r2(P.pos.x), y: r2(P.pos.y), z: r2(P.pos.z), p: extra.p != null ? extra.p : -1, k: kind, n: nameCode(), c: PLAYER.char, ty: extra.ty || '', t: Date.now() };
   try { fetch(notesURL(), { method: 'POST', body: JSON.stringify(d) }).catch(function () {}); } catch (e) { return false; }

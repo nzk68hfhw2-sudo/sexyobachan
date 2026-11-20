@@ -383,7 +383,7 @@ function updateHUD(dt) {
   if (P.pos.z < 300) {
     if (G.xray > 0) ITEMS.list.forEach(function (it) { dot(it.body.pos.x, it.body.pos.z, '#ffd040', 2); });
     NPCS.forEach(function (n) { if (n.ent.visible) dot(n.ent.pos.x, n.ent.pos.z, '#ff70c0', 4); });
-    if (window.NET && NET.peers) for (var id in NET.peers) { var pp = NET.peers[id]; if (pp.vis) dot(pp.pos.x, pp.pos.z, '#40f0ff', 4.5); }
+    if (NET && NET.peers) for (var id in NET.peers) { var pp = NET.peers[id]; if (pp.vis) dot(pp.pos.x, pp.pos.z, '#40f0ff', 4.5); }
     WORLD.friends.forEach(function (f) { if (f.wander && f.mesh.visible) dot(f.mesh.position.x, f.mesh.position.z, 'rgba(255,120,200,.6)', 2.5); });
   }
   x.restore();
@@ -400,7 +400,7 @@ function updateTags() {
   var list = [], cam = R.camera, W = H.W, Hh = H.H, v = _tagV || (_tagV = new THREE.Vector3());
   list.push({ k: 'me', name: PLAYER.name, sub: FRIEND_INFO[PLAYER.char].name, p: P.pos, h: P.bodyH + 0.35, cls: 'me', bub: PLAYER.bubble });
   NPCS.forEach(function (n) { if (n.ent.visible) list.push({ k: 'n' + n.idx, name: FRIEND_INFO[n.idx].name, p: n.ent.pos, h: n.ent.h + 0.3, cls: 'npc', bub: n.bubble }); });
-  if (window.NET && NET.peers && !NET.muted) for (var id in NET.peers) { var pp = NET.peers[id]; if (pp.vis) list.push({ k: 'p' + id, name: pp.name, sub: FRIEND_INFO[pp.char] ? FRIEND_INFO[pp.char].name : '', p: pp.pos, h: pp.h + 0.35, cls: 'pc', bub: pp.bubble }); }
+  if (NET && NET.peers && !NET.muted) for (var id in NET.peers) { var pp = NET.peers[id]; if (pp.vis) list.push({ k: 'p' + id, name: pp.name, sub: FRIEND_INFO[pp.char] ? FRIEND_INFO[pp.char].name : '', p: pp.pos, h: pp.h + 0.35, cls: 'pc', bub: pp.bubble }); }
   var used = 0;
   for (var i = 0; i < list.length && used < 12; i++) {
     var L = list[i], d = cam.position.distanceTo(L.p); if (d > 26 && L.cls !== 'me') continue;

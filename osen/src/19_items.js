@@ -150,6 +150,7 @@ function spawnItem(type, x, y, z, yaw, o) {
 }
 function removeItem(it) {
   if (!it || it.gone) return; it.gone = true; R.scene.remove(it.obj);
+  if (NET.on && !NET.applying && !it.temp && !ITEMS.quiet && (it.netKey || it.def)) { netKeyFor(it); NET.sendGone(it); }
   if (ITEMS.held === it) ITEMS.held = null;
   if (it.prop) it.prop.gone = true;
   var i = ITEMS.list.indexOf(it); if (i >= 0) ITEMS.list.splice(i, 1);
@@ -172,6 +173,7 @@ function spawnFrom(it, type) {
   var n = spawnItem(type, p.x + rand(-0.3, 0.3), p.y + top + 0.3, p.z + rand(-0.3, 0.3), rand(0, TAU), { awake: true });
   n.spawned = true; n.body.vel.set(rand(-2.5, 2.5), rand(3, 5), rand(-2.5, 2.5)); n.body.thrownT = 0.2;
   zukanFind('i_' + type, itemType(type).name);
+  if (NET.on && !NET.applying) NET.sendSpawn(n);
   return n;
 }
 function eat(it, v, msg) { G.genki = Math.min(100, G.genki + v); sysMsg(msg); sfx('eat'); if (it.def && it.prop) it.prop.gone = true; removeItem(it); }
@@ -191,13 +193,13 @@ function tryCombine(ia, ib, rel) {
 }
 function combineAt(ia, ib, r, pos) {
   var s = Math.max(ia.body.scale, ib.body.scale);
-  removeItem(ia); removeItem(ib);
+  ITEMS.quiet = true; removeItem(ia); removeItem(ib); ITEMS.quiet = false;
   var n = spawnItem(r.out, pos.x, pos.y, pos.z, rand(0, TAU), { awake: true, scale: s }); n.spawned = true; n.body.vel.y = 3;
   var name = itemType(r.out).name;
   sysMsg('合成成功!!　「' + name + '」ができました。'); sfx('combine'); popWA(name, { style: randi(0, WA_STYLES.length - 1), y: 0.24 }); confetti(10);
   G.combines = (G.combines || 0) + 1; addPollution(3);
   zukanFind('r_' + r.out, name); zukanFind('i_' + r.out, name);
-  if (window.NET && NET.sendCombine) NET.sendCombine(r.out, pos);
+  if (NET.on && !NET.applying) NET.sendCombine(r.out, pos, ia, ib, n);
   return n;
 }
 // ---- 持つ・置く・投げる・回す・大小・しまう・いじる ----
@@ -211,11 +213,11 @@ var _hp = null;
 function grab(it) {
   if (!it || it.gone) return;
   if (it.body.fixed && !it.onHead) { sysMsg(itemName(it) + 'は　動かせません。'); sfx('error'); return; }
-  if (it.lockUntil && it.lockUntil > G.t && it.lockBy !== 'me') { sysMsg('ほかの人が　持ったばかりです。少し待って下さい。'); sfx('error'); return; }
+  if (!netCanGrab(it)) { sfx('error'); return; }
   if (it.onHead) { it.onHead = false; it.body.fixed = false; }
   ITEMS.held = it; it.holdYaw = it.body.yaw - P.face; it.body.sleep = false;
   sfx('pickup'); sysMsg(itemName(it) + 'を　持った。', true); fiddle(it, 'grab');
-  if (window.NET && NET.sendGrab) NET.sendGrab(it);
+  if (NET && NET.sendGrab) NET.sendGrab(it);
 }
 function release(throwIt) {
   var it = ITEMS.held; if (!it) return; ITEMS.held = null;
@@ -226,8 +228,8 @@ function release(throwIt) {
     if (!b.roll) b.av.set(rand(-6, 6), rand(-4, 4), rand(-6, 6)); else b.av.set(0, rand(-3, 3), 0);
     b.thrownT = 2; P.throwT = 0.35; sfx('throw'); fiddle(it, 'throw');
     if (G.stage >= 5) b.bouncy = 0.9;
-  } else { b.vel.set(0, -0.5, 0); b.thrownT = 1; sfx('put'); fiddle(it, 'put'); }
-  if (window.NET && NET.sendRelease) NET.sendRelease(it);
+  } else { b.vel.set(0, -0.5, 0); b.thrownT = 1; sfx('put'); fiddle(it, 'put'); if (NET_DB_URL && Date.now() - (NOTES.lastItem || 0) > 60000) { NOTES.lastItem = Date.now(); postNote('item', { ty: it.type }, true); } }
+  if (NET && NET.sendRelease) NET.sendRelease(it);
 }
 function fiddle(it, kind) {
   G.fiddles = (G.fiddles || 0) + 1; addPollution(0.4 + (kind === 'special' ? 0.6 : 0));
@@ -242,8 +244,8 @@ function updateHeld(dt) {
   b.yaw = P.face + (it.holdYaw || 0); b.rx = lerp(b.rx, 0, dt * 8); b.rz = lerp(b.rz, 0, dt * 8); bodyExt(b);
 }
 function itemActions(target) {
-  if (IN.rotate) { IN.rotate = false; var r = ITEMS.held || (target && target.item); if (r) { if (r === ITEMS.held) r.holdYaw = (r.holdYaw || 0) + PI / 4; else { r.body.yaw += PI / 4; if (!r.body.roll) r.body.rx = (Math.abs(r.body.rx) > 0.5 ? 0 : PI / 2) * (IN.keys.ShiftLeft ? 1 : 0) + (IN.keys.ShiftLeft ? 0 : r.body.rx); wake(r); r.body.vel.y = 1.5; bodyExt(r.body); } sfx('rotate'); fiddle(r, 'rotate'); } }
-  if (IN.bigger || IN.smaller) { var s = ITEMS.held || (target && target.item); if (s) { var k = IN.bigger ? 1.25 : 0.8; setScale(s, s.body.scale * k); sfx(IN.bigger ? 'grow' : 'down'); sysMsg(itemName(s) + 'の大きさ：×' + s.body.scale.toFixed(2), true); fiddle(s, 'scale'); } IN.bigger = IN.smaller = false; }
+  if (IN.rotate) { IN.rotate = false; var r = ITEMS.held || (target && target.item); if (r) { if (r === ITEMS.held) r.holdYaw = (r.holdYaw || 0) + PI / 4; else { r.body.yaw += PI / 4; if (!r.body.roll) r.body.rx = (Math.abs(r.body.rx) > 0.5 ? 0 : PI / 2) * (IN.keys.ShiftLeft ? 1 : 0) + (IN.keys.ShiftLeft ? 0 : r.body.rx); wake(r); r.body.vel.y = 1.5; bodyExt(r.body); } sfx('rotate'); fiddle(r, 'rotate'); if (NET.on && r !== ITEMS.held) NET.sendRot(r); } }
+  if (IN.bigger || IN.smaller) { var s = ITEMS.held || (target && target.item); if (s) { var k = IN.bigger ? 1.25 : 0.8; setScale(s, s.body.scale * k); sfx(IN.bigger ? 'grow' : 'down'); sysMsg(itemName(s) + 'の大きさ：×' + s.body.scale.toFixed(2), true); fiddle(s, 'scale'); if (NET.on && s !== ITEMS.held) NET.sendScale(s); } IN.bigger = IN.smaller = false; }
   if (IN.throwIt) { IN.throwIt = false; if (ITEMS.held) release(true); }
   if (IN.store) { IN.store = false; var st = ITEMS.held || (target && target.item); if (st) storeItem(st); }
   if (IN.special) { IN.special = false; var sp = ITEMS.held || (target && target.item); if (sp) doSpecial(sp); else if (target && target.prop) touchProp(target.prop); }
@@ -252,7 +254,7 @@ function doSpecial(it) {
   var t = itemType(it.type); if (!t.special) { sysMsg('この物には　とくべつな　いじり方が　ありません。'); return; }
   sysMsg(itemName(it) + '：' + t.special.name, true); fiddle(it, 'special');
   try { t.special.fn(it); } catch (e) {}
-  if (window.NET && NET.send) NET.send('sp', { id: it.netId, t: it.type });
+  if (NET && NET.send) NET.send('sp', { id: it.netId, t: it.type });
 }
 function storeItem(it) {
   if (BAG.items.length >= BAG.size) { sysMsg('カバンがいっぱいです。'); sfx('error'); return; }

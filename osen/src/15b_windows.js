@@ -81,15 +81,16 @@ function openStatus() {
     el('div', 'hd', bd, '記録');
     [['汚染率', Math.round(G.pol) + '％'], ['げんき', Math.round(G.genki)], ['歩いた距離', Math.round(P.dist) + 'ｍ'], ['さわった回数', G.touches], ['いじった回数', G.fiddles || 0], ['合成した回数', G.combines || 0], ['ひみつ', Object.keys(G.secrets).length + ' ／ ' + SECRETS.length]].forEach(function (kv) { el('div', 'kv', bd, '<span>' + cnHTML(kv[0]) + '</span><b>' + cnHTML(String(kv[1])) + '</b>'); });
     var row = el('div', 'row2', bd);
-    mbtn(row, '名前を選び直す', function () { PLAYER.name = makeName(); saveGame(); refreshWin('status'); sysMsg('名前が「' + PLAYER.name + '」になりました。'); if (window.NET && NET.sendMeta) NET.sendMeta(); }, '', 'char');
+    mbtn(row, '名前を選び直す', function () { PLAYER.name = makeName(); saveGame(); refreshWin('status'); sysMsg('名前が「' + PLAYER.name + '」になりました。'); if (NET && NET.sendMeta) NET.sendMeta(); }, '', 'char');
   }, { w: 330, h: 440 });
 }
 // ---- 定型文・スタンプ・身ぶり ----
-var PH_TAB = 0;
+var PH_TAB = 0, PH_NOTE = false;
 function openPhrases() {
   toggleWin('phr', '定型文', 'chat', function (bd) {
     var tabs = el('div', 'tabs2', bd);
     PHRASES.forEach(function (c2, i) { mbtn(tabs, c2[0], function () { PH_TAB = i; refreshWin('phr'); }, i === PH_TAB ? 'sel' : ''); });
+    if (NET_DB_URL) { var tr = el('div', 'kv', bd); el('span', '', tr).innerHTML = cnHTML('この場所に「ひとこと」として残す'); mbtn(tr, PH_NOTE ? 'ON' : 'OFF', function () { PH_NOTE = !PH_NOTE; refreshWin('phr'); }, PH_NOTE ? 'gold' : ''); }
     var l = el('div', 'list', bd);
     PHRASES[PH_TAB][1].forEach(function (p) { var e = el('div', 'li', l); e.innerHTML = cnHTML(p); tapBtn(e, function () { say(p); if (isNarrow()) closeWin('phr', true); }, 'uiClick'); });
   }, { w: 340, h: 380, nopause: true });
@@ -109,11 +110,12 @@ function openGestures() {
 function say(text) {
   PLAYER.bubble = { text: text, t: now() + 4500 };
   logMsg('talk', text, PLAYER.name); sfx('chat');
-  if (window.NET && NET.send) NET.send('say', { t: text });
+  if (NET && NET.send) NET.send('say', { p: phraseCode(text) });
+  if (PH_NOTE && NET_DB_URL) { if (postNote('say', { p: phraseCode(text) })) sysMsg('ひとことを　この場所に残しました。あとから来た人に見えます。'); }
   addPollution(0.2);
 }
-function stamp(id) { PLAYER.bubble = { text: id, icon: id, t: now() + 3500 }; sfx('pop'); logMsg('talk', '（スタンプ：' + (STAMPS.filter(function (s) { return s.id === id; })[0] || {}).n + '）', PLAYER.name); if (window.NET && NET.send) NET.send('stamp', { s: id }); }
-function gesture(id) { P.gesture = { id: id, t: 0 }; logMsg('talk', '（' + (GESTURES.filter(function (g3) { return g3.id === id; })[0] || {}).n + '）', PLAYER.name); if (window.NET && NET.send) NET.send('ges', { g: id }); }
+function stamp(id) { PLAYER.bubble = { text: id, icon: id, t: now() + 3500 }; sfx('pop'); logMsg('talk', '（スタンプ：' + (STAMPS.filter(function (s) { return s.id === id; })[0] || {}).n + '）', PLAYER.name); if (NET && NET.send) NET.send('stamp', { s: id }); }
+function gesture(id) { P.gesture = { id: id, t: 0 }; logMsg('talk', '（' + (GESTURES.filter(function (g3) { return g3.id === id; })[0] || {}).n + '）', PLAYER.name); if (NET && NET.send) NET.send('ges', { g: id }); }
 // ---- 設定 ----
 function openSettings() {
   toggleWin('set', '設定', 'gear', function (bd) {
@@ -122,8 +124,8 @@ function openSettings() {
     row('効果音', 'sound', function () { return AUD.sfxOn; }, function (v) { audioSetSfx(v); });
     row('軽量モード（古いスマホ用）', 'lite', function () { return LITE.on; }, function (v) { setLite(v); });
     row('刺激ひかえめモード', 'eye', function () { return REDUCED.on; }, function (v) { REDUCED.on = v; });
-    row('ほかの人をミュート（見えなくする）', 'mute', function () { return !!(window.NET && NET.muted); }, function (v) { if (window.NET) NET.muted = v; });
-    el('div', 'desc', bd, [cnHTML('記録の保存：' + (STORE.available() ? 'この端末のブラウザに保存されます' : '保存できない環境です（閉じると消えます）')), cnHTML('画質：' + ['最低', '低', '中', '高'][R.quality] + '　/　' + (R.lastFps ? Math.round(R.lastFps) + 'fps' : '計測中')), cnHTML('通信：' + (window.NET ? NET.statusText() : '1人用')), cnHTML('版：' + GAME_VERSION)].join('<br>'));
+    row('ほかの人をミュート（見えなくする）', 'mute', function () { return !!(NET && NET.muted); }, function (v) { NET.muted = v; });
+    el('div', 'desc', bd, [cnHTML('記録の保存：' + (STORE.available() ? 'この端末のブラウザに保存されます' : '保存できない環境です（閉じると消えます）')), cnHTML('画質：' + ['最低', '低', '中', '高'][R.quality] + '　/　' + (R.lastFps ? Math.round(R.lastFps) + 'fps' : '計測中')), cnHTML('通信：' + NET.statusText()), cnHTML('版：' + GAME_VERSION)].join('<br>'));
     var r2 = el('div', 'row2', bd);
     mbtn(r2, 'あそびかた', function () { openHelp(); }, '', 'info');
     mbtn(r2, 'キャラを変える', function () { if (nearDressing()) openCharChange(); else sysMsg('キャラは「着がえ所」で変えられます（駅前・公園）。'); }, '', 'char');

@@ -23,7 +23,7 @@ function enterWorld() {
   if (MENU.el) { MENU.el.remove(); MENU.el = null; }
   bgmPlay(G.area ? G.area.id : 'eki'); snapCamera();
   sysMsg(PLAYER.channel ? PLAYER.server + '　' + PLAYER.channel + 'に入りました。' : '町に入りました。');
-  if (window.NET && NET.join) NET.join();
+  if (NET && NET.join) NET.join();
   G.onStart();
   if (!PLAYER.helpSeen) { PLAYER.helpSeen = true; setTimeout(openHelp, 600); saveGame(); }
 }
@@ -36,13 +36,13 @@ G.onStart = function () {
 function saveGame() {
   try {
     var counts = {}; PROPS.forEach(function (p) { if (p.count) counts[p.def.id] = p.count; });
-    STORE.save({ v: 2, pl: { c: PLAYER.char, n: PLAYER.name, s: PLAYER.server, ch: PLAYER.channel, a: PLAYER.agreed, h: PLAYER.helpSeen }, bag: BAG.items, gk: G.genki, fi: G.fiddles, cb: G.combines, cam: CAM.distT, pol: G.pol, tod: G.tod, z: ZUKAN.found, c: counts, s: G.secrets, m: G.metFriends, bgm: AUD.bgmOn, sfx: AUD.sfxOn, lite: LITE.on, red: REDUCED.on, cl: G.cleaned,
+    STORE.save({ v: 2, pl: { c: PLAYER.char, n: PLAYER.name, nc: PLAYER.nameCode, s: PLAYER.server, ch: PLAYER.channel, a: PLAYER.agreed, h: PLAYER.helpSeen }, bag: BAG.items, gk: G.genki, fi: G.fiddles, cb: G.combines, cam: CAM.distT, pol: G.pol, tod: G.tod, z: ZUKAN.found, c: counts, s: G.secrets, m: G.metFriends, bgm: AUD.bgmOn, sfx: AUD.sfxOn, lite: LITE.on, red: REDUCED.on, cl: G.cleaned,
       pos: P.pos && P.pos.z < 300 ? [P.pos.x, P.pos.y, P.pos.z, P.face] : null });
   } catch (e) {}
 }
 function loadGame() {
   var d = STORE.load(); if (!d || (d.v !== 1 && d.v !== 2)) return null;
-  if (d.pl) { PLAYER.char = d.pl.c || 0; PLAYER.name = d.pl.n || ''; PLAYER.server = d.pl.s || ''; PLAYER.channel = d.pl.ch || ''; PLAYER.agreed = !!d.pl.a; PLAYER.helpSeen = !!d.pl.h; }
+  if (d.pl) { PLAYER.char = d.pl.c || 0; PLAYER.name = d.pl.n || ''; PLAYER.server = d.pl.s || ''; PLAYER.channel = d.pl.ch || ''; PLAYER.agreed = !!d.pl.a; PLAYER.helpSeen = !!d.pl.h; PLAYER.nameCode = d.pl.nc || ''; if (!PLAYER.nameCode) PLAYER.name = ''; }
   if (d.bag) BAG.items = d.bag.filter(function (e) { return e && (EXTRA_TYPES[e.type] || ITEM_INFO[e.type]); });
   if (d.gk != null) G.genki = d.gk; G.fiddles = d.fi || 0; G.combines = d.cb || 0; if (d.cam) CAM.distT = d.cam;
   G.pol = +d.pol || 0; G.tod = +d.tod || 1.3; ZUKAN.found = d.z || {}; G.secrets = d.s || {}; G.metFriends = d.m || {}; G.cleaned = d.cl || 0;
@@ -67,7 +67,7 @@ function updateGame(dt) {
   G.naiT = lerp(G.naiT, G.naiTarget, 1 - Math.exp(-dt * 0.8));
   var tIdx = G.naiT > 0.5 ? 4 : Math.floor(G.tod + 0.35) % 4;
   if (G.started && !G.visitedTimes[tIdx]) { G.visitedTimes[tIdx] = 1; zukanFind('t_' + TIMES[tIdx].id, '時間帯：' + TIMES[tIdx].name); if (t > 5) { popWA(TIMES[tIdx].wa, { style: [4, 2, 6, 12, 10][tIdx], y: 0.2, size: 60 }); } }
-  var tl = TIMES[tIdx].name + (G.area ? '　' + G.area.name : '　道'); if (H.time._t !== tl) { H.time._t = tl; H.time.innerHTML = cnHTML(tl); H.stArea.innerHTML = cnHTML('◆' + (G.area ? G.area.wa : '道') + ' ' + (window.NET && NET.on ? '（' + NET.count() + '人）' : '')); }
+  var tl = TIMES[tIdx].name + (G.area ? '　' + G.area.name : '　道'); if (H.time._t !== tl) { H.time._t = tl; H.time.innerHTML = cnHTML(tl); H.stArea.innerHTML = cnHTML('◆' + (G.area ? G.area.wa : '道') + ' ' + (NET && NET.on ? '（' + NET.count() + '人）' : '')); }
   var crazy = (G.crazySkyT > 0 ? 1 : 0) * 0.85 + (G.pol >= 130 ? Math.min(0.7, (G.pol - 130) / 100) : 0);
   if (G.crazySkyT > 0) G.crazySkyT -= dt;
   var lamps = applyTimeOfDay(G.tod, G.naiT, Math.min(1, crazy), t);
@@ -151,7 +151,7 @@ function updateGame(dt) {
   updateItems(dt); updateNPCs(dt);
   updateProps(dt, t); updateFriends(dt, t); updateWA3D(dt, t); updateCaptions(dt);
   if (!G.inMenu) updateHUD(dt);
-  if (window.NET && NET.update) NET.update(dt);
+  if (NET && NET.update) NET.update(dt);
   if (WORLD.clockHands) WORLD.clockHands.forEach(function (h, i) { h.rotation.z = -(i % 2 ? G.tod / 4 * TAU : G.tod * 13 * TAU) * (i >= 2 ? -1 : 1); });
   // 水
   if (TEX.water) { TEX.water.offset.x = (t * 0.03 * (G.stage >= 5 ? -1 : 1)) % 1; TEX.water.offset.y = Math.sin(t * 0.3) * 0.05; }

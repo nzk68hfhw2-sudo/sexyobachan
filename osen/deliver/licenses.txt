@@ -5,6 +5,11 @@
  ・three.js r128（3D表示）… MIT License
    cdnjs から読み込み：https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
 
+■ 同時プレイ
+ ・Firebase JavaScript SDK v10.14.1（app-compat / database-compat）… Apache License 2.0
+   game.js の中に入れてあります。https://github.com/firebase/firebase-js-sdk
+ ・Firebase Realtime Database（Google のサービス、無料プラン Spark）
+
 ■ フォント（すべて SIL Open Font License 1.1。game.js の中に「使う字だけ」を埋め込み）
    ※v2 から、Google Fonts への通信はしません。端末のフォントも使いません。
  ・DotGothic16 … UI の文字（角ばったドット風）

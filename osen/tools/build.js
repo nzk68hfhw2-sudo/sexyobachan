@@ -14,7 +14,11 @@ if(!process.argv.includes('--nofonts')){
 const fontIds=JSON.parse(fs.readFileSync(path.join(R,'tools/fonts/fonts.json'),'utf8')).map(f=>f.id);
 let code='';
 for(const f of files){code+='\n// ===== '+f+' =====\n'+fs.readFileSync(path.join(dir,f),'utf8')+'\n';}
-let out='/*! 精神汚染ゲーム game.js v'+(/GAME_VERSION = '([^']+)'/.exec(code)||[,''])[1]+' (single-file build) — 説明は source.txt */\n(function(){\n"use strict";\n';
+// 同時プレイ用：Firebase JS SDK（Apache-2.0）。ほかのページの firebase とぶつからないように保存して戻す
+const vend=['firebase-app-compat.js','firebase-database-compat.js'].map(f=>fs.readFileSync(path.join(R,'tools/vendor',f),'utf8')).join('\n;\n');
+const vendor='\n/* Firebase JS SDK v10.14.1 (app-compat + database-compat) — Apache License 2.0 — https://github.com/firebase/firebase-js-sdk */\n'+
+ '(function(){var g=typeof globalThis!=="undefined"?globalThis:window;var prevFB=g.firebase,prevDef=g.define;g.firebase=undefined;try{g.define=undefined;}catch(e){}\ntry{\n'+vend+'\n}catch(e){g.__osenFirebaseErr=String(e&&e.message||e);}\ng.__osenFirebase=g.firebase;g.firebase=prevFB;try{g.define=prevDef;}catch(e){}})();\n';
+let out='/*! 精神汚染ゲーム game.js v'+(/GAME_VERSION = '([^']+)'/.exec(code)||[,''])[1]+' (single-file build) — 説明は source.txt */\n'+vendor+'(function(){\n"use strict";\n';
 out+=code;
 out+='\n// ===== embedded assets (8 friends: 2 GLB models split into 4 each, decimated) =====\n';
 out+='var FRIENDS1_BIN_B64="'+b64('friends1.bin')+'";\nvar FRIENDS1_JPG_B64="'+b64('friends1.jpg')+'";\n';

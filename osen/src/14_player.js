@@ -23,7 +23,7 @@ function setPlayerChar(idx) {
   if (typeof npcSetHidden === 'function') npcSetHidden(idx, prev);
   if (H.face) setFace(idx);
   if (H.stName) H.stName.innerHTML = cnHTML(PLAYER.name);
-  if (window.NET && NET.sendMeta) NET.sendMeta();
+  if (NET && NET.sendMeta) NET.sendMeta();
 }
 function playerHeight() { return P.h * P.scale; }
 // ---- 当たり判定（町の箱＋重い物） --------------------------------------------------------------
@@ -225,5 +225,5 @@ function useSkill() {
     case 'chikuri': G.magnetT = 5; sfx('up'); break;
     case 'shichisan': if (typeof itemsLineUp === 'function') itemsLineUp(P.pos, P.face); sfx('chime'); break;
   }
-  if (window.NET && NET.send) NET.send('skill', { s: sk.id });
+  if (NET && NET.send) NET.send('skill', { s: sk.id });
 }

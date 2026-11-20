@@ -13,7 +13,8 @@
   ・game.js を1本 <script> で読めば全部動く（index.html の中身には頼らない）
   ・3Dモデル（8人）とその色（テクスチャ）は game.js の中に埋め込み済み
     → 別ファイルを読まないので、Gravity 経由でも読み込み失敗が起きにくい
-  ・外から読むもの：three.js（cdnjs, r128）だけ。フォントも game.js に埋め込み
+  ・外から読むもの：three.js（cdnjs, r128）だけ。フォントも Firebase の部品も game.js に埋め込み
+  ・同時プレイ：Firebase Realtime Database（NET_DB_URL）。URL を '' にすると1人用
   ・読めなかった時は、真っ黒にせず「何が読めなかったか」を画面に日本語で出す
 
 ■ Netlify の URL について
@@ -31,6 +32,7 @@
   ・アップロードされた3つの GLB のうち2つは、中身がまったく同じファイルだった
 
 ■ 使っている外部のもの（ライセンス）
+  ・Firebase JS SDK v10.14.1 … Apache License 2.0（同時プレイ用、game.js に同梱）
   ・three.js r128（3D表示）… MIT License（自由に使ってOK）
       https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
   ・フォント（すべて SIL Open Font License 1.1。使う字だけを埋め込み）
@@ -62,6 +64,8 @@
   src/18_physics.js   物の物理（重さ・転がる・倒れる・はねる・積む・元の場所に戻す）
   src/19_items.js     持つ・投げる・回す・大小・いじる・合成（44種）・カバン
   src/20_npc.js       住人（選ばれなかった7人）・着がえ所
+  src/21_net.js       同時プレイ（Firebase）・ひとこと（同時でない共有）
+  tools/vendor/       Firebase JS SDK（Apache-2.0）。build.js が game.js の先頭に入れる
   src/99_main.js      起動の順番
   assets/             モデル（.bin）とテクスチャ（.jpg）、使う字だけのフォント（fonts/*.woff2）
   tools/build.js      src をまとめて dist/game.js を作る（node tools/build.js）

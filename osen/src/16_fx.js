@@ -232,9 +232,9 @@ function updateWA3D(dt, t) {
   }
 }
 // ---- 汚染 -----------------------------------------------------------------------------
-function addPollution(v) { G.pol = Math.max(0, G.pol + v * (G.pol >= 100 ? 1.4 : 1)); }
+function addPollution(v) { var b = G.pol; G.pol = Math.max(0, G.pol + v * (G.pol >= 100 ? 1.4 : 1)); netPollution(G.pol - b); }
 function cleanPollution(v) {
-  var before = G.pol; G.pol = Math.max(0, G.pol - v);
+  var before = G.pol; G.pol = Math.max(0, G.pol - v); netPollution(G.pol - before);
   sfx('clean'); caption2(pick(CLEAN_LINES)); popWA('－' + Math.round(before - G.pol) + '％', { style: 4, x: 0.25, y: 0.18, size: 54, anim: 'waFloat' });
   G.cleaned += before - G.pol; if (G.cleaned > 60) secret('clean');
 }

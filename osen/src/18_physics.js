@@ -32,7 +32,7 @@ function itemsNear(x, z, r) {
 // 人がぶつかる・乗れる物（重い物だけ）
 function itemSolidsNear(x, z, r) {
   var L = itemsNear(x, z, r + 1), out = [];
-  for (var i = 0; i < L.length; i++) { var b = L[i].body; if (effMass(b) < 2.5 && !b.fixed) continue; out.push({ x0: b.pos.x - b.ex, x1: b.pos.x + b.ex, y0: b.pos.y - b.ey, y1: b.pos.y + b.ey, z0: b.pos.z - b.ez, z1: b.pos.z + b.ez, item: L[i] }); }
+  for (var i = 0; i < L.length; i++) { var b = L[i].body; if ((effMass(b) < 2.5 && !b.fixed) || netPassThrough(L[i])) continue; out.push({ x0: b.pos.x - b.ex, x1: b.pos.x + b.ex, y0: b.pos.y - b.ey, y1: b.pos.y + b.ey, z0: b.pos.z - b.ez, z1: b.pos.z + b.ez, item: L[i] }); }
   return out;
 }
 function wake(it) { if (it && it.body) { it.body.sleep = false; it.body.sleepT = 0; } }
@@ -40,7 +40,7 @@ function physStep(dt) {
   var weird = G.stage, gmul = (G.slowT > 0 ? 0.25 : 1) * (weird >= 8 ? 0.7 + 0.3 * Math.sin(G.t * 0.7) : 1);
   var rest0 = weird >= 5 ? 0.55 : 0.3;
   for (var i = 0; i < ITEMS.list.length; i++) {
-    var it = ITEMS.list[i], b = it.body; if (it.gone || it === ITEMS.held || b.fixed) continue;
+    var it = ITEMS.list[i], b = it.body; if (it.gone || it === ITEMS.held || b.fixed || (it.heldBy && NET.peers[it.heldBy])) continue;
     if (b.thrownT > 0) b.thrownT -= dt;
     if (b.sleep) continue;
     var tdt = G.slowT > 0 ? dt * 0.3 : dt;

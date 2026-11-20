@@ -197,7 +197,7 @@ var GESTURES = [
 var NAME_A = ['ぬるい', '直角の', '虹色', 'さかさま', '団地の', '謎の', '４番目の', 'きゅうり', '存在しない', '七三', '夜の', 'はね毛の', '駅前', '骨っぽい', '静かな', 'ワード', 'まるい', '汚染', 'ポン', '令和の'];
 var NAME_B = ['さん', 'たろう', 'こ', '丸', '氏', 'の人', '屋', '殿', 'ちゃん', 'くん', '号', '先輩', '様', 'マン', '子', '兵衛'];
 var NAME_C = ['ハト', 'おにぎり', 'コーン', 'だるま', '字幕', 'メガネ', '自販機', 'タイヤ', '長ぐつ', 'カエル', 'ねこ', '時計', '傘', 'アヒル', '王冠', 'キャベツ'];
-function makeName() { return pick(NAME_A) + pick(NAME_C) + pick(NAME_B); }
+function makeName() { var a = randi(0, NAME_A.length - 1), c2 = randi(0, NAME_C.length - 1), b = randi(0, NAME_B.length - 1); if (typeof PLAYER !== 'undefined') PLAYER.nameCode = a + '.' + c2 + '.' + b; return NAME_A[a] + NAME_C[c2] + NAME_B[b]; }
 
 // 操作説明（v2）。謎日本語だが内容は正しい
 var HELP = {
