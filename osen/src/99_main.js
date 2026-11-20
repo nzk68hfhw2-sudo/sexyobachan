@@ -40,7 +40,7 @@ function startGame() {
   placeProps(R.scene);
   initDebris(R.scene);
   initPlayer();
-  initUI(); initTextUI(); initSmashUI(); initInput(); initNPCs(); initMobs(); initShopBooth(); buildGunModels(); initArmsUI(); initMeterTap();
+  initUI(); initTextUI(); initSmashUI(); initInput(); initNPCs(); initMobs(); initShopBooth(); buildGunModels(); initArmsUI(); initPhoto(); initMeterTap();
   applyLoaded(saved);
   setPlayerChar(PLAYER.char || 0);
   if (LITE.on) setLite(true);

@@ -1,6 +1,8 @@
 // ---- 大暴れ：こわせる町・破片・手ごたえ・迷惑ポイント ---------------------------------------------
 // ★あとから調整できる数字は、ここ（TUNE）にまとめてあります。
 var TUNE = {
+  walkSpeed: 5.2,     // 歩く速さ（スティックを少したおした時）
+  runSpeed: 10.5,     // 走る速さ（大きくたおす／走るボタン／Shift）
   respawn: 40,        // こわれた物が「ポンッ」と元に戻るまでの秒
   respawnBig: 25,     // 建物は、さらにこの秒数だけ長くかかる
   comboTime: 3.0,     // コンボがつながる秒（強化で長くなる）
@@ -216,7 +218,7 @@ function brkBreak(b, dx, dz, src) {
   // 近くの住人は巻きこまれる
   if (typeof npcBlast === 'function') npcBlast(b.c, Math.max(2, Math.max(b.w, b.d) * 0.6), 3 + b.cls * 2, { kind: 'chain', key: 'b' + b.id }, true);
   if (b.wires) brkWires(b, false);
-  if (b.cls >= 2 && near && !src.net) popWABig(b.n + pick(['　崩壊!!', '　ドーン!!', '　ぺしゃんこ', '　さようなら']), { style: pick([0, 3, 5, 10, 12]), size: 54, x: 0.5, y: (portrait() ? 0.27 : 0.22) - 0.07, maxH: 38, w: 0.75, anim: REDUCED.on ? 'waSoft' : 'waPop', dur: 1.4, lim: 2, silent: true });
+  if (b.cls >= 2 && near && !src.net) popWABig(b.n + pick(['　崩壊!!', '　ドーン!!', '　ぺしゃんこ', '　さようなら']), { style: pick([0, 3, 5, 10, 12]), size: 54, x: 0.5, y: (portrait() ? 0.33 : 0.22) - 0.07, maxH: 38, w: 0.75, anim: REDUCED.on ? 'waSoft' : 'waPop', dur: 1.4, lim: 2, silent: true });
   if (typeof onSmashBreak === 'function') onSmashBreak(b, src);
 }
 // 電柱がこわれたら電線も消す
@@ -475,8 +477,8 @@ function initSmashUI() {
 function layoutSmashUI() {
   if (!H.cmb) return;
   var portrait = (H.H || 700) > (H.W || 400);
-  H.cmb.style.top = Math.round((H.H || 700) * (portrait ? 0.27 : 0.22)) + 'px';
-  H.cg.style.top = portrait ? 'calc(var(--st) + 128px)' : 'calc(var(--st) + 36px)';
+  H.cmb.style.top = Math.round((H.H || 700) * (portrait ? 0.33 : 0.22)) + 'px';
+  H.cg.style.top = portrait ? 'calc(var(--st) + 188px)' : 'calc(var(--st) + 36px)';
 }
 function comboShow(labels, p) {
   if (!H.cmb) return;
@@ -490,7 +492,7 @@ function comboShow(labels, p) {
   var tier = -1; for (var i = 0; i < COMBO_STEPS.length; i++) if (S.combo >= COMBO_STEPS[i]) tier = i;
   if (tier > S.lastTier && tier >= 0) {
     S.lastTier = tier; var w = COMBO_WORDS[Math.min(COMBO_WORDS.length - 1, tier)];
-    if (TEXTLV.v >= 1 || tier % 2 === 0 || tier >= 4) popWABig(w, { style: [0, 3, 5, 7, 10, 12, 14][tier % 7], size: 54, x: 0.5, y: (portrait() ? 0.27 : 0.22) + 0.075, maxH: 40, w: 0.7, anim: REDUCED.on ? 'waSoft' : 'waPop', dur: 1.2, lim: 2, silent: true });
+    if (TEXTLV.v >= 1 || tier % 2 === 0 || tier >= 4) popWABig(w, { style: [0, 3, 5, 7, 10, 12, 14][tier % 7], size: 54, x: 0.5, y: (portrait() ? 0.33 : 0.22) + 0.075, maxH: 40, w: 0.7, anim: REDUCED.on ? 'waSoft' : 'waPop', dur: 1.2, lim: 2, silent: true });
     sfx('comboUp', Math.min(12, tier));
   }
 }
@@ -636,8 +638,8 @@ function openShop() {
     });
   }, { w: 320, h: 470 });
 }
-function smashSave() { return { gc: GUN.cur, p: SMASH.pts, tp: SMASH.totalPts, y: SMASH.yen, bc: SMASH.best.combo, by: SMASH.best.yen, u: SMASH.up, b: SMASH.breaks, f: SMASH.flights, v: FEEL.vib }; }
-function smashLoad(d) { if (!d) return; SMASH.pts = d.p | 0; SMASH.totalPts = d.tp | 0; SMASH.yen = +d.y || 0; SMASH.best.combo = d.bc | 0; SMASH.best.yen = +d.by || 0; SMASH.up = d.u || {}; SMASH.breaks = d.b | 0; SMASH.flights = d.f | 0; FEEL.vib = d.v !== false; GUN.cur = (d.gc | 0) % GUNS.length; }
+function smashSave() { return { tp: TOPPAD.mode, gc: GUN.cur, p: SMASH.pts, tp: SMASH.totalPts, y: SMASH.yen, bc: SMASH.best.combo, by: SMASH.best.yen, u: SMASH.up, b: SMASH.breaks, f: SMASH.flights, v: FEEL.vib }; }
+function smashLoad(d) { if (!d) return; SMASH.pts = d.p | 0; SMASH.totalPts = d.tp | 0; SMASH.yen = +d.y || 0; SMASH.best.combo = d.bc | 0; SMASH.best.yen = +d.by || 0; SMASH.up = d.u || {}; SMASH.breaks = d.b | 0; SMASH.flights = d.f | 0; FEEL.vib = d.v !== false; GUN.cur = (d.gc | 0) % GUNS.length; if (d.tp) { TOPPAD.mode = d.tp; applyTopPad(); } }
 // ---- 同時プレイ：ほかの人がこわした物（0.5秒ごとにまとめて送る。破片は各自の画面で計算） ----
 var SNQ = { q: [], t: 0 };
 function smashNetQ(k, d) { if (!NET.on || NET.applying) return; if (SNQ.q.length < 40) SNQ.q.push([k, d]); }

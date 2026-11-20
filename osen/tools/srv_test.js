@@ -1,0 +1,34 @@
+const { chromium } = require('playwright'); const fs = require('fs'), path = require('path');
+const THREE_LOCAL = fs.readFileSync(path.join(__dirname, 'three-r128.min.js'));
+(async () => {
+  const out = process.argv[2]; fs.mkdirSync(out, { recursive: true });
+  const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  await ctx.route('https://cdnjs.cloudflare.com/**', r => r.fulfill({ body: THREE_LOCAL, contentType: 'application/javascript' }));
+  const logs = [];
+  const open = async (name, q) => { const p = await ctx.newPage(); p.on('pageerror', e => logs.push(name + ' PAGEERROR ' + e.message)); await p.goto('http://localhost:8091/index.html?osennet=local' + (q || '')); await p.waitForFunction('window.__osReady', null, { timeout: 120000 }); await p.waitForTimeout(800); return p; };
+  const tap = async (p, t, sel) => { await p.locator(sel || '.mb', { hasText: t }).first().tap({ force: true }); await p.waitForTimeout(500); };
+  const A = await open('A');
+  await tap(A, 'ログイン'); await A.waitForTimeout(800); await A.screenshot({ path: path.join(out, 'srv_list.png') });
+  await tap(A, 'サーバーを作る');
+  await A.locator('input').first().fill('テスト町内会'); await tap(A, '🔒個人'); await A.locator('input[type=password]').fill('abcd'); await A.screenshot({ path: path.join(out, 'srv_create.png') });
+  await tap(A, '作る'); await A.waitForTimeout(800); await A.screenshot({ path: path.join(out, 'srv_ch.png') });
+  await tap(A, 'ch.3'); await tap(A, '同意する'); await A.waitForTimeout(600); await tap(A, 'この人で始める'); await A.waitForTimeout(2500);
+  await A.locator('#os-ui .ow .mb', { hasText: 'わかりました' }).first().tap({ force: true }).catch(() => {});
+  await A.waitForTimeout(1500);
+  logs.push('A room ' + await A.evaluate(() => __os.NET.room));
+  await A.screenshot({ path: path.join(out, 'game_hud.png') });
+  const B = await open('B', '&osentop=64');
+  await tap(B, 'ログイン'); await B.waitForTimeout(1500); await tap(B, '更新'); await B.waitForTimeout(1500);
+  await B.screenshot({ path: path.join(out, 'srv_list_B.png') });
+  logs.push('B list ' + await B.evaluate(() => [...document.querySelectorAll('.li.srv')].map(e => e.textContent).join(' | ')));
+  // wrong password then right
+  await B.locator('.li.srv', { hasText: 'テスト町内会' }).first().tap({ force: true }); await B.waitForTimeout(400);
+  await B.locator('input[type=password]').fill('zzzz'); await tap(B, '決定'); await B.waitForTimeout(500);
+  logs.push('B after wrong: ' + await B.evaluate(() => document.querySelector('.ow .otb') ? [...document.querySelectorAll('.ow .otb')].map(e => e.textContent).join(',') : ''));
+  await B.locator('.li.srv', { hasText: 'テスト町内会' }).first().tap({ force: true }); await B.waitForTimeout(400);
+  await B.locator('input[type=password]').fill('abcd'); await tap(B, '決定'); await B.waitForTimeout(500);
+  await B.screenshot({ path: path.join(out, 'srv_ch_B.png') });
+  logs.push('B ch ' + await B.evaluate(() => [...document.querySelectorAll('.grid .mb')].map(e => e.textContent).join(' | ')));
+  console.log(logs.join('\n')); await b.close();
+})();

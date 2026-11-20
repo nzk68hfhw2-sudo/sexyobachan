@@ -94,7 +94,7 @@ function updatePlayer(dt) {
   if (P.skillCd > 0) P.skillCd -= dt;
   P.scale = lerp(P.scale, P.scaleTarget || 1, 1 - Math.exp(-dt * 3));
   // 移動（カメラの向き基準）
-  var base = (mv.run ? 7.2 : 4.0) * c2.speed * P.speedMul * (P.inWater ? 0.6 : 1) * (0.55 + 0.45 * P.scale) * (ITEMS.held ? 0.85 : 1);
+  var base = (mv.run ? TUNE.runSpeed : TUNE.walkSpeed) * c2.speed * P.speedMul * (P.inWater ? 0.6 : 1) * (0.55 + 0.45 * P.scale) * (ITEMS.held ? 0.85 : 1);
   var fy = CAM.yaw, wx = mv.x * Math.cos(fy) + mv.z * Math.sin(fy), wz = -mv.x * Math.sin(fy) + mv.z * Math.cos(fy);
   if (P.gesture && (Math.abs(mv.x) + Math.abs(mv.z) > 0.1)) P.gesture = null;
   var tvx = wx * base, tvz = wz * base, acc = P.onGround ? 12 : 3.5;

@@ -3,6 +3,13 @@
 GitHub の osen/src/24_smash.js のいちばん上にある「TUNE」に、まとめてあります。
 数字を変えたら node tools/build.js で game.js を作り直します。
 
+■ 歩く・走る速さ（src/24_smash.js の TUNE）
+  walkSpeed: 5.2      歩く速さ
+  runSpeed: 10.5      走る速さ（スティックを大きくたおすと自動で走る）
+
+■ サーバー（src/28_servers.js の SRV_LIMIT）
+  mine: 2  1人が作れる数／all: 30  全体の上限／coolMin: 10  作ったあと次に作れるまでの分／oldDays: 3  使われないと消える日数
+
 ■ 町が戻るまでの時間
   respawn: 40         こわれた物が「ポンッ」と戻るまでの秒
   respawnBig: 25      建物は、さらにこの秒数だけ長い（＝65秒）

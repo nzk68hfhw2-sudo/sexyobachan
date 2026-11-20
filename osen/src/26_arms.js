@@ -64,6 +64,7 @@ function staticHit(x, y, z) {
 }
 // o から d 向きに進んで、当たった物を返す。pierce=true なら全部
 function rayHits(o, d, maxD, pierce, rad) {
+  if (!_rc) aimRay();
   var out = [], seen = {}, step = 0.35, r = rad || 0;
   var t0 = Math.max(0, (P.pos.x - o.x) * d.x + (P.pos.y + 1 - o.y) * d.y + (P.pos.z - o.z) * d.z);
   for (var t = t0; t < maxD; t += step) {
@@ -246,7 +247,7 @@ function skillUpdate(dt) {
     var f = camFwd(), mv = Math.hypot(IN.mx, IN.mz) > 0.2;
     if (mv) { var fy = CAM.yaw, wx = IN.mx * Math.cos(fy) + IN.mz * Math.sin(fy), wz = -IN.mx * Math.sin(fy) + IN.mz * Math.cos(fy); P.face = Math.atan2(-wx, -wz); }
     P.tackleT = Math.max(P.tackleT || 0, 0.05); P.tackleSp = 12; P.tackleId = 'tw' + Math.floor(SK.tornado * 4);
-    if (Math.floor((SK.tornado + dt) * 5) !== Math.floor(SK.tornado * 5)) smashBlast(new THREE.Vector3(P.pos.x, P.pos.y + 1, P.pos.z), 3 * R2, 3, { kind: 'skill', key: 'tw' + Math.floor(SK.tornado * 5) });
+    if (Math.floor((SK.tornado + dt) * 5) !== Math.floor(SK.tornado * 5)) smashBlast(new THREE.Vector3(P.pos.x, P.pos.y + 1, P.pos.z), 4.5 * R2, 3.5, { kind: 'skill', key: 'tw' + Math.floor(SK.tornado * 5) });
     debPuff(P.pos.x + rand(-1, 1), P.pos.y + rand(0, 2), P.pos.z + rand(-1, 1), 1, 0.3);
     if (SK.tornado <= 0) SK.tw.visible = false;
   }
@@ -256,7 +257,9 @@ function skillUpdate(dt) {
   if (SK.beam > 0) {
     SK.beam -= dt; if (!_bm) _bm = new THREE.Vector3();
     P.aimT = 1; P.face += angDiff(P.face, CAM.yaw) * Math.min(1, dt * 20);
-    var ray = aimRay(), hs = rayHits(ray.o, ray.d, 100, true, 1.8), head = new THREE.Vector3(P.pos.x, P.pos.y + P.bodyH * 0.85, P.pos.z), end = _bm.copy(ray.o).addScaledVector(ray.d, 80);
+    var ray = aimRay(), head = new THREE.Vector3(P.pos.x, P.pos.y + P.bodyH * 0.85, P.pos.z), bd = ray.d.clone(); bd.y = clamp(bd.y + 0.14, -0.3, 0.6); bd.normalize();
+    var hs = rayHits(head, bd, 100, true, 1.8), end = _bm.copy(head).addScaledVector(bd, Math.min(100, hs.end));
+    ray = { o: head, d: bd };
     GUN.beam.visible = true; GUN.beam.position.copy(head); GUN.beam.lookAt(end); GUN.beam.scale.set(0.5, 0.5, head.distanceTo(end));
     SK.beamTick = (SK.beamTick || 0) - dt;
     if (SK.beamTick <= 0) { SK.beamTick = 0.15; sfx('gunBeam', -5); hs.forEach(function (h) { applyHit(h, 1.6 * R2, ray.d, 8, 'sb' + Math.floor(SK.beam * 7)); }); }

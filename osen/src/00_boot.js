@@ -14,7 +14,7 @@ try { var _q = /[?&]osennet=([a-z]+)/.exec(location.search); if (_q) NET_DB_URL 
 // ボイスチャット用の中継サーバー（TURN）。スマホどうしで声がつながらない時だけ設定する。例：[{ urls: 'turn:…', username: '…', credential: '…' }]
 var VOICE_TURN = [];
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '3.1.0';
+var GAME_VERSION = '3.2.0';
 
 var ASSET_BASE = BASE_URL;
 (function detectBase() {
@@ -29,6 +29,9 @@ var ASSET_BASE = BASE_URL;
   if (ASSET_BASE.charAt(ASSET_BASE.length - 1) !== '/') ASSET_BASE += '/';
 })();
 function assetURL(p) { return ASSET_BASE + p; }
+// Gravity の中（別のサイトから game.js を読んだ時）は、上のボタンにかぶらないよう UI 全体を少し下げる
+var TOPPAD = { auto: (function () { try { var q = /[?&]osentop=(\d+)/.exec(location.search); if (q) return +q[1]; var h = location.hostname; if (!h || /netlify\.app$|^localhost$|^127\./.test(h)) return 0; return ASSET_BASE.indexOf('//' + location.host + '/') < 0 ? 64 : 0; } catch (e) { return 0; } })(), mode: 'auto' };
+function applyTopPad() { if (!ROOT) return; var px = TOPPAD.mode === 'on' ? 64 : TOPPAD.mode === 'off' ? 0 : TOPPAD.auto; ROOT.style.setProperty('--st', 'calc(env(safe-area-inset-top,0px) + ' + px + 'px)'); }
 
 var ROOT, UI, CANVAS_HOST;
 var BOOT_ERRORS = [];
@@ -92,7 +95,7 @@ function setupPage() {
   ROOT = document.createElement('div'); ROOT.id = 'os-root';
   CANVAS_HOST = document.createElement('div'); CANVAS_HOST.id = 'os-canvas';
   UI = document.createElement('div'); UI.id = 'os-ui';
-  ROOT.appendChild(CANVAS_HOST); ROOT.appendChild(UI);
+  ROOT.appendChild(CANVAS_HOST); ROOT.appendChild(UI); applyTopPad();
   (document.body || document.documentElement).appendChild(ROOT);
   try { document.documentElement.classList.add('os-lock'); document.body.classList.add('os-lock'); } catch (e) {}
 

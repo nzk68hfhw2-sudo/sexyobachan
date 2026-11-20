@@ -22,7 +22,7 @@ function initTextUI() {
 function layoutTop() {
   if (!H.top) return;
   var W = H.W || window.innerWidth, portrait = (H.H || window.innerHeight) > W;
-  if (portrait) { H.top.style.top = 'calc(var(--st) + 150px)'; H.top.style.width = Math.min(W - 24, 360) + 'px'; }
+  if (portrait) { H.top.style.top = 'calc(var(--st) + 206px)'; H.top.style.width = Math.min(W - 24, 360) + 'px'; }
   else { H.top.style.top = 'calc(var(--st) + 8px)'; H.top.style.width = Math.max(160, W - 2 * 240) + 'px'; }
 }
 function showTop(text, kind) {

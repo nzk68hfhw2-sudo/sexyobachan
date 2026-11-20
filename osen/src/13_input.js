@@ -11,7 +11,7 @@ function initInput() {
     audioInit();
     for (var i = 0; i < e.changedTouches.length; i++) {
       var t = e.changedTouches[i], W = window.innerWidth, Hh = window.innerHeight;
-      if (e.currentTarget === STICK.el || (t.clientX < W * 0.42 && t.clientY > Hh * 0.5 && IN.stickId === null && !G.paused)) { if (IN.stickId === null) { IN.stickId = t.identifier; stickCenter(); moveStick(t); continue; } }
+      if (e.currentTarget === STICK.el || (t.clientX < W * 0.42 && t.clientY > Hh * 0.5 && IN.stickId === null && !G.paused && !PHOTO.on)) { if (IN.stickId === null) { IN.stickId = t.identifier; stickCenter(); moveStick(t); continue; } }
       touches[t.identifier] = { x: t.clientX, y: t.clientY };
     }
     var ids = Object.keys(touches);
@@ -63,6 +63,7 @@ function initInput() {
     if (c2 === 'KeyQ') IN.throwIt = true;
     if (c2 === 'KeyV' || c2 === 'KeyB') IN.tackle = true;
     if (c2 === 'KeyH' || c2 === 'KeyN') gunNext();
+    if (c2 === 'KeyP') photoMode(!PHOTO.on);
     if (c2 === 'KeyR') IN.rotate = true;
     if (c2 === 'KeyZ') IN.smaller = true;
     if (c2 === 'KeyX') IN.bigger = true;
@@ -101,5 +102,6 @@ function readMove() {
   if (k.KeyW || k.ArrowUp) z -= 1; if (k.KeyS || k.ArrowDown) z += 1;
   if (k.KeyA || k.ArrowLeft) x -= 1; if (k.KeyD || k.ArrowRight) x += 1;
   var l = Math.sqrt(x * x + z * z); if (l > 1) { x /= l; z /= l; }
-  return { x: x, z: z, run: IN.run || k.ShiftLeft || k.ShiftRight };
+  // スティックを大きくたおすと自動でダッシュ
+  return { x: x, z: z, run: IN.run || k.ShiftLeft || k.ShiftRight || (IN.stickId !== null && Math.hypot(IN.mx, IN.mz) > 0.86) };
 }

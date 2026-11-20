@@ -296,7 +296,7 @@ function layoutUI() {
   // ログ
   var lw = land ? Math.min(330, W * 0.32) : Math.min(330, W * 0.5), lh = land ? Math.min(110, Hh * 0.26) : 96;
   H.log.style.width = lw + 'px'; H.log.style.height = lh + 'px';
-  H.log.style.bottom = 'calc(' + sb + ' + ' + (touch ? (land ? 136 : base + 136) : 62) + 'px)';
+  H.log.style.bottom = 'auto'; H.log.style.top = 'calc(var(--st) + 86px)'; // ログは上（ステータスの下）
   // 字幕
   var capB = touch ? (land ? 30 : base + 250) : 76;
   if (touch && !land) { H.cap.style.bottom = 'auto'; H.cap.style.top = 'calc(var(--st) + 160px)'; H.cap2.style.bottom = 'auto'; H.cap2.style.top = 'calc(var(--st) + 232px)'; }

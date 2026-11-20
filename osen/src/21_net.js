@@ -61,11 +61,10 @@ function localTransport() {
 NET.statusText = function () { return NET.on ? ('同時プレイ中：' + NET.room + '（' + NET.count() + '人）') : (NET.err ? '1人用（' + NET.err + '）' : (NET_DB_URL ? '1人用（つなぐ準備中）' : '1人用')); };
 NET.count = function () { var n = 1; for (var k in NET.peers) if (NET.peers[k].vis) n++; return n; };
 NET.join = function () {
-  if (NET.T || !NET_DB_URL) { if (NET_DB_URL) loadNotes(); return; }
-  try { NET.T = NET_DB_URL === 'local' ? localTransport() : fbTransport(NET_DB_URL.replace(/\/+$/, '')); }
+  if (NET._joined || !NET_DB_URL) { if (NET_DB_URL) loadNotes(); return; }
+  try { netEnsureT(); }
   catch (e) { NET.err = e.message; sysMsg('同時プレイにつなげませんでした。1人用で遊びます。'); return; }
-  NET.pid = 'p' + Math.random().toString(36).slice(2, 9);
-  NET.T.initSkew();
+  NET._joined = true;
   var connected = false;
   NET.T.onConnected(function (c) {
     if (c && !connected) { connected = true; NET.ok = true; if (!NET.on) pickRoom(); }
@@ -75,9 +74,9 @@ NET.join = function () {
   setTimeout(function () { if (!NET.on && !NET.ok) { NET.err = 'つながらない'; sysMsg('同時プレイのサーバーにつながりません。1人用で遊びます。'); } }, 12000);
   loadNotes();
 };
-function roomBase() { var s = Math.max(0, LOGIN.servers.map(function (x) { return x.n; }).indexOf(PLAYER.server)), c = Math.max(0, LOGIN.channels.indexOf(PLAYER.channel)); return 's' + s + 'c' + (c + 1); }
+function roomBase() { var s = /^(main|u[a-z0-9]{6,12})$/.test(PLAYER.srvId || '') ? PLAYER.srvId : 'main', c = clamp(PLAYER.ch | 0 || 1, 1, CHANNELS.length); return s + '_c' + c; }
 function pickRoom(k) {
-  k = k || 1; var room = roomBase() + 'r' + k;
+  k = k || 1; var room = roomBase() + '_r' + k;
   NET.T.once('rooms/' + room + '/p').then(function (ps) {
     var n = 0, tn = NET.T.now(); for (var id in (ps || {})) if (ps[id] && tn - (ps[id].t || 0) < 40000) n++;
     if (n >= ROOM_MAX && k < 30) return pickRoom(k + 1);
@@ -86,7 +85,7 @@ function pickRoom(k) {
 }
 function enterRoom(room) {
   NET.room = room; NET.on = true; NET.joinT = NET.T.now(); var base = 'rooms/' + room + '/';
-  NET.T.onDisconnectRemove(base + 'p/' + NET.pid);
+  NET.T.onDisconnectRemove(base + 'p/' + NET.pid); NET.T.onDisconnectRemove('who/' + NET.pid); setTimeout(srvWho, 500);
   writeMe(true);
   NET.T.on(base + 'p', 'child_added', peerUpsert); NET.T.on(base + 'p', 'child_changed', peerUpsert); NET.T.on(base + 'p', 'child_removed', function (k) { peerRemove(k); });
   NET.T.on(base + 'e', 'child_added', onEvent, 40);

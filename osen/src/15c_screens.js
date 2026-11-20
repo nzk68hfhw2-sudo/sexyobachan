@@ -9,10 +9,12 @@ var SCR_CSS = [
   '#os-load .tip b{color:#ffd56a;font-weight:normal;}',
   '#os-menu{position:absolute;inset:0;z-index:50;pointer-events:none;}',
   '#os-menu .ow{pointer-events:auto;}',
-  '#os-menu .logo{position:absolute;left:50%;top:calc(var(--st) + 14px);transform:translateX(-50%);max-width:92vw;max-height:22vh;pointer-events:none;}',
+  '#os-menu .logo{position:absolute;left:50%;top:calc(var(--st) + 14px);transform:translateX(-50%);max-width:92vw;max-height:19vh;pointer-events:none;}',
   '.fld{display:flex;align-items:center;gap:8px;margin:6px 0;} .fld span{width:64px;color:#ffe7a8;font-size:13px;}',
   '.fld div{flex:1;padding:6px 8px;background:#f4f0e0;color:#222;border:2px solid;border-color:#333 #ddd #ddd #333;font-size:14px;}',
-  '.srv{display:flex;align-items:center;gap:8px;} .srv .nm{flex:1;} .srv .gg{width:70px;}',
+  '.srv{display:flex;align-items:center;gap:8px;} .srv .nm{flex:1;} .srv .gg{width:104px;}',
+  '.li.srv.off{border:1px solid #e8c060!important;background:linear-gradient(#4a3a14,#1e1606)!important;box-shadow:0 0 8px rgba(232,192,96,.5);}', '.li.srv.pv{background:linear-gradient(#3a1a50,#1a0a28)!important;border:1px solid #b070e0!important;}',
+  '.bdg{font-style:normal;font-size:10px;padding:1px 5px;margin-right:6px;border-radius:3px;background:#e8c060;color:#1a1008;vertical-align:middle;}', '.bdg.pv{background:#b070e0;color:#fff;}', '.bdg.us{background:#4a90c0;color:#fff;}',
   '.terms{height:150px;overflow:auto;-webkit-overflow-scrolling:touch;padding:8px;background:#f4f0e0;color:#222;font-family:' + FONT_SUB + ';font-size:12px;line-height:1.7;border:2px solid;border-color:#333 #ddd #ddd #333;}',
   '.cs-name{text-align:center;font-size:20px;color:#ffe7a8;text-shadow:1px 1px 0 #000;}',
   '.cs-sub{text-align:center;font-size:12px;color:#9ad0ff;margin-bottom:4px;}',
@@ -83,6 +85,7 @@ function showMenu() {
   var lg = logoImg(); lg.className = 'logo'; MENU.el.appendChild(lg); MENU.logo = lg;
   H.hud.style.display = 'none';
   bgmPlay('title');
+  if (NET_DB_URL) srvRefresh();
   stepLogin();
 }
 function stepLogin() {
@@ -94,25 +97,6 @@ function stepLogin() {
     mbtn(r, 'ログイン', function () { audioInit(); sfx('uiLogin'); stepServer(); }, 'gold', 'key');
     mbtn(r, '会員登録', function () { sysMsg('会員登録は　すでに　完了しています（していない）。'); });
   });
-}
-function stepServer() {
-  menuWin('サーバー選択', 'server', 360, function (bd) {
-    var l = el('div', 'list', bd);
-    LOGIN.servers.forEach(function (s, i) {
-      var e = el('div', 'li srv', l); el('span', 'nm', e).innerHTML = cnHTML(s.n);
-      var g2 = el('div', 'gg ' + (s.s === '混雑' ? 'pol' : 'hp'), e); var f = el('i', '', g2); f.style.width = [30, 85, 45, 0, 100][i] + '%'; el('b', '', g2).innerHTML = cnHTML(s.s);
-      tapBtn(e, function () { if (s.s === '存在しない') { sysMsg('このサーバーは存在しません。'); return; } PLAYER.server = s.n; stepChannel(); }, 'uiClick');
-    });
-    var r = el('div', 'row2', bd); mbtn(r, 'もどる', stepLogin);
-  }, 'stone');
-}
-function stepChannel() {
-  menuWin('チャンネル選択', 'channel', 380, function (bd) {
-    el('div', 'kv', bd, '<span>サーバー</span><b>' + cnHTML(PLAYER.server) + '</b>');
-    var g2 = el('div', 'grid', bd); g2.style.gridTemplateColumns = 'repeat(auto-fill,minmax(104px,1fr))';
-    LOGIN.channels.forEach(function (ch) { mbtn(g2, ch, function () { PLAYER.channel = ch; stepTerms(); }); });
-    var r = el('div', 'row2', bd); mbtn(r, 'もどる', stepServer);
-  }, 'stone');
 }
 function stepTerms() {
   if (PLAYER.agreed) return stepCharSel();

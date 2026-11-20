@@ -5,7 +5,7 @@ module.exports = { touch: true, url: 'http://localhost:8092/index.html', run: as
   await page.waitForTimeout(2500);
   await clickText('ログイン'); await page.waitForTimeout(3000);
   logs.push('menu ' + JSON.stringify(await st()));
-  await page.locator('.li', { hasText: 'ぬるま川' }).first().tap({ force: true }); await page.waitForTimeout(300);
+  await page.locator('.li', { hasText: '公式' }).first().tap({ force: true }); await page.waitForTimeout(300);
   await clickText('ch.1'); await clickText('同意する'); await page.waitForTimeout(600); await clickText('この人で始める'); await page.waitForTimeout(1200);
   logs.push('enter+1s ' + JSON.stringify(await st()));
   await page.locator('#os-ui .ow .mb', { hasText: 'わかりました' }).first().tap({ force: true }); await page.waitForTimeout(3000);

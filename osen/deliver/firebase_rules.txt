@@ -11,6 +11,18 @@
             "pol": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 99999" }
           }
         },
+        "who": {
+          ".read": true,
+          "$pid": { ".write": true, ".validate": "!newData.exists() || (newData.child('r').isString() && newData.child('r').val().length <= 40 && newData.child('t').isNumber())" }
+        },
+        "srv": {
+          ".read": true,
+          "$sid": {
+            ".write": "!data.exists() || (!newData.exists() && data.child('s').val() < now - 259200000)",
+            ".validate": "!newData.exists() || (newData.hasChildren(['n', 't', 's']) && newData.child('n').isString() && newData.child('n').val().length <= 16 && (!newData.child('h').exists() || newData.child('h').val().length == 64))",
+            "s": { ".write": true, ".validate": "newData.isNumber() && newData.val() <= now + 60000" }
+          }
+        },
         "notes": {
           ".read": true,
           ".indexOn": ["t"],

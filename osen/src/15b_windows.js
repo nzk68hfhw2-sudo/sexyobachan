@@ -166,10 +166,13 @@ function openSettings() {
     row('軽量モード（古いスマホ用）', 'lite', function () { return LITE.on; }, function (v) { setLite(v); });
     row('刺激ひかえめモード', 'eye', function () { return REDUCED.on; }, function (v) { REDUCED.on = v; });
     row('ボイスチャット（近くの人と声で話す）', 'sound', function () { return VOICE.on; }, function () { voiceToggle(); });
+    var tp = el('div', 'kv', bd); el('span', '', tp).innerHTML = cnHTML('上の余白（Gravity用）'); var tpg = el('div', '', tp); tpg.style.display = 'flex'; tpg.style.gap = '3px';
+    [['auto', '自動'], ['on', 'あり'], ['off', 'なし']].forEach(function (m) { mbtn(tpg, m[1], function () { TOPPAD.mode = m[0]; applyTopPad(); layoutUI(); saveGame(); refreshWin('set'); }, TOPPAD.mode === m[0] ? 'gold' : ''); });
     row('振動（使える端末だけ）', 'burst', function () { return FEEL.vib; }, function (v) { FEEL.vib = v; });
     row('ほかの人をミュート（見えなくする）', 'mute', function () { return !!(NET && NET.muted); }, function (v) { NET.muted = v; });
     el('div', 'desc', bd, [cnHTML('記録の保存：' + (STORE.available() ? 'この端末のブラウザに保存されます' : '保存できない環境です（閉じると消えます）')), cnHTML('画質：' + ['最低', '低', '中', '高'][R.quality] + '　/　' + (R.lastFps ? Math.round(R.lastFps) + 'fps' : '計測中')), cnHTML('通信：' + NET.statusText()), cnHTML('版：' + GAME_VERSION)].join('<br>'));
     var r2 = el('div', 'row2', bd);
+    mbtn(r2, 'フォトモード', function () { photoMode(true); }, '', 'eye');
     mbtn(r2, '町をすぐ元に戻す', function () { var n = brkResetAll(); sysMsg(n ? '町を　元に戻しました（' + n + 'か所）。ポンッ。' : 'こわれている物は　ありません。'); }, 'gold', 'home');
     mbtn(r2, 'あそびかた', function () { openHelp(); }, '', 'info');
     mbtn(r2, 'まわりの人', function () { openPeople(); }, '', 'people');
