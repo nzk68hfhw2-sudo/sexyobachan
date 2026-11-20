@@ -301,7 +301,7 @@ function layoutUI() {
   var cw = touch && land ? Math.max(200, W - 2 * 220) : W * 0.92;
   H.cap.style.maxWidth = H.cap2.style.maxWidth = cw + 'px';
   H.cap.style.fontSize = H.cap2.style.fontSize = (Math.min(W, Hh) < 420 ? 18 : 22) + 'px';
-  H.capB = capB;
+  H.capB = capB; if (typeof layoutTop === 'function') layoutTop();
   var small = Math.min(W, Hh) < 420;
   H.st.style.transform = small ? 'scale(.86)' : ''; H.st.style.transformOrigin = 'left top';
   Object.keys(WIN.list).forEach(function (k) { var w = WIN.list[k]; if (w.open) w.el.classList.toggle('big', isNarrow()); });
@@ -333,7 +333,7 @@ function setCross(target) {
   H.tt.style.left = Math.min(W - 240, W / 2 + 28) + 'px'; H.tt.style.top = (Hh / 2 + 18) + 'px';
 }
 // ---- システムメッセージ・ログ -------------------------------------------------------------
-function sysMsg(text, noLog) {
+function sysMsgOld(text, noLog) {
   var d = el('div', '', H.sys); d.innerHTML = cnHTML(text); setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 3700);
   while (H.sys.children.length > 4) H.sys.removeChild(H.sys.firstChild);
   sfx('sysMsg');
@@ -402,22 +402,27 @@ var TAGS = [];
 function updateTags() {
   var list = [], cam = R.camera, W = H.W, Hh = H.H, v = _tagV || (_tagV = new THREE.Vector3());
   var meTalk = VOICE.on && VOICE.level > 0.06;
-  list.push({ k: 'me' + (meTalk ? 't' : (VOICE.on ? 'v' : '')), name: PLAYER.name, sub: (meTalk ? '♪話し中♪ ' : (VOICE.on ? '◎ボイス ' : '')) + FRIEND_INFO[PLAYER.char].name, p: P.pos, h: P.bodyH + 0.35, cls: 'me', bub: PLAYER.bubble });
+  // 自分の名前は、まんなか（照準のそば）に出るので、ふだんは出さない（話している時・ボイス中・「多い」の時だけ）
+  if (meTalk || VOICE.on || (PLAYER.bubble && PLAYER.bubble.t > now()) || TEXTLV.v >= 2) list.push({ k: 'me' + (meTalk ? 't' : (VOICE.on ? 'v' : '')), name: PLAYER.name, sub: (meTalk ? '♪話し中♪ ' : (VOICE.on ? '◎ボイス ' : '')) + FRIEND_INFO[PLAYER.char].name, p: P.pos, h: P.bodyH + 0.35, cls: 'me', bub: PLAYER.bubble });
   NPCS.forEach(function (n) { if (n.ent.visible) list.push({ k: 'n' + n.idx, name: FRIEND_INFO[n.idx].name, p: n.ent.pos, h: n.ent.h + 0.3, cls: 'npc', bub: n.bubble }); });
   if (NET && NET.peers && !NET.muted) for (var id in NET.peers) { var pp = NET.peers[id]; if (pp.vis && !NET.blocked[id]) list.push({ k: 'p' + id + (pp.talking ? 't' : (pp.v ? 'v' : '')), name: pp.name, sub: (pp.talking ? '♪話し中♪ ' : (pp.v ? '◎ボイス ' : '')) + (FRIEND_INFO[pp.char] ? FRIEND_INFO[pp.char].name : ''), p: pp.pos, h: pp.h + 0.35, cls: 'pc', bub: pp.bubble }); }
-  var used = 0;
+  var used = 0, rects = [];
+  function place(x, y, w, h) { for (var tr = 0; tr < 4; tr++) { var hit = false; for (var q = 0; q < rects.length; q++) { var r = rects[q]; if (Math.abs(r.x - x) < (r.w + w) / 2 && Math.abs(r.y - y) < (r.h + h) / 2) { hit = true; y = r.y - (r.h + h) / 2 - 2; } } if (!hit) break; } rects.push({ x: x, y: y, w: w, h: h }); return y; }
   for (var i = 0; i < list.length && used < 12; i++) {
     var L = list[i], d = cam.position.distanceTo(L.p); if (d > 26 && L.cls !== 'me') continue;
     v.set(L.p.x, L.p.y + L.h, L.p.z).project(cam); if (v.z > 1 || Math.abs(v.x) > 1.1 || Math.abs(v.y) > 1.1) continue;
     var t = TAGS[used] || (TAGS[used] = { e: el('div', 'nmtag', H.tags), b: el('div', 'bub', H.tags) });
     if (t.k !== L.k + L.name) { t.k = L.k + L.name; t.e.className = 'nmtag ' + L.cls; t.e.innerHTML = cnHTML(L.name) + (L.sub ? '<i>' + cnHTML(L.sub) + '</i>' : ''); }
-    var sx = (v.x * 0.5 + 0.5) * W, sy = (-v.y * 0.5 + 0.5) * Hh;
+    var sx = (v.x * 0.5 + 0.5) * W, sy = (-v.y * 0.5 + 0.5) * Hh, hasB = L.bub && L.bub.t > now();
+    var tw = Math.max(L.name.length, (L.sub || '').length) * 11 + 12;
+    sy = place(sx, sy - 14, tw, 30) + 14; if (hasB) place(sx, sy - 44, Math.min(200, (L.bub.text || '').length * 12 + 20), 26);
     t.e.style.display = ''; t.e.style.left = sx + 'px'; t.e.style.top = sy + 'px';
-    if (L.bub && L.bub.t > now()) { if (t.b._txt !== L.bub.text) { t.b._txt = L.bub.text; t.b.innerHTML = L.bub.icon ? '' : (L.bub.free ? escHTML(L.bub.text) : cnHTML(L.bub.text)); if (L.bub.icon) t.b.appendChild(iconEl(uiIcon(L.bub.icon), 32)); } t.b.style.display = ''; t.b.style.left = sx + 'px'; t.b.style.top = (sy - 28) + 'px'; }
+    if (hasB) { if (t.b._txt !== L.bub.text) { t.b._txt = L.bub.text; t.b.innerHTML = L.bub.icon ? '' : (L.bub.free ? escHTML(L.bub.text) : cnHTML(L.bub.text)); if (L.bub.icon) t.b.appendChild(iconEl(uiIcon(L.bub.icon), 32)); } t.b.style.display = ''; t.b.style.left = sx + 'px'; t.b.style.top = (sy - 28) + 'px'; }
     else t.b.style.display = 'none';
     used++;
   }
   for (var j = used; j < TAGS.length; j++) { TAGS[j].e.style.display = 'none'; TAGS[j].b.style.display = 'none'; }
+  updateNote(rects);
 }
 var _tagV = null;
 // ---- 顔の絵（3Dモデルを撮影） --------------------------------------------------------------
@@ -443,14 +448,14 @@ function setFace(idx) { var x = H.face.getContext('2d'); x.clearRect(0, 0, 96, 9
 // ---- Movie Maker 風字幕（町のイベント用・前のまま） -------------------------------------------
 var CAPQ = [], _capT = 0, _capBusy = false;
 var CAP_PRESETS = ['fade', 'flyL', 'flyR', 'type', 'zoom', 'drop', 'wave'];
-function caption(text, opt) {
+function captionBig(text, opt) {
   opt = opt || {};
   if (opt.now) { CAPQ = []; _capBusy = false; _capT = 0; }
   if (CAPQ.length > 3) CAPQ.shift();
   CAPQ.push({ text: text, opt: opt });
   logMsg('ev', text);
 }
-function caption2(text) {
+function caption2Big(text) {
   H.cap2.innerHTML = cnHTML(text); H.cap2.style.animation = 'none'; void H.cap2.offsetWidth; H.cap2.style.animation = 'capFade ' + (2.5 + text.length * 0.08) + 's forwards';
   logMsg('ev', text, '字幕');
 }
@@ -477,13 +482,13 @@ function updateCaptions(dt) {
 }
 // ---- ワードアート演出（前のまま） -------------------------------------------------------------
 var WA_LIVE = 0;
-function popWA(text, o) {
+function popWABig(text, o) {
   o = o || {};
-  if (WA_LIVE > (REDUCED.on ? 3 : 14)) return;
+  if (WA_LIVE > (o.lim || (REDUCED.on ? 3 : 14))) return;
   var W = H.W || 400, Hh = H.H || 700, maxW = o.big ? W * 0.94 : W * (o.w || 0.7);
   var c2 = wordArtFit(text, o.style == null ? randi(0, WA_STYLES.length - 1) : o.style, maxW * 1.6, o.size || (o.big ? 110 : 72), o.shape);
   var e = document.createElement('canvas'); e.width = c2.width; e.height = c2.height; e.getContext('2d').drawImage(c2, 0, 0);
-  var sc = Math.min(1, maxW / c2.width, (Hh * (o.big ? 0.4 : 0.22)) / c2.height) * (o.scale || 1);
+  var sc = Math.min(1, maxW / c2.width, (o.maxH || Hh * (o.big ? 0.4 : 0.22)) / c2.height) * (o.scale || 1);
   e.className = 'os-wa'; e.style.width = (c2.width * sc) + 'px'; e.style.height = (c2.height * sc) + 'px';
   e.style.left = (o.x != null ? o.x * W : W / 2) + 'px'; e.style.top = (o.y != null ? o.y * Hh : Hh * 0.32) + 'px';
   var dur = o.dur || (o.big ? 2.8 : 2.2), an = o.anim || (o.big ? 'waSpin' : pick(['waPop', 'waPop', 'waSlide', 'waFloat']));
@@ -494,7 +499,7 @@ function popWA(text, o) {
   setTimeout(function () { if (e.parentNode) e.parentNode.removeChild(e); WA_LIVE--; }, dur * 1000 + 50);
   return e;
 }
-function confetti(n) {
+function confettiBig(n) {
   n = REDUCED.on ? Math.min(n, 5) : n;
   var W = H.W, Hh = H.H;
   for (var i = 0; i < n; i++) (function () {

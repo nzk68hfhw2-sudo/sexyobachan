@@ -15,3 +15,15 @@
 
 /voicetest.js
   Cache-Control: no-cache, must-revalidate
+
+/bgm_long.mp3
+  Content-Type: audio/mpeg
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: cross-origin
+  Cache-Control: public, max-age=86400
+
+/bgm_short.mp3
+  Content-Type: audio/mpeg
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: cross-origin
+  Cache-Control: public, max-age=86400

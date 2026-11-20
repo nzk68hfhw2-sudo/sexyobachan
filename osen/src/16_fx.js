@@ -71,7 +71,7 @@ function touchProp(pr) {
   var fx = n < d.fx.length ? d.fx[n] : pick(FX_POOL);
   if (d.fx[0] === 'statue' || d.fx[0] === 'omikuji' || d.fx[0] === 'exit') fx = d.fx[0];
   var speak = d.b === 'friend' || fx === 'babble' || /「/.test(line);
-  if (fx !== 'omikuji' && fx !== 'exit') caption(line, { speak: speak, preset: speak ? pick(['type', 'wave', 'fade']) : null });
+  if (fx !== 'omikuji' && fx !== 'exit') caption(line, { speak: speak, src: pr });
   sfx('touch');
   doFx(fx, pr);
   if (n > 0 && (n + 1) % 5 === 0) setTimeout(function () { doFx('bigwa', pr); }, 600);
@@ -113,7 +113,7 @@ function doFx(fx, pr) {
     case 'tilt': G.tiltT = 5; G.tiltA = (Math.random() < 0.5 ? -1 : 1) * (REDUCED.on ? 0.08 : 0.25); sfx('whoosh'); break;
     case 'flip': if (REDUCED.on) { doFx('tilt', pr); break; } G.flipT = 6; sfx('warp'); break;
     case 'friend': popFriendNear(pr); sfx('pop'); break;
-    case 'music': var ks = Object.keys(SONGS); bgmPlay(pick(ks)); G.musicLock = 40; break;
+    case 'music': var ks = Object.keys(SONGS); bgmSpecial(pick(ks)); G.musicLock = 40; break;
     case 'clean': cleanPollution(rand(8, 14)); break;
     case 'warp': var w = pick(WARP_POINTS); teleport(w[0], groundAt(w[0], w[2], 30, 0.3), w[2], w[3]); sfx('warp'); caption('……気がついたら　別の場所にいた。', { preset: 'fade' }); break;
     case 'train': popWA('電车が　まいります', { style: 1, anim: 'waSlide', dur: 3.2, y: 0.3, size: 90, big: false, w: 0.95 }); sfx('train'); break;
@@ -235,14 +235,14 @@ function updateWA3D(dt, t) {
 function addPollution(v) { var b = G.pol; G.pol = Math.max(0, G.pol + v * (G.pol >= 100 ? 1.4 : 1)); netPollution(G.pol - b); }
 function cleanPollution(v) {
   var before = G.pol; G.pol = Math.max(0, G.pol - v); netPollution(G.pol - before);
-  sfx('clean'); caption2(pick(CLEAN_LINES)); popWA('－' + Math.round(before - G.pol) + '％', { style: 4, x: 0.25, y: 0.18, size: 54, anim: 'waFloat' });
+  sfx('clean'); caption2(pick(CLEAN_LINES)); popWA('－' + Math.round(before - G.pol) + '％', { style: 4 });
   G.cleaned += before - G.pol; if (G.cleaned > 60) secret('clean');
 }
 function stageOf(v) { var s = 0; for (var i = 0; i < STAGES.length; i++) if (v >= STAGES[i].at) s = i; return s; }
 function onStageChange(prev, s) {
   var st = STAGES[s];
   zukanFind('s_' + s, '汚染：' + st.name);
-  if (s > prev) { sfx('stage'); popWA(st.wa, { big: true, style: [12, 0, 5, 3, 7, 14, 10, 1, 15, 9, 6][s] }); caption(st.desc, { preset: 'type', color: 'y' }); }
+  if (s > prev) { sfx('stage'); popWA(st.wa, { imp: true, big: true, style: [12, 0, 5, 3, 7, 14, 10, 1, 15, 9, 6][s] }); caption(st.desc, { preset: 'type', color: 'y' }); }
   redrawSigns(signLevel(s));
   AUD.stage = s;
   // 100%より上：地面がワードアート
@@ -286,7 +286,7 @@ function secret(id) {
   if (G.secrets[id]) return; G.secrets[id] = 1;
   var s = SECRETS.filter(function (x) { return x.id === id; })[0]; if (!s) return;
   zukanFind('x_' + id, s.n);
-  popWA(s.n, { big: true, style: 0, shape: 'arcUp' }); confetti(20); sfx('wa');
+  popWA(s.n, { imp: true, big: true, style: 0, shape: 'arcUp' }); confetti(20); sfx('wa');
   caption('ひみつ発見!!「' + s.n + '」', { preset: 'zoom', color: 'y', now: true });
   addPollution(4);
   switch (id) {

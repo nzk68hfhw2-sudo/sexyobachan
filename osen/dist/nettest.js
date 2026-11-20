@@ -155,12 +155,38 @@
     var s = document.createElement('script'); s.src = BASE + 'nettest2.js?' + Date.now(); s.onerror = function () { o.set(0, '読めない'); }; document.head.appendChild(s);
   }
 
+  function tMusic() {
+    var o = row('N', 'Netlify の曲（BGM）を audio タグで読む', 'netlify');
+    timeout(o, 15000, '15秒以内に読めなかった');
+    try {
+      var a = new Audio(); a.crossOrigin = 'anonymous'; a.preload = 'auto';
+      a.addEventListener('loadedmetadata', function () { o.set(1, '読めた（長さ ' + Math.round(a.duration) + '秒）'); });
+      a.addEventListener('error', function () { o.set(0, '読めない（code ' + (a.error ? a.error.code : '?') + '）'); });
+      a.src = BASE + 'bgm_short.mp3'; a.load();
+      var bt = document.createElement('button'); bt.textContent = '▶ タップして曲を鳴らしてみる（音量注意：小さめ）';
+      bt.style.cssText = 'display:block;margin:12px 0;padding:12px;width:100%;font:bold 15px sans-serif;background:#ffd84a;color:#000;border:0;border-radius:6px';
+      var res = document.createElement('div'); res.className = 'd'; res.style.fontSize = '14px';
+      bt.onclick = function () {
+        try {
+          var AC = window.AudioContext || window.webkitAudioContext, c = AC && new AC(), g;
+          if (c) { var src = c.createMediaElementSource(a); g = c.createGain(); g.gain.value = 0.25; src.connect(g); g.connect(c.destination); if (c.state === 'suspended') c.resume(); }
+          a.currentTime = 0;
+          var p = a.play(); res.textContent = '再生中…（聞こえたら OK。マナーモードだと鳴りません）';
+          if (p && p.catch) p.catch(function (e) { res.textContent = '鳴らせなかった：' + e.name; });
+          a.onplaying = function () { res.textContent = '♪ 再生できた（' + (c ? 'Web Audio 経由' : 'audio タグのみ') + '）。聞こえたら OK。10秒で止まります'; setTimeout(function () { a.pause(); }, 10000); };
+          bt.onclick = function () { if (a.paused) a.play(); else a.pause(); };
+        } catch (e) { res.textContent = 'エラー：' + e.message; }
+      };
+      box.appendChild(bt); box.appendChild(res);
+    } catch (e) { o.set(0, 'エラー: ' + e.message); }
+  }
+
   function start() {
     ui();
     tJsonp(); tFetchNetlify(); tXhr(); tFirebaseRest(); tFirebaseWs(); tSse(); tWsEcho();
     tWsOpen('G', 'Ably（リアルタイム通信サービス）に WebSocket', 'wss://realtime.ably.io/?v=2&format=json&key=test.test:test');
     tWsOpen('H', 'Supabase（リアルタイム通信サービス）に WebSocket', 'wss://realtime-demo.supabase.co/realtime/v1/websocket?vsn=1.0.0');
-    tRtc(); tFonts(); tImg(); tBitmap();
+    tRtc(); tFonts(); tImg(); tBitmap(); tMusic();
   }
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 })();

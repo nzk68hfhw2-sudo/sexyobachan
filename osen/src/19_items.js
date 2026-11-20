@@ -12,7 +12,7 @@ var ITEM_INFO = {
   register: { n: 'レジ', m: 4, sp: ['チーンと鳴らす', function (it) { spawnFrom(it, 'coinitem'); sfx('coin'); }] },
   onigiri: { n: 'おにぎり', m: 0.2, sp: ['食べる', function (it) { eat(it, 25, 'おにぎりを食べた。具はおにぎりだった。'); }] },
   cup: { n: 'コーヒーカップ', m: 0.3, sp: ['飲む', function (it) { G.genki = Math.min(100, G.genki + 10); P.speedMul = 1.6; P.speedT = 8; sysMsg('コーヒーを飲んだ。カレーの味。足が速くなった。'); sfx('splash'); }] },
-  radio: { n: 'ラジオ', m: 1.5, sp: ['スイッチを入れる', function () { var ks = Object.keys(SONGS); bgmPlay(pick(ks)); G.musicLock = 40; sysMsg('ラジオから　よにん放送が　流れ出した。'); }] },
+  radio: { n: 'ラジオ', m: 1.5, sp: ['スイッチを入れる', function () { var ks = Object.keys(SONGS); bgmSpecial(pick(ks)); G.musicLock = 40; sysMsg('ラジオから　よにん放送が　流れ出した。'); }] },
   gacha: { n: 'ガチャ', m: 12, sp: ['ハンドルを回す', function (it) { spawnFrom(it, 'capsule'); sfx('pop'); }] },
   cabbage: { n: 'キャベツ', m: 3, roll: 0, sp: ['葉をむく', function (it) { if (it.body.scale > 0.4) { setScale(it, it.body.scale * 0.8); spawnFrom(it, 'leaf'); } sfx('pop'); }] },
   fish: { n: '魚', m: 4, sp: ['ピチピチさせる', function (it) { it.body.vel.y = 5; it.body.av.set(rand(-8, 8), rand(-8, 8), rand(-8, 8)); wake(it); sfx('splash'); }] },
@@ -196,7 +196,7 @@ function combineAt(ia, ib, r, pos) {
   ITEMS.quiet = true; removeItem(ia); removeItem(ib); ITEMS.quiet = false;
   var n = spawnItem(r.out, pos.x, pos.y, pos.z, rand(0, TAU), { awake: true, scale: s }); n.spawned = true; n.body.vel.y = 3;
   var name = itemType(r.out).name;
-  sysMsg('合成成功!!　「' + name + '」ができました。'); sfx('combine'); popWA(name, { style: randi(0, WA_STYLES.length - 1), y: 0.24 }); confetti(10);
+  sysMsg('合成成功!!　「' + name + '」ができました。'); sfx('combine'); popWA(name, { imp: true, style: randi(0, WA_STYLES.length - 1), y: 0.24 }); confetti(10);
   G.combines = (G.combines || 0) + 1; addPollution(3);
   zukanFind('r_' + r.out, name); zukanFind('i_' + r.out, name);
   if (NET.on && !NET.applying) NET.sendCombine(r.out, pos, ia, ib, n);

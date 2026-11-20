@@ -26,4 +26,5 @@ out+='var FRIENDS2_BIN_B64="'+b64('friends2.bin')+'";\nvar FRIENDS2_JPG_B64="'+b
 out+='var FONT_B64={'+fontIds.map(id=>id+':"'+b64('fonts/'+id+'.woff2')+'"').join(',\n')+'};\n';
 out+='\nboot();\n})();\n';
 fs.writeFileSync(path.join(R,'dist','game.js'),out);
+['bgm_long.mp3','bgm_short.mp3'].forEach(function(f){fs.copyFileSync(path.join(R,'music',f),path.join(R,'dist',f));});
 console.log('built',files.length,'files code',code.length,'total',out.length,'bytes');

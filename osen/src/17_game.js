@@ -36,17 +36,17 @@ G.onStart = function () {
 function saveGame() {
   try {
     var counts = {}; PROPS.forEach(function (p) { if (p.count) counts[p.def.id] = p.count; });
-    STORE.save({ v: 2, pl: { c: PLAYER.char, n: PLAYER.name, nc: PLAYER.nameCode, s: PLAYER.server, ch: PLAYER.channel, a: PLAYER.agreed, h: PLAYER.helpSeen, vo: PLAYER.voiceOk }, bag: BAG.items, gk: G.genki, fi: G.fiddles, cb: G.combines, cam: CAM.distT, pol: G.pol, tod: G.tod, z: ZUKAN.found, c: counts, s: G.secrets, m: G.metFriends, bgm: AUD.bgmOn, sfx: AUD.sfxOn, lite: LITE.on, red: REDUCED.on, cl: G.cleaned,
+    STORE.save({ v: 2, pl: { c: PLAYER.char, n: PLAYER.name, nc: PLAYER.nameCode, s: PLAYER.server, ch: PLAYER.channel, a: PLAYER.agreed, h: PLAYER.helpSeen, vo: PLAYER.voiceOk, tl: TEXTLV.v }, bag: BAG.items, gk: G.genki, fi: G.fiddles, cb: G.combines, cam: CAM.distT, pol: G.pol, tod: G.tod, z: ZUKAN.found, c: counts, s: G.secrets, m: G.metFriends, bgm: AUD.bgmOn, sfx: AUD.sfxOn, bv: AUD.bgmVol, sv: AUD.sfxVol, lite: LITE.on, red: REDUCED.on, cl: G.cleaned,
       pos: P.pos && P.pos.z < 300 ? [P.pos.x, P.pos.y, P.pos.z, P.face] : null });
   } catch (e) {}
 }
 function loadGame() {
   var d = STORE.load(); if (!d || (d.v !== 1 && d.v !== 2)) return null;
-  if (d.pl) { PLAYER.char = d.pl.c || 0; PLAYER.name = d.pl.n || ''; PLAYER.server = d.pl.s || ''; PLAYER.channel = d.pl.ch || ''; PLAYER.agreed = !!d.pl.a; PLAYER.helpSeen = !!d.pl.h; PLAYER.voiceOk = !!d.pl.vo; PLAYER.nameCode = d.pl.nc || ''; if (!PLAYER.nameCode) PLAYER.name = ''; }
+  if (d.pl) { PLAYER.char = d.pl.c || 0; PLAYER.name = d.pl.n || ''; PLAYER.server = d.pl.s || ''; PLAYER.channel = d.pl.ch || ''; PLAYER.agreed = !!d.pl.a; PLAYER.helpSeen = !!d.pl.h; PLAYER.voiceOk = !!d.pl.vo; TEXTLV.v = d.pl.tl | 0; PLAYER.nameCode = d.pl.nc || ''; if (!PLAYER.nameCode) PLAYER.name = ''; }
   if (d.bag) BAG.items = d.bag.filter(function (e) { return e && (EXTRA_TYPES[e.type] || ITEM_INFO[e.type]); });
   if (d.gk != null) G.genki = d.gk; G.fiddles = d.fi || 0; G.combines = d.cb || 0; if (d.cam) CAM.distT = d.cam;
   G.pol = +d.pol || 0; G.tod = +d.tod || 1.3; ZUKAN.found = d.z || {}; G.secrets = d.s || {}; G.metFriends = d.m || {}; G.cleaned = d.cl || 0;
-  AUD.bgmOn = d.bgm !== false; AUD.sfxOn = d.sfx !== false; LITE.on = !!d.lite; REDUCED.on = !!d.red;
+  AUD.bgmOn = d.bgm !== false; AUD.sfxOn = d.sfx !== false; if (d.bv != null) AUD.bgmVol = clamp(+d.bv || 0, 0, 1); if (d.sv != null) AUD.sfxVol = clamp(+d.sv || 0, 0, 1); LITE.on = !!d.lite; REDUCED.on = !!d.red;
   return d;
 }
 function applyLoaded(d) {
@@ -66,7 +66,7 @@ function updateGame(dt) {
   if (G.stage >= 6 && G.stage < 9 && Math.random() < dt / 90 && G.naiTimer <= 0) { G.naiTarget = 1; G.naiTimer = 20; }
   G.naiT = lerp(G.naiT, G.naiTarget, 1 - Math.exp(-dt * 0.8));
   var tIdx = G.naiT > 0.5 ? 4 : Math.floor(G.tod + 0.35) % 4;
-  if (G.started && !G.visitedTimes[tIdx]) { G.visitedTimes[tIdx] = 1; zukanFind('t_' + TIMES[tIdx].id, '時間帯：' + TIMES[tIdx].name); if (t > 5) { popWA(TIMES[tIdx].wa, { style: [4, 2, 6, 12, 10][tIdx], y: 0.2, size: 60 }); } }
+  if (G.started && !G.visitedTimes[tIdx]) { G.visitedTimes[tIdx] = 1; zukanFind('t_' + TIMES[tIdx].id, '時間帯：' + TIMES[tIdx].name); if (t > 5) { popWA(TIMES[tIdx].wa, { area: true, style: [4, 2, 6, 12, 10][tIdx] }); } }
   var tl = TIMES[tIdx].name + (G.area ? '　' + G.area.name : '　道'); if (H.time._t !== tl) { H.time._t = tl; H.time.innerHTML = cnHTML(tl); H.stArea.innerHTML = cnHTML('◆' + (G.area ? G.area.wa : '道') + ' ' + (NET && NET.on ? '（' + NET.count() + '人）' : '')); }
   var crazy = (G.crazySkyT > 0 ? 1 : 0) * 0.85 + (G.pol >= 130 ? Math.min(0.7, (G.pol - 130) / 100) : 0);
   if (G.crazySkyT > 0) G.crazySkyT -= dt;
@@ -104,7 +104,7 @@ function updateGame(dt) {
   if (aid && (!G.area || G.area.id !== aid)) {
     var a = AREAS.filter(function (x) { return x.id === aid; })[0]; G.area = a;
     if (G.started) {
-      popWA(a.wa, { style: a.style, y: 0.2, size: 80, anim: 'waPop', dur: 2.8 }); caption(a.sub + '　　' + pick(MONOLOGUE), { preset: pick(['flyL', 'fade', 'type']), now: true });
+      popWA(a.wa, { area: true, style: a.style }); caption(a.sub + '　　' + pick(MONOLOGUE), { preset: pick(['flyL', 'fade', 'type']), now: true });
       zukanFind('a_' + aid, a.name);
       if (G.musicLock <= 0) bgmPlay(aid);
     }

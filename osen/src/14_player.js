@@ -225,7 +225,7 @@ function useSkill() {
   if (G.inMenu) return;
   if (P.skillCd > 0) { sysMsg('とくぎは　あと' + Math.ceil(P.skillCd) + '秒で　使えます。'); sfx('error'); return; }
   var sk = CHARS[PLAYER.char].skill; P.skillCd = 8;
-  popWA(sk.name, { style: PLAYER.char * 2 % WA_STYLES.length, y: 0.22, size: 64 }); sysMsg('とくぎ「' + sk.name + '」!!');
+  popWA(sk.name, { imp: true, style: PLAYER.char * 2 % WA_STYLES.length }); sysMsg('とくぎ「' + sk.name + '」!!');
   addPollution(1.5);
   switch (sk.id) {
     case 'matsu': G.slowT = 6; sfx('warp'); break;

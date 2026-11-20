@@ -1,19 +1,23 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- 精神汚染ゲーム（精神汚染オンライン） v2　source.txt
+ 精神汚染ゲーム（精神汚染オンライン） v2.3　source.txt
  （このファイルはゲームの説明書き。動作には関係しません）
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-■ zip の中身（4つ）
-  index.html … game.js を読むだけの短いページ（Netlify の URL を直接開いた時用）
-  game.js    … ゲームのすべて。画面・文字・ボタン・音・3Dの町・8人のモデルも全部この中
-  source.txt … この説明
-  _headers   … Netlify 用の設定。他のサイト（Gravity）から game.js を読めるようにする（CORS）
+■ zip の中身（主なもの）
+  index.html    … game.js を読むだけの短いページ（Netlify の URL を直接開いた時用）
+  game.js       … ゲームのすべて。画面・文字・ボタン・効果音・3Dの町・8人のモデルも全部この中
+  bgm_long.mp3  … BGM（町を歩いている時。約2分50秒）
+  bgm_short.mp3 … BGM（ログイン・サーバー選択・キャラ選択。約1分）
+  source.txt    … この説明
+  _headers      … Netlify 用の設定。他のサイト（Gravity）から game.js と曲を読めるようにする（CORS）
+  （ほかに nettest.* / voicetest.* … 通信テスト・ボイステスト用。ゲーム本体には不要）
 
 ■ しくみ
   ・game.js を1本 <script> で読めば全部動く（index.html の中身には頼らない）
   ・3Dモデル（8人）とその色（テクスチャ）は game.js の中に埋め込み済み
     → 別ファイルを読まないので、Gravity 経由でも読み込み失敗が起きにくい
-  ・外から読むもの：three.js（cdnjs, r128）だけ。フォントも Firebase の部品も game.js に埋め込み
+  ・外から読むもの：three.js（cdnjs, r128）と、BGM の曲2つ（同じ Netlify の場所から audio タグで読む。
+    game.js が自分の場所から絶対URLを作る。ゲームの表示が終わってから読む。読めない時はプログラム製 BGM に自動で切りかえ）。フォントも Firebase の部品も game.js に埋め込み
   ・同時プレイ：Firebase Realtime Database（NET_DB_URL）。URL を '' にすると1人用
   ・読めなかった時は、真っ黒にせず「何が読めなかったか」を画面に日本語で出す
 
@@ -38,7 +42,10 @@
   ・フォント（すべて SIL Open Font License 1.1。使う字だけを埋め込み）
       DotGothic16 / BIZ UDゴシック / Noto Sans SC / Dela Gothic One / Reggae One /
       RocknRoll One / Mochiy Pop One / Yusei Magic
-  ・効果音・BGM … すべてプログラム（Web Audio）で合成。音声ファイルなし
+  ・BGM … 制作者が Suno で作った曲（bgm_long.mp3 / bgm_short.mp3。歌なし）
+      汚染率が上がると、同じ曲をプログラムで少し遅く・ゆらし・こもらせる（ファイルはそのまま）
+      曲が読めない時と、ラジオなどの特別な場面だけ、プログラム（Web Audio）で合成した BGM を使う
+  ・効果音 … すべてプログラム（Web Audio）で合成。音声ファイルなし
   ・絵（看板・ワードアート・星・テクスチャ）… すべてプログラムで描画。画像ファイルなし
   ・3Dモデル … 制作者さんが用意した Meshy AI 製のモデル（8人）
 
@@ -48,7 +55,8 @@
   src/02_model.js     埋め込みモデル（8人）の解凍
   src/03_text.js      謎日本語・8人の紹介とキャラ能力・ログイン画面・ヒント・定型文・スタンプ・身ぶり・名前
   src/04_wordart.js   ワードアート（16種）とクリップアート
-  src/05_audio.js     BGM と効果音（UIの音もここ）
+  src/05_audio.js     効果音（UIの音もここ）と、予備のプログラム製 BGM
+  src/05b_music.js    曲ファイルの BGM（audio タグ・くり返しのつなぎ・場面の入れかえ・汚染の加工・ボイス中に小さく）
   src/06〜09          町の模様・まとめ描画・看板・町の地図
   src/10_propmesh.js  アイテムの形（プログラムで組み立て）
   src/11_props.js     さわれる物の一覧（名前・図鑑の説明・字幕・反応）← 文章を直すならここ
@@ -57,6 +65,7 @@
   src/14_player.js    主人公（三人称）・カメラ・体の動き・とくぎ
   src/15_icons.js     アイコン（UI 74種＋アイテムは3Dから自動）
   src/15_ui.js        MMO風 UI（ウィンドウ・スロットバー・ログ・ミニマップ・ステータス・ツールチップ）
+  src/23_textui.js    文字の出し方（まんなかに出さない・上に小さく・物の上の小さいふきだし・表示量の設定）
   src/15b_windows.js  カバン・図鑑・ステータス・定型文・スタンプ・身ぶり・設定・地図・あそびかた
   src/15c_screens.js  読み込み画面・ログイン・サーバー選択・チャンネル選択・利用規約・キャラ選択
   src/16_fx.js        さわった時の反応・汚染の段階・隠し要素

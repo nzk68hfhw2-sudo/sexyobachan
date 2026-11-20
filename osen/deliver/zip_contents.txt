@@ -1,0 +1,16 @@
+seishin-osen.zip の中身（v2.3.0）— Netlify にそのまま上書き（ドラッグ＆ドロップ）してOK
+──────────────────────────────────────────
+【ゲーム本体】
+  index.html     … Netlify の URL を直接開いた時のページ（game.js を読むだけ）
+  game.js        … ゲームのすべて（3Dの町・8人のモデル・文字・フォント・効果音・通信）
+  bgm_long.mp3   … 曲：町を歩いている時の BGM（約2分50秒）★今回追加
+  bgm_short.mp3  … 曲：ログイン／サーバー選択／キャラ選択の BGM（約1分）★今回追加
+  _headers       … Netlify の設定（Gravity から game.js と曲を読めるようにする）★曲の設定を追加
+  source.txt     … 説明書き（BGM は制作者が Suno で作った曲、と追記）
+
+【テスト用（ゲームには不要だけど、入れたままでOK）】
+  nettest.js / nettest2.js / nettest.txt / nettest.png … 通信テスト（★曲が鳴るかの確認を追加）
+  voicetest.js / voicetest.html                        … ボイスチャットのテスト
+
+※ファイル名は全部半角英数字。曲の名前（bgm_long.mp3 / bgm_short.mp3）は変えないでください。
+※曲を消しても、ゲームは止まらずプログラム製の BGM に切りかわります。

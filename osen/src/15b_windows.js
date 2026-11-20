@@ -146,8 +146,20 @@ function gesture(id) { P.gesture = { id: id, t: 0 }; logMsg('talk', '（' + (GES
 function openSettings() {
   toggleWin('set', '設定', 'gear', function (bd) {
     function row(label, icon, get, set) { var r = el('div', 'kv', bd); var l = el('span', '', r); l.style.display = 'flex'; l.style.alignItems = 'center'; l.style.gap = '5px'; l.appendChild(iconEl(uiIcon(icon), 18)); el('span', '', l).innerHTML = cnHTML(label); mbtn(r, get() ? 'ON' : 'OFF', function () { set(!get()); saveGame(); refreshWin('set'); }, get() ? 'gold' : ''); }
-    row('ＢＧＭ（音楽）', 'music', function () { return AUD.bgmOn; }, function (v) { audioSetBgm(v); });
-    row('効果音', 'sound', function () { return AUD.sfxOn; }, function (v) { audioSetSfx(v); });
+    var tr0 = el('div', 'kv', bd); el('span', '', tr0).innerHTML = cnHTML('文字の表示量'); var tg0 = el('div', '', tr0); tg0.style.display = 'flex'; tg0.style.gap = '3px';
+    ['少ない', 'ふつう', '多い'].forEach(function (nm, i) { mbtn(tg0, nm, function () { TEXTLV.v = i; saveGame(); refreshWin('set'); }, TEXTLV.v === i ? 'gold' : ''); });
+    function vol(label, icon, getOn, getV, set) {
+      row(label, icon, getOn, function (v) { set(v, null); });
+      var r = el('div', 'kv', bd); el('span', '', r).innerHTML = cnHTML('　└ 音量');
+      var sl = el('input', '', r); sl.type = 'range'; sl.min = 0; sl.max = 100; sl.step = 5; sl.value = Math.round(getV() * 100); sl.style.width = '45%'; sl.style.accentColor = '#e8b830';
+      var lb = el('span', '', r); lb.textContent = sl.value; lb.style.minWidth = '2.2em'; lb.style.textAlign = 'right';
+      sl.oninput = function () { lb.textContent = sl.value; set(getOn(), sl.value / 100); };
+      sl.onchange = function () { saveGame(); if (icon === 'sound') sfx('uiClick'); };
+      ['touchstart', 'pointerdown', 'mousedown'].forEach(function (ev) { sl.addEventListener(ev, function (e) { e.stopPropagation(); }, { passive: true }); });
+    }
+    vol('ＢＧＭ（音楽）', 'music', function () { return AUD.bgmOn; }, function () { return AUD.bgmVol; }, function (on, v) { audioSetBgm(on, v); });
+    vol('効果音', 'sound', function () { return AUD.sfxOn; }, function () { return AUD.sfxVol; }, function (on, v) { audioSetSfx(on, v); });
+    el('div', 'desc', bd).innerHTML = cnHTML('※iPhone のマナーモード（消音）中は、音が鳴りません。') + '<br>' + cnHTML('曲：' + musStatus());
     row('軽量モード（古いスマホ用）', 'lite', function () { return LITE.on; }, function (v) { setLite(v); });
     row('刺激ひかえめモード', 'eye', function () { return REDUCED.on; }, function (v) { REDUCED.on = v; });
     row('ボイスチャット（近くの人と声で話す）', 'sound', function () { return VOICE.on; }, function () { voiceToggle(); });

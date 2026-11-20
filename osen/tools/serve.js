@@ -1,7 +1,7 @@
 // static server for dist/ applying Netlify-style _headers (simple subset). usage: node serve.js port [corsOff]
 const http=require('http'),fs=require('fs'),path=require('path');
 const root=process.env.ROOTDIR||path.join(__dirname,'..','dist');const port=+process.argv[2]||8080;
-const types={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.jpg':'image/jpeg','.m4a':'audio/mp4','.txt':'text/plain; charset=utf-8','.png':'image/png','.zip':'application/zip'};
+const types={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.jpg':'image/jpeg','.m4a':'audio/mp4','.mp3':'audio/mpeg','.txt':'text/plain; charset=utf-8','.png':'image/png','.zip':'application/zip'};
 function headersFor(p){const h={};try{const t=fs.readFileSync(path.join(root,'_headers'),'utf8');let cur=null;
  for(const line of t.split('\n')){if(!line.trim()||line.trim().startsWith('#'))continue;
   if(!/^\s/.test(line)){const pat=line.trim();const re=new RegExp('^'+pat.replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*')+'$');cur=re.test(p);}

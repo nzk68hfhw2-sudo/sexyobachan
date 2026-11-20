@@ -1,4 +1,4 @@
-// ---- 音（すべて Web Audio で合成。音声ファイルなし） ---------------------------------
+// ---- 音（効果音はすべて Web Audio で合成。BGM の曲ファイルは 05b_music.js） ---------------------------------
 var AUD = {
   ctx: null, master: null, bgmBus: null, sfxBus: null, comp: null,
   bgmOn: true, sfxOn: true, song: null, nextSong: null, songT: 0, step: 0, timer: null,
@@ -11,8 +11,8 @@ function audioInit() {
     var c = AUD.ctx = new AC();
     AUD.comp = c.createDynamicsCompressor(); AUD.comp.threshold.value = -18; AUD.comp.ratio.value = 6; AUD.comp.attack.value = 0.005; AUD.comp.release.value = 0.2;
     AUD.master = c.createGain(); AUD.master.gain.value = 0.85;
-    AUD.bgmBus = c.createGain(); AUD.bgmBus.gain.value = AUD.bgmOn ? 0.22 : 0;
-    AUD.sfxBus = c.createGain(); AUD.sfxBus.gain.value = AUD.sfxOn ? 0.5 : 0;
+    AUD.bgmBus = c.createGain(); AUD.bgmBus.gain.value = 0;
+    AUD.sfxBus = c.createGain(); AUD.sfxBus.gain.value = AUD.sfxOn ? 0.5 * AUD.sfxVol : 0;
     AUD.bgmBus.connect(AUD.comp); AUD.sfxBus.connect(AUD.comp); AUD.comp.connect(AUD.master); AUD.master.connect(c.destination);
     // 25% pulse wave
     var n = 32, re = new Float32Array(n), im = new Float32Array(n);
@@ -27,12 +27,13 @@ function audioInit() {
     if (c.state === 'suspended') c.resume();
     AUD.started = true;
     AUD.timer = setInterval(bgmTick, 40);
+    if (typeof musConnect === 'function') { musConnect(); setTimeout(musUnlock, 0); }
     // iOS: 一度だけ無音を鳴らしてロック解除
     var o = c.createOscillator(), g = c.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.05);
   } catch (e) { AUD.ctx = null; }
 }
-function audioSetBgm(on) { AUD.bgmOn = on; if (AUD.bgmBus) AUD.bgmBus.gain.setTargetAtTime(on ? 0.22 : 0, AUD.ctx.currentTime, 0.1); }
-function audioSetSfx(on) { AUD.sfxOn = on; if (AUD.sfxBus) AUD.sfxBus.gain.setTargetAtTime(on ? 0.5 : 0, AUD.ctx.currentTime, 0.05); }
+function audioSetBgm(on, vol) { AUD.bgmOn = on; if (vol != null) AUD.bgmVol = vol; if (typeof musTick === 'function') musTick(); }
+function audioSetSfx(on, vol) { AUD.sfxOn = on; if (vol != null) AUD.sfxVol = vol; if (AUD.sfxBus) AUD.sfxBus.gain.setTargetAtTime(on ? 0.5 * AUD.sfxVol : 0, AUD.ctx.currentTime, 0.05); }
 document.addEventListener('visibilitychange', function () {
   if (!AUD.ctx) return; try { if (document.hidden) AUD.ctx.suspend(); else AUD.ctx.resume(); } catch (e) {}
 });
@@ -76,7 +77,7 @@ var SONGS = {
     s.chords = s.prog.split(' ').map(parseChord);
   }
 })();
-function bgmPlay(name) { if (SONGS[name] && AUD.song !== SONGS[name]) { AUD.nextSong = SONGS[name]; } }
+function synthPlay(name) { var s = SONGS[name] || SONGS.eki; if (s && AUD.song !== s && AUD.nextSong !== s) { AUD.nextSong = s; } }
 function _osc(type, f, t, dur, vol, bus, opt) {
   var c = AUD.ctx; opt = opt || {};
   var o = c.createOscillator(), g = c.createGain();
