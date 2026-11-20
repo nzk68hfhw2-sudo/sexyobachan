@@ -12,7 +12,7 @@
 //    game.js を <script src=".../game.js"> で読んだ場合は、そのフォルダを
 //    自動で見つけて使います。
 // ===========================================================================
-var BASE_URL = 'https://seishin-osen.netlify.app/';
+var BASE_URL = 'https://stupendous-moxie-15d900.netlify.app/';
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
 var GAME_VERSION = '2.0.0-beta';
 

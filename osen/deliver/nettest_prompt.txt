@@ -13,7 +13,7 @@
 <div id="m">通信テストを読み込み中…</div>
 <script>
 (function(){
-var URL_JS='https://seishin-osen.netlify.app/nettest.js';
+var URL_JS='https://stupendous-moxie-15d900.netlify.app/nettest.js';
 var s=document.createElement('script');
 s.src=URL_JS+'?'+Date.now();
 s.onerror=function(){document.getElementById('m').textContent='【失敗】nettest.js を読み込めませんでした。\nNetlify に新しい zip を上書きしたか、URL が正しいか確認してください。\nURL: '+URL_JS;};

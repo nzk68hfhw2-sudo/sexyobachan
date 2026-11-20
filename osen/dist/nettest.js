@@ -3,7 +3,7 @@
   'use strict';
   var BASE = (function () {
     try { var s = document.currentScript && document.currentScript.src; if (s) return s.replace(/nettest\.js([?#].*)?$/, ''); } catch (e) {}
-    return 'https://seishin-osen.netlify.app/';
+    return 'https://stupendous-moxie-15d900.netlify.app/';
   })();
   var T0 = Date.now(), CSP = [], rows = [], box, list, codeEl;
   document.addEventListener('securitypolicyviolation', function (e) { CSP.push((e.violatedDirective || e.effectiveDirective || '?') + ' ' + String(e.blockedURI || '').slice(0, 60)); });
