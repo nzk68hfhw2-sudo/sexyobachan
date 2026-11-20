@@ -149,6 +149,7 @@ function openSettings() {
     row('効果音', 'sound', function () { return AUD.sfxOn; }, function (v) { audioSetSfx(v); });
     row('軽量モード（古いスマホ用）', 'lite', function () { return LITE.on; }, function (v) { setLite(v); });
     row('刺激ひかえめモード', 'eye', function () { return REDUCED.on; }, function (v) { REDUCED.on = v; });
+    row('ボイスチャット（近くの人と声で話す）', 'sound', function () { return VOICE.on; }, function () { voiceToggle(); });
     row('ほかの人をミュート（見えなくする）', 'mute', function () { return !!(NET && NET.muted); }, function (v) { NET.muted = v; });
     el('div', 'desc', bd, [cnHTML('記録の保存：' + (STORE.available() ? 'この端末のブラウザに保存されます' : '保存できない環境です（閉じると消えます）')), cnHTML('画質：' + ['最低', '低', '中', '高'][R.quality] + '　/　' + (R.lastFps ? Math.round(R.lastFps) + 'fps' : '計測中')), cnHTML('通信：' + NET.statusText()), cnHTML('版：' + GAME_VERSION)].join('<br>'));
     var r2 = el('div', 'row2', bd);
@@ -192,7 +193,7 @@ function openPeople() {
     ids.forEach(function (id) {
       var pr = NET.peers[id], r = el('div', 'kv', bd), blk = !!NET.blocked[id];
       el('span', '', r).innerHTML = cnHTML(pr.name + '（' + FRIEND_INFO[pr.char].name + '）');
-      mbtn(r, blk ? 'もどす' : '見えなくする', function () { if (blk) delete NET.blocked[id]; else NET.blocked[id] = 1; refreshWin('people'); sysMsg(blk ? pr.name + 'を　見えるようにしました。' : pr.name + 'を　見えなくしました（会話も届きません）。'); }, blk ? 'gold' : 'red');
+      mbtn(r, blk ? 'もどす' : '見えなくする', function () { if (blk) delete NET.blocked[id]; else { NET.blocked[id] = 1; voiceHang(id); } refreshWin('people'); sysMsg(blk ? pr.name + 'を　見えるようにしました。' : pr.name + 'を　見えなくしました（会話も届きません）。'); }, blk ? 'gold' : 'red');
     });
     el('div', 'desc', bd, cnHTML('「見えなくする」と、その人の姿・吹き出し・会話が、あなたの画面に出なくなります。全員を見えなくするには ⚙設定の「ミュート」。'));
   }, { w: 340, theme: 'stone' });

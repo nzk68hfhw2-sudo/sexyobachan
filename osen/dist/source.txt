@@ -64,7 +64,9 @@
   src/18_physics.js   物の物理（重さ・転がる・倒れる・はねる・積む・元の場所に戻す）
   src/19_items.js     持つ・投げる・回す・大小・いじる・合成（44種）・カバン
   src/20_npc.js       住人（選ばれなかった7人）・着がえ所
-  src/21_net.js       同時プレイ（Firebase）・ひとこと（同時でない共有）
+  src/03b_filter.js   自由メッセージの検閲（NGワード・個人情報）
+  src/21_net.js       同時プレイ（Firebase）・ひとこと（同時でない共有）・自由メッセージ・ブロック
+  src/22_voice.js     ボイスチャット（WebRTC。近くの人とだけ。VOICE_TURN で中継サーバーを足せる）
   tools/vendor/       Firebase JS SDK（Apache-2.0）。build.js が game.js の先頭に入れる
   src/99_main.js      起動の順番
   assets/             モデル（.bin）とテクスチャ（.jpg）、使う字だけのフォント（fonts/*.woff2）

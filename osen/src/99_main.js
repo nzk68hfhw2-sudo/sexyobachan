@@ -49,7 +49,7 @@ function startGame() {
   window.__osReady = true;
   window.__os = { G: G, P: P, R: R, CAM: CAM, PROPS: PROPS, ITEMS: ITEMS, NPCS: NPCS, BAG: BAG, PLAYER: PLAYER, teleport: teleport, addPollution: addPollution, secret: secret, touchProp: touchProp, COL: COL, WORLD: WORLD, setQuality: setQuality,
     IN: IN, updatePlayer: updatePlayer, groundAt: groundAt, colQuery: colQuery, cnHTML: cnHTML, FONT_SUB: FONT_SUB, AUD: AUD, setLite: setLite, REDUCED: REDUCED, grab: grab, release: release, spawnItem: spawnItem,
-    findRecipe: findRecipe, RECIPES: RECIPES, setPlayerChar: setPlayerChar, enterWorld: enterWorld, stepCharSel: stepCharSel, csDecide: csDecide, CS: CS, openWin: openWin, WIN: WIN, openBag: openBag, openZukan: openZukan, openStatus: openStatus, openSettings: openSettings, openPhrases: openPhrases, storeItem: storeItem, doSpecial: doSpecial, useSkill: useSkill, gesture: gesture, say: say, itemType: itemType, NET: NET, EXTRA_TYPES: EXTRA_TYPES, ITEM_INFO: ITEM_INFO, effMass: effMass };
+    findRecipe: findRecipe, RECIPES: RECIPES, setPlayerChar: setPlayerChar, enterWorld: enterWorld, stepCharSel: stepCharSel, csDecide: csDecide, CS: CS, openWin: openWin, WIN: WIN, openBag: openBag, openZukan: openZukan, openStatus: openStatus, openSettings: openSettings, openPhrases: openPhrases, storeItem: storeItem, doSpecial: doSpecial, useSkill: useSkill, gesture: gesture, say: say, itemType: itemType, NET: NET, VOICE: VOICE, voiceStart: voiceStart, EXTRA_TYPES: EXTRA_TYPES, ITEM_INFO: ITEM_INFO, effMass: effMass };
   R.renderer.render(R.scene, R.camera);
   hideLoading(); showMenu();
   requestAnimationFrame(function (ts) { _last = ts; loop(ts); });

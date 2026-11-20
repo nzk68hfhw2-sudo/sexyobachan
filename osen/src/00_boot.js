@@ -11,8 +11,10 @@ var BASE_URL = 'https://stupendous-moxie-15d900.netlify.app/';
 // 同時プレイ用：Firebase Realtime Database の URL（見られても安全な種類の値）。空にすると1人用。
 var NET_DB_URL = 'https://seishinosen-online-default-rtdb.firebaseio.com/';
 try { var _q = /[?&]osennet=([a-z]+)/.exec(location.search); if (_q) NET_DB_URL = _q[1] === 'local' ? 'local' : (_q[1] === 'off' ? '' : NET_DB_URL); } catch (e) {}
+// ボイスチャット用の中継サーバー（TURN）。スマホどうしで声がつながらない時だけ設定する。例：[{ urls: 'turn:…', username: '…', credential: '…' }]
+var VOICE_TURN = [];
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '2.0.0';
+var GAME_VERSION = '2.1.0';
 
 var ASSET_BASE = BASE_URL;
 (function detectBase() {

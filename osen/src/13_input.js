@@ -70,7 +70,7 @@ function initInput() {
     if (c2 === 'KeyM') openMapWin();
     if (c2 === 'Tab') { openSettings(); e.preventDefault(); }
     if (c2 === 'Escape') Object.keys(WIN.list).forEach(function (k) { closeWin(k, true); });
-    var n = /^Digit([1-8])$/.exec(c2); if (n) SLOTS[+n[1] - 1].fn();
+    var n = /^Digit([1-9])$/.exec(c2); if (n) SLOTS[+n[1] - 1].fn();
   });
   window.addEventListener('keyup', function (e) { IN.keys[e.code] = false; });
   // ---- マウス（クリックで視点をつかむ。ホイールで距離） ----

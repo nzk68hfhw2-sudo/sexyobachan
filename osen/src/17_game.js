@@ -36,13 +36,13 @@ G.onStart = function () {
 function saveGame() {
   try {
     var counts = {}; PROPS.forEach(function (p) { if (p.count) counts[p.def.id] = p.count; });
-    STORE.save({ v: 2, pl: { c: PLAYER.char, n: PLAYER.name, nc: PLAYER.nameCode, s: PLAYER.server, ch: PLAYER.channel, a: PLAYER.agreed, h: PLAYER.helpSeen }, bag: BAG.items, gk: G.genki, fi: G.fiddles, cb: G.combines, cam: CAM.distT, pol: G.pol, tod: G.tod, z: ZUKAN.found, c: counts, s: G.secrets, m: G.metFriends, bgm: AUD.bgmOn, sfx: AUD.sfxOn, lite: LITE.on, red: REDUCED.on, cl: G.cleaned,
+    STORE.save({ v: 2, pl: { c: PLAYER.char, n: PLAYER.name, nc: PLAYER.nameCode, s: PLAYER.server, ch: PLAYER.channel, a: PLAYER.agreed, h: PLAYER.helpSeen, vo: PLAYER.voiceOk }, bag: BAG.items, gk: G.genki, fi: G.fiddles, cb: G.combines, cam: CAM.distT, pol: G.pol, tod: G.tod, z: ZUKAN.found, c: counts, s: G.secrets, m: G.metFriends, bgm: AUD.bgmOn, sfx: AUD.sfxOn, lite: LITE.on, red: REDUCED.on, cl: G.cleaned,
       pos: P.pos && P.pos.z < 300 ? [P.pos.x, P.pos.y, P.pos.z, P.face] : null });
   } catch (e) {}
 }
 function loadGame() {
   var d = STORE.load(); if (!d || (d.v !== 1 && d.v !== 2)) return null;
-  if (d.pl) { PLAYER.char = d.pl.c || 0; PLAYER.name = d.pl.n || ''; PLAYER.server = d.pl.s || ''; PLAYER.channel = d.pl.ch || ''; PLAYER.agreed = !!d.pl.a; PLAYER.helpSeen = !!d.pl.h; PLAYER.nameCode = d.pl.nc || ''; if (!PLAYER.nameCode) PLAYER.name = ''; }
+  if (d.pl) { PLAYER.char = d.pl.c || 0; PLAYER.name = d.pl.n || ''; PLAYER.server = d.pl.s || ''; PLAYER.channel = d.pl.ch || ''; PLAYER.agreed = !!d.pl.a; PLAYER.helpSeen = !!d.pl.h; PLAYER.voiceOk = !!d.pl.vo; PLAYER.nameCode = d.pl.nc || ''; if (!PLAYER.nameCode) PLAYER.name = ''; }
   if (d.bag) BAG.items = d.bag.filter(function (e) { return e && (EXTRA_TYPES[e.type] || ITEM_INFO[e.type]); });
   if (d.gk != null) G.genki = d.gk; G.fiddles = d.fi || 0; G.combines = d.cb || 0; if (d.cam) CAM.distT = d.cam;
   G.pol = +d.pol || 0; G.tod = +d.tod || 1.3; ZUKAN.found = d.z || {}; G.secrets = d.s || {}; G.metFriends = d.m || {}; G.cleaned = d.cl || 0;

@@ -104,9 +104,9 @@ function enterRoom(room) {
 function nameCode() { return PLAYER.nameCode || ''; }
 function writeMe(force) {
   if (!NET.on) return;
-  var p = P.pos, d = { n: nameCode(), c: PLAYER.char, x: Math.round(p.x * 100) / 100, y: Math.round(p.y * 100) / 100, z: Math.round(p.z * 100) / 100, f: Math.round(P.face * 100) / 100, g: P.gesture ? P.gesture.id : '', h: ITEMS.held && ITEMS.held.netKey ? ITEMS.held.netKey : '', t: NET.T.now() };
+  var p = P.pos, d = { n: nameCode(), c: PLAYER.char, x: Math.round(p.x * 100) / 100, y: Math.round(p.y * 100) / 100, z: Math.round(p.z * 100) / 100, f: Math.round(P.face * 100) / 100, g: P.gesture ? P.gesture.id : '', h: ITEMS.held && ITEMS.held.netKey ? ITEMS.held.netKey : '', v: VOICE.on ? 1 : 0, t: NET.T.now() };
   var L = NET.last;
-  if (!force && L && Math.abs(L.x - d.x) + Math.abs(L.y - d.y) + Math.abs(L.z - d.z) < 0.05 && Math.abs(L.f - d.f) < 0.08 && L.g === d.g && L.h === d.h && d.t - L.t < 9000) return;
+  if (!force && L && Math.abs(L.x - d.x) + Math.abs(L.y - d.y) + Math.abs(L.z - d.z) < 0.05 && Math.abs(L.f - d.f) < 0.08 && L.g === d.g && L.h === d.h && L.v === d.v && d.t - L.t < 9000) return;
   NET.last = d; NET.T.set('rooms/' + NET.room + '/p/' + NET.pid, d);
 }
 NET.sendMeta = function () { writeMe(true); };
@@ -141,11 +141,13 @@ function applyItemState(key, s) {
 // ---- ほかの人の出来事 ----
 function onEvent(key, e) {
   if (!e || e.by === NET.pid || (e.t || 0) < NET.joinT - 2000) return;
+  if (/^v[oaih]$/.test(e.k) && Date.now() - (e.t || 0) > 30000 + Math.abs(NET.skew || 0)) return;
   var pr = NET.peers[e.by], d = e.d || {}, who = pr ? pr.name : 'だれか';
   var hidden = NET.muted || NET.blocked[e.by];
   NET.applying = true;
   try {
     switch (e.k) {
+      case 'vo': case 'va': case 'vi': case 'vh': voiceOnEvent(e); break;
       case 'msg': { if (hidden || typeof d.m !== 'string') break; var fm = filterMsg(d.m); if (!fm.text) break; if (pr) pr.bubble = { text: fm.text, t: now() + 5000, free: true }; logMsg('talk', fm.text, who, true); sfx('chat'); break; }
       case 'say': { var tx = phraseText(d.p); if (tx && !hidden) { if (pr) pr.bubble = { text: tx, t: now() + 4500 }; logMsg('talk', tx, who); sfx('chat'); } break; }
       case 'stamp': if (pr && !hidden && STAMPS.some(function (s) { return s.id === d.s; })) { pr.bubble = { text: d.s, icon: d.s, t: now() + 3500 }; } break;
@@ -182,9 +184,9 @@ function peerUpsert(id, v) {
   pr.name = decodeName(v.n); pr.lastT = v.t || NET.T.now(); pr.recv = Date.now();
   pr.snaps.push({ t: Date.now(), x: v.x, y: v.y, z: v.z, f: v.f || 0 }); if (pr.snaps.length > 12) pr.snaps.shift();
   if (v.g && (!pr.gesture || pr.gesture.id !== v.g)) pr.gesture = { id: v.g, t: 0 };
-  pr.holding = v.h || '';
+  pr.holding = v.h || ''; pr.v = v.v === 1;
 }
-function peerRemove(id) { var pr = NET.peers[id]; if (!pr) return; R.scene.remove(pr.root); delete NET.peers[id]; if (!NET.muted) logMsg('sys', pr.name + 'が　町から出ました。'); ITEMS.list.forEach(function (it) { if (it.heldBy === id) { it.heldBy = null; wake(it); } }); }
+function peerRemove(id) { var pr = NET.peers[id]; if (!pr) return; voiceHang(id, true); R.scene.remove(pr.root); delete NET.peers[id]; if (!NET.muted) logMsg('sys', pr.name + 'が　町から出ました。'); ITEMS.list.forEach(function (it) { if (it.heldBy === id) { it.heldBy = null; wake(it); } }); }
 var _pv = null;
 function updatePeers(dt) {
   if (!_pv) _pv = new THREE.Vector3();
@@ -215,6 +217,7 @@ NET.update = function (dt) {
   if (!NET.on) { NET.heartbeat += dt; if (NET.heartbeat > 20 && NET_DB_URL) { NET.heartbeat = 0; } return; }
   NET.sendT -= dt; if (NET.sendT <= 0) { NET.sendT = 0.25; if (NET.ok) writeMe(false); }
   updatePeers(dt);
+  updateVoice(dt);
   // 自分が動かした物が止まったら、最後の位置を記録（あとから来た人用）
   for (var i = 0; i < ITEMS.list.length; i++) { var it = ITEMS.list[i]; if (it.ownSettle && it.body.sleep && it !== ITEMS.held) { it.ownSettle = false; itemState(it); }
     if (it.pendState && (it.body.sleep || G.t - (it.lastT || 0) > 6) && it !== ITEMS.held) { var ps = it.pendState; it.pendState = null; NET.applying = true; applyItemState(it.netKey, ps); NET.applying = false; } }

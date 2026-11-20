@@ -215,7 +215,8 @@ var SLOTS = [
   { k: '5', icon: 'stamp', l: 'スタンプ', fn: function () { openStamps(); } },
   { k: '6', icon: 'gesture', l: '身ぶり', fn: function () { openGestures(); } },
   { k: '7', icon: 'skill', l: 'とくぎ', fn: function () { useSkill(); } },
-  { k: '8', icon: 'gear', l: '設定', fn: function () { openSettings(); } }
+  { k: '8', icon: 'gear', l: '設定', fn: function () { openSettings(); } },
+  { k: '9', icon: 'sound', l: 'ボイス', fn: function () { voiceToggle(); } }
 ];
 function initUI() {
   IN.isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
@@ -283,7 +284,7 @@ function layoutUI() {
   [STICK.el, H.bMain, H.bJump, H.bRun, H.bSkill].forEach(function (e) { e.style.display = touch ? '' : 'none'; });
   var slotH = 54, base = land ? 6 : slotH + 6;
   // スロットバー：縦画面はいちばん下、横画面は下の中央
-  var slotW = Math.min(46, Math.floor((W - 24) / 8) - 3);
+  var slotW = Math.min(46, Math.floor((W - 24) / SLOTS.length) - 3);
   H.sb.querySelectorAll('.slot').forEach(function (e) { e.style.width = e.style.height = slotW + 'px'; });
   STICK.el.style.left = 'calc(var(--sl) + 14px)'; STICK.el.style.bottom = 'calc(' + sb + ' + ' + (base + 4) + 'px)';
   pos(H.bMain, 14, base + 8, 84); pos(H.bJump, 106, base + 2, 62); pos(H.bRun, 18, base + 104, 54); pos(H.bSkill, 84, base + 92, 54); pos(H.bSub, 150, base + 74, 50); pos(H.bTouch2, 156, base + 130, 46);
@@ -400,9 +401,10 @@ function updateHUD(dt) {
 var TAGS = [];
 function updateTags() {
   var list = [], cam = R.camera, W = H.W, Hh = H.H, v = _tagV || (_tagV = new THREE.Vector3());
-  list.push({ k: 'me', name: PLAYER.name, sub: FRIEND_INFO[PLAYER.char].name, p: P.pos, h: P.bodyH + 0.35, cls: 'me', bub: PLAYER.bubble });
+  var meTalk = VOICE.on && VOICE.level > 0.06;
+  list.push({ k: 'me' + (meTalk ? 't' : ''), name: PLAYER.name, sub: (meTalk ? '♪話し中♪ ' : '') + FRIEND_INFO[PLAYER.char].name, p: P.pos, h: P.bodyH + 0.35, cls: 'me', bub: PLAYER.bubble });
   NPCS.forEach(function (n) { if (n.ent.visible) list.push({ k: 'n' + n.idx, name: FRIEND_INFO[n.idx].name, p: n.ent.pos, h: n.ent.h + 0.3, cls: 'npc', bub: n.bubble }); });
-  if (NET && NET.peers && !NET.muted) for (var id in NET.peers) { var pp = NET.peers[id]; if (pp.vis && !NET.blocked[id]) list.push({ k: 'p' + id, name: pp.name, sub: FRIEND_INFO[pp.char] ? FRIEND_INFO[pp.char].name : '', p: pp.pos, h: pp.h + 0.35, cls: 'pc', bub: pp.bubble }); }
+  if (NET && NET.peers && !NET.muted) for (var id in NET.peers) { var pp = NET.peers[id]; if (pp.vis && !NET.blocked[id]) list.push({ k: 'p' + id + (pp.talking ? 't' : ''), name: pp.name, sub: (pp.talking ? '♪話し中♪ ' : '') + (FRIEND_INFO[pp.char] ? FRIEND_INFO[pp.char].name : ''), p: pp.pos, h: pp.h + 0.35, cls: 'pc', bub: pp.bubble }); }
   var used = 0;
   for (var i = 0; i < list.length && used < 12; i++) {
     var L = list[i], d = cam.position.distanceTo(L.p); if (d > 26 && L.cls !== 'me') continue;
