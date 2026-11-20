@@ -16,7 +16,7 @@ function physGridKey(x, z) { return Math.floor(x / ITEMS.cell) + ',' + Math.floo
 function physRebuildGrid() {
   var g2 = ITEMS.grid = {};
   for (var i = 0; i < ITEMS.list.length; i++) {
-    var it = ITEMS.list[i], b = it.body; if (it.gone || it === ITEMS.held) continue;
+    var it = ITEMS.list[i], b = it.body; if (it.gone || it.broken || it === ITEMS.held) continue;
     var c2 = ITEMS.cell, x0 = Math.floor((b.pos.x - b.ex) / c2), x1 = Math.floor((b.pos.x + b.ex) / c2), z0 = Math.floor((b.pos.z - b.ez) / c2), z1 = Math.floor((b.pos.z + b.ez) / c2);
     for (var gx = x0; gx <= x1; gx++) for (var gz = z0; gz <= z1; gz++) { var k = gx + ',' + gz; (g2[k] || (g2[k] = [])).push(it); }
   }
@@ -32,7 +32,7 @@ function itemsNear(x, z, r) {
 // 人がぶつかる・乗れる物（重い物だけ）
 function itemSolidsNear(x, z, r) {
   var L = itemsNear(x, z, r + 1), out = [];
-  for (var i = 0; i < L.length; i++) { var b = L[i].body; if ((effMass(b) < 2.5 && !b.fixed) || netPassThrough(L[i])) continue; out.push({ x0: b.pos.x - b.ex, x1: b.pos.x + b.ex, y0: b.pos.y - b.ey, y1: b.pos.y + b.ey, z0: b.pos.z - b.ez, z1: b.pos.z + b.ez, item: L[i] }); }
+  for (var i = 0; i < L.length; i++) { var b = L[i].body; if ((effMass(b) < 2.5 && !b.fixed) || L[i].broken || netPassThrough(L[i])) continue; out.push({ x0: b.pos.x - b.ex, x1: b.pos.x + b.ex, y0: b.pos.y - b.ey, y1: b.pos.y + b.ey, z0: b.pos.z - b.ez, z1: b.pos.z + b.ez, item: L[i] }); }
   return out;
 }
 function wake(it) { if (it && it.body) { it.body.sleep = false; it.body.sleepT = 0; } }
@@ -40,7 +40,7 @@ function physStep(dt) {
   var weird = G.stage, gmul = (G.slowT > 0 ? 0.25 : 1) * (weird >= 8 ? 0.7 + 0.3 * Math.sin(G.t * 0.7) : 1);
   var rest0 = weird >= 5 ? 0.55 : 0.3;
   for (var i = 0; i < ITEMS.list.length; i++) {
-    var it = ITEMS.list[i], b = it.body; if (it.gone || it === ITEMS.held || b.fixed || (it.heldBy && NET.peers[it.heldBy])) continue;
+    var it = ITEMS.list[i], b = it.body; if (it.gone || it.broken || it === ITEMS.held || b.fixed || (it.heldBy && NET.peers[it.heldBy])) continue;
     if (b.thrownT > 0) b.thrownT -= dt;
     if (b.sleep) continue;
     var tdt = G.slowT > 0 ? dt * 0.3 : dt;
@@ -55,6 +55,10 @@ function physStep(dt) {
     b.pos.x += b.vel.x * tdt; b.pos.y += b.vel.y * tdt; b.pos.z += b.vel.z * tdt;
     b.yaw += b.av.y * tdt; b.rx += b.av.x * tdt; b.rz += b.av.z * tdt;
     bodyExt(b);
+    var sp2 = b.vel.x * b.vel.x + b.vel.y * b.vel.y + b.vel.z * b.vel.z;
+    if (sp2 > 30 && (b.thrownT > 0 || sp2 > 90)) smashMover(it, Math.sqrt(sp2));
+    if (b.thrownT > 0 && !it.riverT && b.pos.z > RIVER.z1 && b.pos.z < RIVER.z2 && b.pos.y < RIVER.water + 0.3 && b.pos.z < 300) { it.riverT = 1; smashEvent('river', 20, 0, { kind: 'item' }, null); sfx('splash'); debBurst(b.pos.x, RIVER.water, b.pos.z, 0x9fdcff, 8, 'ball', 3); }
+    if (it.riverT && b.pos.y > RIVER.water + 1) it.riverT = 0;
     b.onGround = false;
     // 町（動かない箱）との当たり
     var L = colQuery(b.pos.x, b.pos.z, Math.max(b.ex, b.ez) + 0.3);
@@ -63,7 +67,7 @@ function physStep(dt) {
     if (b.pos.y - b.ey < ty) { b.pos.y = ty + b.ey; landBody(b, rest0); }
     // ほかの物
     var N = itemsNear(b.pos.x, b.pos.z, Math.max(b.ex, b.ez) + 0.5);
-    for (j = 0; j < N.length; j++) { var o = N[j]; if (o === it || o.gone || o === ITEMS.held) continue; resolvePair(it, o); }
+    for (j = 0; j < N.length; j++) { var o = N[j]; if (o === it || o.gone || o.broken || o === ITEMS.held) continue; resolvePair(it, o); }
     // 人に蹴られる（軽い物）
     if (effMass(b) < 2.5) kickBy(b, P.pos, P.vel, P.r + 0.05, P.bodyH);
     // 転がる・倒れる
@@ -138,7 +142,7 @@ function kickBy(b, pos, vel, r, h) {
 // 町の外に落ちた・埋まった物を元の場所に戻す
 function physRescue(dt) {
   for (var i = 0; i < ITEMS.list.length; i++) {
-    var it = ITEMS.list[i], b = it.body; if (it.gone || it === ITEMS.held || b.fixed) continue;
+    var it = ITEMS.list[i], b = it.body; if (it.gone || it.broken || it === ITEMS.held || b.fixed) continue;
     var out = b.pos.y < -12 || Math.abs(b.pos.x) > 150 || (b.pos.z > 160 && b.pos.z < 300) || b.pos.z < -150 || !isFinite(b.pos.x + b.pos.y + b.pos.z) || b.pos.y > 120;
     if (!out && b.sleep) {
       // 町の箱にめり込んで動けない

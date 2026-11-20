@@ -28,6 +28,7 @@ function initNPCs() {
 function nearDressing() { for (var i = 0; i < DRESSING.length; i++) if (Math.hypot(P.pos.x - DRESSING[i].x, P.pos.z - DRESSING[i].z) < 3.5) return true; return false; }
 function npcSetHidden(idx, prev) {
   NPCS.forEach(function (n) {
+    if (n.mob) return;
     if (n.idx === idx) { n.ent.visible = false; n.root.visible = false; n.pr.gone = true; }
     else if (n.idx === prev || !n.ent.visible) { n.ent.visible = true; n.root.visible = true; n.pr.gone = false; }
   });
@@ -36,6 +37,7 @@ function updateNPCs(dt) {
   var slow = G.slowT > 0 ? 0.25 : 1;
   NPCS.forEach(function (n) {
     if (!n.ent.visible) return;
+    if (npcSmash(n, dt)) return;
     var e = n.ent, dxp = P.pos.x - e.pos.x, dzp = P.pos.z - e.pos.z, dP = Math.hypot(dxp, dzp);
     var far = dP > 70;
     if (far) { n.root.visible = false; return; } n.root.visible = true;

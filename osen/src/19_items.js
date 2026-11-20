@@ -223,8 +223,8 @@ function release(throwIt) {
   var it = ITEMS.held; if (!it) return; ITEMS.held = null;
   var b = it.body; b.sleep = false; b.sleepT = 0;
   if (throwIt) {
-    var f = P.face, pw = 11 / Math.sqrt(Math.max(0.6, effMass(b))) + 3;
-    b.vel.set(-Math.sin(f) * pw + P.vel.x, 4 + pw * 0.15, -Math.cos(f) * pw + P.vel.z);
+    var f = P.face, pw = (11 / Math.sqrt(Math.max(0.6, effMass(b))) + 3) * TUNE.throwPow * (1 + smashUp('throw') * 0.15);
+    b.vel.set(-Math.sin(f) * pw + P.vel.x, 3 + pw * 0.12 + Math.max(0, -CAM.pitch + 0.3) * pw * 0.5, -Math.cos(f) * pw + P.vel.z);
     if (!b.roll) b.av.set(rand(-6, 6), rand(-4, 4), rand(-6, 6)); else b.av.set(0, rand(-3, 3), 0);
     b.thrownT = 2; P.throwT = 0.35; sfx('throw'); fiddle(it, 'throw');
     if (G.stage >= 5) b.bouncy = 0.9;

@@ -1,4 +1,4 @@
-seishin-osen.zip の中身（v2.3.0）— Netlify にそのまま上書き（ドラッグ＆ドロップ）してOK
+seishin-osen.zip の中身（v3.0.0 大暴れ 第1弾）— Netlify にそのまま上書き（ドラッグ＆ドロップ）してOK
 ──────────────────────────────────────────
 【ゲーム本体】
   index.html     … Netlify の URL を直接開いた時のページ（game.js を読むだけ）

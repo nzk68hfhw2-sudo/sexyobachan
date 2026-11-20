@@ -92,6 +92,7 @@ var UI_CSS = [
   '.ab.down{transform:translateY(2px) scale(.95);filter:brightness(1.3);box-shadow:0 0 0 2px #1a1008,0 0 10px #ffd56a;}',
   '.ab.main{background:radial-gradient(circle at 40% 30%,#e0a050,#a05a10 55%,#5a2a04);}',
   '.ab.main.ready{box-shadow:0 0 0 2px #1a1008,0 0 14px 3px #ffe23a;}',
+  '.ab.tk{background:radial-gradient(circle at 40% 30%,#ff7a8a,#d0203a 55%,#6a0418);font-size:13px;}',
   '.ab .ico{width:26px;height:26px;}',
   '#os-hold{position:absolute;display:none;gap:4px;flex-wrap:wrap;justify-content:flex-end;pointer-events:none;}',
   '#os-hold .ab{position:relative;width:52px;height:52px;border-radius:8px;font-size:10px;}',
@@ -255,11 +256,12 @@ function initUI() {
   H.logList = el('div', 'ls os-scroll', lg);
   // 操作ボタン（スマホ）
   STICK.el = el('div', 'pe', hud); STICK.el.id = 'os-stick'; STICK.knob = el('i', '', STICK.el);
-  H.bMain = abtn('main', 'さわる', 'touch', function () { IN.main = true; });
+  H.bMain = abtn('main', 'さわる', 'touch', function () { IN.main = true; IN.mainTouch = true; });
+  H.bTackle = abtn('tk', '体当たり', 'burst', function () { IN.tackle = true; });
   H.bJump = abtn('', 'ジャンプ', 'jump', function () { IN.jump = true; });
   H.bRun = abtn('', '走る', 'run', function () { IN.run = !IN.run; updateRunBtn(); });
   H.bSkill = abtn('', 'とくぎ', 'skill', function () { useSkill(); });
-  H.bSub = abtn('', 'いじる', 'special', function () { IN.special = true; });
+  H.bSub = abtn('', 'いじる', 'special', function () { if (ITEMS.held || NPCHELD.n) IN.put = true; else IN.special = true; });
   H.bTouch2 = abtn('', 'さわる', 'touch', function () { IN.touch2 = true; });
   H.hold = el('div', '', hud); H.hold.id = 'os-hold';
   H.holdBtns = [['throw', '投げる', function () { IN.throwIt = true; }], ['rotate', '回す', function () { IN.rotate = true; }], ['bigger', '大きく', function () { IN.bigger = true; }],
@@ -281,14 +283,14 @@ function layoutUI() {
   H.W = W; H.H = Hh; H.land = land;
   var sb = 'var(--sb)';
   function pos(e, r, b, sz) { e.style.right = 'calc(var(--sr) + ' + r + 'px)'; e.style.bottom = 'calc(' + sb + ' + ' + b + 'px)'; if (sz) { e.style.width = e.style.height = sz + 'px'; } }
-  [STICK.el, H.bMain, H.bJump, H.bRun, H.bSkill].forEach(function (e) { e.style.display = touch ? '' : 'none'; });
+  [STICK.el, H.bMain, H.bJump, H.bRun, H.bSkill, H.bTackle].forEach(function (e) { e.style.display = touch ? '' : 'none'; });
   var slotH = 54, base = land ? 6 : slotH + 6;
   // スロットバー：縦画面はいちばん下、横画面は下の中央
   var slotW = Math.min(46, Math.floor((W - 24) / SLOTS.length) - 3);
   H.sb.querySelectorAll('.slot').forEach(function (e) { e.style.width = e.style.height = slotW + 'px'; });
   STICK.el.style.left = 'calc(var(--sl) + 14px)'; STICK.el.style.bottom = 'calc(' + sb + ' + ' + (base + 4) + 'px)';
-  pos(H.bMain, 14, base + 8, 84); pos(H.bJump, 106, base + 2, 62); pos(H.bRun, 18, base + 104, 54); pos(H.bSkill, 84, base + 92, 54); pos(H.bSub, 150, base + 74, 50); pos(H.bTouch2, 156, base + 130, 46);
-  H.hold.style.right = 'calc(var(--sr) + 10px)'; H.hold.style.bottom = 'calc(' + sb + ' + ' + (base + (touch ? 168 : 60)) + 'px)'; H.hold.style.width = (touch ? 172 : 340) + 'px';
+  pos(H.bMain, 14, base + 8, 84); pos(H.bJump, 106, base + 2, 62); pos(H.bTackle, 104, base + 70, 76); pos(H.bRun, 16, base + 100, 50); pos(H.bSkill, 20, base + 154, 54); pos(H.bSub, 186, base + 70, 50); pos(H.bTouch2, 188, base + 126, 46);
+  H.hold.style.right = 'calc(var(--sr) + 10px)'; H.hold.style.bottom = 'calc(' + sb + ' + ' + (base + (touch ? 214 : 60)) + 'px)'; H.hold.style.width = (touch ? 172 : 340) + 'px';
   if (!touch) { H.hold.style.right = '50%'; H.hold.style.marginRight = '-170px'; H.hold.style.justifyContent = 'center'; }
   // ログ
   var lw = land ? Math.min(330, W * 0.32) : Math.min(330, W * 0.5), lh = land ? Math.min(110, Hh * 0.26) : 96;
@@ -301,7 +303,7 @@ function layoutUI() {
   var cw = touch && land ? Math.max(200, W - 2 * 220) : W * 0.92;
   H.cap.style.maxWidth = H.cap2.style.maxWidth = cw + 'px';
   H.cap.style.fontSize = H.cap2.style.fontSize = (Math.min(W, Hh) < 420 ? 18 : 22) + 'px';
-  H.capB = capB; if (typeof layoutTop === 'function') layoutTop();
+  H.capB = capB; if (typeof layoutTop === 'function') layoutTop(); if (typeof layoutSmashUI === 'function') layoutSmashUI();
   var small = Math.min(W, Hh) < 420;
   H.st.style.transform = small ? 'scale(.86)' : ''; H.st.style.transformOrigin = 'left top';
   Object.keys(WIN.list).forEach(function (k) { var w = WIN.list[k]; if (w.open) w.el.classList.toggle('big', isNarrow()); });
@@ -404,7 +406,7 @@ function updateTags() {
   var meTalk = VOICE.on && VOICE.level > 0.06;
   // 自分の名前は、まんなか（照準のそば）に出るので、ふだんは出さない（話している時・ボイス中・「多い」の時だけ）
   if (meTalk || VOICE.on || (PLAYER.bubble && PLAYER.bubble.t > now()) || TEXTLV.v >= 2) list.push({ k: 'me' + (meTalk ? 't' : (VOICE.on ? 'v' : '')), name: PLAYER.name, sub: (meTalk ? '♪話し中♪ ' : (VOICE.on ? '◎ボイス ' : '')) + FRIEND_INFO[PLAYER.char].name, p: P.pos, h: P.bodyH + 0.35, cls: 'me', bub: PLAYER.bubble });
-  NPCS.forEach(function (n) { if (n.ent.visible) list.push({ k: 'n' + n.idx, name: FRIEND_INFO[n.idx].name, p: n.ent.pos, h: n.ent.h + 0.3, cls: 'npc', bub: n.bubble }); });
+  NPCS.forEach(function (n) { if (!n.ent.visible || !n.root.visible) return; var hb = n.bubble && n.bubble.t > now(); if (n.mob && !hb && n.ent.pos.distanceTo(P.pos) > 12) return; var sp2 = n.state && n.state !== 'react' && n.state !== 'crowd'; list.push({ k: 'n' + n.uid, name: npcName(n), p: n.ent.pos, h: sp2 ? 0.95 : n.ent.h + 0.3, cls: 'npc', bub: n.bubble }); });
   if (NET && NET.peers && !NET.muted) for (var id in NET.peers) { var pp = NET.peers[id]; if (pp.vis && !NET.blocked[id]) list.push({ k: 'p' + id + (pp.talking ? 't' : (pp.v ? 'v' : '')), name: pp.name, sub: (pp.talking ? '♪話し中♪ ' : (pp.v ? '◎ボイス ' : '')) + (FRIEND_INFO[pp.char] ? FRIEND_INFO[pp.char].name : ''), p: pp.pos, h: pp.h + 0.35, cls: 'pc', bub: pp.bubble }); }
   var used = 0, rects = [];
   function place(x, y, w, h) { for (var tr = 0; tr < 4; tr++) { var hit = false; for (var q = 0; q < rects.length; q++) { var r = rects[q]; if (Math.abs(r.x - x) < (r.w + w) / 2 && Math.abs(r.y - y) < (r.h + h) / 2) { hit = true; y = r.y - (r.h + h) / 2 - 2; } } if (!hit) break; } rects.push({ x: x, y: y, w: w, h: h }); return y; }

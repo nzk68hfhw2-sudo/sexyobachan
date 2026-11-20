@@ -29,6 +29,7 @@ function enterWorld() {
 }
 G.onStart = function () {
   G.started = true;
+  setTimeout(function () { if (!SMASH.breaks) sysMsg('赤い「体当たり」ボタン（PCは V）で、町の物は　なんでも　こわせます!!'); }, 2500);
   if (!G.loadedPos) { caption('……ここは　どこだろう。とりあえず　歩いてみよう。', { preset: 'type' }); }
   else caption('おかえりなさい。汚染率は　そのままです。', { preset: 'fade' });
   G.area = null;
@@ -36,13 +37,13 @@ G.onStart = function () {
 function saveGame() {
   try {
     var counts = {}; PROPS.forEach(function (p) { if (p.count) counts[p.def.id] = p.count; });
-    STORE.save({ v: 2, pl: { c: PLAYER.char, n: PLAYER.name, nc: PLAYER.nameCode, s: PLAYER.server, ch: PLAYER.channel, a: PLAYER.agreed, h: PLAYER.helpSeen, vo: PLAYER.voiceOk, tl: TEXTLV.v }, bag: BAG.items, gk: G.genki, fi: G.fiddles, cb: G.combines, cam: CAM.distT, pol: G.pol, tod: G.tod, z: ZUKAN.found, c: counts, s: G.secrets, m: G.metFriends, bgm: AUD.bgmOn, sfx: AUD.sfxOn, bv: AUD.bgmVol, sv: AUD.sfxVol, lite: LITE.on, red: REDUCED.on, cl: G.cleaned,
+    STORE.save({ v: 2, pl: { c: PLAYER.char, n: PLAYER.name, nc: PLAYER.nameCode, s: PLAYER.server, ch: PLAYER.channel, a: PLAYER.agreed, h: PLAYER.helpSeen, vo: PLAYER.voiceOk, tl: TEXTLV.v }, sm: smashSave(), bag: BAG.items, gk: G.genki, fi: G.fiddles, cb: G.combines, cam: CAM.distT, pol: G.pol, tod: G.tod, z: ZUKAN.found, c: counts, s: G.secrets, m: G.metFriends, bgm: AUD.bgmOn, sfx: AUD.sfxOn, bv: AUD.bgmVol, sv: AUD.sfxVol, lite: LITE.on, red: REDUCED.on, cl: G.cleaned,
       pos: P.pos && P.pos.z < 300 ? [P.pos.x, P.pos.y, P.pos.z, P.face] : null });
   } catch (e) {}
 }
 function loadGame() {
   var d = STORE.load(); if (!d || (d.v !== 1 && d.v !== 2)) return null;
-  if (d.pl) { PLAYER.char = d.pl.c || 0; PLAYER.name = d.pl.n || ''; PLAYER.server = d.pl.s || ''; PLAYER.channel = d.pl.ch || ''; PLAYER.agreed = !!d.pl.a; PLAYER.helpSeen = !!d.pl.h; PLAYER.voiceOk = !!d.pl.vo; TEXTLV.v = d.pl.tl | 0; PLAYER.nameCode = d.pl.nc || ''; if (!PLAYER.nameCode) PLAYER.name = ''; }
+  if (d.pl) { PLAYER.char = d.pl.c || 0; PLAYER.name = d.pl.n || ''; PLAYER.server = d.pl.s || ''; PLAYER.channel = d.pl.ch || ''; PLAYER.agreed = !!d.pl.a; PLAYER.helpSeen = !!d.pl.h; PLAYER.voiceOk = !!d.pl.vo; TEXTLV.v = d.pl.tl | 0; smashLoad(d.sm); PLAYER.nameCode = d.pl.nc || ''; if (!PLAYER.nameCode) PLAYER.name = ''; }
   if (d.bag) BAG.items = d.bag.filter(function (e) { return e && (EXTRA_TYPES[e.type] || ITEM_INFO[e.type]); });
   if (d.gk != null) G.genki = d.gk; G.fiddles = d.fi || 0; G.combines = d.cb || 0; if (d.cam) CAM.distT = d.cam;
   G.pol = +d.pol || 0; G.tod = +d.tod || 1.3; ZUKAN.found = d.z || {}; G.secrets = d.s || {}; G.metFriends = d.m || {}; G.cleaned = d.cl || 0;
@@ -114,17 +115,21 @@ function updateGame(dt) {
   var tg = (G.paused || G.inMenu) ? null : findTarget(); G.target = tg; setCross(tg);
   if (tg) { G.gazeT += dt; addPollution(dt * 0.15); } else G.gazeT = 0;
   // ボタンの表示を、いまできる事に合わせる
-  var held = ITEMS.held;
-  if (held) setMainBtn('置く', 'put'); else if (tg && tg.item) setMainBtn('持つ', 'grab'); else setMainBtn('さわる', 'touch');
-  var showSub = !!(held || (tg && tg.item));
-  H.bSub.style.display = IN.isTouch && showSub ? '' : 'none'; H.bTouch2.style.display = IN.isTouch && tg && tg.prop && tg.item && !held ? '' : 'none';
-  H.hold.style.display = showSub ? 'flex' : 'none'; H.holdBtns[0].classList.toggle('off', !held);
+  var held = ITEMS.held, hn = NPCHELD.n;
+  if (held || hn) setMainBtn('投げる', 'throw'); else if (tg && (tg.item || tg.npc)) setMainBtn('持つ', 'grab'); else setMainBtn('さわる', 'touch');
+  if (H.bSub._m !== !!(held || hn)) { H.bSub._m = !!(held || hn); H.bSub.innerHTML = ''; H.bSub.appendChild(iconEl(uiIcon(held || hn ? 'put' : 'special'), 24)); el('span', '', H.bSub).innerHTML = cnHTML(held || hn ? '置く' : 'いじる'); }
+  var showSub = !!(held || hn || (tg && tg.item));
+  H.bSub.style.display = IN.isTouch && showSub ? '' : 'none'; H.bTouch2.style.display = IN.isTouch && tg && tg.prop && (tg.item || tg.npc) && !held && !hn ? '' : 'none';
+  H.hold.style.display = (held || (tg && tg.item)) ? 'flex' : 'none'; H.holdBtns[0].classList.toggle('off', !held);
   if (!G.paused && !G.inMenu) {
-    if (IN.main) { IN.main = false; if (held) release(false); else if (tg && tg.item) grab(tg.item); else if (tg && tg.prop) touchProp(tg.prop); }
+    if (IN.put) { IN.put = false; if (held) release(false); else if (hn) npcRelease(false); }
+    if (IN.main) { IN.main = false; var mt = IN.mainTouch; IN.mainTouch = false; if (hn) npcRelease(mt); else if (held) release(!!mt); else if (tg && tg.npc) npcGrab(tg.npc); else if (tg && tg.item) grab(tg.item); else if (tg && tg.prop) touchProp(tg.prop); }
     if (IN.touch2) { IN.touch2 = false; if (tg && tg.prop) touchProp(tg.prop); }
+    if (IN.throwIt && hn) { IN.throwIt = false; npcRelease(true); }
+    if (IN.tackle) { IN.tackle = false; smashTackle(); }
     itemActions(tg);
   }
-  IN.main = IN.touch2 = false;
+  IN.main = IN.touch2 = IN.put = IN.tackle = false; IN.mainTouch = false;
   G.genki = clamp(G.genki - dt * (0.05 + G.stage * 0.02), 0, 100);
   if (G.genki <= 0 && !G._tired) { G._tired = true; sysMsg('げんきが　なくなった。何か食べて下さい（おにぎり・みかん・缶など）。'); }
   if (G.genki > 5) G._tired = false;
@@ -148,7 +153,7 @@ function updateGame(dt) {
   G.monoT -= dt; if (G.monoT <= 0 && G.started && !G.paused) { G.monoT = rand(35, 70); if (G.stage < 5) caption(pick(MONOLOGUE), { preset: 'fade' }); }
   // 保存
   G.saveT -= dt; if (G.saveT <= 0) { G.saveT = 10; saveGame(); }
-  updateItems(dt); updateNPCs(dt);
+  updateItems(dt); updateNPCs(dt); if (!G.inMenu) smashUpdate(dt);
   updateProps(dt, t); updateFriends(dt, t); updateWA3D(dt, t); updateCaptions(dt);
   if (!G.inMenu) updateHUD(dt);
   if (NET && NET.update) NET.update(dt);
@@ -205,8 +210,10 @@ var _last = 0;
 function loop(ts) {
   requestAnimationFrame(loop);
   var tnow = ts || now(); var raw = Math.max(0.001, (tnow - _last) / 1000), dt = Math.min(0.05, raw); _last = tnow;
+  dt = feelTime(Math.min(raw, 0.1), dt);
   try {
     updateGame(dt);
+    feelCamera(Math.min(raw, 0.1));
     autoQuality(Math.min(raw, 0.5));
     if (CS.on) { renderCharSel(dt); return; }
     var usePost = !LITE.on && R.quality >= 1 && (G.stage >= 1 || G.tintT > 0);

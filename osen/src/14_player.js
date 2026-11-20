@@ -99,9 +99,10 @@ function updatePlayer(dt) {
   if (P.gesture && (Math.abs(mv.x) + Math.abs(mv.z) > 0.1)) P.gesture = null;
   var tvx = wx * base, tvz = wz * base, acc = P.onGround ? 12 : 3.5;
   if (P.slideT > 0) { P.slideT -= dt; tvx = -Math.sin(P.face) * 14; tvz = -Math.cos(P.face) * 14; acc = 30; }
+  if (P.tackleT > 0) { P.tackleT -= dt; tvx = -Math.sin(P.face) * P.tackleSp; tvz = -Math.cos(P.face) * P.tackleSp; acc = 40; }
   P.vel.x += (tvx - P.vel.x) * Math.min(1, acc * dt); P.vel.z += (tvz - P.vel.z) * Math.min(1, acc * dt);
   var spd = Math.hypot(P.vel.x, P.vel.z);
-  if (spd > 0.3) P.face += angDiff(P.face, Math.atan2(-P.vel.x, -P.vel.z)) * Math.min(1, dt * 10);
+  if (spd > 0.3 && !(P.tackleT > 0)) P.face += angDiff(P.face, Math.atan2(-P.vel.x, -P.vel.z)) * Math.min(1, dt * 10);
   // ジャンプ
   if (IN.jump) {
     IN.jump = false;
@@ -178,6 +179,8 @@ function animatePlayer(dt, spd, run) {
   if (ITEMS.held) { ex.lean = (ex.lean || 0) - 0.07; ex.L_armL = ex.L_armR = -0.75; ex.L_raiseL = ex.L_raiseR = 0.1; }
   if (P.throwT > 0) { P.throwT -= dt; ex.lean = (ex.lean || 0) + Math.sin(P.throwT / 0.35 * PI) * 0.45; ex.L_armR = -1.1 * Math.sin(P.throwT / 0.35 * PI); }
   if (P.slideT > 0) { ex.lean = (ex.lean || 0) + 0.35; }
+  if (P.tackleT > 0 || (P.tackleCd > TUNE.tackleCd - 0.5 && P.tackleCd > 0)) { var tk = P.tackleT > 0 ? 1 : clamp(P.tackleCd / 0.2, 0, 1); ex.lean = (ex.lean || 0) + 0.55 * tk; ex.L_armL = ex.L_armR = -1.2 * tk; ex.L_raiseL = ex.L_raiseR = 0.25 * tk; ex.L_headP = -0.3 * tk; }
+  if (NPCHELD.n) { ex.L_armL = ex.L_armR = -2.6; ex.L_raiseL = ex.L_raiseR = 0.15; }
   bodyAnim(P.root, P.body, P, dt, spd, run, P.onGround, P.vel.y, ex);
   P.root.position.copy(P.pos); P.root.rotation.y = P.face + PI; P.root.scale.setScalar(P.scale);
   P.shadow.position.set(P.pos.x, groundAt(P.pos.x, P.pos.z, P.pos.y + 0.1, 0.1, 0.1) + 0.03, P.pos.z); P.shadow.scale.setScalar(P.scale * CHARS[PLAYER.char].scale * (1 - clamp((P.pos.y - P.shadow.position.y) * 0.1, 0, 0.6)));
@@ -198,7 +201,7 @@ function insideZone(x, y, z) { for (var i = 0; i < WORLD.zones.length; i++) { va
 function snapCamera() { CAM.snap = true; }
 function updateCamera(dt) {
   var inZ = insideZone(P.pos.x, P.pos.y, P.pos.z); CAM.inside = !!inZ;
-  var want = inZ ? Math.min(CAM.distT, 2.6) : CAM.distT;
+  var want = (inZ ? Math.min(CAM.distT, 2.6) : CAM.distT) + (inZ ? 0 : FEEL.kick);
   CAM.dist = lerp(CAM.dist, want, 1 - Math.exp(-dt * 6));
   var hx = P.pos.x, hy = P.pos.y + P.bodyH * P.scale * 0.9 + 0.15, hz = P.pos.z;
   // 肩ごしのカメラ（照準が自分に重ならないよう、少し右にずらす）
@@ -232,7 +235,7 @@ function useSkill() {
     case 'surari': P.slideT = 0.7; sfx('whoosh'); break;
     case 'beranda': if (P.onGround) { P.vel.y = 10; P.onGround = false; } else { P.vel.y = 7; } sfx('up'); break;
     case 'haneru': P.vel.y = 13; P.onGround = false; sfx('boing'); break;
-    case 'mamoru': if (typeof itemsBlast === 'function') itemsBlast(P.pos, 7, 9); sfx('grow'); break;
+    case 'mamoru': smashBlast(P.pos, 7 * (1 + smashUp('skill') * 0.2), 3, { kind: 'skill', key: 'sk' + G.t }); feel(2); sfx('grow'); break;
     case 'tooshi': G.xray = 10; sfx('chime'); break;
     case 'chikuri': G.magnetT = 5; sfx('up'); break;
     case 'shichisan': if (typeof itemsLineUp === 'function') itemsLineUp(P.pos, P.face); sfx('chime'); break;

@@ -44,13 +44,16 @@ function findTarget() {
     if (perp2 < rr * rr && t < bt) { bt = t; best = obj; }
   }
   for (var i = 0; i < PROPS.length; i++) {
-    var pr = PROPS[i]; if (pr.gone || (pr.item && (pr.item === ITEMS.held || pr.item.gone || pr.item.onHead))) continue;
+    var pr = PROPS[i]; if (pr.gone || (pr.item && (pr.item === ITEMS.held || pr.item.gone || pr.item.broken || pr.item.onHead))) continue;
     if (pr.def.id === 'water') pr.center.set(clamp(P.pos.x, -160, 160), -0.3, 49.5);
     test(pr.center, pr.rad * Math.max(1, pr.scl), pr);
   }
-  for (i = 0; i < ITEMS.list.length; i++) { var it = ITEMS.list[i]; if (it.prop || it.gone || it === ITEMS.held || it.onHead) continue; test(it.body.pos, Math.max(it.body.ex, it.body.ey, it.body.ez) + 0.2, it); }
+  for (i = 0; i < ITEMS.list.length; i++) { var it = ITEMS.list[i]; if (it.prop || it.gone || it.broken || it === ITEMS.held || it.onHead) continue; test(it.body.pos, Math.max(it.body.ex, it.body.ey, it.body.ez) + 0.2, it); }
+  npcTarget(test);
   if (!best) return null;
-  if (best.def) { var itm = best.item; return { key: 'p' + best.def.id, name: best.def.n, kind: itm ? '持てる物（重さ ' + effMass(itm.body).toFixed(1) + '）' : (best.dressing ? '着がえ所' : (best.fr ? '住人' : '町の物')), hint: itm ? '持つ／さわる／いじる' : (best.dressing ? 'さわるとキャラを変えられる' : 'さわる'), prop: best, item: itm, count: best.count };
+  if (best.ent) return { key: 'n' + best.uid, name: npcName(best), kind: '住人', hint: '持つ（投げられる）／体当たり', npc: best, count: 1 };
+  var fnpc = best.fr && best.fr.npc ? NPCS.filter(function (q) { return q.pr === best && !q.mob; })[0] : null;
+  if (best.def) { var itm = best.item; return { key: 'p' + best.def.id, name: best.def.n, kind: itm ? '持てる物（重さ ' + effMass(itm.body).toFixed(1) + '）' : (best.dressing ? '着がえ所' : (best.fr ? '住人' : '町の物')), hint: itm ? '持つ／さわる／いじる' : fnpc ? '持つ（投げられる）／さわると話す' : (best.dressing ? 'さわるとキャラを変えられる' : best.shop ? 'さわると強化屋が開く' : 'さわる'), prop: best, item: itm, npc: fnpc, count: best.count };
   }
   var t = itemType(best.type);
   return { key: 'i' + best.id, name: t.name, kind: '持てる物（重さ ' + effMass(best.body).toFixed(1) + '）', hint: '持つ／いじる' + (t.special ? '：' + t.special.name : ''), item: best, count: 1 };
@@ -61,6 +64,7 @@ var BIG_WORDS = ['ＧＲＥＡＴ!!', 'すごい!!', 'ナイス!!', '感動!!', 
 function touchProp(pr) {
   if (!pr || pr.gone) return;
   if (pr.dressing) { sfx('uiOpen'); openCharChange(); return; }
+  if (pr.shop) { sfx('uiOpen'); openShop(); return; }
   var d = pr.def, n = pr.count; pr.count++;
   G.touches++;
   var first = n === 0;

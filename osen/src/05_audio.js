@@ -191,6 +191,31 @@ function sfx(name, p) {
     case 'thud': _osc('sine', 140 - p * 5, t, 0.12, Math.min(0.2, 0.05 + p * 0.015), null, { slide: 60 }); _noise(t, 0.06, Math.min(0.12, 0.03 + p * 0.01), 0, null, 900); break;
     case 'eat': for (i = 0; i < 3; i++) _noise(t + i * 0.12, 0.06, 0.08, 0, null, 2500); break;
     case 'chat': _osc('square', 1046, t, 0.04, 0.04, null, { lp: 3000 }); _osc('square', 1318, t + 0.05, 0.05, 0.04, null, { lp: 3000 }); break;
+    case 'hit_glass': _osc('sine', 2200 * Math.pow(2, p / 12), t, 0.12, 0.06, null, { slide: 1500 }); _noise(t, 0.08, 0.09, 3000); break;
+    case 'hit_wood': _noise(t, 0.08, 0.14, 0, null, 1400); _osc('triangle', 160 * Math.pow(2, p / 12), t, 0.1, 0.14, null, { slide: 90 }); break;
+    case 'hit_metal': [1, 2.76].forEach(function (h, k) { _osc('sine', 420 * h * Math.pow(2, p / 12), t, 0.25 - k * 0.08, 0.06 / (k + 1), null, { r: 0.2 }); }); _noise(t, 0.05, 0.1, 0, null, 1800); break;
+    case 'hit_concrete': _osc('sine', 110 * Math.pow(2, p / 24), t, 0.18, 0.18, null, { slide: 55 }); _noise(t, 0.12, 0.12, 0, null, 700); break;
+    case 'hit_plant': _noise(t, 0.15, 0.1, 0, null, 2200); _osc('triangle', 200, t, 0.08, 0.08, null, { slide: 120 }); break;
+    case 'hit_paper': _noise(t, 0.06, 0.08, 2000); break;
+    case 'hitHeavy': _osc('sine', 120 * Math.pow(2, p / 24), t, 0.16, 0.18, null, { slide: 50 }); _noise(t, 0.07, 0.12, 0, null, 1200); break;
+    case 'brk_glass': _noise(t, 0.35, 0.14, 2500); for (i = 0; i < 6; i++) _osc('sine', (1800 + Math.random() * 3000) * Math.pow(2, p / 12), t + i * 0.035 + Math.random() * 0.03, 0.18, 0.04, null, { r: 0.15 }); _osc('sine', 140, t, 0.15, 0.12, null, { slide: 60 }); break;
+    case 'brk_wood': _noise(t, 0.12, 0.2, 0, null, 1600); _noise(t + 0.06, 0.25, 0.12, 0, null, 700); _osc('sine', 120 * Math.pow(2, p / 24), t, 0.3, 0.2, null, { slide: 45 }); _osc('square', 300, t, 0.05, 0.04, null, { lp: 1200 }); break;
+    case 'brk_metal': [1, 2.76, 5.4, 8.9].forEach(function (h, k) { _osc('sine', 260 * h * Math.pow(2, p / 12), t, 0.7 - k * 0.12, 0.07 / (k + 1), null, { r: 0.5 }); }); _osc('saw', 180, t + 0.05, 0.6, 0.04, null, { slide: 70, lp: 900 }); _osc('sine', 90, t, 0.3, 0.18, null, { slide: 40 }); break;
+    case 'brk_concrete': _noise(t, 0.6, 0.2, 0, null, 500); _osc('sine', 70 * Math.pow(2, p / 24), t, 0.5, 0.22, null, { slide: 32 }); _noise(t + 0.1, 0.4, 0.08, 0, null, 2000); break;
+    case 'brk_plant': _noise(t, 0.4, 0.14, 0, null, 2600); _noise(t, 0.12, 0.16, 0, null, 900); _osc('sine', 110, t, 0.25, 0.16, null, { slide: 50 }); break;
+    case 'brk_paper': _noise(t, 0.2, 0.12, 1500); _osc('sine', 300, t, 0.1, 0.06, null, { slide: 600 }); break;
+    case 'crack': _noise(t, 0.1, 0.14, 0, null, 2400); _osc('square', 220 * Math.pow(2, (p || 0) / 12), t, 0.06, 0.05, null, { lp: 1500, slide: 110 }); break;
+    case 'crumble': _noise(t, 0.5, 0.18, 0, null, 380); _osc('sine', 62 * Math.pow(2, p / 24), t, 0.45, 0.2, null, { slide: 30 }); break;
+    case 'rumble': _noise(t, 1.6, 0.1, 0, null, 220); _osc('sine', 45, t, 1.4, 0.12, null, { a: 0.2, r: 1, vib: 0.1, vibF: 7 }); break;
+    case 'thudBig': _osc('sine', 85, t, 0.35, 0.22, null, { slide: 38 }); _noise(t, 0.2, 0.14, 0, null, 600); break;
+    case 'tackle': _noise(t, 0.3, 0.12, 0, null, 1400); _osc('square', 180, t, 0.12, 0.05, null, { slide: 90, lp: 900 }); break;
+    case 'spill': for (i = 0; i < 7; i++) _osc('sine', 900 + Math.random() * 1500, t + i * 0.05 + Math.random() * 0.04, 0.08, 0.03); break;
+    case 'pon': _osc('sine', 380, t, 0.14, 0.14, null, { slide: 1100 }); _osc('triangle', 1760, t + 0.1, 0.25, 0.04, null, { r: 0.2 }); break;
+    case 'comboUp': [0, 4, 7, 12].forEach(function (m, k) { _osc('square', mtof(72 + p + m), t + k * 0.04, 0.09, 0.035, null, { lp: 3500 }); }); break;
+    case 'npcFly': _osc('sine', 300, t, 0.35, 0.1, null, { slide: 900, vib: 0.08, vibF: 12 }); _osc('sine', 110, t, 0.12, 0.16, null, { slide: 60 }); _noise(t, 0.08, 0.1, 0, null, 1500); break;
+    case 'npcLand': _osc('sine', 160, t, 0.18, 0.12, null, { vib: 0.3, vibF: 18, slide: 90 }); _noise(t, 0.06, 0.06, 0, null, 900); break;
+    case 'snap': _noise(t, 0.05, 0.12, 4000); _osc('sine', 2400, t, 0.06, 0.03); break;
+    case 'clap': for (i = 0; i < 3; i++) _noise(t + i * 0.13, 0.04, 0.07, 1800); break;
     case 'train': _osc('square', 660, t, 0.6, 0.04, null, { lp: 1500 }); _osc('square', 784, t, 0.6, 0.04, null, { lp: 1500 }); break;
   }
 }

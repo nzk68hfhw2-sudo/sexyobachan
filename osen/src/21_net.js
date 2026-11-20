@@ -110,9 +110,9 @@ function writeMe(force) {
   NET.last = d; NET.T.set('rooms/' + NET.room + '/p/' + NET.pid, d);
 }
 NET.sendMeta = function () { writeMe(true); };
-NET.send = function (k, data) { // 定型文・スタンプ・身ぶり・とくぎ など
+NET.send = function (k, data, force) { // 定型文・スタンプ・身ぶり・とくぎ など
   if (!NET.on) return;
-  var now2 = Date.now(); if (NET.rate[k] && now2 - NET.rate[k] < 1200) return; NET.rate[k] = now2;
+  var now2 = Date.now(); if (!force) { if (NET.rate[k] && now2 - NET.rate[k] < 1200) return; NET.rate[k] = now2; }
   var key = NET.T.push('rooms/' + NET.room + '/e', { k: k, by: NET.pid, t: NET.T.now(), d: data || {} });
   NET.myEvents.push({ key: key, t: now2 });
 };
@@ -148,6 +148,7 @@ function onEvent(key, e) {
   try {
     switch (e.k) {
       case 'vo': case 'va': case 'vi': case 'vh': voiceOnEvent(e); break;
+      case 'bks': if (d.l && d.l.length) d.l.slice(0, 40).forEach(function (q) { smashNetEvent(q[0], q[1]); }); break;
       case 'msg': { if (hidden || typeof d.m !== 'string') break; var fm = filterMsg(d.m); if (!fm.text) break; if (pr) pr.bubble = { text: fm.text, t: now() + 5000, free: true }; logMsg('talk', fm.text, who, true); sfx('chat'); break; }
       case 'say': { var tx = phraseText(d.p); if (tx && !hidden) { if (pr) pr.bubble = { text: tx, t: now() + 4500 }; logMsg('talk', tx, who); sfx('chat'); } break; }
       case 'stamp': if (pr && !hidden && STAMPS.some(function (s) { return s.id === d.s; })) { pr.bubble = { text: d.s, icon: d.s, t: now() + 3500 }; } break;

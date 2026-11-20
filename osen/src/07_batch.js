@@ -73,7 +73,7 @@ Batch.prototype.build = function (scene, mats, opts) {
 var COL = { boxes: [], grid: {}, cell: 8 };
 function colAdd(x0, y0, z0, x1, y1, z1, tag) {
   var b = { x0: Math.min(x0, x1), x1: Math.max(x0, x1), y0: Math.min(y0, y1), y1: Math.max(y0, y1), z0: Math.min(z0, z1), z1: Math.max(z0, z1), tag: tag || '' };
-  COL.boxes.push(b);
+  COL.boxes.push(b); if (BRK.rec) BRK.rec.cols.push(b);
   var c = COL.cell;
   for (var gx = Math.floor(b.x0 / c); gx <= Math.floor(b.x1 / c); gx++)
     for (var gz = Math.floor(b.z0 / c); gz <= Math.floor(b.z1 / c); gz++) {
@@ -87,7 +87,7 @@ function colQuery(x, z, r) {
   for (var gx = Math.floor((x - r) / c); gx <= Math.floor((x + r) / c); gx++)
     for (var gz = Math.floor((z - r) / c); gz <= Math.floor((z + r) / c); gz++) {
       var L = COL.grid[gx + ',' + gz]; if (!L) continue;
-      for (var i = 0; i < L.length; i++) { var b = L[i]; if (b._st !== st) { b._st = st; out.push(b); } }
+      for (var i = 0; i < L.length; i++) { var b = L[i]; if (b._st !== st) { b._st = st; if (!b.off) out.push(b); } }
     }
   return out;
 }

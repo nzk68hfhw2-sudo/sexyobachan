@@ -78,6 +78,8 @@ function openStatus() {
     bar('歩く速さ', c.speed, 1.5); bar('ジャンプ', c.jump, 1.6); bar('体の大きさ', c.scale, 1.5);
     el('div', 'kv', bd, '<span>とくぎ</span><b>' + cnHTML(c.skill.name) + '</b>');
     el('div', 'desc', bd, cnHTML(c.skill.desc));
+    el('div', 'hd', bd, '大暴れの記録');
+    [['迷惑ポイント（使える）', SMASH.pts.toLocaleString() + ' pt'], ['迷惑ポイント（合計）', SMASH.totalPts.toLocaleString() + ' pt'], ['被害額（合計）', yenStr(SMASH.yen)], ['最高コンボ', SMASH.best.combo + ' HIT'], ['最高被害額（1コンボ）', yenStr(SMASH.best.yen)], ['こわした数', SMASH.breaks], ['ふっとばした数', SMASH.flights]].forEach(function (r) { el('div', 'kv', bd, '<span>' + cnHTML(r[0]) + '</span><b>' + cnHTML(String(r[1])) + '</b>'); });
     el('div', 'hd', bd, '記録');
     [['汚染率', Math.round(G.pol) + '％'], ['げんき', Math.round(G.genki)], ['歩いた距離', Math.round(P.dist) + 'ｍ'], ['さわった回数', G.touches], ['いじった回数', G.fiddles || 0], ['合成した回数', G.combines || 0], ['ひみつ', Object.keys(G.secrets).length + ' ／ ' + SECRETS.length]].forEach(function (kv) { el('div', 'kv', bd, '<span>' + cnHTML(kv[0]) + '</span><b>' + cnHTML(String(kv[1])) + '</b>'); });
     var row = el('div', 'row2', bd);
@@ -163,9 +165,11 @@ function openSettings() {
     row('軽量モード（古いスマホ用）', 'lite', function () { return LITE.on; }, function (v) { setLite(v); });
     row('刺激ひかえめモード', 'eye', function () { return REDUCED.on; }, function (v) { REDUCED.on = v; });
     row('ボイスチャット（近くの人と声で話す）', 'sound', function () { return VOICE.on; }, function () { voiceToggle(); });
+    row('振動（使える端末だけ）', 'burst', function () { return FEEL.vib; }, function (v) { FEEL.vib = v; });
     row('ほかの人をミュート（見えなくする）', 'mute', function () { return !!(NET && NET.muted); }, function (v) { NET.muted = v; });
     el('div', 'desc', bd, [cnHTML('記録の保存：' + (STORE.available() ? 'この端末のブラウザに保存されます' : '保存できない環境です（閉じると消えます）')), cnHTML('画質：' + ['最低', '低', '中', '高'][R.quality] + '　/　' + (R.lastFps ? Math.round(R.lastFps) + 'fps' : '計測中')), cnHTML('通信：' + NET.statusText()), cnHTML('版：' + GAME_VERSION)].join('<br>'));
     var r2 = el('div', 'row2', bd);
+    mbtn(r2, '町をすぐ元に戻す', function () { var n = brkResetAll(); sysMsg(n ? '町を　元に戻しました（' + n + 'か所）。ポンッ。' : 'こわれている物は　ありません。'); }, 'gold', 'home');
     mbtn(r2, 'あそびかた', function () { openHelp(); }, '', 'info');
     mbtn(r2, 'まわりの人', function () { openPeople(); }, '', 'people');
     mbtn(r2, 'キャラを変える', function () { if (nearDressing()) openCharChange(); else sysMsg('キャラは「着がえ所」で変えられます（駅前・公園）。'); }, '', 'char');

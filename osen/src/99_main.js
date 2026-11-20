@@ -38,8 +38,9 @@ function startGame() {
   buildWorld(R.scene);
   placeSigns(R.scene);
   placeProps(R.scene);
+  initDebris(R.scene);
   initPlayer();
-  initUI(); initTextUI(); initInput(); initNPCs(); initMeterTap();
+  initUI(); initTextUI(); initSmashUI(); initInput(); initNPCs(); initMobs(); initShopBooth(); initMeterTap();
   applyLoaded(saved);
   setPlayerChar(PLAYER.char || 0);
   if (LITE.on) setLite(true);
@@ -49,7 +50,7 @@ function startGame() {
   window.__osReady = true;
   window.__os = { G: G, P: P, R: R, CAM: CAM, PROPS: PROPS, ITEMS: ITEMS, NPCS: NPCS, BAG: BAG, PLAYER: PLAYER, teleport: teleport, addPollution: addPollution, secret: secret, touchProp: touchProp, COL: COL, WORLD: WORLD, setQuality: setQuality,
     IN: IN, updatePlayer: updatePlayer, groundAt: groundAt, colQuery: colQuery, cnHTML: cnHTML, FONT_SUB: FONT_SUB, AUD: AUD, setLite: setLite, REDUCED: REDUCED, grab: grab, release: release, spawnItem: spawnItem,
-    findRecipe: findRecipe, RECIPES: RECIPES, setPlayerChar: setPlayerChar, enterWorld: enterWorld, stepCharSel: stepCharSel, csDecide: csDecide, CS: CS, csShow: csShow, openWin: openWin, WIN: WIN, openBag: openBag, openZukan: openZukan, openStatus: openStatus, openSettings: openSettings, openPhrases: openPhrases, storeItem: storeItem, doSpecial: doSpecial, useSkill: useSkill, gesture: gesture, say: say, itemType: itemType, NET: NET, VOICE: VOICE, voiceStart: voiceStart, EXTRA_TYPES: EXTRA_TYPES, ITEM_INFO: ITEM_INFO, effMass: effMass, MUS: MUS, TEXTLV: TEXTLV, musStatus: musStatus, H: H };
+    findRecipe: findRecipe, RECIPES: RECIPES, setPlayerChar: setPlayerChar, enterWorld: enterWorld, stepCharSel: stepCharSel, csDecide: csDecide, CS: CS, csShow: csShow, openWin: openWin, WIN: WIN, openBag: openBag, openZukan: openZukan, openStatus: openStatus, openSettings: openSettings, openPhrases: openPhrases, storeItem: storeItem, doSpecial: doSpecial, useSkill: useSkill, gesture: gesture, say: say, itemType: itemType, NET: NET, VOICE: VOICE, voiceStart: voiceStart, EXTRA_TYPES: EXTRA_TYPES, ITEM_INFO: ITEM_INFO, effMass: effMass, MUS: MUS, TEXTLV: TEXTLV, musStatus: musStatus, H: H, BRK: BRK, SMASH: SMASH, TUNE: TUNE, FEEL: FEEL, DEB: DEB, brkHit: brkHit, brkResetAll: brkResetAll, smashTackle: smashTackle, npcGrab: npcGrab, npcRelease: npcRelease, NPCHELD: NPCHELD, CHAOS: CHAOS, openShop: openShop, itemHit: itemHit, smashBlast: smashBlast, colTop: colTop };
   R.renderer.render(R.scene, R.camera);
   hideLoading(); showMenu();
   setTimeout(musicLoad, 1500); // 曲は最初の表示が終わってから読む

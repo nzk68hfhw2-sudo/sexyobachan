@@ -61,6 +61,7 @@ function initInput() {
     if (c2 === 'KeyF') IN.touch2 = true;
     if (c2 === 'KeyG') IN.special = true;
     if (c2 === 'KeyQ') IN.throwIt = true;
+    if (c2 === 'KeyV' || c2 === 'KeyB') IN.tackle = true;
     if (c2 === 'KeyR') IN.rotate = true;
     if (c2 === 'KeyZ') IN.smaller = true;
     if (c2 === 'KeyX') IN.bigger = true;
@@ -77,7 +78,7 @@ function initInput() {
   cv.addEventListener('mousedown', function (e) {
     if (G.inMenu || (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents)) return;
     audioInit();
-    if (IN.locked) { if (e.button === 2) IN.throwIt = true; else IN.main = true; return; }
+    if (IN.locked) { if (e.button === 2) { if (ITEMS.held || NPCHELD.n) IN.throwIt = true; else IN.tackle = true; } else IN.main = true; return; }
     IN.dragMouse = true; IN.lpx = e.clientX; IN.lpy = e.clientY; IN.mdownT = now(); IN.mmoved = 0;
   });
   window.addEventListener('mouseup', function (e) {

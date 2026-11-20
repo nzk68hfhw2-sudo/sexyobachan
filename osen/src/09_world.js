@@ -68,7 +68,8 @@ function baseGeos() {
   GEO.cone = new THREE.ConeGeometry(1, 1, 8); GEO.sph = new THREE.IcosahedronGeometry(1, 1); GEO.sph2 = new THREE.SphereGeometry(1, 12, 8);
   GEO.torus = new THREE.TorusGeometry(1, 0.15, 6, 16);
 }
-function tree(x, z, s, kind) {
+function tree(x, z, s, kind) { BK({ n: kind === 'pine' ? '松の木' : kind === 'sakura' ? '桜の木' : '木', mat: 'plant', mode: 'fall', hp: 1.4 * (s || 1), yen: 48000, spill: kind === 'sakura' ? 'flower' : 'leaf', cls: 1, pts: 25 }, function () { treeRaw(x, z, s, kind); }); }
+function treeRaw(x, z, s, kind) {
   s = s || 1; var y = terrainY(x, z);
   B.geo('plain', GEO.cyl8, mtx(x, y + 1.2 * s, z, 0, 0.18 * s, 2.4 * s, 0.18 * s), 0x7a4e2a);
   if (kind === 'pine') {
@@ -80,20 +81,44 @@ function tree(x, z, s, kind) {
   }
   colAdd(x - 0.25 * s, y, z - 0.25 * s, x + 0.25 * s, y + 3 * s, z + 0.25 * s);
 }
-function lamp(x, z, rot) {
+function lamp(x, z, rot) { BK({ n: '街灯', mat: 'metal', mode: 'bend', hp: 1.3, yen: 180000, cls: 1, pts: 25 }, function () { lampRaw(x, z, rot); }); }
+function lampRaw(x, z, rot) {
   B.geo('metal', GEO.cyl8, mtx(x, 2.4, z, 0, 0.09, 4.8, 0.09), 0x556070);
   B.box('metal', x + Math.sin(rot || 0) * 0.5, 4.75, z + Math.cos(rot || 0) * 0.5, 0.25, 0.08, 1.1, 0x556070, { rot: rot || 0 });
   WORLD.lamps.push(new THREE.Vector3(x + Math.sin(rot || 0) * 0.95, 4.6, z + Math.cos(rot || 0) * 0.95));
   colAdd(x - 0.12, 0, z - 0.12, x + 0.12, 4.8, z + 0.12);
 }
 var POLES = [];
-function pole(x, z) {
+function pole(x, z) { BK({ n: '電柱', mat: 'metal', mode: 'bend', hp: 2.2, yen: 950000, cls: 1, pts: 45 }, function () { poleRaw(x, z); }); POLES[POLES.length - 1][2] = BRK.list[BRK.list.length - 1]; }
+// 信号・車・屋台（こわせる）
+function signal(x, z, rot) { BK({ n: '信号', mat: 'metal', mode: 'bend', hp: 1.4, yen: 1600000, cls: 1, pts: 40 }, function () {
+  B.geo('metal', GEO.cyl8, mtx(x, 1.7, z, 0, 0.08, 3.4, 0.08), 0x8a9098);
+  var cx = x + Math.sin(rot) * 0.5, cz = z + Math.cos(rot) * 0.5, c = Math.abs(Math.cos(rot)) > 0.5;
+  B.box('metal', cx, 3.25, cz, c ? 1.0 : 0.3, 0.32, c ? 0.3 : 1.0, 0x30343a);
+  [0xff3030, 0xffd030, 0x30e070].forEach(function (col, k) { var o = (k - 1) * 0.3; B.geo('plain', GEO.sph, mtx(cx + (c ? o : 0) + (c ? 0 : (Math.sin(rot) > 0 ? 0.17 : -0.17)), 3.25, cz + (c ? (Math.cos(rot) > 0 ? 0.17 : -0.17) : o), 0, 0.1), col); });
+  colAdd(x - 0.1, 0, z - 0.1, x + 0.1, 3.4, z + 0.1); }); }
+function car(x, z, alongX, col) { BK({ n: '車', mat: 'metal', mode: 'fall', hp: 3, yen: 2800000, spill: 'box', cls: 1, pts: 90 }, function () {
+  var L = 4.0, W = 1.8, sx = alongX ? L : W, sz = alongX ? W : L;
+  solid('plain', x, 0.7, z, sx, 0.8, sz, col);
+  B.box('plain', x, 1.45, z, alongX ? 2.2 : 1.6, 0.7, alongX ? 1.6 : 2.2, 0xbfe4ff);
+  B.box('plain', x, 1.82, z, alongX ? 2.0 : 1.5, 0.06, alongX ? 1.5 : 2.0, col);
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (p) { var wx = x + (alongX ? p[0] * 1.3 : p[1] * 0.92), wz = z + (alongX ? p[1] * 0.92 : p[0] * 1.3); B.geo('plain', GEO.cyl8, mtx(wx, 0.36, wz, alongX ? 0 : PI / 2, 0.36, 0.25, 0.36, PI / 2), 0x222222); });
+  colAdd(x - sx / 2, 0, z - sz / 2, x + sx / 2, 1.8, z + sz / 2); }); }
+function yatai(x, z, rot, cloth, name) { BK({ n: name || '屋台', mat: 'wood', mode: 'shatter', hp: 1.6, yen: 600000, spill: 'food', cls: 1, pts: 60 }, function () {
+  var c = Math.abs(Math.cos(rot)) > 0.5;
+  solid('wood', x, 0.5, z, c ? 2.4 : 1.1, 1.0, c ? 1.1 : 2.4, 0xc8945a);
+  B.box('plain', x, 2.35, z, c ? 2.8 : 1.7, 0.12, c ? 1.7 : 2.8, cloth);
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (p) { B.box('wood', x + p[0] * (c ? 1.2 : 0.6), 1.2, z + p[1] * (c ? 0.6 : 1.2), 0.07, 2.4, 0.07, 0x7a5030); });
+  B.box('plain', x + (c ? 0 : Math.sin(rot) * 0.62), 2.0, z + (c ? Math.cos(rot) * 0.62 : 0), c ? 2.6 : 0.04, 0.55, c ? 0.04 : 2.6, 0xffffff);
+  for (var k = 0; k < 4; k++) B.geo('plain', GEO.sph, mtx(x + (c ? (k - 1.5) * 0.45 : 0), 1.12, z + (c ? 0 : (k - 1.5) * 0.45), 0, 0.14), [0xff9030, 0xffe0a0, 0xff5050, 0x80c050][k]); }); }
+function poleRaw(x, z) {
   B.geo('wood', GEO.cyl8, mtx(x, 4.5, z, 0, 0.16, 9, 0.16), 0x9a8a78);
   B.box('wood', x, 8.4, z, 1.8, 0.12, 0.12, 0x6a5a48);
   B.geo('plain', GEO.cyl8, mtx(x + 0.5, 7.6, z, 0, 0.22, 0.6, 0.22), 0x8a8a8a);
   POLES.push([x, z]); colAdd(x - 0.18, 0, z - 0.18, x + 0.18, 9, z + 0.18);
 }
-function fence(x0, z0, x1, z1, h, color, noCol) {
+function fence(x0, z0, x1, z1, h, color, noCol) { if (noCol) return fenceRaw(x0, z0, x1, z1, h, color, noCol); var hedge = color === 0x2d7a2d; BK({ n: hedge ? '生け垣' : 'フェンス', mat: hedge ? 'plant' : 'metal', mode: 'fall', hp: 1.0 + Math.hypot(x1 - x0, z1 - z0) * 0.04, yen: 60000, spill: hedge ? 'leaf' : null, cls: 1, pts: 20 }, function () { fenceRaw(x0, z0, x1, z1, h, color, noCol); }); }
+function fenceRaw(x0, z0, x1, z1, h, color, noCol) {
   var dx = x1 - x0, dz = z1 - z0, L = Math.sqrt(dx * dx + dz * dz), rot = Math.atan2(dx, dz);
   var n = Math.max(1, Math.round(L / 2));
   for (var i = 0; i <= n; i++) { var t = i / n; B.box('metal', x0 + dx * t, h / 2, z0 + dz * t, 0.08, h, 0.08, color || 0x5a7a5a); }
@@ -133,7 +158,8 @@ function hollow(o) {
   deco('glow', (x0 + x1) / 2 - 0.8, y0 + h - 0.06, (z0 + z1) / 2 - 0.15, (x0 + x1) / 2 + 0.8, y0 + h, (z0 + z1) / 2 + 0.15, 0xffffff);
   WORLD.zones.push({ x0: x0, x1: x1, z0: z0, z1: z1, y0: y0, y1: y0 + h, indoor: true, name: o.name });
 }
-function house(x, z, w, d, h, rot, color, roofColor) {
+function house(x, z, w, d, h, rot, color, roofColor) { BK({ n: h > 11 ? 'ビル' : '民家', mat: 'concrete', mode: 'crumble', hp: 5 + h * 0.6, yen: 12000000 + h * 2500000, spill: 'goods' }, function () { houseRaw(x, z, w, d, h, rot, color, roofColor); }); }
+function houseRaw(x, z, w, d, h, rot, color, roofColor) {
   var r = rot || 0, sw = (Math.abs(Math.sin(r)) > 0.5) ? d : w, sd = (Math.abs(Math.sin(r)) > 0.5) ? w : d;
   solid('house', x, h / 2, z, sw, h, sd, color || 0xffffff, { tile: [4, 3], worldY: true });
   // 切妻屋根
@@ -150,7 +176,8 @@ function crosswalk(cx, cz, alongX, w) {
     else deco('plainS', cx - w / 2, 0.014, cz + i * 0.9 - 0.3, cx + w / 2, 0.022, cz + i * 0.9 + 0.3, 0xf6f6f6);
   }
 }
-function bench(x, z, rot) {
+function bench(x, z, rot) { BK({ n: 'ベンチ', mat: 'wood', mode: 'fall', hp: 0.9, yen: 35000, spill: 'box', cls: 0, pts: 12 }, function () { benchRaw(x, z, rot); }); }
+function benchRaw(x, z, rot) {
   B.box('wood', x, 0.45, z, 1.8, 0.08, 0.5, 0xb07a40, { rot: rot }); B.box('wood', x - Math.cos(rot) * 0 + Math.sin(rot) * -0.22, 0.75, z + Math.cos(rot) * -0.22, 1.8, 0.4, 0.06, 0xb07a40, { rot: rot });
   B.box('metal', x, 0.22, z, 1.6, 0.44, 0.08, 0x333333, { rot: rot });
   var c = Math.abs(Math.cos(rot)) > 0.5; colAdd(x - (c ? 0.9 : 0.25), 0, z - (c ? 0.25 : 0.9), x + (c ? 0.9 : 0.25), 0.5, z + (c ? 0.25 : 0.9));
@@ -202,12 +229,14 @@ function buildWorld(scene) {
   solidR('metal', -57, 0, -101, -55, 1.0, -92, 0xffdd00); // 車止め
 
   // ===== 駅 =====
+  BK({ n: '駅舎', mat: 'concrete', mode: 'crumble', hp: 28, yen: 4800000000, spill: 'kippu', cls: 3 }, function () {
   hollow({ x0: -18, x1: 18, z0: -84, z1: -70, h: 5, mat: 'station', tile: [6, 5], floor: 'floor', doors: [{ s: 's', c: 0, w: 4, h: 3 }, { s: 'n', c: 0, w: 4, h: 3 }, { s: 's', c: -12, w: 2.5, h: 2.6 }], roofMat: 'concrete', name: '駅舎' });
   solidR('station', -18, 5.3, -84, 18, 9, -70, 0xffffff, { tile: [6, 5], worldY: true }); // 上の階（中には入れない）
   solidR('concrete', -19, 9, -85, 19, 9.4, -69, 0xdddddd);
   // 改札
   for (i = -3; i <= 3; i++) { if (i === 0) continue; solidR('metal', i * 1.6 - 0.25, 0, -78.5, i * 1.6 + 0.25, 1.0, -76.5, 0x9aa6b8); }
   solidR('wood', -17.5, 0, -83.5, -11, 1.1, -82.5, 0xffffff); // 窓口
+  });
   // ホーム
   solidR('concrete', -50, 0, -92, 60, 0.45, -84, 0xcfcac0, { tile: [4, 4] });
   deco('plainS', -50, 0.45, -92.2, 60, 0.47, -91.6, 0xffe14a); // 点字ブロック風の線
@@ -234,8 +263,10 @@ function buildWorld(scene) {
   lamp(-22, -44, 0); lamp(22, -44, 0); lamp(-22, -62, PI); lamp(22, -62, PI);
   bench(-12, -42, PI); bench(12, -42, PI);
   // バス停の屋根
+  BK({ n: 'バス待合所', mat: 'glass', mode: 'shatter', hp: 1.2, yen: 400000, cls: 1, pts: 40 }, function () {
   deco('metal', 14, 2.6, -66, 22, 2.7, -63.5, 0x3a6aa0); solidR('metal', 14, 0, -63.6, 14.2, 2.6, -63.4, 0x3a6aa0); solidR('metal', 21.8, 0, -63.6, 22, 2.6, -63.4, 0x3a6aa0);
   deco('glass', 14, 0.3, -66, 22, 2.5, -65.9, 0xffffff); colAdd(14, 0, -66.05, 22, 2.5, -65.85);
+  });
   // 駅前の植え込み・ビル
   for (x = -28; x <= 28; x += 8) { if (Math.abs(x) < 6) continue; tree(x, -38.6, 0.8, 'round'); }
   house(-44, -46, 12, 14, 12, 0, 0xd8e0ff, 0x4060a0); house(-44, -66, 12, 14, 9, 0, 0xffe0d0, 0xa04040);
@@ -250,32 +281,40 @@ function buildWorld(scene) {
       var special = (side === 0 && (i === 5 || i === 6)) || (side === 1 && (i === 3 || i === 4)) || (side === 0 && i === 0);
       if (special) continue;
       // 閉まった店（シャッター）または中が見える店
+      BK({ n: '商店', mat: 'concrete', mode: 'crumble', hp: 9, yen: 30000000, spill: 'goods', cls: 2 }, function () {
       solidR('shop', sx0, 0, za, sx1, 7, zb, pick([0xffffff, 0xffeedd, 0xeeffee, 0xeeeeff]), { tile: [6.9, 7], worldY: true });
       deco('shutter', front + (side ? -0.05 : 0.05), 0.02, za + 0.4, front + (side ? -0.06 : 0.06), 3.2, zb - 0.4, 0xffffff, { tile: [2, 1] });
       // 日よけテント
       var tentC = [0xff3355, 0x33aaff, 0xffcc00, 0x33cc66, 0xff66cc, 0x9966ff][(i + side * 3) % 6];
       B.box('plain', front + (side ? -0.7 : 0.7), 3.5, (za + zb) / 2, 1.4, 0.08, slot - 0.3, tentC, { rot: 0 });
+      });
     }
   }
   // 分け目くんのショーウィンドウ（西側 0番）
+  BK({ n: 'ブティック', mat: 'glass', mode: 'crumble', hp: 10, yen: 45000000, spill: 'goods', cls: 2 }, function () {
   hollow({ x0: 35, x1: 44, z0: -30, z1: -30 + slot, h: 4, mat: 'shop', tile: [6.9, 7], doors: [{ s: 'e', c: -30 + slot / 2, w: slot - 1.2, h: 3.2 }], floor: 'wallpaper', name: 'ブティック' });
   solidR('shop', 35, 4.3, -30, 44, 7, -30 + slot, 0xffd0f0, { tile: [6.9, 7], worldY: true });
   B.box('glass', 43.85, 1.75, -30 + slot / 2, 0.06, 3.1, slot - 1.2, 0xffffff); colAdd(43.8, 0, -30 + 0.6, 43.95, 3.3, -30 + slot - 0.6, 'glass');
   solidR('plainS', 38, 0, -28, 41, 0.4, -25, 0xffffff); // 台
+  });
   // 喫茶（西側 5-6）
   var kz0 = -30 + 5 * slot, kz1 = -30 + 7 * slot;
+  BK({ n: '喫茶店', mat: 'concrete', mode: 'crumble', hp: 12, yen: 52000000, spill: 'food', cls: 2 }, function () {
   hollow({ x0: 35, x1: 44, z0: kz0, z1: kz1, h: 4, mat: 'brick', tile: [3, 3], floor: 'wood', inner: 'wallpaper', doors: [{ s: 'e', c: (kz0 + kz1) / 2, w: 2.2, h: 2.6 }], name: '喫茶ジャスミソ' });
   solidR('brick', 35, 4.3, kz0, 44, 7, kz1, 0xffffff, { tile: [3, 3], worldY: true });
   for (i = 0; i < 3; i++) { var tz = kz0 + 2.5 + i * 3.6; B.geo('woodS', GEO.cyl12, mtx(38.5, 0.75, tz, 0, 0.6, 0.06, 0.6), 0x6a3a1a); B.geo('metal', GEO.cyl8, mtx(38.5, 0.37, tz, 0, 0.06, 0.74, 0.06), 0x333333); colAdd(37.9, 0, tz - 0.6, 39.1, 0.78, tz + 0.6); }
   solidR('woodS', 35.4, 0, kz0 + 1, 36.4, 1.1, kz1 - 1, 0x5a2a10); // カウンター
+  });
   // コソビニ（東側 3-4）
   var cz0 = -30 + 3 * slot, cz1 = -30 + 5 * slot;
+  BK({ n: 'コンビニ', mat: 'glass', mode: 'crumble', hp: 12, yen: 68000000, spill: 'goods', cls: 2 }, function () {
   hollow({ x0: 56, x1: 65, z0: cz0, z1: cz1, h: 4, mat: 'concrete', color: 0xffffff, tile: [4, 4], floor: 'floor', doors: [{ s: 'w', c: (cz0 + cz1) / 2, w: 3, h: 2.8 }], name: 'コソビニ' });
   solidR('shop', 56, 4.3, cz0, 65, 7, cz1, 0xffffff, { tile: [6.9, 7], worldY: true });
   deco('plain', 55.8, 3.0, cz0, 56, 3.6, cz1, 0x00a050); deco('plain', 55.8, 3.6, cz0, 56, 3.9, cz1, 0xff6a00);
   for (i = 0; i < 3; i++) { solidR('metal', 59 + i * 2, 0, cz0 + 2.5, 59.6 + i * 2, 1.6, cz1 - 2.5, 0xf0f0f0); for (j = 0; j < 4; j++) deco('plain', 58.95 + i * 2, 0.3 + j * 0.38, cz0 + 2.6, 59.65 + i * 2, 0.5 + j * 0.38, cz1 - 2.6, pick([0xff4040, 0x40a0ff, 0xffd040, 0x60e060, 0xff80c0])); }
   solidR('metal', 57, 0, cz0 + 0.8, 58.2, 1.05, cz0 + 4, 0xdddddd); // レジ
   deco('glow', 64.6, 0.2, cz0 + 0.5, 64.7, 2.2, cz1 - 0.5, 0xddf6ff);
+  });
   // アーケードの屋根
   for (z = -30; z < 25; z += 5) {
     B.box('arcade', 50, 7.6, z + 2.5, 12.4, 0.05, 4.8, [0xff99cc, 0x99ccff, 0xffff99, 0xccff99][Math.abs(Math.round(z / 5)) % 4]);
@@ -288,14 +327,22 @@ function buildWorld(scene) {
   // ===== 団地 =====
   var DB = [[-95, -50, -55, -45], [-95, -50, -20, -10], [-95, -50, 15, 25]];
   // 1号棟
-  solidR('danchi', DB[0][0], 0, DB[0][2], DB[0][1], 15, DB[0][3], 0xffffff, { tile: [4.5, 3.75], worldY: true });
+  BK({ n: '団地１号棟', mat: 'concrete', mode: 'crumble', hp: 24, yen: 1800000000, spill: 'goods', cls: 3 }, function () { solidR('danchi', DB[0][0], 0, DB[0][2], DB[0][1], 15, DB[0][3], 0xffffff, { tile: [4.5, 3.75], worldY: true }); });
   // 2号棟（1階に入れる部屋）
+  BK({ n: '団地２号棟', mat: 'concrete', mode: 'crumble', hp: 24, yen: 1800000000, spill: 'goods', cls: 3 }, function () {
   solidR('danchi', -95, 0, -20, -74, 15, -10, 0xffffff, { tile: [4.5, 3.75], worldY: true });
   solidR('danchi', -64, 0, -20, -50, 15, -10, 0xffffff, { tile: [4.5, 3.75], worldY: true });
   hollow({ x0: -74, x1: -64, z0: -20, z1: -10, h: 3.2, mat: 'danchi', tile: [4.5, 3.75], floor: 'tatami', inner: 'wallpaper', doors: [{ s: 's', c: -69, w: 1.6, h: 2.3 }], name: '２号棟１０１号室' });
   solidR('danchi', -74, 3.5, -20, -64, 15, -10, 0xffffff, { tile: [4.5, 3.75], worldY: true });
+  });
   // 3号棟（外階段で屋上へ）
+  BK({ n: '団地３号棟', mat: 'concrete', mode: 'crumble', hp: 24, yen: 1900000000, spill: 'goods', cls: 3 }, function () {
   solidR('danchiS', DB[2][0], 0, DB[2][2], DB[2][1], 15, DB[2][3], 0xffffff, { tile: [4.5, 3.75], worldY: true });
+  fence(-95, 15, -50, 15, 1.1 + 15, 0x9aa8b0, true); colAdd(-95, 15, 14.8, -50, 16.2, 15);
+  fence(-95, 15, -95, 25, 16.1, 0x9aa8b0, true); colAdd(-95.2, 15, 15, -95, 16.2, 25); colAdd(-50, 15, 15, -49.8, 16.2, 25);
+  B.geo('metal', GEO.cyl12, mtx(-72, 17, 20, 0, 2, 3, 2), 0xd8e0e8); colAdd(-74, 15, 18, -70, 18.5, 22);
+  for (i = 0; i < 4; i++) B.geo('metal', GEO.cyl8, mtx(-73.5 + (i % 2) * 3, 15.4, 18.5 + (i >> 1) * 3, 0, 0.08, 0.8, 0.08), 0x777777);
+  });
   for (i = 0; i < 40; i++) {
     var ty = 0.375 * (i + 1), tx = -51 - i;
     solidR('concreteS', tx - 1, ty - 0.2, 25.4, tx, ty, 27.6, 0xcfcfcf);
@@ -305,38 +352,40 @@ function buildWorld(scene) {
   for (i = 0; i < 40; i += 3) B.box('plainS', -51 - i, 0.375 * i + 0.9, 27.65, 0.06, 1.0, 0.06, 0x6a7a8a);
   colAdd(-95.4, 0, 27.6, -50, 16.5, 27.8); // 手すり
   // 屋上の手すりと給水塔
-  fence(-95, 15, -50, 15, 1.1 + 15, 0x9aa8b0, true); colAdd(-95, 15, 14.8, -50, 16.2, 15);
-  fence(-95, 15, -95, 25, 16.1, 0x9aa8b0, true); colAdd(-95.2, 15, 15, -95, 16.2, 25); colAdd(-50, 15, 15, -49.8, 16.2, 25);
   colAdd(-95.4, 15, 25, -95.2, 16.2, 27.8); // 階段上の西の手すり
-  B.geo('metal', GEO.cyl12, mtx(-72, 17, 20, 0, 2, 3, 2), 0xd8e0e8); colAdd(-74, 15, 18, -70, 18.5, 22);
-  for (i = 0; i < 4; i++) B.geo('metal', GEO.cyl8, mtx(-73.5 + (i % 2) * 3, 15.4, 18.5 + (i >> 1) * 3, 0, 0.08, 0.8, 0.08), 0x777777);
   // 団地の木とベンチ
   for (x = -92; x <= -54; x += 9) { tree(x, -36 + 2, 1, 'round'); tree(x, 3, 0.9, 'sakura'); tree(x, 37, 1, 'round'); }
   bench(-80, 4, 0); bench(-65, 4, 0);
   // 自転車置き場の屋根
-  deco('metal', -94, 2.4, -42, -80, 2.5, -38, 0x3aa070); for (x = -94; x <= -80; x += 7) solidR('metal', x, 0, -38.2, x + 0.15, 2.4, -38, 0x3aa070);
+  BK({ n: '自転車置き場', mat: 'metal', mode: 'fall', hp: 2, yen: 800000, cls: 1, pts: 40 }, function () { deco('metal', -94, 2.4, -42, -80, 2.5, -38, 0x3aa070); for (x = -94; x <= -80; x += 7) solidR('metal', x, 0, -38.2, x + 0.15, 2.4, -38, 0x3aa070); });
   // 1号棟のごみ捨て場
   fence(-60, -42, -54, -42, 1.2, 0x2a8a3a); fence(-60, -42, -60, -38, 1.2, 0x2a8a3a); fence(-54, -42, -54, -38, 1.2, 0x2a8a3a);
 
   // ===== 公園 =====
   for (i = 0; i < 28; i++) { var a = i / 28 * TAU; var tx2 = Math.cos(a) * 21.5, tz2 = Math.sin(a) * 21.5; if (Math.abs(tx2) < 4 || Math.abs(tz2) < 4) continue; tree(tx2, tz2, rand(0.9, 1.25), i % 3 === 0 ? 'sakura' : 'round'); }
   // 噴水
+  BK({ n: 'ふんすい', mat: 'concrete', mode: 'shatter', hp: 4, yen: 9000000, spill: 'water', cls: 2, pts: 120 }, function () {
   B.geo('concrete', GEO.cyl12, mtx(0, 0.3, 0, 0, 3.6, 0.6, 3.6), 0xe8e4dc); colAdd(-3.2, 0, -3.2, 3.2, 0.6, 3.2);
   B.geo('plainS', GEO.cyl12, mtx(0, 0.62, 0, 0, 3.2, 0.04, 3.2), 0x37b6e0);
   B.geo('concrete', GEO.cyl8, mtx(0, 1.4, 0, 0, 0.4, 1.6, 0.4), 0xe8e4dc); B.geo('concrete', GEO.cyl12, mtx(0, 2.2, 0, 0, 1.4, 0.2, 1.4), 0xe8e4dc);
+  });
   // 8人の像の台座
   for (i = 0; i < 8; i++) { var pa = i / 8 * TAU + PI / 8; solid('concrete', Math.cos(pa) * 10, 0.4, Math.sin(pa) * 10, 1.3, 0.8, 1.3, 0xd8d2c8); }
   // すべり台
+  BK({ n: 'すべり台', mat: 'metal', mode: 'bend', hp: 2.4, yen: 2500000, cls: 1, pts: 60 }, function () {
   solidR('metal', 12, 0, -19, 13.6, 2.6, -17.4, 0xff4444); // 台
   for (i = 0; i < 6; i++) solidR('metal', 13.6 + i * 0.4, 0, -19, 14.0 + i * 0.4, 2.6 - (i + 1) * 0.42, -17.4, 0xffcc00);
   for (i = 0; i < 6; i++) solidR('metal', 12 - (i + 1) * 0.35, 0, -19, 12 - i * 0.35, 2.6 - (i + 1) * 0.42, -17.4, 0x44aaff);
+  });
   // ブランコ
-  B.box('metal', -15, 2.6, -17, 4.4, 0.12, 0.12, 0xff6600); for (i = -1; i <= 1; i += 2) { B.box('metal', -15 + i * 2.1, 1.3, -17.6, 0.1, 2.6, 0.1, 0xff6600, { rot: 0 }); B.box('metal', -15 + i * 2.1, 1.3, -16.4, 0.1, 2.6, 0.1, 0xff6600); colAdd(-15 + i * 2.1 - 0.1, 0, -17.7, -15 + i * 2.1 + 0.1, 2.7, -16.3); }
+  BK({ n: 'ブランコ', mat: 'metal', mode: 'bend', hp: 1.8, yen: 1200000, cls: 1, pts: 50 }, function () { B.box('metal', -15, 2.6, -17, 4.4, 0.12, 0.12, 0xff6600); for (i = -1; i <= 1; i += 2) { B.box('metal', -15 + i * 2.1, 1.3, -17.6, 0.1, 2.6, 0.1, 0xff6600, { rot: 0 }); B.box('metal', -15 + i * 2.1, 1.3, -16.4, 0.1, 2.6, 0.1, 0xff6600); colAdd(-15 + i * 2.1 - 0.1, 0, -17.7, -15 + i * 2.1 + 0.1, 2.7, -16.3); } });
   // 砂場
   gnd('ground_sand', -19, 12, -11, 19, 0.06, 2); solidR('wood', -19.3, 0, 11.7, -10.7, 0.22, 12, 0xc08040); solidR('wood', -19.3, 0, 19, -10.7, 0.22, 19.3, 0xc08040); solidR('wood', -19.3, 0, 12, -19, 0.22, 19, 0xc08040); solidR('wood', -11, 0, 12, -10.7, 0.22, 19, 0xc08040);
   // 公衆トイレ
+  BK({ n: '公衆トイレ', mat: 'concrete', mode: 'crumble', hp: 8, yen: 15000000, spill: 'paper', cls: 2 }, function () {
   hollow({ x0: 12, x1: 19, z0: 12, z1: 18, h: 3, mat: 'brick', tile: [3, 3], floor: 'floor', inner: 'concreteS', doors: [{ s: 'w', c: 15, w: 1.4, h: 2.3 }], roofColor: 0x5a8a5a, name: '公衆トイレ' });
   for (i = 0; i < 2; i++) solidR('plainS', 16.5, 0, 12.4 + i * 2.6, 18.6, 2.2, 12.5 + i * 2.6, 0xd0e8ff);
+  });
   bench(-8, 22.5, PI); bench(8, 22.5, PI); bench(-22.5, 8, PI / 2); bench(22.5, -8, -PI / 2);
   lamp(-6, -6, PI / 4); lamp(6, 6, -PI * 3 / 4); lamp(-6, 6, PI * 3 / 4); lamp(6, -6, -PI / 4);
   // 生け垣
@@ -383,20 +432,23 @@ function buildWorld(scene) {
   gnd('ground_sand', -100, -114, -60, -80, 5.02, 3);
   for (i = 1; i <= 14; i++) solidR('concreteS', -84, 0, -66 - i, -76, i * 5 / 14, -65 - i, 0xc8c0b0);
   // 鳥居
-  function torii(cx, cz, y, s) {
+  function torii(cx, cz, y, s) { BK({ n: '鳥居', mat: 'wood', mode: 'fall', hp: 4, yen: 12000000, cls: 2, pts: 160 }, function () { toriiRaw(cx, cz, y, s); }); }
+  function toriiRaw(cx, cz, y, s) {
     B.geo('plain', GEO.cyl8, mtx(cx - 2.6 * s, y + 2.4 * s, cz, 0, 0.25 * s, 4.8 * s, 0.25 * s), 0xe0301e); B.geo('plain', GEO.cyl8, mtx(cx + 2.6 * s, y + 2.4 * s, cz, 0, 0.25 * s, 4.8 * s, 0.25 * s), 0xe0301e);
     B.box('plain', cx, y + 4.9 * s, cz, 7.4 * s, 0.4 * s, 0.5 * s, 0x222222); B.box('plain', cx, y + 4.5 * s, cz, 6.8 * s, 0.3 * s, 0.4 * s, 0xe0301e); B.box('plain', cx, y + 3.7 * s, cz, 6 * s, 0.25 * s, 0.3 * s, 0xe0301e);
     colAdd(cx - 2.6 * s - 0.25, y, cz - 0.25, cx - 2.6 * s + 0.25, y + 4.8 * s, cz + 0.25); colAdd(cx + 2.6 * s - 0.25, y, cz - 0.25, cx + 2.6 * s + 0.25, y + 4.8 * s, cz + 0.25);
   }
   torii(-80, -63.5, 0, 1); torii(-80, -83, 5, 0.9);
+  BK({ n: '本殿っぽい所', mat: 'wood', mode: 'crumble', hp: 14, yen: 300000000, spill: 'paper', cls: 2 }, function () {
   hollow({ x0: -88, x1: -72, y0: 5, z0: -106, z1: -95, h: 4, mat: 'wood', tile: [3, 3], floor: 'tatami', doors: [{ s: 's', c: -80, w: 4, h: 3 }], roofMat: 'roof', roofColor: 0xffffff, name: '本殿っぽい所' });
   var rg = new THREE.CylinderGeometry(0.01, 1, 1, 4, 1); B.geo('roof', rg, mtx(-80, 11.2, -100.5, PI / 4, 13, 3.2, 9.5), 0xffffff, 4);
   solidR('woodS', -81.2, 5, -93.4, -78.8, 5.9, -92.4, 0x6a3a1a); // さい銭箱
+  });
   for (x = -98; x <= -62; x += 6) { tree(x, -112, 1.1, 'pine'); }
   for (z = -110; z <= -86; z += 6) { tree(-98, z, 1.0, 'pine'); tree(-62, z, 1.0, 'pine'); }
   solidR('concreteS', -85.5, 5, -89, -83.5, 6.0, -87, 0xaaaaaa); solidR('concreteS', -76.5, 5, -89, -74.5, 6.0, -87, 0xaaaaaa);
   // 石灯籠
-  [[-86, -70], [-74, -70]].forEach(function (p) { solidR('concreteS', p[0] - 0.4, 0, p[1] - 0.4, p[0] + 0.4, 1.8, p[1] + 0.4, 0xb0aaa0); deco('glow', p[0] - 0.3, 1.3, p[1] - 0.3, p[0] + 0.3, 1.6, p[1] + 0.3, 0xffe9a0); });
+  [[-86, -70], [-74, -70]].forEach(function (p) { BK({ n: '石灯籠', mat: 'concrete', mode: 'shatter', hp: 1.6, yen: 900000, cls: 1, pts: 40 }, function () { solidR('concreteS', p[0] - 0.4, 0, p[1] - 0.4, p[0] + 0.4, 1.8, p[1] + 0.4, 0xb0aaa0); deco('glow', p[0] - 0.3, 1.3, p[1] - 0.3, p[0] + 0.3, 1.6, p[1] + 0.3, 0xffe9a0); }); });
 
   // ===== 町のあちこちの家 =====
   var r = mulberry(77);
@@ -406,6 +458,10 @@ function buildWorld(scene) {
   for (x = 110; x <= 150; x += 14) for (z = 80; z <= 120; z += 14) house(x, z, 9, 9, 6 + r() * 4, 0, 0xfff0e0, 0x406080);
   for (x = -150; x <= 150; x += 13) { if (x > -60 && x < 30) continue; tree(x, -120, 1.2, 'pine'); }
 
+  // ===== 信号・車・屋台 =====
+  [[-38.4, -42.5, PI / 2], [-25.8, -42.5, -PI / 2], [34.4, -42.5, -PI / 2], [23.8, -42.5, PI / 2], [-38.4, 22, PI / 2], [34.4, 22, -PI / 2], [-25.8, 22, -PI / 2], [23.8, 22, PI / 2]].forEach(function (s) { signal(s[0], s[1], s[2]); });
+  [[-62, -35.6, 1, 0xd03030], [-48, -35.6, 1, 0x3060d0], [70, -35.6, 1, 0xf0f0f0], [88, -35.6, 1, 0x30a050], [-56, 35.6, 1, 0xf0c020], [76, 35.6, 1, 0x202428], [31.6, -70, 0, 0xff80c0], [-35.6, -80, 0, 0x8060e0]].forEach(function (c) { car(c[0], c[1], !!c[2], c[3]); });
+  yatai(7.2, -46.2, 0, 0xff4060, 'たこ焼きの屋台'); yatai(-19, -51, 0, 0x3080ff, 'わたあめの屋台'); yatai(-9, 9, PI / 2, 0xffc020, 'やきそばの屋台'); yatai(-30, 43, 0, 0x40c070, 'かき氷の屋台'); yatai(24, 43, 0, 0xff80c0, '謎の屋台');
   // ===== 電柱と電線 =====
   for (x = -150; x <= 150; x += 20) { pole(x, -38.2); pole(x + 10, 38.0); }
   for (z = -140; z <= 30; z += 20) { if (z > -40 && z < -24) continue; pole(-38.2, z); pole(34.2, z); }
@@ -415,12 +471,14 @@ function buildWorld(scene) {
   solidR('plainS', -1.2, 0, 423.5, 1.2, 2.4, 423.7, 0x3a2a1a); // 出口のドア（さわると帰る）
 
   WORLD.statics = B.build(scene, MATS);
+  brkBuild(scene);
   // 電線
   var wires = [];
-  function wireLine(a, b) { var n = 8; for (var k = 0; k < n; k++) { var t0 = k / n, t1 = (k + 1) / n; var s0 = Math.sin(t0 * PI) * 0.8, s1 = Math.sin(t1 * PI) * 0.8; for (var o = -1; o <= 1; o += 2) wires.push(lerp(a[0], b[0], t0) + o * 0.7 * (Math.abs(a[1] - b[1]) > 1 ? 0 : 0), 8.4 - s0, lerp(a[1], b[1], t0) + o * 0.7 * (Math.abs(a[1] - b[1]) > 1 ? 1 : 0) * 0, lerp(a[0], b[0], t1), 8.4 - s1, lerp(a[1], b[1], t1)); } }
+  function wireLine(a, b) { var w0 = wires.length / 3; wireLine2(a, b); var w1 = wires.length / 3; [a, b].forEach(function (q) { if (q[2]) (q[2].wires || (q[2].wires = [])).push([w0, w1]); }); }
+  function wireLine2(a, b) { var n = 8; for (var k = 0; k < n; k++) { var t0 = k / n, t1 = (k + 1) / n; var s0 = Math.sin(t0 * PI) * 0.8, s1 = Math.sin(t1 * PI) * 0.8; for (var o = -1; o <= 1; o += 2) wires.push(lerp(a[0], b[0], t0) + o * 0.7 * (Math.abs(a[1] - b[1]) > 1 ? 0 : 0), 8.4 - s0, lerp(a[1], b[1], t0) + o * 0.7 * (Math.abs(a[1] - b[1]) > 1 ? 1 : 0) * 0, lerp(a[0], b[0], t1), 8.4 - s1, lerp(a[1], b[1], t1)); } }
   for (i = 0; i < POLES.length; i++) for (j = i + 1; j < POLES.length; j++) { var dd = Math.hypot(POLES[i][0] - POLES[j][0], POLES[i][1] - POLES[j][1]); if (dd > 9 && dd < 21) wireLine(POLES[i], POLES[j]); }
   var wgeo = new THREE.BufferGeometry(); wgeo.setAttribute('position', new THREE.Float32BufferAttribute(wires, 3));
-  scene.add(new THREE.LineSegments(wgeo, new THREE.LineBasicMaterial({ color: 0x222222 })));
+  scene.add(new THREE.LineSegments(wgeo, new THREE.LineBasicMaterial({ color: 0x222222 }))); WORLD.wireGeo = wgeo; WORLD.wireOrig = wgeo.attributes.position.array.slice();
   // 街灯の光（夜に光る）
   var bg = new THREE.SphereGeometry(0.22, 8, 6), bulbs = new THREE.InstancedMesh(bg, new THREE.MeshBasicMaterial({ color: 0xfff2c0 }), WORLD.lamps.length);
   var dm = new THREE.Matrix4(); WORLD.lamps.forEach(function (p, k) { dm.makeTranslation(p.x, p.y, p.z); bulbs.setMatrixAt(k, dm); });
@@ -443,7 +501,7 @@ function placeSigns(scene) {
   [-52.86, -53.14].forEach(function (z, i) { var m = new THREE.Mesh(new THREE.CircleGeometry(0.86, 24), cm); m.position.set(0, 6.3, z); m.rotation.y = i ? PI : 0; g.add(m);
     var hm = new THREE.MeshBasicMaterial({ color: 0x111111 }); var h1 = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.55), hm); h1.position.set(0, 6.3, z + (i ? -0.01 : 0.01)); h1.rotation.y = i ? PI : 0; h1.geometry.translate(0, 0.25, 0); g.add(h1); WORLD.clockHands = (WORLD.clockHands || []).concat([h1]);
     var h2 = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.38), hm); h2.position.copy(h1.position); h2.rotation.y = h1.rotation.y; h2.geometry.translate(0, 0.17, 0); g.add(h2); WORLD.clockHands.push(h2); });
-  function S(o) { var s = makeSign(o); g.add(s.mesh); return s; }
+  function S(o) { var s = makeSign(o); g.add(s.mesh); if (o.pos[2] < 300) brkAddObj(s.mesh, o.kind === 'notice' ? { n: '注意書き', hp: 0.4, yen: 20000, cls: 0, pts: 8, color: 0xffffee } : { n: '看板', hp: 0.6 + o.w * 0.08, yen: 100000 + o.w * 60000, cls: o.w > 7 ? 1 : 0, pts: 15 + Math.round(o.w * 3), color: 0xffffff }); return s; }
   S({ texts: ['よにん駅', 'よにん駅?', 'はちにん駅'], sub: ['ＹＯＮＩＮ　ＳＴＡＴＩＯＮ', 'ＹＯＮＩＮ　ＳＴＡＴＩＯＮ　这里', 'ＨＡＣＨＩＮＩＮ'], style: 1, kind: 'board', w: 14, h: 3, pos: [0, 7.2, -69.85] });
   S({ texts: ['きっぷうりば', 'きっぷうりぱ', 'きっぶうりば'], style: 4, kind: 'none', w: 5, h: 1.1, pos: [-14, 3.8, -69.8], shape: 'flat' });
   S({ texts: ['駅前ロータリー', '駅前ロータソー', '駅前ローターリーリー'], style: 0, kind: 'yellow', w: 4, h: 0.9, pos: [0, 1.25, -47.9], rot: 0, twoSided: true });
