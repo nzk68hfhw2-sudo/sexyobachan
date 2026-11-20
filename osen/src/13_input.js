@@ -52,6 +52,7 @@ function initInput() {
   window.addEventListener('click', function () { audioInit(); });
   // ---- キーボード ----
   window.addEventListener('keydown', function (e) {
+    if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
     audioInit(); IN.keys[e.code] = true; IN.anyInput = now();
     if (G.inMenu) return;
     var c2 = e.code;

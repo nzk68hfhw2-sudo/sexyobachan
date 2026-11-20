@@ -41,6 +41,8 @@ const THREE_LOCAL = fs.readFileSync(path.join(__dirname, 'three-r128.min.js'));
   await A.evaluate(() => { __os.say('はい。'); });
   await A.waitForTimeout(1500);
   logs.push('B log talk: ' + JSON.stringify(await B.evaluate(() => [...document.querySelectorAll('#os-log .ls div')].map(e => e.textContent).filter(t => /はい。|来ました/.test(t)))));
+  await A.evaluate(() => { __os.NET.send('msg', { m: 'やあ　しね　090-1111-2222' }); }); await A.waitForTimeout(1500);
+  logs.push('B got msg: ' + JSON.stringify(await B.evaluate(() => [...document.querySelectorAll('#os-log .ls div')].map(e => e.textContent).filter(t => /やあ/.test(t)))));
   // pollution share
   await A.evaluate(() => { __os.addPollution(20); }); await A.waitForTimeout(4500);
   logs.push('pol A ' + (await A.evaluate(() => __os.G.pol.toFixed(1))) + ' B ' + (await B.evaluate(() => __os.G.pol.toFixed(1))));

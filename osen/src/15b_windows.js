@@ -90,6 +90,19 @@ function openPhrases() {
   toggleWin('phr', '定型文', 'chat', function (bd) {
     var tabs = el('div', 'tabs2', bd);
     PHRASES.forEach(function (c2, i) { mbtn(tabs, c2[0], function () { PH_TAB = i; refreshWin('phr'); }, i === PH_TAB ? 'sel' : ''); });
+    mbtn(tabs, '自由に書く', function () { PH_TAB = 99; refreshWin('phr'); }, PH_TAB === 99 ? 'sel gold' : 'gold');
+    if (PH_TAB === 99) {
+      el('div', 'desc', bd, cnHTML('４０文字まで。過激な言葉は「＊」になります。電話番号・メール・URL・SNSのIDらしい物は消えます。個人情報は書かないで下さい。'));
+      var inp = el('input', 'fm pe', bd); inp.type = 'text'; inp.maxLength = MSG_MAX; inp.placeholder = 'ここに書く（' + MSG_MAX + '文字まで）'; inp.setAttribute('enterkeyhint', 'send'); inp.autocomplete = 'off';
+      var prev = el('div', 'desc', bd); prev.style.minHeight = '2em';
+      inp.addEventListener('input', function () { var f = filterMsg(inp.value); prev.innerHTML = f.text ? '送る文：' + escHTML(f.text) : ''; });
+      var send = function () { var t = inp.value; if (sendFreeMsg(t)) { inp.value = ''; prev.innerHTML = ''; if (isNarrow()) closeWin('phr', true); } };
+      inp.addEventListener('keydown', function (e) { e.stopPropagation(); if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); send(); } });
+      ['touchstart', 'touchend', 'mousedown'].forEach(function (n) { inp.addEventListener(n, function (e) { e.stopPropagation(); }, { passive: true }); });
+      var r = el('div', 'row2', bd); mbtn(r, '送る', send, 'gold', 'chat');
+      setTimeout(function () { try { inp.focus(); } catch (e) {} }, 100);
+      return;
+    }
     if (NET_DB_URL) { var tr = el('div', 'kv', bd); el('span', '', tr).innerHTML = cnHTML('この場所に「ひとこと」として残す'); mbtn(tr, PH_NOTE ? 'ON' : 'OFF', function () { PH_NOTE = !PH_NOTE; refreshWin('phr'); }, PH_NOTE ? 'gold' : ''); }
     var l = el('div', 'list', bd);
     PHRASES[PH_TAB][1].forEach(function (p) { var e = el('div', 'li', l); e.innerHTML = cnHTML(p); tapBtn(e, function () { say(p); if (isNarrow()) closeWin('phr', true); }, 'uiClick'); });
@@ -114,6 +127,18 @@ function say(text) {
   if (PH_NOTE && NET_DB_URL) { if (postNote('say', { p: phraseCode(text) })) sysMsg('ひとことを　この場所に残しました。あとから来た人に見えます。'); }
   addPollution(0.2);
 }
+var _lastMsg = 0;
+function sendFreeMsg(raw) {
+  var f = filterMsg(raw); if (!f.text || !f.text.replace(/[＊\s]/g, '')) { sysMsg('送れる文字がありません。'); return false; }
+  if (Date.now() - _lastMsg < 3000) { sysMsg('少し時間をあけて下さい（３秒）。'); return false; }
+  _lastMsg = Date.now();
+  PLAYER.bubble = { text: f.text, t: now() + 5000, free: true };
+  logMsg('talk', f.text, PLAYER.name, true); sfx('chat');
+  if (f.censored) sysMsg('一部の言葉を＊にしました。', true);
+  if (NET && NET.on) NET.send('msg', { m: f.text });
+  addPollution(0.2);
+  return true;
+}
 function stamp(id) { PLAYER.bubble = { text: id, icon: id, t: now() + 3500 }; sfx('pop'); logMsg('talk', '（スタンプ：' + (STAMPS.filter(function (s) { return s.id === id; })[0] || {}).n + '）', PLAYER.name); if (NET && NET.send) NET.send('stamp', { s: id }); }
 function gesture(id) { P.gesture = { id: id, t: 0 }; logMsg('talk', '（' + (GESTURES.filter(function (g3) { return g3.id === id; })[0] || {}).n + '）', PLAYER.name); if (NET && NET.send) NET.send('ges', { g: id }); }
 // ---- 設定 ----
@@ -128,6 +153,7 @@ function openSettings() {
     el('div', 'desc', bd, [cnHTML('記録の保存：' + (STORE.available() ? 'この端末のブラウザに保存されます' : '保存できない環境です（閉じると消えます）')), cnHTML('画質：' + ['最低', '低', '中', '高'][R.quality] + '　/　' + (R.lastFps ? Math.round(R.lastFps) + 'fps' : '計測中')), cnHTML('通信：' + NET.statusText()), cnHTML('版：' + GAME_VERSION)].join('<br>'));
     var r2 = el('div', 'row2', bd);
     mbtn(r2, 'あそびかた', function () { openHelp(); }, '', 'info');
+    mbtn(r2, 'まわりの人', function () { openPeople(); }, '', 'people');
     mbtn(r2, 'キャラを変える', function () { if (nearDressing()) openCharChange(); else sysMsg('キャラは「着がえ所」で変えられます（駅前・公園）。'); }, '', 'char');
     var conf = 0; var rb = mbtn(r2, '記録を消す', function () { conf++; if (conf < 2) { rb.lastChild.textContent = 'もう一度押すと消えます'; return; } STORE.clear(); location.reload(); }, 'red');
   }, { w: 340, h: 430, theme: 'stone' });
@@ -156,4 +182,18 @@ function openHelp() {
     el('div', 'desc', bd, cnHTML('※画面の色が変わる・ゆれる演出があります。⚙設定の「刺激ひかえめモード」で弱くできます。'));
     var r2 = el('div', 'row2', bd); mbtn(r2, 'わかりました', function () { closeWin('help'); }, 'gold');
   }, { w: 380, h: 440, theme: 'wood' });
+}
+
+function openPeople() {
+  toggleWin('people', 'まわりの人', 'people', function (bd) {
+    var ids = Object.keys(NET.peers);
+    el('div', 'kv', bd, '<span>' + cnHTML(NET.on ? '同じ町：' + NET.room : '1人用') + '</span><b>' + NET.count() + '人</b>');
+    if (!ids.length) { el('div', 'desc', bd, cnHTML('いま、ほかの人はいません。')); }
+    ids.forEach(function (id) {
+      var pr = NET.peers[id], r = el('div', 'kv', bd), blk = !!NET.blocked[id];
+      el('span', '', r).innerHTML = cnHTML(pr.name + '（' + FRIEND_INFO[pr.char].name + '）');
+      mbtn(r, blk ? 'もどす' : '見えなくする', function () { if (blk) delete NET.blocked[id]; else NET.blocked[id] = 1; refreshWin('people'); sysMsg(blk ? pr.name + 'を　見えるようにしました。' : pr.name + 'を　見えなくしました（会話も届きません）。'); }, blk ? 'gold' : 'red');
+    });
+    el('div', 'desc', bd, cnHTML('「見えなくする」と、その人の姿・吹き出し・会話が、あなたの画面に出なくなります。全員を見えなくするには ⚙設定の「ミュート」。'));
+  }, { w: 340, theme: 'stone' });
 }

@@ -14,6 +14,17 @@ cfg = json.load(open(os.path.join(os.path.dirname(__file__), 'fonts.json'), enco
 res = {}
 for f in cfg:
     chars = ''.join(sorted(cn)) + '0123456789' if f.get('cn') else jp
+    if f.get('jis1'):  # 自由メッセージ用：JIS第1水準の漢字＋よく使う記号
+        extra = set()
+        for hi in range(0x88, 0x99):
+            for lo in list(range(0x40, 0x7f)) + list(range(0x80, 0xfd)):
+                try: extra.add(bytes([hi, lo]).decode('shift_jis'))
+                except Exception: pass
+        for hi in [0x81, 0x82, 0x83, 0x84]:
+            for lo in list(range(0x40, 0x7f)) + list(range(0x80, 0xfd)):
+                try: extra.add(bytes([hi, lo]).decode('shift_jis'))
+                except Exception: pass
+        chars = ''.join(sorted(set(chars) | extra))
     font = TTFont(os.path.join(fsrc, f['file']))
     if 'wght' in f:
         from fontTools.varLib import instancer

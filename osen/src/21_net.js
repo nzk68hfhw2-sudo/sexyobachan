@@ -1,7 +1,7 @@
 // ---- 同時プレイ（Firebase Realtime Database / テスト用ローカル） ------------------------------
 // 送るもの：自動で付けた名前の番号・キャラ番号・位置・身ぶり・定型文の番号・物の動き・町の汚染率だけ。
 // 個人情報・端末の情報・自由な文字は送らない。
-var NET = { on: false, ok: false, T: null, room: '', pid: '', peers: {}, muted: false, joinT: 0, sendT: 0, last: null, polDelta: 0, polT: 0, polBase: null, applying: false,
+var NET = { blocked: {}, on: false, ok: false, T: null, room: '', pid: '', peers: {}, muted: false, joinT: 0, sendT: 0, last: null, polDelta: 0, polT: 0, polBase: null, applying: false,
   keyN: 0, myEvents: [], rate: {}, status: '1人用', notesShown: false, err: '', heartbeat: 0 };
 var ROOM_MAX = 6;
 // ---- 通信の「口」：Firebase ----
@@ -142,12 +142,14 @@ function applyItemState(key, s) {
 function onEvent(key, e) {
   if (!e || e.by === NET.pid || (e.t || 0) < NET.joinT - 2000) return;
   var pr = NET.peers[e.by], d = e.d || {}, who = pr ? pr.name : 'だれか';
+  var hidden = NET.muted || NET.blocked[e.by];
   NET.applying = true;
   try {
     switch (e.k) {
-      case 'say': { var tx = phraseText(d.p); if (tx && !NET.muted) { if (pr) pr.bubble = { text: tx, t: now() + 4500 }; logMsg('talk', tx, who); sfx('chat'); } break; }
-      case 'stamp': if (pr && !NET.muted && STAMPS.some(function (s) { return s.id === d.s; })) { pr.bubble = { text: d.s, icon: d.s, t: now() + 3500 }; } break;
-      case 'ges': if (pr && GESTURES.some(function (g2) { return g2.id === d.g; })) pr.gesture = { id: d.g, t: 0 }; break;
+      case 'msg': { if (hidden || typeof d.m !== 'string') break; var fm = filterMsg(d.m); if (!fm.text) break; if (pr) pr.bubble = { text: fm.text, t: now() + 5000, free: true }; logMsg('talk', fm.text, who, true); sfx('chat'); break; }
+      case 'say': { var tx = phraseText(d.p); if (tx && !hidden) { if (pr) pr.bubble = { text: tx, t: now() + 4500 }; logMsg('talk', tx, who); sfx('chat'); } break; }
+      case 'stamp': if (pr && !hidden && STAMPS.some(function (s) { return s.id === d.s; })) { pr.bubble = { text: d.s, icon: d.s, t: now() + 3500 }; } break;
+      case 'ges': if (pr && !hidden && GESTURES.some(function (g2) { return g2.id === d.g; })) pr.gesture = { id: d.g, t: 0 }; break;
       case 'skill': if (pr && !NET.muted) logMsg('sys', who + 'が　とくぎを使った。'); break;
       case 'grab': { var it = findNetItem(d.i); if (it) { if (it === ITEMS.held) { ITEMS.held = null; sysMsg('ほかの人と同時に持とうとしました。ゆずりました。'); } it.heldBy = e.by; it.body.sleep = true; } break; }
       case 'rel': { var it2 = findNetItem(d.i); if (!it2 && validType(d.ty)) { var df = d.i.indexOf('d_') === 0 ? PROP_DEFS.filter(function (q) { return q.id === d.i.slice(2); })[0] : null; it2 = spawnItem(d.ty, d.x, d.y, d.z, d.yw, { scale: d.s, def: df }); it2.netKey = d.i; if (!df) it2.spawned = true; }
@@ -190,7 +192,7 @@ function updatePeers(dt) {
   for (var id in NET.peers) {
     var pr = NET.peers[id], S = pr.snaps;
     if (Date.now() - pr.recv > 45000) { peerRemove(id); continue; }
-    pr.vis = !NET.muted; pr.root.visible = pr.vis;
+    pr.vis = !NET.muted && !NET.blocked[id]; pr.root.visible = pr.vis;
     // なめらかにつなぐ（160ms 遅らせて補間）
     var a = S[0], b = S[S.length - 1];
     for (var i = 0; i < S.length - 1; i++) if (S[i].t <= tRender && S[i + 1].t >= tRender) { a = S[i]; b = S[i + 1]; break; }

@@ -131,7 +131,9 @@ var UI_CSS = [
   '.li:hover,.li.hot{background:linear-gradient(#3a3020,#241c10);box-shadow:inset 0 0 0 1px #c8a050;}',
   '.li.sel{background:linear-gradient(#4a3a14,#2a1e08);box-shadow:inset 0 0 0 1px #ffe23a;color:#fff4c8;}',
   '.tabs2{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:6px;}',
-  '.tabs2 .mb{min-height:30px;padding:4px 8px;font-size:12px;}'
+  '.tabs2 .mb{min-height:30px;padding:4px 8px;font-size:12px;}',
+  '#os-root input.fm{-webkit-user-select:text;user-select:text;width:100%;font:16px ' + FONT_SUB + ';padding:9px;background:#f4f0e0;color:#222;border:2px solid;border-color:#333 #ddd #ddd #333;border-radius:0;}',
+  '.lgm{font-family:' + FONT_SUB + ';}'
 ].join('\n');
 
 // ---- ボタンの押し方（さわると光る・押すとへこむ・音） -------------------------------------
@@ -337,15 +339,15 @@ function sysMsg(text, noLog) {
   if (!noLog) logMsg('sys', text);
 }
 var LOG_COL = { sys: '#ffe23a', talk: '#ffffff', ev: '#9ad0ff', me: '#b0ffb0' };
-function logMsg(tab, text, who) {
-  H.logLines.push({ tab: tab, text: text, who: who });
+function logMsg(tab, text, who, free) {
+  H.logLines.push({ tab: tab, text: text, who: who, free: free });
   if (H.logLines.length > 80) H.logLines.shift();
   renderLog();
 }
 function renderLog() {
   if (!H.logList) return;
   var html = H.logLines.filter(function (l) { return H.logTab === 'all' || l.tab === H.logTab || (H.logTab === 'sys' && l.tab === 'ev'); }).slice(-40).map(function (l) {
-    return '<div style="color:' + (LOG_COL[l.tab] || '#ddd') + '">' + (l.who ? '[' + cnHTML(l.who) + '] ' : (l.tab === 'sys' ? '[システム] ' : '')) + cnHTML(l.text) + '</div>';
+    return '<div style="color:' + (LOG_COL[l.tab] || '#ddd') + '">' + (l.who ? '[' + cnHTML(l.who) + '] ' : (l.tab === 'sys' ? '[システム] ' : '')) + (l.free ? '<span class="lgm">' + escHTML(l.text) + '</span>' : cnHTML(l.text)) + '</div>';
   }).join('');
   H.logList.innerHTML = html; H.logList.scrollTop = 99999;
 }
@@ -400,7 +402,7 @@ function updateTags() {
   var list = [], cam = R.camera, W = H.W, Hh = H.H, v = _tagV || (_tagV = new THREE.Vector3());
   list.push({ k: 'me', name: PLAYER.name, sub: FRIEND_INFO[PLAYER.char].name, p: P.pos, h: P.bodyH + 0.35, cls: 'me', bub: PLAYER.bubble });
   NPCS.forEach(function (n) { if (n.ent.visible) list.push({ k: 'n' + n.idx, name: FRIEND_INFO[n.idx].name, p: n.ent.pos, h: n.ent.h + 0.3, cls: 'npc', bub: n.bubble }); });
-  if (NET && NET.peers && !NET.muted) for (var id in NET.peers) { var pp = NET.peers[id]; if (pp.vis) list.push({ k: 'p' + id, name: pp.name, sub: FRIEND_INFO[pp.char] ? FRIEND_INFO[pp.char].name : '', p: pp.pos, h: pp.h + 0.35, cls: 'pc', bub: pp.bubble }); }
+  if (NET && NET.peers && !NET.muted) for (var id in NET.peers) { var pp = NET.peers[id]; if (pp.vis && !NET.blocked[id]) list.push({ k: 'p' + id, name: pp.name, sub: FRIEND_INFO[pp.char] ? FRIEND_INFO[pp.char].name : '', p: pp.pos, h: pp.h + 0.35, cls: 'pc', bub: pp.bubble }); }
   var used = 0;
   for (var i = 0; i < list.length && used < 12; i++) {
     var L = list[i], d = cam.position.distanceTo(L.p); if (d > 26 && L.cls !== 'me') continue;
@@ -409,7 +411,7 @@ function updateTags() {
     if (t.k !== L.k + L.name) { t.k = L.k + L.name; t.e.className = 'nmtag ' + L.cls; t.e.innerHTML = cnHTML(L.name) + (L.sub ? '<i>' + cnHTML(L.sub) + '</i>' : ''); }
     var sx = (v.x * 0.5 + 0.5) * W, sy = (-v.y * 0.5 + 0.5) * Hh;
     t.e.style.display = ''; t.e.style.left = sx + 'px'; t.e.style.top = sy + 'px';
-    if (L.bub && L.bub.t > now()) { if (t.b._txt !== L.bub.text) { t.b._txt = L.bub.text; t.b.innerHTML = L.bub.icon ? '' : cnHTML(L.bub.text); if (L.bub.icon) t.b.appendChild(iconEl(uiIcon(L.bub.icon), 32)); } t.b.style.display = ''; t.b.style.left = sx + 'px'; t.b.style.top = (sy - 28) + 'px'; }
+    if (L.bub && L.bub.t > now()) { if (t.b._txt !== L.bub.text) { t.b._txt = L.bub.text; t.b.innerHTML = L.bub.icon ? '' : (L.bub.free ? escHTML(L.bub.text) : cnHTML(L.bub.text)); if (L.bub.icon) t.b.appendChild(iconEl(uiIcon(L.bub.icon), 32)); } t.b.style.display = ''; t.b.style.left = sx + 'px'; t.b.style.top = (sy - 28) + 'px'; }
     else t.b.style.display = 'none';
     used++;
   }

@@ -1,10 +1,45 @@
 [
- {"id":"OsUI","file":"DotGothic16-Regular.ttf","src":"https://github.com/google/fonts/tree/main/ofl/dotgothic16"},
- {"id":"OsSub","file":"BIZUDGothic-Bold.ttf","src":"https://github.com/google/fonts/tree/main/ofl/bizudgothic"},
- {"id":"OsCN","file":"NotoSansSC%5Bwght%5D.ttf","wght":900,"cn":true,"src":"https://github.com/google/fonts/tree/main/ofl/notosanssc"},
- {"id":"OsWA1","file":"DelaGothicOne-Regular.ttf","src":"https://github.com/google/fonts/tree/main/ofl/delagothicone"},
- {"id":"OsWA2","file":"ReggaeOne-Regular.ttf","src":"https://github.com/google/fonts/tree/main/ofl/reggaeone"},
- {"id":"OsWA3","file":"RocknRollOne-Regular.ttf","src":"https://github.com/google/fonts/tree/main/ofl/rocknrollone"},
- {"id":"OsWA4","file":"MochiyPopOne-Regular.ttf","src":"https://github.com/google/fonts/tree/main/ofl/mochiypopone"},
- {"id":"OsWA5","file":"YuseiMagic-Regular.ttf","src":"https://github.com/google/fonts/tree/main/ofl/yuseimagic"}
+ {
+  "id": "OsUI",
+  "file": "DotGothic16-Regular.ttf",
+  "src": "https://github.com/google/fonts/tree/main/ofl/dotgothic16"
+ },
+ {
+  "id": "OsSub",
+  "file": "BIZUDGothic-Bold.ttf",
+  "src": "https://github.com/google/fonts/tree/main/ofl/bizudgothic",
+  "jis1": true
+ },
+ {
+  "id": "OsCN",
+  "file": "NotoSansSC%5Bwght%5D.ttf",
+  "wght": 900,
+  "cn": true,
+  "src": "https://github.com/google/fonts/tree/main/ofl/notosanssc"
+ },
+ {
+  "id": "OsWA1",
+  "file": "DelaGothicOne-Regular.ttf",
+  "src": "https://github.com/google/fonts/tree/main/ofl/delagothicone"
+ },
+ {
+  "id": "OsWA2",
+  "file": "ReggaeOne-Regular.ttf",
+  "src": "https://github.com/google/fonts/tree/main/ofl/reggaeone"
+ },
+ {
+  "id": "OsWA3",
+  "file": "RocknRollOne-Regular.ttf",
+  "src": "https://github.com/google/fonts/tree/main/ofl/rocknrollone"
+ },
+ {
+  "id": "OsWA4",
+  "file": "MochiyPopOne-Regular.ttf",
+  "src": "https://github.com/google/fonts/tree/main/ofl/mochiypopone"
+ },
+ {
+  "id": "OsWA5",
+  "file": "YuseiMagic-Regular.ttf",
+  "src": "https://github.com/google/fonts/tree/main/ofl/yuseimagic"
+ }
 ]
