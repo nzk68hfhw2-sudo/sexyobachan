@@ -7,7 +7,7 @@ function initNPCs() {
     var f = pr.fr; f.npc = true;
     var ent = { pos: f.mesh.position.clone(), vel: new THREE.Vector3(), r: 0.28, h: 1.25, onGround: true, visible: true };
     var root = new THREE.Group(), body = new THREE.Group(); R.scene.add(root); root.add(body);
-    R.scene.remove(f.mesh); f.mesh.position.set(0, 0, 0); f.mesh.rotation.set(0, 0, 0); body.add(f.mesh);
+    R.scene.remove(f.mesh); f.mesh.position.set(0, 0, 0); f.mesh.rotation.set(0, 0, 0); f.mesh.material = animMat(f.mesh.geometry.userData.set || 0); f.mesh.material.userData.u.uH.value = f.mesh.geometry.userData.h || 1.06; body.add(f.mesh);
     var n = { idx: d.fr, pr: pr, f: f, ent: ent, root: root, body: body, home: ent.pos.clone(), face: d.r || 0, homeFace: d.r || 0, target: null, wait: rand(0.3, 2.5), st: {}, bubble: null, talkT: rand(10, 30) };
     ent.h = (f.mesh.geometry.userData.h || 1.06) * f.scale;
     NPCS.push(n);
@@ -58,7 +58,9 @@ function updateNPCs(dt) {
     if (e.pos.y < -10) { e.pos.copy(n.home); e.vel.set(0, 0, 0); }
     // ときどき独り言（定型文）
     n.talkT -= dt; if (n.talkT <= 0) { n.talkT = rand(18, 45); if (dP < 18) { var cat = PHRASES[randi(0, PHRASES.length - 1)][1]; n.bubble = { text: pick(cat), t: now() + 4000 }; } }
-    var ex = n.pr.hop > 0 ? { bounce: Math.sin((1 - n.pr.hop) * PI) * 0.6 } : null;
+    if (dP < 3 && !n.gs && Math.random() < dt * 0.15) n.gs = { id: pick(['wave', 'bow', 'nod', 'dance']), t: 0 };
+    var ex = gestureAnim(n.gs, dt); if (ex === 'end') { n.gs = null; ex = null; }
+    if (n.pr.hop > 0) { ex = ex || {}; ex.bounce = Math.sin((1 - n.pr.hop) * PI) * 0.6; ex.L_raiseL = ex.L_raiseR = 0.6; }
     bodyAnim(n.root, n.body, n.st, dt, Math.hypot(e.vel.x, e.vel.z), false, e.onGround, e.vel.y, ex);
     n.root.position.copy(e.pos); n.root.rotation.y = n.face + (n.pr.spin > 0 ? G.t * 12 : 0);
     var big = G.stage >= 4 ? 1 + smooth((G.pol - 60) / 40) * 0.6 : 1;

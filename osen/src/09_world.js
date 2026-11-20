@@ -8,6 +8,38 @@ function friendMat(set, tint) {
   }
   return FRIEND_MATS[key];
 }
+// 手足と頭を動かせるマテリアル（モデルに骨が無いので、形をシェーダーで関節ごとに曲げる）
+function animMat(set) {
+  var u = { uArmLo: { value: set === 0 ? 0.30 : 0.2 }, uH: { value: 1.06 }, uLegL: { value: 0 }, uLegR: { value: 0 }, uArmL: { value: 0 }, uArmR: { value: 0 }, uRaiseL: { value: 0 }, uRaiseR: { value: 0 }, uHeadP: { value: 0 }, uHeadY: { value: 0 } };
+  var m = new THREE.MeshLambertMaterial({ map: FRIENDS.texs[set] || null, side: THREE.DoubleSide });
+  m.userData.u = u;
+  m.onBeforeCompile = function (sh) {
+    for (var k in u) sh.uniforms[k] = u[k];
+    sh.vertexShader = 'uniform float uArmLo, uH, uLegL, uLegR, uArmL, uArmR, uRaiseL, uRaiseR, uHeadP, uHeadY;\n' +
+      'vec3 rx(vec3 p, float a){ float c=cos(a), s=sin(a); return vec3(p.x, p.y*c - p.z*s, p.y*s + p.z*c); }\n' +
+      'vec3 rz(vec3 p, float a){ float c=cos(a), s=sin(a); return vec3(p.x*c - p.y*s, p.x*s + p.y*c, p.z); }\n' +
+      'vec3 ry(vec3 p, float a){ float c=cos(a), s=sin(a); return vec3(p.x*c + p.z*s, p.y, -p.x*s + p.z*c); }\n' +
+      sh.vertexShader.replace('#include <begin_vertex>', [
+        'vec3 transformed = vec3(position);',
+        'float H = uH; float sd = position.x >= 0.0 ? 1.0 : -1.0;',
+        // 足：腰を中心に前後にふる
+        'float wl = 1.0 - smoothstep(H*0.20, H*0.33, position.y);',
+        'vec3 hip = vec3(sd*H*0.045, H*0.32, 0.0);',
+        'transformed = rx(transformed - hip, (sd > 0.0 ? uLegR : uLegL) * wl) + hip;',
+        // 腕：肩を中心に前後にふる・横に上げる
+        'float wa = smoothstep(H*0.118, H*0.135, abs(position.x)) * (1.0 - smoothstep(H*0.54, H*0.60, position.y)) * smoothstep(H*uArmLo, H*(uArmLo + 0.08), position.y) * (1.0 - smoothstep(0.07*H, 0.12*H, abs(position.z)));',
+        'vec3 sho = vec3(sd*H*0.115, H*0.59, 0.0);',
+        'vec3 q = transformed - sho; q = rx(q, (sd > 0.0 ? uArmR : uArmL) * wa); q = rz(q, sd * (sd > 0.0 ? uRaiseR : uRaiseL) * wa); transformed = q + sho;',
+        // 頭：首を中心にうなずく・横にふる
+        'float wh = smoothstep(H*0.64, H*0.72, position.y);',
+        'vec3 nk = vec3(0.0, H*0.66, 0.0);',
+        'transformed = ry(rx(transformed - nk, uHeadP * wh), uHeadY * wh) + nk;'
+      ].join('\n'));
+  };
+  m.customProgramCacheKey = function () { return 'friendAnim'; };
+  return m;
+}
+function animMesh(geo) { var m = new THREE.Mesh(geo, animMat(geo.userData.set || 0)); m.material.userData.u.uH.value = geo.userData.h || 1.06; m.castShadow = true; return m; }
 // 8人のうち idx 番の友達を置く（scale 1 = 身長 約1.25m）
 function addFriend(idx, x, y, z, rot, scale, opt) {
   opt = opt || {};

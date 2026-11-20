@@ -402,9 +402,9 @@ var TAGS = [];
 function updateTags() {
   var list = [], cam = R.camera, W = H.W, Hh = H.H, v = _tagV || (_tagV = new THREE.Vector3());
   var meTalk = VOICE.on && VOICE.level > 0.06;
-  list.push({ k: 'me' + (meTalk ? 't' : ''), name: PLAYER.name, sub: (meTalk ? '♪話し中♪ ' : '') + FRIEND_INFO[PLAYER.char].name, p: P.pos, h: P.bodyH + 0.35, cls: 'me', bub: PLAYER.bubble });
+  list.push({ k: 'me' + (meTalk ? 't' : (VOICE.on ? 'v' : '')), name: PLAYER.name, sub: (meTalk ? '♪話し中♪ ' : (VOICE.on ? '◎ボイス ' : '')) + FRIEND_INFO[PLAYER.char].name, p: P.pos, h: P.bodyH + 0.35, cls: 'me', bub: PLAYER.bubble });
   NPCS.forEach(function (n) { if (n.ent.visible) list.push({ k: 'n' + n.idx, name: FRIEND_INFO[n.idx].name, p: n.ent.pos, h: n.ent.h + 0.3, cls: 'npc', bub: n.bubble }); });
-  if (NET && NET.peers && !NET.muted) for (var id in NET.peers) { var pp = NET.peers[id]; if (pp.vis && !NET.blocked[id]) list.push({ k: 'p' + id + (pp.talking ? 't' : ''), name: pp.name, sub: (pp.talking ? '♪話し中♪ ' : '') + (FRIEND_INFO[pp.char] ? FRIEND_INFO[pp.char].name : ''), p: pp.pos, h: pp.h + 0.35, cls: 'pc', bub: pp.bubble }); }
+  if (NET && NET.peers && !NET.muted) for (var id in NET.peers) { var pp = NET.peers[id]; if (pp.vis && !NET.blocked[id]) list.push({ k: 'p' + id + (pp.talking ? 't' : (pp.v ? 'v' : '')), name: pp.name, sub: (pp.talking ? '♪話し中♪ ' : (pp.v ? '◎ボイス ' : '')) + (FRIEND_INFO[pp.char] ? FRIEND_INFO[pp.char].name : ''), p: pp.pos, h: pp.h + 0.35, cls: 'pc', bub: pp.bubble }); }
   var used = 0;
   for (var i = 0; i < list.length && used < 12; i++) {
     var L = list[i], d = cam.position.distanceTo(L.p); if (d > 26 && L.cls !== 'me') continue;

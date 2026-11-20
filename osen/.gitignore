@@ -1,3 +1,4 @@
 deliver/*.zip
+deliver/*-full.html
 node_modules/
 tools/fonts/src/

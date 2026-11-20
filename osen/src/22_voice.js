@@ -10,7 +10,7 @@ function voiceToggle() {
 }
 function openVoiceConfirm() {
   openWin('vconf', 'ボイスチャット', 'sound', function (bd) {
-    el('div', 'desc', bd, cnHTML('マイクを使って、近く（だいたい２５ｍ以内）にいる人と声で話せます。\n◆声は　そのまま相手に届きます。検閲はできません。\n◆本名・住所・学校・電話番号など、個人情報は話さないで下さい。\n◆いやな人は　⚙設定→「まわりの人」で　見えなくする（声も消えます）。\n◆イヤホンを使うと、音がハウリングしにくくなります。\n◆iPhone では、ボイスチャット中はゲームの音が小さくなる事があります。').replace(/\n/g, '<br>'));
+    el('div', 'desc', bd, cnHTML('マイクを使って、近く（だいたい２５ｍ以内）にいる人と声で話せます。\n◆【大事】話す相手も「ボイス」をONにして、マイクを「許可」している時だけ　声がつながります（おたがいの許可が必要）。\n◆声は　そのまま相手に届きます。検閲はできません。\n◆本名・住所・学校・電話番号など、個人情報は話さないで下さい。\n◆いやな人は　⚙設定→「まわりの人」で　見えなくする（声も消えます）。\n◆イヤホンを使うと、音がハウリングしにくくなります。\n◆iPhone では、ボイスチャット中はゲームの音が小さくなる事があります。').replace(/\n/g, '<br>'));
     var r = el('div', 'row2', bd);
     mbtn(r, 'はじめる（マイクを使う）', function () { PLAYER.voiceOk = true; saveGame(); closeWin('vconf'); voiceStart(); }, 'gold', 'sound');
     mbtn(r, 'やめる', function () { closeWin('vconf'); });
@@ -21,7 +21,7 @@ function voiceStart() {
   audioInit();
   navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).then(function (s) {
     VOICE.stream = s; VOICE.on = true; voiceMeter(s);
-    sysMsg('ボイスチャット：ON（近くの人と話せます）'); sfx('uiOpen'); writeMe(true); voiceSlot();
+    sysMsg('ボイスチャット：ON。相手もボイスONの時だけ話せます。'); logMsg('sys', '声は、おたがいに「ボイス」をONにしてマイクを許可している人どうしだけ　つながります。名前の下に「◎ボイス」と出ている人と話せます。'); sfx('uiOpen'); writeMe(true); voiceSlot();
   }, function (e) { sysMsg('マイクを使えませんでした（' + (e && e.name || '') + '）。設定でマイクを許可して下さい。'); sfx('error'); });
 }
 function voiceStop() {

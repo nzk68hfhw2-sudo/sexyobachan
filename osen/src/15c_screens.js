@@ -111,7 +111,7 @@ function buildCharScene() {
 function csShow(idx) {
   CS.idx = (idx + 8) % 8;
   if (CS.mesh) CS.scene.remove(CS.mesh);
-  var g2 = FRIENDS.hi[CS.idx]; CS.mesh = new THREE.Mesh(g2, friendMat(g2.userData.set || 0)); var s = 1.18 * CHARS[CS.idx].scale; CS.mesh.scale.set(s, s, s); CS.scene.add(CS.mesh);
+  var g2 = FRIENDS.hi[CS.idx]; CS.mesh = animMesh(g2); CS.body = new THREE.Group(); CS.st = {}; CS.gs = { id: 'wave', t: 0 }; var s = 1.18 * CHARS[CS.idx].scale; CS.mesh.scale.set(s, s, s); CS.scene.add(CS.mesh);
   if (CS.win) CS.fill();
   sfx('uiSlot');
 }
@@ -173,7 +173,7 @@ function csClose() {
 }
 function openCharChange() { Object.keys(WIN.list).forEach(function (k) { closeWin(k, true); }); stepCharSel(true); }
 function renderCharSel(dt) {
-  CS.t += dt; if (CS.mesh) { CS.mesh.rotation.y += dt * 0.6; CS.mesh.position.y = Math.abs(Math.sin(CS.t * 2)) * 0.03; }
+  CS.t += dt; if (CS.mesh && CS.forcePose) { var fu = CS.mesh.material.userData.u; for (var fk in CS.forcePose) fu[fk].value = CS.forcePose[fk]; CS.mesh.rotation.y = CS.forceRot || 0; } else if (CS.mesh) { CS.mesh.rotation.y += dt * 0.6; var e2 = gestureAnim(CS.gs, dt); if (e2 === 'end') { CS.gs = Math.random() < 0.5 ? { id: pick(['wave', 'dance', 'jump', 'bow', 'nod']), t: -2 } : null; e2 = null; } if (!CS.gs && Math.random() < dt * 0.4) CS.gs = { id: pick(['wave', 'dance', 'jump', 'bow']), t: 0 }; var u = CS.mesh.material.userData.u, ee = e2 || {}; var br = Math.sin(CS.t * 1.6) * 0.05; u.uRaiseL.value = lerp(u.uRaiseL.value, ee.L_raiseL != null ? ee.L_raiseL : 0.12, 0.2); u.uRaiseR.value = lerp(u.uRaiseR.value, ee.L_raiseR != null ? ee.L_raiseR : 0.12, 0.2); u.uArmL.value = lerp(u.uArmL.value, ee.L_armL != null ? ee.L_armL : br, 0.2); u.uArmR.value = lerp(u.uArmR.value, ee.L_armR != null ? ee.L_armR : -br, 0.2); u.uHeadP.value = lerp(u.uHeadP.value, ee.L_headP || 0, 0.2); u.uHeadY.value = lerp(u.uHeadY.value, ee.L_headY || 0, 0.2); u.uLegL.value = lerp(u.uLegL.value, ee.L_legL || 0, 0.2); u.uLegR.value = lerp(u.uLegR.value, ee.L_legR || 0, 0.2); CS.mesh.position.y = (ee.bounce || 0) * 0.5; }
   var W = H.W, Hh = H.H, land = W > Hh;
   CS.cam.aspect = W / Hh;
   if (land) { CS.cam.setViewOffset(W, Hh, W * 0.16, 0, W, Hh); CS.cam.position.set(0, 1.0, 4.0); }

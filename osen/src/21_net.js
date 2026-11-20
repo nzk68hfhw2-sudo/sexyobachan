@@ -176,11 +176,11 @@ function peerUpsert(id, v) {
   if (!pr) {
     var ci = clamp(v.c | 0, 0, 7), g2 = FRIENDS.lo[ci] || FRIENDS.hi[ci];
     var root = new THREE.Group(), body = new THREE.Group(); root.add(body); R.scene.add(root);
-    var m = new THREE.Mesh(g2, friendMat(g2.userData.set || 0)); var sc = 1.18 * CHARS[ci].scale; m.scale.set(sc, sc, sc); m.castShadow = true; body.add(m);
+    var m = animMesh(g2); var sc = 1.18 * CHARS[ci].scale; m.scale.set(sc, sc, sc); body.add(m);
     pr = NET.peers[id] = { id: id, char: ci, name: decodeName(v.n), pos: new THREE.Vector3(v.x, v.y, v.z), face: v.f || 0, snaps: [], root: root, body: body, mesh: m, st: {}, h: (g2.userData.h || 1.06) * sc, vis: true, gesture: null };
     if (!NET.muted) { logMsg('sys', pr.name + '（' + FRIEND_INFO[ci].name + '）が　町に来ました。'); sfx('uiOpen'); }
   }
-  if ((v.c | 0) !== pr.char) { var ci2 = clamp(v.c | 0, 0, 7), g3 = FRIENDS.lo[ci2]; pr.char = ci2; pr.mesh.geometry = g3; pr.mesh.material = friendMat(g3.userData.set || 0); var s2 = 1.18 * CHARS[ci2].scale; pr.mesh.scale.set(s2, s2, s2); pr.h = (g3.userData.h || 1.06) * s2; }
+  if ((v.c | 0) !== pr.char) { var ci2 = clamp(v.c | 0, 0, 7), g3 = FRIENDS.lo[ci2]; pr.char = ci2; pr.mesh.geometry = g3; pr.mesh.material = animMat(g3.userData.set || 0); pr.mesh.material.userData.u.uH.value = g3.userData.h || 1.06; var s2 = 1.18 * CHARS[ci2].scale; pr.mesh.scale.set(s2, s2, s2); pr.h = (g3.userData.h || 1.06) * s2; }
   pr.name = decodeName(v.n); pr.lastT = v.t || NET.T.now(); pr.recv = Date.now();
   pr.snaps.push({ t: Date.now(), x: v.x, y: v.y, z: v.z, f: v.f || 0 }); if (pr.snaps.length > 12) pr.snaps.shift();
   if (v.g && (!pr.gesture || pr.gesture.id !== v.g)) pr.gesture = { id: v.g, t: 0 };
@@ -205,7 +205,7 @@ function updatePeers(dt) {
     pr.pos.lerp(_pv, 1 - Math.exp(-dt * 18));
     var tf = a.f + angDiff(a.f, b.f) * k; pr.face += angDiff(pr.face, tf) * Math.min(1, dt * 12);
     var ex = gestureAnim(pr.gesture, dt); if (ex === 'end') { pr.gesture = null; ex = null; }
-    if (pr.holding) { ex = ex || {}; ex.lean = (ex.lean || 0) - 0.07; }
+    if (pr.holding) { ex = ex || {}; ex.lean = (ex.lean || 0) - 0.07; ex.L_armL = ex.L_armR = -0.75; }
     bodyAnim(pr.root, pr.body, pr.st, dt, Math.min(8, spd), spd > 5.5, true, 0, ex);
     pr.root.position.copy(pr.pos); pr.root.rotation.y = pr.face + PI;
     // ほかの人が持っている物

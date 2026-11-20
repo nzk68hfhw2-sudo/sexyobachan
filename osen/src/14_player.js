@@ -17,7 +17,7 @@ function setPlayerChar(idx) {
   PLAYER.char = idx;
   var c2 = CHARS[idx], g2 = LITE.on ? FRIENDS.lo[idx] : FRIENDS.hi[idx];
   if (P.mesh) P.body.remove(P.mesh);
-  P.mesh = new THREE.Mesh(g2, friendMat(g2.userData.set || 0)); P.mesh.castShadow = true;
+  P.mesh = animMesh(g2);
   var s = 1.18 * c2.scale; P.mesh.scale.set(s, s, s); P.body.add(P.mesh);
   P.bodyH = (g2.userData.h || 1.06) * s; P.h = P.bodyH + 0.08; P.r = 0.28 * c2.scale;
   if (typeof npcSetHidden === 'function') npcSetHidden(idx, prev);
@@ -145,26 +145,38 @@ function bodyAnim(rootObj, bodyObj, st, dt, spd, run, onGround, vy, extra) {
   var yaw = 0, ex = extra || {};
   if (ex.lean) lean += ex.lean; if (ex.roll) roll += ex.roll; if (ex.yaw) yaw += ex.yaw; if (ex.bounce) bounce += ex.bounce; if (ex.sy) sy *= ex.sy;
   bodyObj.position.y = bounce; bodyObj.rotation.set(-lean, yaw, roll); bodyObj.scale.set(sxz, sy, sxz);
+  // 手足・頭
+  var mesh = bodyObj.children[0], u = mesh && mesh.material && mesh.material.userData && mesh.material.userData.u; if (!u) return;
+  var sw = Math.sin(st.walkPh) * (run ? 0.75 : 0.55) * w, air = onGround ? 0 : 1;
+  var L = { legL: sw, legR: -sw, armL: -sw * 0.7, armR: sw * 0.7, raiseL: 0.06 + air * 0.3, raiseR: 0.06 + air * 0.3, headP: 0, headY: 0 };
+  if (!onGround) { L.legL = -0.35; L.legR = 0.25; }
+  if (w < 0.05) { var br = Math.sin((st.idleT = (st.idleT || 0) + dt) * 1.6) * 0.04; L.armL = br; L.armR = -br; L.headP = Math.sin(st.idleT * 0.7) * 0.05; }
+  for (var k in ex) if (k.indexOf('L_') === 0) L[k.slice(2)] = ex[k];
+  st.limb = st.limb || {};
+  for (k in L) { var cur = st.limb[k] || 0; st.limb[k] = cur + (L[k] - cur) * Math.min(1, dt * 14); }
+  u.uLegL.value = st.limb.legL; u.uLegR.value = st.limb.legR; u.uArmL.value = st.limb.armL; u.uArmR.value = st.limb.armR;
+  u.uRaiseL.value = st.limb.raiseL; u.uRaiseR.value = st.limb.raiseR; u.uHeadP.value = st.limb.headP; u.uHeadY.value = st.limb.headY;
 }
 function gestureAnim(gs, dt) {
   if (!gs) return null; gs.t += dt; var t = gs.t, e = {};
   switch (gs.id) {
-    case 'wave': e.roll = Math.sin(t * 10) * 0.25; if (t > 1.6) return 'end'; break;
-    case 'bow': e.lean = Math.sin(Math.min(1, t / 1.6) * PI) * 0.7; if (t > 1.6) return 'end'; break;
-    case 'jump': e.bounce = Math.abs(Math.sin(t * 6)) * 0.5; if (t > 1.05) return 'end'; break;
-    case 'spin': e.yaw = t * TAU * 1.5; if (t > 1.33) return 'end'; break;
-    case 'dance': e.bounce = Math.abs(Math.sin(t * 8)) * 0.15; e.roll = Math.sin(t * 4) * 0.25; e.yaw = Math.sin(t * 2) * 0.8; if (t > 3) return 'end'; break;
-    case 'nod': e.lean = Math.max(0, Math.sin(t * 9)) * 0.25; if (t > 1.1) return 'end'; break;
-    case 'shake': e.yaw = Math.sin(t * 14) * 0.4; if (t > 1.1) return 'end'; break;
-    case 'sit': e.sy = 1 - 0.4 * Math.sin(Math.min(1, t / 2.5) * PI); if (t > 2.5) return 'end'; break;
+    case 'wave': e.L_raiseR = 0.75 + Math.sin(t * 10) * 0.2; e.L_armR = -0.5; e.L_armR = -0.2; e.roll = Math.sin(t * 5) * 0.05; e.L_headY = 0.15; if (t > 1.8) return 'end'; break;
+    case 'bow': { var k = Math.sin(Math.min(1, t / 1.6) * PI); e.lean = k * 0.75; e.L_headP = k * 0.45; e.L_armL = e.L_armR = -k * 0.35; if (t > 1.6) return 'end'; break; }
+    case 'jump': e.bounce = Math.abs(Math.sin(t * 6)) * 0.5; e.L_raiseL = e.L_raiseR = 0.65; e.L_legL = e.L_legR = -Math.abs(Math.sin(t * 6)) * 0.5; if (t > 1.05) return 'end'; break;
+    case 'spin': e.yaw = t * TAU * 1.5; e.L_raiseL = e.L_raiseR = 0.6; if (t > 1.33) return 'end'; break;
+    case 'dance': e.bounce = Math.abs(Math.sin(t * 8)) * 0.15; e.roll = Math.sin(t * 4) * 0.2; e.yaw = Math.sin(t * 2) * 0.6;
+      e.L_raiseL = 0.4 + Math.sin(t * 8) * 0.35; e.L_raiseR = 0.4 - Math.sin(t * 8) * 0.35; e.L_armL = Math.sin(t * 8) * 0.5; e.L_armR = -Math.sin(t * 8) * 0.5; e.L_legL = Math.sin(t * 8) * 0.4; e.L_legR = -Math.sin(t * 8) * 0.4; e.L_headY = Math.sin(t * 4) * 0.3; if (t > 3) return 'end'; break;
+    case 'nod': e.L_headP = Math.max(0, Math.sin(t * 9)) * 0.45; if (t > 1.1) return 'end'; break;
+    case 'shake': e.L_headY = Math.sin(t * 14) * 0.55; e.L_raiseL = e.L_raiseR = 0.3; if (t > 1.1) return 'end'; break;
+    case 'sit': { var k2 = Math.sin(Math.min(1, t / 2.5) * PI); e.sy = 1 - 0.18 * k2; e.bounce = -0.32 * k2; e.L_legL = e.L_legR = -1.45 * k2; e.L_armL = e.L_armR = -0.4 * k2; if (t > 2.5) return 'end'; break; }
   }
   return e;
 }
 function animatePlayer(dt, spd, run) {
   var ex = gestureAnim(P.gesture, dt); if (ex === 'end') { P.gesture = null; ex = null; }
   ex = ex || {};
-  if (ITEMS.held) ex.lean = (ex.lean || 0) - 0.07;
-  if (P.throwT > 0) { P.throwT -= dt; ex.lean = (ex.lean || 0) + Math.sin(P.throwT / 0.35 * PI) * 0.45; }
+  if (ITEMS.held) { ex.lean = (ex.lean || 0) - 0.07; ex.L_armL = ex.L_armR = -0.75; ex.L_raiseL = ex.L_raiseR = 0.1; }
+  if (P.throwT > 0) { P.throwT -= dt; ex.lean = (ex.lean || 0) + Math.sin(P.throwT / 0.35 * PI) * 0.45; ex.L_armR = -1.1 * Math.sin(P.throwT / 0.35 * PI); }
   if (P.slideT > 0) { ex.lean = (ex.lean || 0) + 0.35; }
   bodyAnim(P.root, P.body, P, dt, spd, run, P.onGround, P.vel.y, ex);
   P.root.position.copy(P.pos); P.root.rotation.y = P.face + PI; P.root.scale.setScalar(P.scale);
@@ -205,7 +217,7 @@ function updateCamera(dt) {
   cam.rotateZ(P.roll || 0);
   // 近すぎる時は自分を半透明に
   var near = cam.position.distanceTo(CAM.look) < 0.9;
-  if (P.mesh) { P.mesh.material = near ? (P._ghostMat || (P._ghostMat = new THREE.MeshLambertMaterial({ map: P.mesh.material.map, transparent: true, opacity: 0.25 }))) : friendMat(P.mesh.geometry.userData.set || 0); }
+  if (P.mesh) { var mm = P.mesh.material; if (mm.transparent !== near) { mm.transparent = near; mm.opacity = near ? 0.25 : 1; mm.needsUpdate = true; } }
 }
 function teleport(x, y, z, yaw) { P.pos.set(x, y, z); P.vel.set(0, 0, 0); if (yaw != null) { P.face = yaw; CAM.yaw = yaw; } P.lastSafe.set(x, y, z); snapCamera(); }
 // ---- とくぎ ---------------------------------------------------------------------------------
