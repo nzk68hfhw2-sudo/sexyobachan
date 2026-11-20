@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "osen": {
+      "v1": {
+        "rooms": {
+          "$room": {
+            ".read": true,
+            "p": { "$pid": { ".write": true, ".validate": "!newData.exists() || (newData.hasChildren(['c', 'x', 'y', 'z']) && newData.child('c').isNumber() && newData.child('x').isNumber())" } },
+            "e": { "$e": { ".write": true, ".validate": "!newData.exists() || (newData.hasChildren(['k', 'by', 't']) && newData.child('k').isString() && newData.child('k').val().length <= 8)" } },
+            "i": { "$i": { ".write": true, ".validate": "!newData.exists() || newData.hasChildren(['ty'])" } },
+            "pol": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 99999" }
+          }
+        },
+        "notes": {
+          ".read": true,
+          ".indexOn": ["t"],
+          "$n": { ".write": "!data.exists()", ".validate": "newData.hasChildren(['x', 'z', 'p', 't']) && newData.child('p').isNumber()" }
+        }
+      }
+    }
+  }
+}
