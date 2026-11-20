@@ -1,5 +1,5 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- 精神汚染ゲーム ～はちにんの町～　source.txt
+ 精神汚染ゲーム（精神汚染オンライン） v2　source.txt
  （このファイルはゲームの説明書き。動作には関係しません）
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -13,7 +13,7 @@
   ・game.js を1本 <script> で読めば全部動く（index.html の中身には頼らない）
   ・3Dモデル（8人）とその色（テクスチャ）は game.js の中に埋め込み済み
     → 別ファイルを読まないので、Gravity 経由でも読み込み失敗が起きにくい
-  ・外から読むもの：three.js（cdnjs, r128）と Google Fonts（フォント）だけ
+  ・外から読むもの：three.js（cdnjs, r128）だけ。フォントも game.js に埋め込み
   ・読めなかった時は、真っ黒にせず「何が読めなかったか」を画面に日本語で出す
 
 ■ Netlify の URL について
@@ -33,37 +33,41 @@
 ■ 使っている外部のもの（ライセンス）
   ・three.js r128（3D表示）… MIT License（自由に使ってOK）
       https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
-  ・Google Fonts（すべて SIL Open Font License 1.1。自由に使ってOK）
-      Zen Kaku Gothic New / M PLUS 1p / Dela Gothic One / Rampart One / Reggae One /
-      RocknRoll One / Mochiy Pop One / Potta One / Yusei Magic / Hachi Maru Pop /
-      DotGothic16 / Kaisei Decol / Train One / Bungee / Shrikhand / Noto Sans SC（中国語）
+  ・フォント（すべて SIL Open Font License 1.1。使う字だけを埋め込み）
+      DotGothic16 / BIZ UDゴシック / Noto Sans SC / Dela Gothic One / Reggae One /
+      RocknRoll One / Mochiy Pop One / Yusei Magic
   ・効果音・BGM … すべてプログラム（Web Audio）で合成。音声ファイルなし
   ・絵（看板・ワードアート・星・テクスチャ）… すべてプログラムで描画。画像ファイルなし
   ・3Dモデル … 制作者さんが用意した Meshy AI 製のモデル（8人）
 
 ■ 元のソース（GitHub の osen/ フォルダ）
-  src/00_boot.js     起動・診断メッセージ・フォント・three.js 読み込み（BASE_URL はここ）
-  src/01_util.js     便利関数・保存（localStorage が使えなくても止まらない）
-  src/02_model.js    埋め込みモデルの解凍
-  src/03_text.js     謎日本語の文章・8人の紹介・エリア・汚染の段階・時間帯
-  src/04_wordart.js  2000年代ワードアート（16種類）とクリップアート
-  src/05_audio.js    MIDI風BGM（エリア別9曲）と効果音
-  src/06_tex.js      地面・壁などの模様（すべて手続き生成）
-  src/07_batch.js    描画のまとめ（軽くする工夫）・当たり判定・マテリアル
-  src/08_signs.js    看板と注意書き
-  src/09_world.js    町の地図（建物・道・川・神社・存在しない部屋）
-  src/10_propmesh.js さわれる物の形
-  src/11_props.js    さわれる物の一覧（名前・図鑑の説明・字幕・反応）← 文章を直すならここ
-  src/12_render.js   描画・空・時間帯・画面効果・自動画質
-  src/13_input.js    操作（スティック・視点・ボタン・キーボード・マウス）
-  src/14_player.js   歩く・ジャンプ・当たり判定
-  src/15_ui.js       画面（汚染率・字幕・ワードアート表示・設定・図鑑・説明画面）
-  src/16_fx.js       さわった時の反応・汚染の段階・隠し要素
-  src/17_game.js     ゲーム全体の流れ・汚染の演出
-  src/99_main.js     起動の順番
-  assets/            埋め込み前のモデル（.bin）とテクスチャ（.jpg）
-  tools/build.js     src をまとめて dist/game.js を作る（node tools/build.js）
-  tools/model/       GLB を軽くして .bin にする道具
+  src/00_boot.js      起動・診断メッセージ・埋め込みフォントの読み込み・three.js（BASE_URL はここ）
+  src/01_util.js      便利関数・保存（localStorage が使えなくても止まらない）
+  src/02_model.js     埋め込みモデル（8人）の解凍
+  src/03_text.js      謎日本語・8人の紹介とキャラ能力・ログイン画面・ヒント・定型文・スタンプ・身ぶり・名前
+  src/04_wordart.js   ワードアート（16種）とクリップアート
+  src/05_audio.js     BGM と効果音（UIの音もここ）
+  src/06〜09          町の模様・まとめ描画・看板・町の地図
+  src/10_propmesh.js  アイテムの形（プログラムで組み立て）
+  src/11_props.js     さわれる物の一覧（名前・図鑑の説明・字幕・反応）← 文章を直すならここ
+  src/12_render.js    描画・空・時間帯・画面効果・自動画質
+  src/13_input.js     操作（スティック・なぞる・ピンチ・ボタン・キー・マウス）
+  src/14_player.js    主人公（三人称）・カメラ・体の動き・とくぎ
+  src/15_icons.js     アイコン（UI 74種＋アイテムは3Dから自動）
+  src/15_ui.js        MMO風 UI（ウィンドウ・スロットバー・ログ・ミニマップ・ステータス・ツールチップ）
+  src/15b_windows.js  カバン・図鑑・ステータス・定型文・スタンプ・身ぶり・設定・地図・あそびかた
+  src/15c_screens.js  読み込み画面・ログイン・サーバー選択・チャンネル選択・利用規約・キャラ選択
+  src/16_fx.js        さわった時の反応・汚染の段階・隠し要素
+  src/17_game.js      ゲーム全体の流れ・汚染の演出
+  src/18_physics.js   物の物理（重さ・転がる・倒れる・はねる・積む・元の場所に戻す）
+  src/19_items.js     持つ・投げる・回す・大小・いじる・合成（44種）・カバン
+  src/20_npc.js       住人（選ばれなかった7人）・着がえ所
+  src/99_main.js      起動の順番
+  assets/             モデル（.bin）とテクスチャ（.jpg）、使う字だけのフォント（fonts/*.woff2）
+  tools/build.js      src をまとめて dist/game.js を作る（node tools/build.js）
+                      ※文章を変えたら、フォントも自動で作り直します（python3 と fonttools が必要）
+  tools/fonts/        フォントの切り出し道具
+  tools/model/        GLB を軽くして .bin にする道具
 
 ■ 直し方のコツ
   ・文章を変えたい → src/11_props.js や src/03_text.js の「'～'」の中を書きかえる

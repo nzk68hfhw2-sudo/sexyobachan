@@ -1,25 +1,27 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- 使った外部のものとライセンス
+ 使った外部のものとライセンス（v2）
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ■ ライブラリ
  ・three.js r128（3D表示）… MIT License
    cdnjs から読み込み：https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
-   （モデルの読み込み用の追加部品は使っていません。モデルは独自の形式で game.js に埋め込み）
 
-■ フォント（Google Fonts から読み込み。すべて SIL Open Font License 1.1）
- ・Zen Kaku Gothic New（画面の文字）
- ・M PLUS 1p（ムービーメーカー風の字幕）
- ・Noto Sans SC（中国語の字形を混ぜる用。必要な字だけ取り寄せ）
- ・ワードアート用：Dela Gothic One / Rampart One / Reggae One / RocknRoll One / Mochiy Pop One /
-   Potta One / Yusei Magic / Hachi Maru Pop / DotGothic16 / Kaisei Decol / Train One
- ・英字：Bungee / Shrikhand
+■ フォント（すべて SIL Open Font License 1.1。game.js の中に「使う字だけ」を埋め込み）
+   ※v2 から、Google Fonts への通信はしません。端末のフォントも使いません。
+ ・DotGothic16 … UI の文字（角ばったドット風）
+ ・BIZ UDゴシック Bold（BIZ UDGothic）… 字幕・説明文（素っ気ない昔風ゴシック）
+ ・Noto Sans SC … 一部の漢字だけ中国語の字形にする用
+ ・Dela Gothic One / Reggae One / RocknRoll One / Mochiy Pop One / Yusei Magic … ワードアート用
+   入手元：Google Fonts の公開リポジトリ（https://github.com/google/fonts）
+   OFL では、フォントを埋め込んで配布すること・使う字だけに減らすことが認められています。
+   フォントだけを取り出して売ることはできません。
 
 ■ 自作（借り物なし）
- ・BGM 9曲・効果音 約30種 … Web Audio で合成
- ・ワードアート16種・クリップアート・看板・地面や壁の模様 … Canvas でプログラム描画
- ・文章（謎日本語 約580種）… すべて架空。実在の会社・商品・キャラクター名は不使用
+ ・BGM 9曲・効果音 約45種（昔のオンラインゲーム風のUI音を含む）… Web Audio で合成
+ ・UIアイコン 74種 … プログラムで描画（32×32）
+ ・アイテムアイコン 約100種 … 3Dの物をプログラムで撮影してドット絵風に加工
+ ・ワードアート16種・看板・地面や壁の模様・ウィンドウのわく … プログラムで描画
+ ・文章（謎日本語 約800種、定型文80種）… すべて架空。実在の会社・商品・キャラクター名は不使用
 
 ■ 3Dモデル
  ・作者さんが用意した Meshy AI のモデル2つ（4人×2＝8人）
-   ※Meshy AI で作ったモデルの利用条件（商用利用・公開の可否など）は、
-     Meshy のプランの規約を作者さん自身で確認してください
+   ※Meshy AI の利用条件（商用・公開の可否など）は、Meshy のプランの規約をご自身で確認してください

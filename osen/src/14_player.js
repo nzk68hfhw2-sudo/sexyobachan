@@ -188,7 +188,11 @@ function updateCamera(dt) {
   var inZ = insideZone(P.pos.x, P.pos.y, P.pos.z); CAM.inside = !!inZ;
   var want = inZ ? Math.min(CAM.distT, 2.6) : CAM.distT;
   CAM.dist = lerp(CAM.dist, want, 1 - Math.exp(-dt * 6));
-  var tx = P.pos.x, ty = P.pos.y + P.bodyH * P.scale * 0.9 + 0.15, tz = P.pos.z;
+  var hx = P.pos.x, hy = P.pos.y + P.bodyH * P.scale * 0.9 + 0.15, hz = P.pos.z;
+  // 肩ごしのカメラ（照準が自分に重ならないよう、少し右にずらす）
+  var sh = CAM.inside ? 0.3 : (H.land || !IN.isTouch ? 0.6 : 0.32), rx = Math.cos(CAM.yaw) * sh, rz = -Math.sin(CAM.yaw) * sh;
+  var fs = camBlocked(hx, hy, hz, hx + rx, hy + 0.2, hz + rz);
+  var tx = hx + rx * fs, ty = hy + 0.2 * fs, tz = hz + rz * fs;
   var cp = Math.cos(CAM.pitch), dx = Math.sin(CAM.yaw) * cp, dy = Math.sin(CAM.pitch), dz = Math.cos(CAM.yaw) * cp;
   var bx = tx + dx * CAM.dist, by = ty + dy * CAM.dist + 0.2, bz = tz + dz * CAM.dist;
   var f = camBlocked(tx, ty, tz, bx, by, bz), d = Math.max(0.35, CAM.dist * f);

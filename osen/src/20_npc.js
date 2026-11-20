@@ -8,7 +8,7 @@ function initNPCs() {
     var ent = { pos: f.mesh.position.clone(), vel: new THREE.Vector3(), r: 0.28, h: 1.25, onGround: true, visible: true };
     var root = new THREE.Group(), body = new THREE.Group(); R.scene.add(root); root.add(body);
     R.scene.remove(f.mesh); f.mesh.position.set(0, 0, 0); f.mesh.rotation.set(0, 0, 0); body.add(f.mesh);
-    var n = { idx: d.fr, pr: pr, f: f, ent: ent, root: root, body: body, home: ent.pos.clone(), face: d.r || 0, homeFace: d.r || 0, target: null, wait: rand(1, 5), st: {}, bubble: null, talkT: rand(10, 30) };
+    var n = { idx: d.fr, pr: pr, f: f, ent: ent, root: root, body: body, home: ent.pos.clone(), face: d.r || 0, homeFace: d.r || 0, target: null, wait: rand(0.3, 2.5), st: {}, bubble: null, talkT: rand(10, 30) };
     ent.h = (f.mesh.geometry.userData.h || 1.06) * f.scale;
     NPCS.push(n);
   });

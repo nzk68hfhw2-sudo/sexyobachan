@@ -9,7 +9,7 @@
 // ===========================================================================
 var BASE_URL = 'https://seishin-osen.netlify.app/';
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.0.0';
+var GAME_VERSION = '2.0.0-beta';
 
 var ASSET_BASE = BASE_URL;
 (function detectBase() {

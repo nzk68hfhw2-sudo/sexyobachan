@@ -372,8 +372,9 @@ function updateHUD(dt) {
   if (pv !== _polShown) { _polShown = pv; H.gPol.firstChild.style.width = Math.min(100, p) + '%'; H.gPol.lastChild.textContent = (p >= 333 ? '∞＋' + Math.floor(p - 333) : pv) + '％'; H.gPol.classList.toggle('over', p >= 100); }
   var hp = Math.round(G.genki);
   if (hp !== _hpShown) { _hpShown = hp; H.gHp.firstChild.style.width = clamp(G.genki, 0, 100) + '%'; H.gHp.lastChild.textContent = hp + '/100'; }
-  // ミニマップ
+  // ミニマップ（２フレームに１回）
   if (!MM.base) buildMinimapBase();
+  MM.f = (MM.f || 0) + 1; if (MM.f % 2) { updateTags(); return; }
   var x = H.mm.getContext('2d'), S = MM.size, k = MM.k, sc = 1.15, rot = CAM.yaw;
   x.save(); x.fillStyle = '#0a1a10'; x.fillRect(0, 0, S, S);
   x.translate(S / 2, S / 2); x.rotate(rot); x.scale(sc, sc);

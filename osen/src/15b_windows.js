@@ -125,6 +125,7 @@ function openSettings() {
     row('ほかの人をミュート（見えなくする）', 'mute', function () { return !!(window.NET && NET.muted); }, function (v) { if (window.NET) NET.muted = v; });
     el('div', 'desc', bd, [cnHTML('記録の保存：' + (STORE.available() ? 'この端末のブラウザに保存されます' : '保存できない環境です（閉じると消えます）')), cnHTML('画質：' + ['最低', '低', '中', '高'][R.quality] + '　/　' + (R.lastFps ? Math.round(R.lastFps) + 'fps' : '計測中')), cnHTML('通信：' + (window.NET ? NET.statusText() : '1人用')), cnHTML('版：' + GAME_VERSION)].join('<br>'));
     var r2 = el('div', 'row2', bd);
+    mbtn(r2, 'あそびかた', function () { openHelp(); }, '', 'info');
     mbtn(r2, 'キャラを変える', function () { if (nearDressing()) openCharChange(); else sysMsg('キャラは「着がえ所」で変えられます（駅前・公園）。'); }, '', 'char');
     var conf = 0; var rb = mbtn(r2, '記録を消す', function () { conf++; if (conf < 2) { rb.lastChild.textContent = 'もう一度押すと消えます'; return; } STORE.clear(); location.reload(); }, 'red');
   }, { w: 340, h: 430, theme: 'stone' });
@@ -144,4 +145,13 @@ function setLite(v) {
   LITE.on = v; setQuality(v ? 1 : 3);
   WORLD.friends.forEach(function (f) { var g2 = v ? FRIENDS.lo[f.idx] : FRIENDS.hi[f.idx]; if (g2 && f.mesh.geometry !== g2) f.mesh.geometry = g2; });
   if (P.mesh) { var g3 = v ? FRIENDS.lo[PLAYER.char] : FRIENDS.hi[PLAYER.char]; if (g3) P.mesh.geometry = g3; }
+}
+
+function openHelp() {
+  openWin('help', 'あそびかた', 'info', function (bd) {
+    el('div', 'desc', bd, cnHTML('目的は　ありません。歩いて、物を　持って、投げて、積んで、合成して下さい。いじるほど　町が「汚染」されます。汚染率は１００％を超えても終わりません。'));
+    (IN.isTouch ? HELP.touch : HELP.pc).forEach(function (r) { el('div', 'kv', bd, '<b>' + cnHTML(r[0]) + '</b><span style="text-align:right">' + cnHTML(r[1]) + '</span>'); });
+    el('div', 'desc', bd, cnHTML('※画面の色が変わる・ゆれる演出があります。⚙設定の「刺激ひかえめモード」で弱くできます。'));
+    var r2 = el('div', 'row2', bd); mbtn(r2, 'わかりました', function () { closeWin('help'); }, 'gold');
+  }, { w: 380, h: 440, theme: 'wood' });
 }
