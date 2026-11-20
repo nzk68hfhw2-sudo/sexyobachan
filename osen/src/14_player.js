@@ -102,7 +102,8 @@ function updatePlayer(dt) {
   if (P.tackleT > 0) { P.tackleT -= dt; tvx = -Math.sin(P.face) * P.tackleSp; tvz = -Math.cos(P.face) * P.tackleSp; acc = 40; }
   P.vel.x += (tvx - P.vel.x) * Math.min(1, acc * dt); P.vel.z += (tvz - P.vel.z) * Math.min(1, acc * dt);
   var spd = Math.hypot(P.vel.x, P.vel.z);
-  if (spd > 0.3 && !(P.tackleT > 0)) P.face += angDiff(P.face, Math.atan2(-P.vel.x, -P.vel.z)) * Math.min(1, dt * 10);
+  if (P.aimT > 0 && !(P.tackleT > 0)) P.face += angDiff(P.face, CAM.yaw) * Math.min(1, dt * 20);
+  else if (spd > 0.3 && !(P.tackleT > 0)) P.face += angDiff(P.face, Math.atan2(-P.vel.x, -P.vel.z)) * Math.min(1, dt * 10);
   // ジャンプ
   if (IN.jump) {
     IN.jump = false;
@@ -181,6 +182,8 @@ function animatePlayer(dt, spd, run) {
   if (P.slideT > 0) { ex.lean = (ex.lean || 0) + 0.35; }
   if (P.tackleT > 0 || (P.tackleCd > TUNE.tackleCd - 0.5 && P.tackleCd > 0)) { var tk = P.tackleT > 0 ? 1 : clamp(P.tackleCd / 0.2, 0, 1); ex.lean = (ex.lean || 0) + 0.55 * tk; ex.L_armL = ex.L_armR = -1.2 * tk; ex.L_raiseL = ex.L_raiseR = 0.25 * tk; ex.L_headP = -0.3 * tk; }
   if (NPCHELD.n) { ex.L_armL = ex.L_armR = -2.6; ex.L_raiseL = ex.L_raiseR = 0.15; }
+  else if (P.aimT > 0 && !ITEMS.held) { ex.L_armL = -1.45 - CAM.pitch * 0.5; ex.L_raiseL = 0.05; ex.L_armR = -1.1; ex.L_raiseR = -0.1; }
+  if (SK.tornado > 0) { ex.yaw = G.t * 25; ex.L_raiseL = ex.L_raiseR = 1.0; }
   bodyAnim(P.root, P.body, P, dt, spd, run, P.onGround, P.vel.y, ex);
   P.root.position.copy(P.pos); P.root.rotation.y = P.face + PI; P.root.scale.setScalar(P.scale);
   P.shadow.position.set(P.pos.x, groundAt(P.pos.x, P.pos.z, P.pos.y + 0.1, 0.1, 0.1) + 0.03, P.pos.z); P.shadow.scale.setScalar(P.scale * CHARS[PLAYER.char].scale * (1 - clamp((P.pos.y - P.shadow.position.y) * 0.1, 0, 0.6)));
@@ -227,18 +230,9 @@ function teleport(x, y, z, yaw) { P.pos.set(x, y, z); P.vel.set(0, 0, 0); if (ya
 function useSkill() {
   if (G.inMenu) return;
   if (P.skillCd > 0) { sysMsg('とくぎは　あと' + Math.ceil(P.skillCd) + '秒で　使えます。'); sfx('error'); return; }
-  var sk = CHARS[PLAYER.char].skill; P.skillCd = 8;
+  var sk = CHARS[PLAYER.char].skill; P.skillCd = 6;
   popWA(sk.name, { imp: true, style: PLAYER.char * 2 % WA_STYLES.length }); sysMsg('とくぎ「' + sk.name + '」!!');
   addPollution(1.5);
-  switch (sk.id) {
-    case 'matsu': G.slowT = 6; sfx('warp'); break;
-    case 'surari': P.slideT = 0.7; sfx('whoosh'); break;
-    case 'beranda': if (P.onGround) { P.vel.y = 10; P.onGround = false; } else { P.vel.y = 7; } sfx('up'); break;
-    case 'haneru': P.vel.y = 13; P.onGround = false; sfx('boing'); break;
-    case 'mamoru': smashBlast(P.pos, 7 * (1 + smashUp('skill') * 0.2), 3, { kind: 'skill', key: 'sk' + G.t }); feel(2); sfx('grow'); break;
-    case 'tooshi': G.xray = 10; sfx('chime'); break;
-    case 'chikuri': G.magnetT = 5; sfx('up'); break;
-    case 'shichisan': if (typeof itemsLineUp === 'function') itemsLineUp(P.pos, P.face); sfx('chime'); break;
-  }
+  skillGo(sk.id);
   if (NET && NET.send) NET.send('skill', { s: sk.id });
 }

@@ -37,13 +37,13 @@ G.onStart = function () {
 function saveGame() {
   try {
     var counts = {}; PROPS.forEach(function (p) { if (p.count) counts[p.def.id] = p.count; });
-    STORE.save({ v: 2, pl: { c: PLAYER.char, n: PLAYER.name, nc: PLAYER.nameCode, s: PLAYER.server, ch: PLAYER.channel, a: PLAYER.agreed, h: PLAYER.helpSeen, vo: PLAYER.voiceOk, tl: TEXTLV.v }, sm: smashSave(), bag: BAG.items, gk: G.genki, fi: G.fiddles, cb: G.combines, cam: CAM.distT, pol: G.pol, tod: G.tod, z: ZUKAN.found, c: counts, s: G.secrets, m: G.metFriends, bgm: AUD.bgmOn, sfx: AUD.sfxOn, bv: AUD.bgmVol, sv: AUD.sfxVol, lite: LITE.on, red: REDUCED.on, cl: G.cleaned,
+    STORE.save({ v: 2, pl: { c: PLAYER.char, n: PLAYER.name, nf: PLAYER.nameFree ? 1 : 0, nc: PLAYER.nameCode, s: PLAYER.server, ch: PLAYER.channel, a: PLAYER.agreed, h: PLAYER.helpSeen, vo: PLAYER.voiceOk, tl: TEXTLV.v }, sm: smashSave(), bag: BAG.items, gk: G.genki, fi: G.fiddles, cb: G.combines, cam: CAM.distT, pol: G.pol, tod: G.tod, z: ZUKAN.found, c: counts, s: G.secrets, m: G.metFriends, bgm: AUD.bgmOn, sfx: AUD.sfxOn, bv: AUD.bgmVol, sv: AUD.sfxVol, lite: LITE.on, red: REDUCED.on, cl: G.cleaned,
       pos: P.pos && P.pos.z < 300 ? [P.pos.x, P.pos.y, P.pos.z, P.face] : null });
   } catch (e) {}
 }
 function loadGame() {
   var d = STORE.load(); if (!d || (d.v !== 1 && d.v !== 2)) return null;
-  if (d.pl) { PLAYER.char = d.pl.c || 0; PLAYER.name = d.pl.n || ''; PLAYER.server = d.pl.s || ''; PLAYER.channel = d.pl.ch || ''; PLAYER.agreed = !!d.pl.a; PLAYER.helpSeen = !!d.pl.h; PLAYER.voiceOk = !!d.pl.vo; TEXTLV.v = d.pl.tl | 0; smashLoad(d.sm); PLAYER.nameCode = d.pl.nc || ''; if (!PLAYER.nameCode) PLAYER.name = ''; }
+  if (d.pl) { PLAYER.char = d.pl.c || 0; PLAYER.name = d.pl.n || ''; PLAYER.server = d.pl.s || ''; PLAYER.channel = d.pl.ch || ''; PLAYER.agreed = !!d.pl.a; PLAYER.helpSeen = !!d.pl.h; PLAYER.voiceOk = !!d.pl.vo; TEXTLV.v = d.pl.tl | 0; smashLoad(d.sm); PLAYER.nameCode = d.pl.nc || ''; PLAYER.nameFree = !!d.pl.nf; if (!PLAYER.nameCode && !PLAYER.nameFree) PLAYER.name = ''; }
   if (d.bag) BAG.items = d.bag.filter(function (e) { return e && (EXTRA_TYPES[e.type] || ITEM_INFO[e.type]); });
   if (d.gk != null) G.genki = d.gk; G.fiddles = d.fi || 0; G.combines = d.cb || 0; if (d.cam) CAM.distT = d.cam;
   G.pol = +d.pol || 0; G.tod = +d.tod || 1.3; ZUKAN.found = d.z || {}; G.secrets = d.s || {}; G.metFriends = d.m || {}; G.cleaned = d.cl || 0;
@@ -153,7 +153,7 @@ function updateGame(dt) {
   G.monoT -= dt; if (G.monoT <= 0 && G.started && !G.paused) { G.monoT = rand(35, 70); if (G.stage < 5) caption(pick(MONOLOGUE), { preset: 'fade' }); }
   // 保存
   G.saveT -= dt; if (G.saveT <= 0) { G.saveT = 10; saveGame(); }
-  updateItems(dt); updateNPCs(dt); if (!G.inMenu) smashUpdate(dt);
+  updateItems(dt); updateNPCs(dt); if (!G.inMenu) { smashUpdate(dt); armsUpdate(dt); }
   updateProps(dt, t); updateFriends(dt, t); updateWA3D(dt, t); updateCaptions(dt);
   if (!G.inMenu) updateHUD(dt);
   if (NET && NET.update) NET.update(dt);

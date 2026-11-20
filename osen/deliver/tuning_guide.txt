@@ -41,3 +41,10 @@ GitHub の osen/src/24_smash.js のいちばん上にある「TUNE」に、ま�
   ・文句・コンボの言葉・やじ馬の声・強化屋の品物 … src/03c_smash_text.js
 
 ■ 追っ手の強さ … 第3弾（警戒レベル）で追加します
+
+■ 銃（src/26_arms.js のいちばん上の GUNS）
+  rate: 撃つ間かく（秒）／dmg: 1発のこわす力／spread: ばらつき／kb: 物や住人を飛ばす強さ
+  pellets: ショットガンの粒の数／speed・r・pw: バズーカと爆弾の弾の速さ・爆発の大きさ・強さ
+■ とくぎ（src/26_arms.js の skillGo と skillUpdate）
+  メテオの爆発 8×範囲、竜巻 3秒、着地の爆発 8、ミサイル 8発、大爆発 10、ビーム 3秒、吸いこみ 2.4秒、地割れ 12回
+  とくぎの待ち時間は src/14_player.js の P.skillCd = 6（秒）

@@ -101,7 +101,7 @@ function enterRoom(room) {
   logMsg('sys', 'ほかの人とは　定型文・スタンプ・身ぶりで　話せます。⚙設定で　ミュートできます。');
 }
 // ---- 自分の状態を送る ----
-function nameCode() { return PLAYER.nameCode || ''; }
+function nameCode() { return PLAYER.nameFree && PLAYER.name ? 'F:' + PLAYER.name.slice(0, 12) : (PLAYER.nameCode || ''); }
 function writeMe(force) {
   if (!NET.on) return;
   var p = P.pos, d = { n: nameCode(), c: PLAYER.char, x: Math.round(p.x * 100) / 100, y: Math.round(p.y * 100) / 100, z: Math.round(p.z * 100) / 100, f: Math.round(P.face * 100) / 100, g: P.gesture ? P.gesture.id : '', h: ITEMS.held && ITEMS.held.netKey ? ITEMS.held.netKey : '', v: VOICE.on ? 1 : 0, t: NET.T.now() };
@@ -169,7 +169,8 @@ function onEvent(key, e) {
 }
 function phraseText(code) { if (typeof code !== 'number') return null; var c = Math.floor(code / 100), i = code % 100; return PHRASES[c] && PHRASES[c][1][i] || null; }
 function phraseCode(text) { for (var c = 0; c < PHRASES.length; c++) { var i = PHRASES[c][1].indexOf(text); if (i >= 0) return c * 100 + i; } return -1; }
-function decodeName(code) { var m = /^(\d+)\.(\d+)\.(\d+)$/.exec(code || ''); if (!m) return '名無しの住人'; return (NAME_A[+m[1]] || '？') + (NAME_C[+m[2]] || '？') + (NAME_B[+m[3]] || ''); }
+function decodeName(code) {
+  if (typeof code === 'string' && code.indexOf('F:') === 0) { var fn = code.slice(2, 14), f = filterMsg(fn); return f.censored || !f.text.trim() ? '名無しの住人' : f.text; } var m = /^(\d+)\.(\d+)\.(\d+)$/.exec(code || ''); if (!m) return '名無しの住人'; return (NAME_A[+m[1]] || '？') + (NAME_C[+m[2]] || '？') + (NAME_B[+m[3]] || ''); }
 // ---- ほかの人を表示する ----
 function peerUpsert(id, v) {
   if (id === NET.pid || !v || typeof v.x !== 'number') return;

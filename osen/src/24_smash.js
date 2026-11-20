@@ -636,8 +636,8 @@ function openShop() {
     });
   }, { w: 320, h: 470 });
 }
-function smashSave() { return { p: SMASH.pts, tp: SMASH.totalPts, y: SMASH.yen, bc: SMASH.best.combo, by: SMASH.best.yen, u: SMASH.up, b: SMASH.breaks, f: SMASH.flights, v: FEEL.vib }; }
-function smashLoad(d) { if (!d) return; SMASH.pts = d.p | 0; SMASH.totalPts = d.tp | 0; SMASH.yen = +d.y || 0; SMASH.best.combo = d.bc | 0; SMASH.best.yen = +d.by || 0; SMASH.up = d.u || {}; SMASH.breaks = d.b | 0; SMASH.flights = d.f | 0; FEEL.vib = d.v !== false; }
+function smashSave() { return { gc: GUN.cur, p: SMASH.pts, tp: SMASH.totalPts, y: SMASH.yen, bc: SMASH.best.combo, by: SMASH.best.yen, u: SMASH.up, b: SMASH.breaks, f: SMASH.flights, v: FEEL.vib }; }
+function smashLoad(d) { if (!d) return; SMASH.pts = d.p | 0; SMASH.totalPts = d.tp | 0; SMASH.yen = +d.y || 0; SMASH.best.combo = d.bc | 0; SMASH.best.yen = +d.by || 0; SMASH.up = d.u || {}; SMASH.breaks = d.b | 0; SMASH.flights = d.f | 0; FEEL.vib = d.v !== false; GUN.cur = (d.gc | 0) % GUNS.length; }
 // ---- 同時プレイ：ほかの人がこわした物（0.5秒ごとにまとめて送る。破片は各自の画面で計算） ----
 var SNQ = { q: [], t: 0 };
 function smashNetQ(k, d) { if (!NET.on || NET.applying) return; if (SNQ.q.length < 40) SNQ.q.push([k, d]); }

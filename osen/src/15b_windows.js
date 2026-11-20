@@ -83,7 +83,8 @@ function openStatus() {
     el('div', 'hd', bd, '記録');
     [['汚染率', Math.round(G.pol) + '％'], ['げんき', Math.round(G.genki)], ['歩いた距離', Math.round(P.dist) + 'ｍ'], ['さわった回数', G.touches], ['いじった回数', G.fiddles || 0], ['合成した回数', G.combines || 0], ['ひみつ', Object.keys(G.secrets).length + ' ／ ' + SECRETS.length]].forEach(function (kv) { el('div', 'kv', bd, '<span>' + cnHTML(kv[0]) + '</span><b>' + cnHTML(String(kv[1])) + '</b>'); });
     var row = el('div', 'row2', bd);
-    mbtn(row, '名前を選び直す', function () { PLAYER.name = makeName(); saveGame(); refreshWin('status'); sysMsg('名前が「' + PLAYER.name + '」になりました。'); if (NET && NET.sendMeta) NET.sendMeta(); }, '', 'char');
+    mbtn(row, '名前を入力', function () { openNameInput(function () { refreshWin('status'); sysMsg('名前が「' + PLAYER.name + '」になりました。'); }); }, 'gold', 'char');
+    mbtn(row, 'おまかせ', function () { PLAYER.name = makeName(); PLAYER.nameFree = false; saveGame(); refreshWin('status'); sysMsg('名前が「' + PLAYER.name + '」になりました。'); if (NET && NET.sendMeta) NET.sendMeta(); }, '', 'char');
   }, { w: 330, h: 440 });
 }
 // ---- 定型文・スタンプ・身ぶり ----

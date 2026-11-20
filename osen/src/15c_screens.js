@@ -31,7 +31,36 @@ function showLoading() {
 function nextTip() { if (H.lTip) H.lTip.innerHTML = '<b>【ゲームのヒント】</b><br>' + cnHTML(pick(TIPS)); }
 function drawLoadingTitle() {
   if (!H.lLogo) return; H.lLogo.innerHTML = '';
-  var c2 = wordArt(LOGIN.title, { style: 1, size: 64, shape: 'slant' }), e = document.createElement('canvas'); e.width = c2.width; e.height = c2.height; e.getContext('2d').drawImage(c2, 0, 0); e.style.maxWidth = '88vw'; H.lLogo.appendChild(e);
+  H.lLogo.appendChild(logoImg('min(88vw,520px)'));
+}
+// タイトルロゴ（制作者がくれた画像。白い所は透明にしてある）
+function logoImg(w) {
+  var im = document.createElement('img'); im.alt = '精神汚染オンライン'; im.draggable = false;
+  im.src = 'data:image/png;base64,' + LOGO_B64;
+  im.style.cssText = 'display:block;margin:0 auto;height:auto;filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 8px rgba(255,255,255,.85));' + (w ? 'width:' + w + ';' : '');
+  im.onerror = function () { var c2 = wordArt(LOGIN.title, { style: 1, size: 64, shape: 'slant' }); im.replaceWith(c2); };
+  return im;
+}
+// 名前を自分で入れる（12文字まで。ひどい言葉・個人情報っぽい物は使えない）
+function openNameInput(done) {
+  var bg = el('div', '', UI); bg.style.cssText = 'position:absolute;inset:0;z-index:60;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;pointer-events:auto;';
+  var w = el('div', 'ow', bg); w.style.cssText = 'position:relative;width:min(320px,88vw);padding:12px;display:block;';
+  el('div', 'hd', w, '名前を入力');
+  var inp = document.createElement('input'); inp.type = 'text'; inp.maxLength = 12; inp.value = PLAYER.nameFree ? PLAYER.name : ''; inp.placeholder = '12文字まで';
+  inp.style.cssText = 'width:100%;box-sizing:border-box;font:16px ' + FONT_SUB + ';padding:8px;margin:8px 0;border:2px solid #c8a050;background:#fffef0;color:#222;';
+  w.appendChild(inp);
+  var msg = el('div', 'desc', w); msg.innerHTML = cnHTML('ほかの人にも見えます。本名・住所・電話番号などは入れないでください。');
+  var row = el('div', 'row2', w);
+  function close() { if (bg.parentNode) bg.parentNode.removeChild(bg); }
+  mbtn(row, '決定', function () {
+    var t = (inp.value || '').replace(/[\s　]+/g, ' ').trim().slice(0, 12);
+    if (!t) { msg.innerHTML = cnHTML('名前を入れてください。'); sfx('error'); return; }
+    var f = filterMsg(t);
+    if (f.censored || f.text !== t) { msg.innerHTML = '<span style="color:#ff8080">' + cnHTML('その名前は使えません（ひどい言葉・個人情報っぽい文字）。') + '</span>'; sfx('error'); return; }
+    PLAYER.name = t; PLAYER.nameFree = true; saveGame(); close(); sfx('uiOpen'); if (NET && NET.sendMeta) NET.sendMeta(); if (done) done();
+  }, 'gold');
+  mbtn(row, 'やめる', function () { close(); });
+  setTimeout(function () { try { inp.focus(); } catch (e) {} }, 50);
 }
 function setLoading(p, msg) { if (!H.lBar) return; H.lBar.firstChild.style.width = Math.round(p * 100) + '%'; H.lPct.innerHTML = cnHTML('Loading… ' + Math.round(p * 100) + '％　' + (msg || '') + '　（版 ' + GAME_VERSION + '）'); }
 function hideLoading() { clearInterval(H.tipIv); if (H.loading) { H.loading.style.transition = 'opacity .5s'; H.loading.style.opacity = 0; var l = H.loading; setTimeout(function () { if (l.parentNode) l.parentNode.removeChild(l); }, 600); H.loading = null; } }
@@ -51,7 +80,7 @@ function menuWin(title, icon, w, build, theme) {
 function showMenu() {
   G.inMenu = true; updatePause();
   MENU.el = el('div', '', UI); MENU.el.id = 'os-menu';
-  var c2 = wordArt(LOGIN.title, { style: 1, size: 70, shape: 'slant' }), lg = document.createElement('canvas'); lg.width = c2.width; lg.height = c2.height; lg.getContext('2d').drawImage(c2, 0, 0); lg.className = 'logo'; MENU.el.appendChild(lg); MENU.logo = lg;
+  var lg = logoImg(); lg.className = 'logo'; MENU.el.appendChild(lg); MENU.logo = lg;
   H.hud.style.display = 'none';
   bgmPlay('title');
   stepLogin();
@@ -130,7 +159,7 @@ function stepCharSel(change) {
     mbtn(r, '◀', function () { csShow(CS.idx - 1); });
     mbtn(r, change ? 'この人になる' : 'この人で始める', function () { csDecide(); }, 'gold');
     mbtn(r, '▶', function () { csShow(CS.idx + 1); });
-    if (!change) { var r2 = el('div', 'kv', bd); el('span', '', r2).innerHTML = cnHTML('名前：' + PLAYER.name); mbtn(r2, '選び直す', function () { PLAYER.name = makeName(); r2.firstChild.innerHTML = cnHTML('名前：' + PLAYER.name); }); }
+    if (!change) { var r2 = el('div', 'kv', bd); el('span', '', r2).innerHTML = cnHTML('名前：' + PLAYER.name); var rb = el('div', '', r2); rb.style.display = 'flex'; rb.style.gap = '3px'; mbtn(rb, '入力', function () { openNameInput(function () { r2.firstChild.innerHTML = cnHTML('名前：' + PLAYER.name); }); }, 'gold'); mbtn(rb, 'おまかせ', function () { PLAYER.name = makeName(); PLAYER.nameFree = false; r2.firstChild.innerHTML = cnHTML('名前：' + PLAYER.name); }); }
     else { var r3 = el('div', 'row2', bd); mbtn(r3, 'やめる', function () { csClose(); }); }
   });
   // 横画面は右に、縦画面は下に

@@ -92,6 +92,7 @@ var UI_CSS = [
   '.ab.down{transform:translateY(2px) scale(.95);filter:brightness(1.3);box-shadow:0 0 0 2px #1a1008,0 0 10px #ffd56a;}',
   '.ab.main{background:radial-gradient(circle at 40% 30%,#e0a050,#a05a10 55%,#5a2a04);}',
   '.ab.main.ready{box-shadow:0 0 0 2px #1a1008,0 0 14px 3px #ffe23a;}',
+  '.ab.fire{background:radial-gradient(circle at 40% 30%,#ffe080,#e08a10 55%,#6a3a04);font-size:13px;}', '.ab.fire.on{box-shadow:0 0 0 2px #1a1008,0 0 12px 3px #ffd040;}', '.ab.gsw{font-size:9px;line-height:1.05;text-align:center;background:radial-gradient(circle at 40% 30%,#a0a8ff,#4050c0 60%,#1a2060);}',
   '.ab.tk{background:radial-gradient(circle at 40% 30%,#ff7a8a,#d0203a 55%,#6a0418);font-size:13px;}',
   '.ab .ico{width:26px;height:26px;}',
   '#os-hold{position:absolute;display:none;gap:4px;flex-wrap:wrap;justify-content:flex-end;pointer-events:none;}',
@@ -290,7 +291,7 @@ function layoutUI() {
   H.sb.querySelectorAll('.slot').forEach(function (e) { e.style.width = e.style.height = slotW + 'px'; });
   STICK.el.style.left = 'calc(var(--sl) + 14px)'; STICK.el.style.bottom = 'calc(' + sb + ' + ' + (base + 4) + 'px)';
   pos(H.bMain, 14, base + 8, 84); pos(H.bJump, 106, base + 2, 62); pos(H.bTackle, 104, base + 70, 76); pos(H.bRun, 16, base + 100, 50); pos(H.bSkill, 20, base + 154, 54); pos(H.bSub, 186, base + 70, 50); pos(H.bTouch2, 188, base + 126, 46);
-  H.hold.style.right = 'calc(var(--sr) + 10px)'; H.hold.style.bottom = 'calc(' + sb + ' + ' + (base + (touch ? 214 : 60)) + 'px)'; H.hold.style.width = (touch ? 172 : 340) + 'px';
+  H.hold.style.right = 'calc(var(--sr) + 10px)'; H.hold.style.bottom = 'calc(' + sb + ' + ' + (base + (touch ? 232 : 60)) + 'px)'; H.hold.style.width = (touch ? 172 : 340) + 'px';
   if (!touch) { H.hold.style.right = '50%'; H.hold.style.marginRight = '-170px'; H.hold.style.justifyContent = 'center'; }
   // ログ
   var lw = land ? Math.min(330, W * 0.32) : Math.min(330, W * 0.5), lh = land ? Math.min(110, Hh * 0.26) : 96;
@@ -303,7 +304,7 @@ function layoutUI() {
   var cw = touch && land ? Math.max(200, W - 2 * 220) : W * 0.92;
   H.cap.style.maxWidth = H.cap2.style.maxWidth = cw + 'px';
   H.cap.style.fontSize = H.cap2.style.fontSize = (Math.min(W, Hh) < 420 ? 18 : 22) + 'px';
-  H.capB = capB; if (typeof layoutTop === 'function') layoutTop(); if (typeof layoutSmashUI === 'function') layoutSmashUI();
+  H.capB = capB; if (typeof layoutTop === 'function') layoutTop(); if (typeof layoutArmsUI === 'function') layoutArmsUI(); if (typeof layoutSmashUI === 'function') layoutSmashUI();
   var small = Math.min(W, Hh) < 420;
   H.st.style.transform = small ? 'scale(.86)' : ''; H.st.style.transformOrigin = 'left top';
   Object.keys(WIN.list).forEach(function (k) { var w = WIN.list[k]; if (w.open) w.el.classList.toggle('big', isNarrow()); });

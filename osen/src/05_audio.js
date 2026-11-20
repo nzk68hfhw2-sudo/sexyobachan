@@ -216,6 +216,14 @@ function sfx(name, p) {
     case 'npcLand': _osc('sine', 160, t, 0.18, 0.12, null, { vib: 0.3, vibF: 18, slide: 90 }); _noise(t, 0.06, 0.06, 0, null, 900); break;
     case 'snap': _noise(t, 0.05, 0.12, 4000); _osc('sine', 2400, t, 0.06, 0.03); break;
     case 'clap': for (i = 0; i < 3; i++) _noise(t + i * 0.13, 0.04, 0.07, 1800); break;
+    case 'gunPistol': _osc('square', 900 * Math.pow(2, p / 12), t, 0.07, 0.06, null, { slide: 220, lp: 2600 }); _noise(t, 0.05, 0.07, 0, null, 2500); break;
+    case 'gunMg': _osc('square', 600 * Math.pow(2, p / 12), t, 0.04, 0.035, null, { slide: 200, lp: 2000 }); _noise(t, 0.03, 0.05, 0, null, 2200); break;
+    case 'gunShot': _noise(t, 0.25, 0.16, 0, null, 1300); _osc('sine', 140, t, 0.18, 0.16, null, { slide: 50 }); break;
+    case 'gunRocket': _noise(t, 0.5, 0.1, 0, null, 900); _osc('saw', 120, t, 0.35, 0.04, null, { slide: 260, lp: 700 }); break;
+    case 'gunPoi': _osc('sine', 300, t, 0.12, 0.12, null, { slide: 600 }); _osc('sine', 600, t + 0.05, 0.1, 0.05, null, { slide: 900 }); break;
+    case 'gunBeam': _osc('sine', 1200 * Math.pow(2, p / 24), t, 0.14, 0.035, null, { vib: 0.05, vibF: 30 }); _osc('saw', 300, t, 0.14, 0.02, null, { lp: 1500 }); break;
+    case 'gunAir': _noise(t, 0.4, 0.15, 0, null, 600); _osc('sine', 90, t, 0.3, 0.15, null, { slide: 40 }); break;
+    case 'boom': _noise(t, 0.8, 0.22, 0, null, 420); _osc('sine', 80 * Math.pow(2, (p || 0) / 36), t, 0.6, 0.24, null, { slide: 30 }); _noise(t + 0.05, 0.5, 0.08, 0, null, 2400); break;
     case 'train': _osc('square', 660, t, 0.6, 0.04, null, { lp: 1500 }); _osc('square', 784, t, 0.6, 0.04, null, { lp: 1500 }); break;
   }
 }
