@@ -1,0 +1,71 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 精神汚染ゲーム ～はちにんの町～　source.txt
+ （このファイルはゲームの説明書き。動作には関係しません）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+■ zip の中身（4つ）
+  index.html … game.js を読むだけの短いページ（Netlify の URL を直接開いた時用）
+  game.js    … ゲームのすべて。画面・文字・ボタン・音・3Dの町・8人のモデルも全部この中
+  source.txt … この説明
+  _headers   … Netlify 用の設定。他のサイト（Gravity）から game.js を読めるようにする（CORS）
+
+■ しくみ
+  ・game.js を1本 <script> で読めば全部動く（index.html の中身には頼らない）
+  ・3Dモデル（8人）とその色（テクスチャ）は game.js の中に埋め込み済み
+    → 別ファイルを読まないので、Gravity 経由でも読み込み失敗が起きにくい
+  ・外から読むもの：three.js（cdnjs, r128）と Google Fonts（フォント）だけ
+  ・読めなかった時は、真っ黒にせず「何が読めなかったか」を画面に日本語で出す
+
+■ Netlify の URL について
+  ・game.js の一番上に BASE_URL という行が1か所ある（今は将来の追加ファイル用）
+  ・game.js は自分が読み込まれた場所を自動で調べるので、ふつうは書きかえ不要
+  ・Gravity 用ローダーの中の BASE='https://～/' は、実際の Netlify の URL に合わせること
+
+■ 3Dモデル（添付された2つの GLB → 8人）
+  ・Meshy_AI_Four_Little_Friends（女の子4人が1つのメッシュ）
+  ・Meshy_AI_Four_Friends（男の子4人が1つのメッシュ）
+  ・どちらも約80万ポリゴン・27～28MB で、iPhone では重すぎるため
+    形はそのままで、ポリゴン数を減らした（1人 約1万ポリゴン＋軽量モード用 約3千ポリゴン）
+  ・つながっていない4人を、それぞれ別の1人として切り分けた（形は変えていない）
+  ・テクスチャは 2048px → 1024px の JPEG に縮小。法線マップなどは省略
+  ・アップロードされた3つの GLB のうち2つは、中身がまったく同じファイルだった
+
+■ 使っている外部のもの（ライセンス）
+  ・three.js r128（3D表示）… MIT License（自由に使ってOK）
+      https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
+  ・Google Fonts（すべて SIL Open Font License 1.1。自由に使ってOK）
+      Zen Kaku Gothic New / M PLUS 1p / Dela Gothic One / Rampart One / Reggae One /
+      RocknRoll One / Mochiy Pop One / Potta One / Yusei Magic / Hachi Maru Pop /
+      DotGothic16 / Kaisei Decol / Train One / Bungee / Shrikhand / Noto Sans SC（中国語）
+  ・効果音・BGM … すべてプログラム（Web Audio）で合成。音声ファイルなし
+  ・絵（看板・ワードアート・星・テクスチャ）… すべてプログラムで描画。画像ファイルなし
+  ・3Dモデル … 制作者さんが用意した Meshy AI 製のモデル（8人）
+
+■ 元のソース（GitHub の osen/ フォルダ）
+  src/00_boot.js     起動・診断メッセージ・フォント・three.js 読み込み（BASE_URL はここ）
+  src/01_util.js     便利関数・保存（localStorage が使えなくても止まらない）
+  src/02_model.js    埋め込みモデルの解凍
+  src/03_text.js     謎日本語の文章・8人の紹介・エリア・汚染の段階・時間帯
+  src/04_wordart.js  2000年代ワードアート（16種類）とクリップアート
+  src/05_audio.js    MIDI風BGM（エリア別9曲）と効果音
+  src/06_tex.js      地面・壁などの模様（すべて手続き生成）
+  src/07_batch.js    描画のまとめ（軽くする工夫）・当たり判定・マテリアル
+  src/08_signs.js    看板と注意書き
+  src/09_world.js    町の地図（建物・道・川・神社・存在しない部屋）
+  src/10_propmesh.js さわれる物の形
+  src/11_props.js    さわれる物の一覧（名前・図鑑の説明・字幕・反応）← 文章を直すならここ
+  src/12_render.js   描画・空・時間帯・画面効果・自動画質
+  src/13_input.js    操作（スティック・視点・ボタン・キーボード・マウス）
+  src/14_player.js   歩く・ジャンプ・当たり判定
+  src/15_ui.js       画面（汚染率・字幕・ワードアート表示・設定・図鑑・説明画面）
+  src/16_fx.js       さわった時の反応・汚染の段階・隠し要素
+  src/17_game.js     ゲーム全体の流れ・汚染の演出
+  src/99_main.js     起動の順番
+  assets/            埋め込み前のモデル（.bin）とテクスチャ（.jpg）
+  tools/build.js     src をまとめて dist/game.js を作る（node tools/build.js）
+  tools/model/       GLB を軽くして .bin にする道具
+
+■ 直し方のコツ
+  ・文章を変えたい → src/11_props.js や src/03_text.js の「'～'」の中を書きかえる
+  ・直したら node tools/build.js で game.js を作り直し、zip を作って Netlify に上書き
+  ・game.js を直接書きかえてもOK（ただし先頭の /*! … */ と最後の行は消さない）

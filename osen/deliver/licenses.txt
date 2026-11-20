@@ -1,0 +1,25 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 使った外部のものとライセンス
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+■ ライブラリ
+ ・three.js r128（3D表示）… MIT License
+   cdnjs から読み込み：https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
+   （モデルの読み込み用の追加部品は使っていません。モデルは独自の形式で game.js に埋め込み）
+
+■ フォント（Google Fonts から読み込み。すべて SIL Open Font License 1.1）
+ ・Zen Kaku Gothic New（画面の文字）
+ ・M PLUS 1p（ムービーメーカー風の字幕）
+ ・Noto Sans SC（中国語の字形を混ぜる用。必要な字だけ取り寄せ）
+ ・ワードアート用：Dela Gothic One / Rampart One / Reggae One / RocknRoll One / Mochiy Pop One /
+   Potta One / Yusei Magic / Hachi Maru Pop / DotGothic16 / Kaisei Decol / Train One
+ ・英字：Bungee / Shrikhand
+
+■ 自作（借り物なし）
+ ・BGM 9曲・効果音 約30種 … Web Audio で合成
+ ・ワードアート16種・クリップアート・看板・地面や壁の模様 … Canvas でプログラム描画
+ ・文章（謎日本語 約580種）… すべて架空。実在の会社・商品・キャラクター名は不使用
+
+■ 3Dモデル
+ ・作者さんが用意した Meshy AI のモデル2つ（4人×2＝8人）
+   ※Meshy AI で作ったモデルの利用条件（商用利用・公開の可否など）は、
+     Meshy のプランの規約を作者さん自身で確認してください

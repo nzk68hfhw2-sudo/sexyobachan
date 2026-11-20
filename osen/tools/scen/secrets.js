@@ -1,0 +1,28 @@
+module.exports = { touch: true, run: async (page, shot, logs) => {
+  await page.waitForTimeout(500);
+  await page.tap('.os-big >> text=あそぶ', { force: true });
+  const T = (id) => page.evaluate((id) => __os.touchProp(__os.PROPS.find(p => p.def.id === id)), id);
+  for (const id of ['statue0', 'statue1', 'statue2', 'statue3']) await T(id);
+  await page.waitForTimeout(1500); await shot('x1_order');
+  for (let i = 0; i < 13; i++) await T('clock');
+  await page.waitForTimeout(4000); await shot('x2_clock13');
+  await page.evaluate(() => { __os.teleport(134, 0.05, 0, -Math.PI / 2); });
+  await page.keyboard.down('KeyW'); await page.waitForTimeout(1500); await page.keyboard.up('KeyW');
+  logs.push('after wrap x=' + await page.evaluate(() => __os.P.pos.x.toFixed(1)));
+  await page.evaluate(() => { __os.teleport(88, 0.05, 102.5, Math.PI); });
+  await page.keyboard.down('KeyW'); await page.waitForTimeout(2500); await page.keyboard.up('KeyW');
+  logs.push('after shed z=' + await page.evaluate(() => __os.P.pos.z.toFixed(1)));
+  await page.waitForTimeout(800); await shot('x3_nai');
+  await T('exitDoor'); await page.waitForTimeout(800);
+  logs.push('after exit z=' + await page.evaluate(() => __os.P.pos.z.toFixed(1)));
+  await T('riverVend'); await T('crown'); await T('omikuji'); await T('omikuji');
+  for (const id of ['f_toge','f_naga','f_sarari','f_wakeme','f_okappa','f_maruo','f_haneko','f_megane']) await T(id);
+  await page.waitForTimeout(1500); await shot('x4_after');
+  const st = await page.evaluate(() => ({ secrets: Object.keys(__os.G.secrets), pol: __os.G.pol.toFixed(1), naiT: __os.G.naiT.toFixed(2) }));
+  logs.push(JSON.stringify(st));
+  await page.evaluate(() => { saveGame && 0; }).catch(() => {});
+  await page.waitForTimeout(11000);
+  await page.reload(); await page.waitForFunction('window.__osReady', null, { timeout: 60000 });
+  const st2 = await page.evaluate(() => ({ secrets: Object.keys(__os.G.secrets).length, pol: __os.G.pol.toFixed(1) }));
+  logs.push('after reload ' + JSON.stringify(st2));
+} };
