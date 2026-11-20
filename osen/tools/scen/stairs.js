@@ -1,5 +1,5 @@
 module.exports = { touch: false, run: async (page, shot, logs) => {
-  await page.click('.os-big >> text=あそぶ', { force: true });
+  await page.evaluate(() => { __os.PLAYER.agreed = true; __os.stepCharSel(false); __os.CS.idx = 0; __os.csDecide(); });
   const res = await page.evaluate(() => {
     const O = __os, P = O.P, IN = O.IN; O.G.paused = false; const out = {};
     function walk(name, x, z, yaw, secs, run) {

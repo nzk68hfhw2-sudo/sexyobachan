@@ -1,78 +1,94 @@
-// ---- 操作（スマホ：スティック＋右半分スライド＋ボタン / PC：WASD＋マウス） -----------------
-var IN = { mx: 0, mz: 0, lookX: 0, lookY: 0, run: false, runHold: false, jump: false, touch: false, keys: {}, locked: false, stickId: null, lookId: null, lastLook: 0, isTouch: false, anyInput: 0, dragMouse: false };
+// ---- 操作（スマホ：スティック・なぞって視点・ピンチで距離・ボタン / PC：WASD・マウス・ホイール・キー） ----
+var IN = { mx: 0, mz: 0, lookX: 0, lookY: 0, zoom: 0, run: false, jump: false, main: false, touch2: false, special: false, throwIt: false, rotate: false, bigger: false, smaller: false, store: false,
+  keys: {}, locked: false, stickId: null, lookId: null, pinch: null, lastLook: 0, isTouch: false, anyInput: 0, dragMouse: false };
 var STICK = { el: null, knob: null, cx: 0, cy: 0, r: 58 };
 function initInput() {
   var cv = R.renderer.domElement;
   IN.isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-  // ---- touch ----
   function stickCenter() { var b = STICK.el.getBoundingClientRect(); STICK.cx = b.left + b.width / 2; STICK.cy = b.top + b.height / 2; STICK.r = b.width / 2; }
+  var touches = {};
   function onStart(e) {
-    if (G.paused) return;
     audioInit();
     for (var i = 0; i < e.changedTouches.length; i++) {
-      var t = e.changedTouches[i], W = window.innerWidth, H = window.innerHeight;
-      if (t.clientX < W * 0.5 && IN.stickId === null && t.clientY > H * 0.35) { IN.stickId = t.identifier; stickCenter(); moveStick(t); }
-      else if (IN.lookId === null) { IN.lookId = t.identifier; IN.lpx = t.clientX; IN.lpy = t.clientY; }
+      var t = e.changedTouches[i], W = window.innerWidth, Hh = window.innerHeight;
+      if (e.currentTarget === STICK.el || (t.clientX < W * 0.42 && t.clientY > Hh * 0.5 && IN.stickId === null && !G.paused)) { if (IN.stickId === null) { IN.stickId = t.identifier; stickCenter(); moveStick(t); continue; } }
+      touches[t.identifier] = { x: t.clientX, y: t.clientY };
     }
-    IN.anyInput = now();
-    e.preventDefault();
+    var ids = Object.keys(touches);
+    if (ids.length >= 2) { var a = touches[ids[0]], b = touches[ids[1]]; IN.pinch = Math.hypot(a.x - b.x, a.y - b.y); IN.lookId = null; }
+    else if (ids.length === 1) IN.lookId = +ids[0];
+    IN.anyInput = now(); e.preventDefault();
   }
   function moveStick(t) {
-    var dx = t.clientX - STICK.cx, dy = t.clientY - STICK.cy, d = Math.sqrt(dx * dx + dy * dy), m = STICK.r * 0.9;
+    var dx = t.clientX - STICK.cx, dy = t.clientY - STICK.cy, d = Math.sqrt(dx * dx + dy * dy), m = STICK.r * 0.85;
     if (d > m) { dx *= m / d; dy *= m / d; }
-    IN.mx = dx / m; IN.mz = dy / m;
-    STICK.knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
-    STICK.el.classList.add('on');
+    IN.mx = dx / m; IN.mz = dy / m; STICK.knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
   }
   function onMove(e) {
     for (var i = 0; i < e.changedTouches.length; i++) {
       var t = e.changedTouches[i];
-      if (t.identifier === IN.stickId) moveStick(t);
-      else if (t.identifier === IN.lookId) { IN.lookX += (t.clientX - IN.lpx); IN.lookY += (t.clientY - IN.lpy); IN.lpx = t.clientX; IN.lpy = t.clientY; IN.lastLook = now(); }
+      if (t.identifier === IN.stickId) { moveStick(t); continue; }
+      var p = touches[t.identifier]; if (!p) continue;
+      if (IN.pinch == null && t.identifier === IN.lookId) { IN.lookX += t.clientX - p.x; IN.lookY += t.clientY - p.y; IN.lastLook = now(); }
+      p.x = t.clientX; p.y = t.clientY;
     }
-    IN.anyInput = now();
-    e.preventDefault();
+    var ids = Object.keys(touches);
+    if (IN.pinch != null && ids.length >= 2) { var a = touches[ids[0]], b = touches[ids[1]], d = Math.hypot(a.x - b.x, a.y - b.y); IN.zoom += (IN.pinch - d) * 0.02; IN.pinch = d; }
+    IN.anyInput = now(); e.preventDefault();
   }
   function onEnd(e) {
     for (var i = 0; i < e.changedTouches.length; i++) {
       var t = e.changedTouches[i];
-      if (t.identifier === IN.stickId) { IN.stickId = null; IN.mx = IN.mz = 0; STICK.knob.style.transform = ''; STICK.el.classList.remove('on'); }
-      if (t.identifier === IN.lookId) IN.lookId = null;
+      if (t.identifier === IN.stickId) { IN.stickId = null; IN.mx = IN.mz = 0; STICK.knob.style.transform = ''; }
+      delete touches[t.identifier]; if (t.identifier === IN.lookId) IN.lookId = null;
     }
+    var ids = Object.keys(touches); if (ids.length < 2) IN.pinch = null; if (ids.length === 1) IN.lookId = +ids[0];
   }
-  cv.addEventListener('touchstart', onStart, { passive: false });
-  cv.addEventListener('touchmove', onMove, { passive: false });
+  cv.addEventListener('touchstart', onStart, { passive: false }); cv.addEventListener('touchmove', onMove, { passive: false });
   cv.addEventListener('touchend', onEnd); cv.addEventListener('touchcancel', onEnd);
-  STICK.el.addEventListener('touchstart', function (e) { onStart(e); }, { passive: false });
-  STICK.el.addEventListener('touchmove', onMove, { passive: false });
+  STICK.el.addEventListener('touchstart', onStart, { passive: false }); STICK.el.addEventListener('touchmove', onMove, { passive: false });
   STICK.el.addEventListener('touchend', onEnd); STICK.el.addEventListener('touchcancel', onEnd);
   window.addEventListener('touchend', function () { audioInit(); }, { passive: true });
   window.addEventListener('click', function () { audioInit(); });
-  // ---- keyboard ----
+  // ---- キーボード ----
   window.addEventListener('keydown', function (e) {
-    if (G.paused && e.code !== 'Escape' && e.code !== 'KeyZ' && e.code !== 'Tab') return;
-    audioInit();
-    IN.keys[e.code] = true; IN.anyInput = now();
-    if (e.code === 'Space') { IN.jump = true; e.preventDefault(); }
-    if (e.code === 'KeyE' || e.code === 'Enter') IN.touch = true;
-    if (e.code === 'KeyZ') toggleZukan();
-    if (e.code === 'Tab') { toggleMenu(); e.preventDefault(); }
-    if (e.code === 'KeyR') { IN.run = !IN.run; updateRunBtn(); }
+    audioInit(); IN.keys[e.code] = true; IN.anyInput = now();
+    if (G.inMenu) return;
+    var c2 = e.code;
+    if (c2 === 'Space') { IN.jump = true; e.preventDefault(); }
+    if (c2 === 'KeyE' || c2 === 'Enter') IN.main = true;
+    if (c2 === 'KeyF') IN.touch2 = true;
+    if (c2 === 'KeyG') IN.special = true;
+    if (c2 === 'KeyQ') IN.throwIt = true;
+    if (c2 === 'KeyR') IN.rotate = true;
+    if (c2 === 'KeyZ') IN.smaller = true;
+    if (c2 === 'KeyX') IN.bigger = true;
+    if (c2 === 'KeyC') IN.store = true;
+    if (c2 === 'KeyT') { IN.run = !IN.run; updateRunBtn(); }
+    if (c2 === 'KeyI') openBag();
+    if (c2 === 'KeyM') openMapWin();
+    if (c2 === 'Tab') { openSettings(); e.preventDefault(); }
+    if (c2 === 'Escape') Object.keys(WIN.list).forEach(function (k) { closeWin(k, true); });
+    var n = /^Digit([1-8])$/.exec(c2); if (n) SLOTS[+n[1] - 1].fn();
   });
   window.addEventListener('keyup', function (e) { IN.keys[e.code] = false; });
-  // ---- mouse ----
+  // ---- マウス（クリックで視点をつかむ。ホイールで距離） ----
   cv.addEventListener('mousedown', function (e) {
-    if (G.paused || IN.isTouch && e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return;
+    if (G.inMenu || (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents)) return;
     audioInit();
-    if (IN.locked) { IN.touch = true; return; }
-    try { if (cv.requestPointerLock) cv.requestPointerLock(); } catch (er) {}
-    IN.dragMouse = true; IN.lpx = e.clientX; IN.lpy = e.clientY; IN.mdownT = now();
+    if (IN.locked) { if (e.button === 2) IN.throwIt = true; else IN.main = true; return; }
+    IN.dragMouse = true; IN.lpx = e.clientX; IN.lpy = e.clientY; IN.mdownT = now(); IN.mmoved = 0;
   });
-  window.addEventListener('mouseup', function (e) { if (IN.dragMouse && !IN.locked && now() - IN.mdownT < 250 && G.target) IN.touch = true; IN.dragMouse = false; });
+  window.addEventListener('mouseup', function (e) {
+    if (IN.dragMouse && !IN.locked && now() - IN.mdownT < 260 && IN.mmoved < 6) { try { if (cv.requestPointerLock) cv.requestPointerLock(); } catch (er) {} }
+    IN.dragMouse = false;
+  });
   window.addEventListener('mousemove', function (e) {
-    if (IN.locked) { IN.lookX += e.movementX || 0; IN.lookY += e.movementY || 0; IN.lastLook = now(); }
-    else if (IN.dragMouse) { IN.lookX += e.clientX - IN.lpx; IN.lookY += e.clientY - IN.lpy; IN.lpx = e.clientX; IN.lpy = e.clientY; IN.lastLook = now(); }
+    if (IN.locked) { IN.lookX += (e.movementX || 0) * 0.5; IN.lookY += (e.movementY || 0) * 0.5; IN.lastLook = now(); }
+    else if (IN.dragMouse) { IN.lookX += e.clientX - IN.lpx; IN.lookY += e.clientY - IN.lpy; IN.mmoved += Math.abs(e.clientX - IN.lpx) + Math.abs(e.clientY - IN.lpy); IN.lpx = e.clientX; IN.lpy = e.clientY; IN.lastLook = now(); }
   });
+  cv.addEventListener('wheel', function (e) { IN.zoom += e.deltaY * 0.004; e.preventDefault(); }, { passive: false });
+  cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
   document.addEventListener('pointerlockchange', function () { IN.locked = document.pointerLockElement === cv; IN.dragMouse = false; });
   window.addEventListener('blur', function () { IN.keys = {}; IN.mx = IN.mz = 0; });
 }
@@ -81,5 +97,5 @@ function readMove() {
   if (k.KeyW || k.ArrowUp) z -= 1; if (k.KeyS || k.ArrowDown) z += 1;
   if (k.KeyA || k.ArrowLeft) x -= 1; if (k.KeyD || k.ArrowRight) x += 1;
   var l = Math.sqrt(x * x + z * z); if (l > 1) { x /= l; z /= l; }
-  return { x: x, z: z, run: IN.run || k.ShiftLeft || k.ShiftRight || IN.runHold };
+  return { x: x, z: z, run: IN.run || k.ShiftLeft || k.ShiftRight };
 }

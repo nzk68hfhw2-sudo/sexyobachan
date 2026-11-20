@@ -147,10 +147,10 @@ function sfx(name, p) {
   var t = c.currentTime + 0.01, i;
   p = p || 0;
   switch (name) {
-    case 'step': _noise(t, 0.06, 0.09 + Math.random() * 0.03, 0, null, 500 + Math.random() * 400); _osc('sine', 90 + Math.random() * 20, t, 0.05, 0.08); break;
+    case 'step': _noise(t, 0.06, 0.09 + Math.random() * 0.03, 0, null, (500 + Math.random() * 400) * Math.pow(2, p / 12)); _osc('sine', (90 + Math.random() * 20) * Math.pow(2, p / 12), t, 0.05, 0.08); break;
     case 'stepWater': _noise(t, 0.15, 0.08, 0, null, 1600); break;
     case 'stepWood': _osc('triangle', 220 + Math.random() * 40, t, 0.05, 0.1, null, { slide: 120 }); break;
-    case 'jump': _osc('square', 300, t, 0.15, 0.08, null, { slide: 700, lp: 3000 }); break;
+    case 'jump': _osc('square', 300 * Math.pow(2, p / 12), t, 0.15, 0.08, null, { slide: 700 * Math.pow(2, p / 12), lp: 3000 }); break;
     case 'land': _noise(t, 0.12, 0.12, 0, null, 400); break;
     case 'touch': _osc('square', 880, t, 0.06, 0.1, null, { lp: 4000 }); _osc('square', 1320, t + 0.06, 0.09, 0.1, null, { lp: 4000 }); break;
     case 'wa': [0, 4, 7, 12, 16, 19, 24].forEach(function (m, k) { _osc('triangle', mtof(72 + m + p), t + k * 0.045, 0.25, 0.09); }); _osc('sine', 2093, t + 0.32, 0.4, 0.05, null, { vib: 0.02, vibF: 12 }); break;
@@ -175,6 +175,21 @@ function sfx(name, p) {
     case 'meow': _osc('sawtooth', 700, t, 0.35, 0.05, null, { slide: 500, lp: 1800, vib: 0.03 }); break;
     case 'crow': _noise(t, 0.25, 0.08, 0, null, 1200); _osc('sawtooth', 500, t, 0.25, 0.05, null, { slide: 350, lp: 1200 }); break;
     case 'quack': _osc('sawtooth', 400, t, 0.15, 0.06, null, { slide: 300, lp: 900, q: 6 }); break;
+    case 'uiClick': _osc('square', 1800, t, 0.025, 0.04, null, { lp: 5000 }); _osc('square', 900, t + 0.02, 0.03, 0.03, null, { lp: 3000 }); break;
+    case 'uiSlot': _osc('triangle', 660, t, 0.05, 0.08); _osc('triangle', 990, t + 0.04, 0.06, 0.06); break;
+    case 'uiOpen': _noise(t, 0.12, 0.05, 0, null, 2200); _osc('square', 392, t, 0.07, 0.05, null, { lp: 2000 }); _osc('square', 587, t + 0.06, 0.1, 0.05, null, { lp: 2000 }); break;
+    case 'uiClose': _osc('square', 587, t, 0.06, 0.05, null, { lp: 2000 }); _osc('square', 392, t + 0.05, 0.08, 0.05, null, { lp: 2000 }); break;
+    case 'uiLogin': [0, 4, 7, 12].forEach(function (m, k) { _osc('square', mtof(67 + m), t + k * 0.07, 0.12, 0.05, null, { lp: 3000 }); }); _osc('triangle', mtof(91), t + 0.3, 0.5, 0.05); break;
+    case 'sysMsg': _osc('sine', 1320, t, 0.12, 0.05); _osc('sine', 1760, t + 0.07, 0.18, 0.04); break;
+    case 'pickup': [0, 5, 9].forEach(function (m, k) { _osc('square', mtof(76 + m), t + k * 0.045, 0.06, 0.06, null, { lp: 4000 }); }); break;
+    case 'put': _noise(t, 0.08, 0.1, 0, null, 700); _osc('sine', 160, t, 0.08, 0.12, null, { slide: 90 }); break;
+    case 'throw': _noise(t, 0.25, 0.1, 0, null, 1800); _osc('triangle', 500, t, 0.2, 0.05, null, { slide: 200 }); break;
+    case 'rotate': _osc('square', 700, t, 0.05, 0.04, null, { lp: 3000 }); _osc('square', 900, t + 0.05, 0.05, 0.04, null, { lp: 3000 }); break;
+    case 'bagIn': _osc('square', 880, t, 0.05, 0.05, null, { lp: 3000 }); _osc('square', 660, t + 0.05, 0.05, 0.05, null, { lp: 3000 }); _noise(t + 0.08, 0.06, 0.05, 0, null, 1500); break;
+    case 'combine': [0, 4, 7, 11, 14, 19].forEach(function (m, k) { _osc('triangle', mtof(72 + m), t + k * 0.06, 0.4, 0.07); }); _osc('square', mtof(96), t + 0.4, 0.3, 0.03, null, { vib: 0.02, vibF: 10 }); break;
+    case 'thud': _osc('sine', 140 - p * 5, t, 0.12, Math.min(0.2, 0.05 + p * 0.015), null, { slide: 60 }); _noise(t, 0.06, Math.min(0.12, 0.03 + p * 0.01), 0, null, 900); break;
+    case 'eat': for (i = 0; i < 3; i++) _noise(t + i * 0.12, 0.06, 0.08, 0, null, 2500); break;
+    case 'chat': _osc('square', 1046, t, 0.04, 0.04, null, { lp: 3000 }); _osc('square', 1318, t + 0.05, 0.05, 0.04, null, { lp: 3000 }); break;
     case 'train': _osc('square', 660, t, 0.6, 0.04, null, { lp: 1500 }); _osc('square', 784, t, 0.6, 0.04, null, { lp: 1500 }); break;
   }
 }

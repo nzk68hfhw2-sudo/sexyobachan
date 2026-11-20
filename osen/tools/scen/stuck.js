@@ -1,5 +1,5 @@
 module.exports = { touch: false, run: async (page, shot, logs) => {
-  await page.click('.os-big >> text=あそぶ', { force: true });
+  await page.evaluate(() => { __os.PLAYER.agreed = true; __os.stepCharSel(false); __os.CS.idx = 0; __os.csDecide(); });
   const res = await page.evaluate(() => {
     const O = __os, P = O.P, IN = O.IN; O.G.paused = false;
     function inside(x, y, z) { return O.colQuery(x, z, 0.4).some(b => x + 0.3 > b.x0 && x - 0.3 < b.x1 && z + 0.3 > b.z0 && z - 0.3 < b.z1 && b.y1 > y + 0.55 && b.y0 < y + 1.7); }

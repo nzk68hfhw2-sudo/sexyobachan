@@ -49,10 +49,32 @@ window.addEventListener('error', function (e) {
 });
 
 // ---- fonts (Google Fonts only / OFL) ------------------------------------------
-var FONT_JP = '"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif';
-var FONT_SUB = '"M PLUS 1p","Zen Kaku Gothic New","Hiragino Sans",sans-serif';
-var FONT_CN = '"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif';
-var WA_FONTS = ['Dela Gothic One', 'Rampart One', 'Reggae One', 'RocknRoll One', 'Mochiy Pop One', 'Potta One', 'Yusei Magic', 'Hachi Maru Pop', 'DotGothic16', 'Kaisei Decol', 'Train One', 'Zen Kaku Gothic New'];
+// ---- フォント：すべて game.js に埋め込み（端末のフォントは使わない） ----------------------
+//   OsUI  = DotGothic16（UI・角ばったドット風）   OsSub = BIZ UDゴシック Bold（字幕・説明文）
+//   OsCN  = Noto Sans SC（一部の漢字だけ中国語の字形）  OsWA1-5 = ワードアート用
+var FONT_UI = '"OsUI",monospace';
+var FONT_JP = FONT_UI;
+var FONT_SUB = '"OsSub",monospace';
+var FONT_CN = '"OsCN",monospace';
+var WA_FONTS = ['OsWA1', 'OsWA2', 'OsWA3', 'OsWA4', 'OsWA5', 'OsUI', 'OsSub'];
+var FONT_NAMES = { OsUI: 'DotGothic16', OsSub: 'BIZ UDゴシック', OsCN: 'Noto Sans SC', OsWA1: 'Dela Gothic One', OsWA2: 'Reggae One', OsWA3: 'RocknRoll One', OsWA4: 'Mochiy Pop One', OsWA5: 'Yusei Magic' };
+function loadEmbeddedFonts(cb) {
+  var fail = [], names = Object.keys(FONT_B64), left = names.length, t0 = Date.now();
+  function one(n, ok) { if (!ok) fail.push(n); if (--left === 0) cb(fail); }
+  if (!window.FontFace || !document.fonts) {
+    // 予備：@font-face に data URL で入れる
+    var css = names.map(function (n) { return '@font-face{font-family:"' + n + '";src:url(data:font/woff2;base64,' + FONT_B64[n] + ') format("woff2");font-display:block}'; }).join('\n');
+    var st = document.createElement('style'); st.textContent = css; (document.head || document.documentElement).appendChild(st);
+    return setTimeout(function () { cb([]); }, 300);
+  }
+  names.forEach(function (n) {
+    try {
+      var bytes = b64ToBytes(FONT_B64[n]);
+      var ff = new FontFace(n, bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+      ff.load().then(function (f) { document.fonts.add(f); one(n, true); }, function () { one(n, false); });
+    } catch (e) { one(n, false); }
+  });
+}
 
 function setupPage() {
   var head = document.head || document.getElementsByTagName('head')[0] || document.documentElement;
@@ -61,26 +83,6 @@ function setupPage() {
     if (!vp) { vp = document.createElement('meta'); vp.name = 'viewport'; head.appendChild(vp); }
     vp.content = 'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover';
   } catch (e) {}
-  try {
-    var pre = document.createElement('link'); pre.rel = 'preconnect'; pre.href = 'https://fonts.gstatic.com'; pre.crossOrigin = 'anonymous'; head.appendChild(pre);
-    var fam = ['Zen+Kaku+Gothic+New:wght@500;700;900', 'M+PLUS+1p:wght@700;800', 'Bungee', 'Shrikhand'];
-    var lk = document.createElement('link'); lk.rel = 'stylesheet';
-    lk.href = 'https://fonts.googleapis.com/css2?family=' + fam.join('&family=') + '&display=swap';
-    head.appendChild(lk);
-    // ワードアート用フォントは「使う字だけ」を1フォント1ファイルで取り寄せる（軽い・速い）
-    var chars = encodeURIComponent(waCharset());
-    WA_FONTS.forEach(function (f) {
-      if (f === 'Zen Kaku Gothic New') return;
-      var l = document.createElement('link'); l.rel = 'stylesheet';
-      l.href = 'https://fonts.googleapis.com/css2?family=' + f.replace(/ /g, '+') + (f === 'Kaisei Decol' ? ':wght@700' : '') + '&display=swap&text=' + chars;
-      head.appendChild(l);
-    });
-    // 中国語フォントは「混ぜる字」だけを取り寄せる（軽い）
-    var lk2 = document.createElement('link'); lk2.rel = 'stylesheet';
-    lk2.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@500;700;900&display=swap&text=' + encodeURIComponent(CN_CHARS_ALL);
-    head.appendChild(lk2);
-  } catch (e) {}
-
   var st = document.createElement('style'); st.id = 'os-style'; st.textContent = BASE_CSS; head.appendChild(st);
   ROOT = document.createElement('div'); ROOT.id = 'os-root';
   CANVAS_HOST = document.createElement('div'); CANVAS_HOST.id = 'os-canvas';

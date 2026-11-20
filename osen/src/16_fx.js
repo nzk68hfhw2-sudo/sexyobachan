@@ -10,15 +10,19 @@ function placeProps(scene) {
       fr = addFriend(d.fr, p[0], p[1], p[2], rot, 1.05, { tint: 0xf0e2c8, col: false, area: 'koen' }); obj = fr.mesh; fr.statue = true;
       center.set(p[0], p[1] + 0.7, p[2]); rad = 1.0;
     } else if (d.b === 'friend') {
-      fr = addFriend(d.fr, p[0], p[1], p[2], rot, d.s || 1, { tint: d.tint, area: d.a }); obj = fr.mesh;
+      fr = addFriend(d.fr, p[0], p[1], p[2], rot, d.s || 1, { tint: d.tint, area: d.a, col: !!(d.tint || d.s) }); obj = fr.mesh;
       center.set(p[0], p[1] + 0.7 * (d.s || 1), p[2]); rad = 1.0 * (d.s || 1);
+    } else if (d.b !== 'proxy') {
+      var item = spawnItem(d.b, p[0], p[1], p[2], rot, { def: d, opt: d.o });
+      obj = item.obj; center.copy(item.body.pos); rad = d.rad || Math.max(item.body.ex, item.body.ez) + 0.5;
     } else {
-      obj = new THREE.Group(); if (BUILD[d.b]) BUILD[d.b](obj, d.o || {});
+      obj = new THREE.Group();
       obj.position.set(p[0], p[1], p[2]); obj.rotation.y = rot; scene.add(obj);
       center.set(p[0], p[1] + (d.col ? d.col[1] * 0.5 : (d.b === 'proxy' ? 0 : 0.35)), p[2]);
       if (d.col) { var sw = Math.abs(Math.sin(rot)) > 0.7, w = sw ? d.col[2] : d.col[0], dd = sw ? d.col[0] : d.col[2]; colAdd(p[0] - w / 2, p[1], p[2] - dd / 2, p[0] + w / 2, p[1] + d.col[1], p[2] + dd / 2, 'prop'); rad = d.rad || Math.max(d.col[0], d.col[2]) * 0.6 + 0.45; }
     }
-    var pr = { def: d, obj: obj, center: center, rad: rad, count: 0, fr: fr, base: obj.position.clone(), baseRot: obj.rotation.y, scl: 1, sclT: 1, spin: 0, hop: 0, floatT: 0, clones: 0 };
+    var pr = { def: d, obj: obj, center: center, rad: rad, count: 0, fr: fr, base: obj.position.clone(), baseRot: obj.rotation.y, scl: 1, sclT: 1, spin: 0, hop: 0, floatT: 0, clones: 0, item: item || null };
+    if (item) item.prop = pr; item = null;
     PROPS.push(pr); PROP_BY_ID[d.id] = pr;
   });
   // 存在しない部屋の８人
@@ -28,25 +32,35 @@ function placeProps(scene) {
   colAdd(63.4, 0, 101.6, 66.6, 6, 104.4);
 }
 var _ray = null, _tmp = null;
+// ねらっている物：カメラの中心の線上で、主人公の手がとどく物
 function findTarget() {
   if (!_ray) { _ray = new THREE.Vector3(); _tmp = new THREE.Vector3(); }
   var cam = R.camera; _ray.set(0, 0, -1).applyQuaternion(cam.quaternion);
-  var best = null, bt = 1e9, o = cam.position;
-  for (var i = 0; i < PROPS.length; i++) {
-    var pr = PROPS[i], c = pr.center;
-    if (pr.def.id === 'water') { c.set(clamp(P.pos.x, -160, 160), -0.3, 49.5); }
-    var dx = c.x - o.x, dy = c.y - o.y, dz = c.z - o.z, d2 = dx * dx + dy * dy + dz * dz, rr = pr.rad * Math.max(1, pr.scl);
-    if (d2 > (4.2 + rr) * (4.2 + rr)) continue;
-    var t = dx * _ray.x + dy * _ray.y + dz * _ray.z; if (t < 0) continue;
-    var perp2 = d2 - t * t;
-    if (perp2 < rr * rr && t < bt) { bt = t; best = pr; }
+  var best = null, bt = 1e9, o = cam.position, px = P.pos.x, py = P.pos.y + P.bodyH * 0.6, pz = P.pos.z, reach = 2.6 + P.r;
+  function test(c, rad, obj) {
+    var hx = c.x - px, hy = c.y - py, hz = c.z - pz; if (hx * hx + hy * hy + hz * hz > (reach + rad) * (reach + rad)) return;
+    var dx = c.x - o.x, dy = c.y - o.y, dz = c.z - o.z, d2 = dx * dx + dy * dy + dz * dz, t = dx * _ray.x + dy * _ray.y + dz * _ray.z; if (t < 0) return;
+    var perp2 = d2 - t * t, rr = rad + 0.25 + t * 0.03;
+    if (perp2 < rr * rr && t < bt) { bt = t; best = obj; }
   }
-  return best;
+  for (var i = 0; i < PROPS.length; i++) {
+    var pr = PROPS[i]; if (pr.gone || (pr.item && (pr.item === ITEMS.held || pr.item.gone || pr.item.onHead))) continue;
+    if (pr.def.id === 'water') pr.center.set(clamp(P.pos.x, -160, 160), -0.3, 49.5);
+    test(pr.center, pr.rad * Math.max(1, pr.scl), pr);
+  }
+  for (i = 0; i < ITEMS.list.length; i++) { var it = ITEMS.list[i]; if (it.prop || it.gone || it === ITEMS.held || it.onHead) continue; test(it.body.pos, Math.max(it.body.ex, it.body.ey, it.body.ez) + 0.2, it); }
+  if (!best) return null;
+  if (best.def) { var itm = best.item; return { key: 'p' + best.def.id, name: best.def.n, kind: itm ? '持てる物（重さ ' + effMass(itm.body).toFixed(1) + '）' : (best.dressing ? '着がえ所' : (best.fr ? '住人' : '町の物')), hint: itm ? '持つ／さわる／いじる' : (best.dressing ? 'さわるとキャラを変えられる' : 'さわる'), prop: best, item: itm, count: best.count };
+  }
+  var t = itemType(best.type);
+  return { key: 'i' + best.id, name: t.name, kind: '持てる物（重さ ' + effMass(best.body).toFixed(1) + '）', hint: '持つ／いじる' + (t.special ? '：' + t.special.name : ''), item: best, count: 1 };
 }
 // ---- さわる ---------------------------------------------------------------------------
 var FX_POOL = ['wa', 'jump', 'spin', 'grow', 'multiply', 'confetti', 'tint', 'sky', 'tilt', 'float', 'friend', 'rain', 'fov', 'grav', 'speed', 'babble', 'bigwa', 'shrink', 'time', 'fog'];
 var BIG_WORDS = ['ＧＲＥＡＴ!!', 'すごい!!', 'ナイス!!', '感動!!', '奇跡', 'ＮＩＣＥ', 'ありがとう', 'おめでとう', 'ＳＵＰＥＲ', '最高', '伝説', 'ＷＯＷ!!', '本日の主役', '愛', '虹色', '精神汚染', '汚染完了', 'ＨＡＰＰＹ', 'わーい', 'たのしい', '大成功', 'ふしぎ', 'ちょうど', 'ＮＥＷ!!'];
 function touchProp(pr) {
+  if (!pr || pr.gone) return;
+  if (pr.dressing) { sfx('uiOpen'); openCharChange(); return; }
   var d = pr.def, n = pr.count; pr.count++;
   G.touches++;
   var first = n === 0;
@@ -80,12 +94,12 @@ function doFx(fx, pr) {
     case 'confetti': confetti(16); sfx('chime'); break;
     case 'rain': rainObjects(pr); sfx('whoosh'); break;
     case 'multiply': multiplyProp(pr, randi(3, 5)); sfx('pop'); break;
-    case 'grow': pr.sclT = Math.min(pr.sclT * 1.5, 7); sfx('grow'); break;
-    case 'shrink': pr.sclT = Math.max(pr.sclT * 0.6, 0.25); sfx('down'); break;
-    case 'spin': pr.spin = 14; sfx('whoosh'); break;
-    case 'jump': pr.hop = 1; sfx('boing'); break;
+    case 'grow': if (pr.item) setScale(pr.item, pr.item.body.scale * 1.5); else pr.sclT = Math.min(pr.sclT * 1.5, 7); sfx('grow'); break;
+    case 'shrink': if (pr.item) setScale(pr.item, pr.item.body.scale * 0.6); else pr.sclT = Math.max(pr.sclT * 0.6, 0.25); sfx('down'); break;
+    case 'spin': if (pr.item) { pr.item.body.av.y = 14; wake(pr.item); } else pr.spin = 14; sfx('whoosh'); break;
+    case 'jump': if (pr.item) { pr.item.body.vel.y = 5; wake(pr.item); } else pr.hop = 1; sfx('boing'); break;
     case 'jump8': WORLD.friends.forEach(function (f) { if (f.naiRow) f.hopT = 1 + Math.random(); }); sfx('boing'); break;
-    case 'float': pr.floatT = 6; sfx('up'); break;
+    case 'float': if (pr.item) { pr.item.body.vel.y = 9; wake(pr.item); } else pr.floatT = 6; sfx('up'); break;
     case 'grav': P.gravMul = 0.28; P.gravT = 15; caption('重力が　よわく　なった。（１５秒）', { preset: 'zoom' }); sfx('up'); break;
     case 'heavy': P.gravMul = 2.3; P.gravT = 10; caption('重力が　つよく　なった。からだが　おもい。', { preset: 'drop' }); sfx('down'); break;
     case 'shrinkMe': P.scaleTarget = 0.3; P.scaleT = 15; caption('自分が　小さくなった。', { preset: 'zoom' }); sfx('down'); break;
@@ -116,6 +130,7 @@ function statueTouch(pr) {
 }
 var WARP_POINTS = [[0, 0, -46, 0], [50, 0, -10, 0], [-70, 0, 0, PI / 2], [0, 0, 10, 0], [10, 0, 42, PI], [60, 0, 90, 0], [-80, 5, -86, 0]];
 function multiplyProp(pr, n) {
+  if (pr.item) { for (var q = 0; q < n && pr.clones < 14; q++) { spawnFrom(pr.item, pr.item.type); pr.clones++; } return; }
   if (G.cloneCount > (LITE.on ? 60 : 140) || pr.clones > 14) return;
   for (var i = 0; i < n; i++) {
     var c;
@@ -126,13 +141,11 @@ function multiplyProp(pr, n) {
 }
 function rainObjects(pr) {
   var src = pr && pr.def.b !== 'proxy' && pr.def.b !== 'friend' && pr.def.b !== 'statue' ? pr.obj : null;
-  var n = LITE.on ? 8 : 16;
+  var n = LITE.on ? 6 : 12;
   for (var i = 0; i < n; i++) {
-    var c;
-    if (src && Math.random() < 0.6) c = src.clone();
-    else { c = new THREE.Group(); BUILD[pick(['duck', 'duck', 'cone', 'daruma', 'frog'])](c, {}); }
-    c.position.set(P.pos.x + rand(-8, 8), P.pos.y + rand(10, 22), P.pos.z + rand(-8, 8));
-    R.scene.add(c); SPAWNED.push({ o: c, v: new THREE.Vector3(0, -rand(0, 3), 0), life: 12, spin: rand(-6, 6), bounce: true, rain: true });
+    var ty = src && pr.item && Math.random() < 0.6 ? pr.item.type : pick(['duck', 'duck', 'cone', 'daruma', 'frog', 'can', 'star']);
+    var r2 = spawnItem(ty, P.pos.x + rand(-8, 8), P.pos.y + rand(10, 22), P.pos.z + rand(-8, 8), rand(0, TAU), { temp: true, awake: true });
+    r2.body.av.set(rand(-5, 5), rand(-5, 5), rand(-5, 5)); r2.born = G.t - 25;
   }
 }
 function popFriendNear(pr) {
@@ -143,6 +156,8 @@ function popFriendNear(pr) {
 function updateProps(dt, t) {
   for (var i = 0; i < PROPS.length; i++) {
     var pr = PROPS[i], o = pr.obj;
+    if (pr.item) { var inn = pr.item.inner; if (pr.def.b === 'barber') inn.children.forEach(function (c) { if (c.name === 'spin') c.rotation.y += dt * 3; }); if (pr.def.b === 'tv' || pr.def.b === 'oldtv') inn.children.forEach(function (c) { if (c.name === 'screen') c.material.color.setHSL((t * 0.2) % 1, 0.8, 0.6); }); if (pr.def.b === 'cat') inn.children.forEach(function (c) { if (c.name === 'tail') c.rotation.z = Math.sin(t * 3) * 0.4; }); if (pr.def.b === 'garapon' && pr.item.spinFast > 0) inn.children.forEach(function (c) { if (c.name === 'spin2') c.rotation.y += dt * 10; }); continue; }
+    if (pr.dressing) continue;
     if (pr.scl !== pr.sclT) { pr.scl = lerp(pr.scl, pr.sclT, 1 - Math.exp(-dt * 4)); if (Math.abs(pr.scl - pr.sclT) < 0.001) pr.scl = pr.sclT; if (!pr.fr) o.scale.set(pr.scl, pr.scl, pr.scl); }
     if (pr.fr) { pr.fr.pscl = pr.scl; pr.fr.spinning = pr.spin > 0; }
     if (pr.spin > 0) { o.rotation.y += pr.spin * dt; pr.spin = Math.max(0, pr.spin - dt * 4); if (pr.spin === 0) o.rotation.y = pr.baseRot; }
@@ -170,6 +185,7 @@ function updateFriends(dt, t) {
   var cam = R.camera.position;
   for (var i = WORLD.friends.length - 1; i >= 0; i--) {
     var f = WORLD.friends[i], m = f.mesh;
+    if (f.npc) continue;
     if (f.life != null) { f.life -= dt; if (f.life <= 0) { R.scene.remove(m); WORLD.friends.splice(i, 1); G.cloneCount = Math.max(0, G.cloneCount - 1); continue; } }
     var dx = cam.x - m.position.x, dz = cam.z - m.position.z, dist = Math.sqrt(dx * dx + dz * dz);
     if (dist > 140 && !f.giant) { m.visible = false; continue; } m.visible = true;
