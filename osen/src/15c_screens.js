@@ -33,7 +33,7 @@ function drawLoadingTitle() {
   if (!H.lLogo) return; H.lLogo.innerHTML = '';
   var c2 = wordArt(LOGIN.title, { style: 1, size: 64, shape: 'slant' }), e = document.createElement('canvas'); e.width = c2.width; e.height = c2.height; e.getContext('2d').drawImage(c2, 0, 0); e.style.maxWidth = '88vw'; H.lLogo.appendChild(e);
 }
-function setLoading(p, msg) { if (!H.lBar) return; H.lBar.firstChild.style.width = Math.round(p * 100) + '%'; H.lPct.innerHTML = cnHTML('Loading… ' + Math.round(p * 100) + '％　' + (msg || '')); }
+function setLoading(p, msg) { if (!H.lBar) return; H.lBar.firstChild.style.width = Math.round(p * 100) + '%'; H.lPct.innerHTML = cnHTML('Loading… ' + Math.round(p * 100) + '％　' + (msg || '') + '　（版 ' + GAME_VERSION + '）'); }
 function hideLoading() { clearInterval(H.tipIv); if (H.loading) { H.loading.style.transition = 'opacity .5s'; H.loading.style.opacity = 0; var l = H.loading; setTimeout(function () { if (l.parentNode) l.parentNode.removeChild(l); }, 600); H.loading = null; } }
 // ---- ログイン風の流れ ----
 var MENU = { el: null, step: '' };

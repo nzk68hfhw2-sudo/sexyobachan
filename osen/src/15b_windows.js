@@ -85,12 +85,13 @@ function openStatus() {
   }, { w: 330, h: 440 });
 }
 // ---- 定型文・スタンプ・身ぶり ----
-var PH_TAB = 0, PH_NOTE = false;
+var PH_TAB = 99, PH_NOTE = false;
 function openPhrases() {
-  toggleWin('phr', '定型文', 'chat', function (bd) {
+  toggleWin('phr', 'チャット', 'chat', function (bd) {
     var tabs = el('div', 'tabs2', bd);
-    PHRASES.forEach(function (c2, i) { mbtn(tabs, c2[0], function () { PH_TAB = i; refreshWin('phr'); }, i === PH_TAB ? 'sel' : ''); });
     mbtn(tabs, '自由に書く', function () { PH_TAB = 99; refreshWin('phr'); }, PH_TAB === 99 ? 'sel gold' : 'gold');
+    PHRASES.forEach(function (c2, i) { mbtn(tabs, c2[0], function () { PH_TAB = i; refreshWin('phr'); }, i === PH_TAB ? 'sel' : ''); });
+    
     if (PH_TAB === 99) {
       el('div', 'desc', bd, cnHTML('４０文字まで。過激な言葉は「＊」になります。電話番号・メール・URL・SNSのIDらしい物は消えます。個人情報は書かないで下さい。'));
       var inp = el('input', 'fm pe', bd); inp.type = 'text'; inp.maxLength = MSG_MAX; inp.placeholder = 'ここに書く（' + MSG_MAX + '文字まで）'; inp.setAttribute('enterkeyhint', 'send'); inp.autocomplete = 'off';

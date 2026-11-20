@@ -211,7 +211,7 @@ var SLOTS = [
   { k: '1', icon: 'bag', l: 'カバン', fn: function () { openBag(); } },
   { k: '2', icon: 'book', l: '図鑑', fn: function () { openZukan(); } },
   { k: '3', icon: 'status', l: 'ステータス', fn: function () { openStatus(); } },
-  { k: '4', icon: 'chat', l: '定型文', fn: function () { openPhrases(); } },
+  { k: '4', icon: 'chat', l: 'チャット', fn: function () { openPhrases(); } },
   { k: '5', icon: 'stamp', l: 'スタンプ', fn: function () { openStamps(); } },
   { k: '6', icon: 'gesture', l: '身ぶり', fn: function () { openGestures(); } },
   { k: '7', icon: 'skill', l: 'とくぎ', fn: function () { useSkill(); } },

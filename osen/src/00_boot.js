@@ -14,7 +14,7 @@ try { var _q = /[?&]osennet=([a-z]+)/.exec(location.search); if (_q) NET_DB_URL 
 // ボイスチャット用の中継サーバー（TURN）。スマホどうしで声がつながらない時だけ設定する。例：[{ urls: 'turn:…', username: '…', credential: '…' }]
 var VOICE_TURN = [];
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '2.1.0';
+var GAME_VERSION = '2.1.1';
 
 var ASSET_BASE = BASE_URL;
 (function detectBase() {
