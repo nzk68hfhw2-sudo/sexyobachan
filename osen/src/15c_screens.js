@@ -127,7 +127,8 @@ function buildCharScene() {
 function csShow(idx) {
   CS.idx = (idx + 8) % 8;
   if (CS.mesh) CS.scene.remove(CS.mesh);
-  var g2 = FRIENDS.hi[CS.idx]; CS.mesh = animMesh(g2); CS.body = new THREE.Group(); CS.st = {}; CS.gs = { id: 'wave', t: 0 }; var s = 1.18 * CHARS[CS.idx].scale; CS.mesh.scale.set(s, s, s); CS.scene.add(CS.mesh);
+  var g2 = FRIENDS.hi[CS.idx]; CS.mesh = new THREE.Mesh(g2, animMat(g2.userData.set || 0)); CS.mesh.material.userData.u.uH.value = g2.userData.h || 1.06; CS.mesh.castShadow = true; // キャラ選択は腕を切りはなさない（きれいな形のまま。腕は動かさない）
+  CS.body = new THREE.Group(); CS.st = {}; CS.gs = { id: 'nod', t: 0 }; var s = 1.18 * CHARS[CS.idx].scale; CS.mesh.scale.set(s, s, s); CS.scene.add(CS.mesh);
   if (CS.win) CS.fill();
   sfx('uiSlot');
 }
