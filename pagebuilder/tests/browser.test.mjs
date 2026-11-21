@@ -37,7 +37,7 @@ async function login(pg, id, pw) {
 // ユーザーが書いた内容から、危ないタグが1つも作られていないことを調べる
 const dangerous = (pg) => pg.evaluate(() => {
   const r = document.getElementById('kojin-page-root').shadowRoot;
-  return { xss: window.__xss || 0, bad: r.querySelectorAll('.main script, .main img, .main svg, .main iframe, .main a, .main style, .main details, .main b[onmouseover], .main [onerror], .main [onload]').length };
+  return { xss: window.__xss || 0, bad: r.querySelectorAll('.main script, .main img:not(.gi), .main svg, .main iframe, .main a, .main style, .main details, .main b[onmouseover], .main [onerror], .main [onload]').length };
 });
 
 let pg = await open(HOST), postUrl;
@@ -177,6 +177,39 @@ await R.t('アカウントを完全に削除できる', async () => {
 });
 await R.t('ここまでの操作で画面のエラーは0件', async () => { eq(pg.errors.length + bobPg.errors.length, 0, [...pg.errors, ...bobPg.errors].join(' / ')); eq(pg.dialogs + bobPg.dialogs, 0, 'dialogs'); });
 await pg.context().close(); await bobPg.context().close();
+
+console.log('■ Gravity に投稿する・Gravity のアイコン');
+await R.t('日記に「Gravityに投稿する」があり、URLなしの文章とカード画像が作られる', async () => {
+  const c = await open(HOST); await register(c, 'ui_share'); await c.click('.seg >> text=日記カレンダー'); await c.click('.cal button >> text="10"');
+  await c.fill('[aria-label="題名"]', 'はれの日'); await c.fill('[aria-label="本文"]', '# さんぽ\n**こうえん**にいった。\n- はな\n> きれい\n---\n<script>window.__xss=1</script>'); await c.click('.seg >> text=公開する'); await c.click('text=💾 保存する');
+  await c.waitForSelector('text=ひとことコメント'); await c.click('text=📮 Gravityに投稿する'); await c.waitForSelector('.cardimg');
+  const txt = await c.inputValue('[aria-label="投稿用の文章"]');
+  ok(!/https?:\/\//.test(txt), 'URLをふくまない'); ok(txt.includes('の日記') && txt.includes('はれの日') && txt.includes('■ さんぽ') && txt.includes('こうえんにいった。') && txt.includes('・はな'), txt); ok(txt.includes('@ui_share をさがしてね'), '道しるべ');
+  const im = await c.evaluate(() => { const i = document.getElementById('kojin-page-root').shadowRoot.querySelector('.cardimg'); return i.decode().then(() => [i.naturalWidth, i.naturalHeight, i.src.slice(0, 22)]); });
+  eq(im.join(), '1080,1350,data:image/png;base64,', 'card'); eq((await dangerous(c)).xss, 0, 'xss'); eq(c.errors.length, 0, c.errors.join());
+  await c.click('text=📋 文章をコピー'); await c.waitForSelector('.toast'); await c.context().close();
+});
+await R.t('ほかの人の日記には「Gravityに投稿する」が出ない', async () => { const v = await open(HOST); await v.click('.card >> text=はれの日'); await v.waitForSelector('text=ひとことコメント'); eq(await v.locator('text=Gravityに投稿する').count(), 0, 'none'); await v.context().close(); });
+await R.t('Gravity がアイコンのURLをわたしていれば自動で読み取り、日記とカードに貼る', async () => {
+  const gh = await startHost(GAME, { pre: `window.gravityUser={nickname:'x',profile:{avatarUrl:'${GAME}/test-icon.png?cors=1'}};` });
+  const c = await open(`http://localhost:${gh.port}/`); await login(c, 'ui_share', PW); await c.waitForSelector('text=書いたもの');
+  await c.click('.seg >> text=日記カレンダー'); await c.click('.cal button.has'); await c.waitForSelector('.pad .pg img.gi'); // 編集プレビューにデフォルトで貼られる
+  await c.click('.tabs >> text=もどる'); await c.click('text=👀 ページを見る'); await c.click('.seg >> text=日記'); await c.click('.pg .pl >> text=はれの日'); await c.waitForSelector('.pl img.gi');
+  await c.click('text=📮 Gravityに投稿する'); await c.waitForSelector('.cardimg'); await c.waitForSelector('.seg >> text=Gravityのアイコン'); eq(await c.locator('text=書き出せなかった').count(), 0, 'アイコン入りで書き出せた');
+  const sent = JSON.stringify(await call('getPage', { u: 'ui_share' })) + JSON.stringify(await call('feed')); ok(!sent.includes('test-icon'), 'アイコンのURLはサーバーに送らない');
+  await c.context().close(); await gh.stop();
+});
+await R.t('アイコン画像が書き出し禁止でも、絵文字に切りかえてカードを作れる。危ないURLは使わない', async () => {
+  const gh = await startHost(GAME, { pre: `window.userInfo={avatar:'${GAME}/test-icon.png'};window.profileData={icon:'javascript:window.__xss=1'};` });
+  const c = await open(`http://localhost:${gh.port}/`); await login(c, 'ui_share', PW); await c.waitForSelector('text=書いたもの');
+  await c.click('.card >> text=はれの日').catch(() => {}); await c.click('.seg >> text=日記カレンダー'); await c.click('.cal button.has'); await c.click('.tabs >> text=もどる');
+  await c.click('text=👀 ページを見る'); await c.click('.seg >> text=日記'); await c.click('.pg .pl >> text=はれの日'); await c.click('text=📮 Gravityに投稿する'); await c.waitForSelector('.cardimg'); await c.waitForSelector('text=書き出せなかった');
+  eq((await dangerous(c)).xss, 0, 'xss'); await c.context().close(); await gh.stop();
+});
+await R.t('アイコンが読み取れない場所では絵文字を使い、読み取りのようすを確認できる', async () => {
+  const c = await open(HOST); await tabTo(c, 'せってい'); await c.waitForSelector('text=いまの場所からは読み取れませんでした'); await c.click('text=読み取りのようすを見る');
+  ok((await c.inputValue('[aria-label="読み取りのようす"]')).includes('Gravityアイコン: 見つかりません'), 'diag'); await c.context().close();
+});
 
 console.log('■ fetch が禁止された場所(きびしい条件)と、サイトを直接開いた場合');
 await R.t('fetch が禁止されていても script タグ方式に自動で切りかわり、登録・長文の投稿・表示ができる', async () => {

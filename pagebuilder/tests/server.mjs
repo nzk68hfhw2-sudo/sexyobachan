@@ -29,6 +29,10 @@ export async function startSite(app, port = 0) {
       const r = await app.handleRequest(new Request('http://x' + req.url, { method: req.method, headers: req.headers, body: ['GET', 'HEAD', 'OPTIONS'].includes(req.method) ? undefined : Buffer.concat(chunks) }), req.headers['x-test-ip'] || req.socket.remoteAddress);
       res.writeHead(r.status, Object.fromEntries(r.headers)); res.end(Buffer.from(await r.arrayBuffer())); return;
     }
+    if (url.pathname === '/test-icon.png') { // テスト用の小さな画像(Gravity のアイコンの代わり)
+      const h = { 'content-type': 'image/png' }; if (url.searchParams.get('cors')) h['access-control-allow-origin'] = '*';
+      res.writeHead(200, h); res.end(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGP8z8CAFTBhFx4+EgBnAQEP8YcmkAAAAABJRU5ErkJggg==', 'base64')); return;
+    }
     const f = url.pathname === '/' ? '/index.html' : url.pathname;
     try {
       const data = await readFile(path.join(PUB, path.normalize(f)));
