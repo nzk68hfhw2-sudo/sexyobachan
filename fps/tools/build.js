@@ -20,3 +20,18 @@ for (const n of ['boys', 'girls']) {
   fs.writeFileSync(path.join(root, 'dist', 'models', n + '.glb.js'), 'window.__frAsset&&window.__frAsset(' + JSON.stringify(n) + ',"' + b.toString('base64') + '");\n');
 }
 console.log('built', files.length, 'files', out.length, 'bytes');
+
+// 1ファイル版（ダウンロード用）: three.js・game.js・モデルをすべて1つの HTML に埋め込む
+{
+  const three = fs.readFileSync(path.join(root, '..', 'tools', 'three-r128.min.js'), 'utf8');
+  const game = fs.readFileSync(path.join(root, 'dist', 'game.js'), 'utf8');
+  const esc = t => t.replace(/<\/script/gi, '<\\/script');
+  const b64 = n => fs.readFileSync(path.join(root, 'dist', 'models', n + '.glb')).toString('base64');
+  const html = '<!doctype html>\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<title>FRIENDS WARFARE</title>\n<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}</style>\n</head>\n<body>\n'
+    + '<script>/* three.js r128 (MIT License) */\n' + esc(three) + '\n</script>\n'
+    + '<script>window.__frInline={boys:"' + b64('boys') + '",girls:"' + b64('girls') + '"};</script>\n'
+    + '<script>\n' + esc(game) + '\n</script>\n</body>\n</html>\n';
+  const outDir = path.join(root, '..', 'deliver'); fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(path.join(outDir, 'friends-warfare.html'), html);
+  console.log('single-file html', (html.length / 1048576).toFixed(2), 'MB');
+}

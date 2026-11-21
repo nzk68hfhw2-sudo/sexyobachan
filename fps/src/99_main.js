@@ -2,7 +2,7 @@
 function boot() {
   setupPage();
   var loading = el('div', 'fr-load', UI, 'LOADING…');
-  loadScript(THREE_URL, function (err) {
+  (window.THREE && window.THREE.WebGLRenderer ? function (u, cb) { cb(null); } : loadScript)(THREE_URL, function (err) {
     if (err || !window.THREE) { showFatal('three.js を読み込めませんでした', '3D ライブラリ（cdnjs）への接続が止められている可能性があります。\n' + THREE_URL); return; }
     THREE = window.THREE;
     try {

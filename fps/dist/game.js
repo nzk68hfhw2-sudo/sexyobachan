@@ -603,6 +603,8 @@ function parseGLB(buf) {
 function fetchBinary(path, key, cb) {
   var done = false;
   function fin(err, buf) { if (done) return; done = true; cb(err, buf); }
+  function b64buf(b64) { var bin = atob(b64), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; }
+  if (window.__frInline && window.__frInline[key]) { try { return fin(null, b64buf(window.__frInline[key])); } catch (e) {} }   // single-file HTML build
   function viaScript() {       // fallback for hosts that forbid fetch/XHR: same bytes, wrapped in a .js file
     window.__frAsset = window.__frAsset || function (k, b64) { var f = window.__frAssetCb && window.__frAssetCb[k]; if (f) f(b64); };
     window.__frAssetCb = window.__frAssetCb || {};
@@ -1624,7 +1626,7 @@ function refreshAccountUI() {
 function boot() {
   setupPage();
   var loading = el('div', 'fr-load', UI, 'LOADING…');
-  loadScript(THREE_URL, function (err) {
+  (window.THREE && window.THREE.WebGLRenderer ? function (u, cb) { cb(null); } : loadScript)(THREE_URL, function (err) {
     if (err || !window.THREE) { showFatal('three.js を読み込めませんでした', '3D ライブラリ（cdnjs）への接続が止められている可能性があります。\n' + THREE_URL); return; }
     THREE = window.THREE;
     try {
