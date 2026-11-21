@@ -1,0 +1,53 @@
+一字一句変えずに出力してください。書き換えは禁止です。
+以下のHTMLを、そのまま1文字も変えずにゲームのコードとして使ってください。説明文・コメント・改行の追加や削除、URLの変更、ライブラリの追加、iframe化、fetch化、コードの整形・省略はすべて禁止です。
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>こじんページ</title>
+<style>
+html,body{margin:0;padding:0;height:100%;background:#f6efe2;overflow:hidden}
+#kpl{position:fixed;left:16px;right:16px;top:45%;color:#8a7c66;font:16px sans-serif;text-align:center;letter-spacing:.1em}
+#kpe{display:none;position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 100px);background:#fde0dc;color:#8e2219;border:2px solid #d9534f;border-radius:10px;padding:12px;font:13px/1.6 sans-serif;white-space:pre-wrap;z-index:2147483647}
+</style>
+</head>
+<body>
+<div id="kpl">ノートをひらいています…</div>
+<div id="kpe"></div>
+<script>
+(function(){
+var BASE='https://あなたのサイト名.netlify.app/';
+var URL_JS=BASE+'game.js';
+var done=false;
+function hide(){var l=document.getElementById('kpl');if(l)l.style.display='none';}
+function show(t,d){
+if(done)return;
+var e=document.getElementById('kpe');
+e.style.display='block';
+e.textContent='[読み込みエラー] '+t+'\n'+(d||'')+'\n\nURL: '+URL_JS+'\nオンライン: '+(navigator.onLine?'はい':'いいえ');
+hide();
+}
+window.addEventListener('error',function(ev){
+show('スクリプトの実行中にエラーが起きました',(ev.message||'')+' '+(ev.filename||'')+':'+(ev.lineno||''));
+});
+var s=document.createElement('script');
+s.src=URL_JS;
+s.async=true;
+s.onload=function(){
+var t0=Date.now();
+(function chk(){
+if(document.getElementById('kojin-page-root')){done=true;hide();return;}
+if(Date.now()-t0>20000){show('起動がタイムアウトしました','game.js は読み込めましたが、画面を作れませんでした。');return;}
+setTimeout(chk,300);
+})();
+};
+s.onerror=function(){
+show('game.js を読み込めませんでした','NetlifyのURLが正しいか、サイトが公開されているか、通信状態を確認してください。');
+};
+document.body.appendChild(s);
+})();
+</script>
+</body>
+</html>

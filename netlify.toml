@@ -1,0 +1,9 @@
+# 個人ページビルダー (pagebuilder フォルダ) を Netlify で公開するための設定
+[build]
+  base = "pagebuilder"
+  publish = "public"
+  command = "echo ready"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
