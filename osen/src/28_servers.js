@@ -3,7 +3,7 @@
 var OFFICIAL_SRV = { id: 'main', n: '公式サーバー　よにん町', official: true };
 var CHANNELS = ['ch.1 駅前', 'ch.2 ぬるい', 'ch.3 祭り', 'ch.4 静か', 'ch.5 ８人', 'ch.6 夜', 'ch.7 謎', 'ch.8 ４', 'ch.9 ワードアート', 'ch.10 来世'];
 var SRV_LIMIT = { mine: 2, all: 30, coolMin: 10, oldDays: 3 };
-var SRV = { list: [], counts: {}, ch: {}, ok: false, err: '', loading: false, t: 0 };
+var SRV = { list: [], counts: {}, ch: {}, rooms: {}, ok: false, err: '', loading: false, t: 0 };
 // 通信の口だけ先に作る（メニューで人数を見るため）
 function netEnsureT() {
   if (NET.T) return NET.T;
@@ -19,8 +19,8 @@ function srvRefresh(cb) {
   var to = setTimeout(function () { if (done) return; done = true; SRV.loading = false; SRV.err = 'つながらない'; if (cb) cb(); }, 8000);
   Promise.all([NET.T.once('who').catch(function () { return null; }), NET.T.once('srv').catch(function () { return null; })]).then(function (r) {
     if (done) return; done = true; clearTimeout(to); SRV.loading = false; SRV.ok = true; SRV.err = '';
-    var who = r[0] || {}, srv = r[1] || {}, tn = NET.T.now(); SRV.counts = {}; SRV.ch = {};
-    for (var k in who) { var w = who[k]; if (!w || typeof w.r !== 'string' || tn - (w.t || 0) > 70000) continue; var m = /^([a-z0-9]+)_c(\d+)_r\d+$/.exec(w.r); if (!m) continue; SRV.counts[m[1]] = (SRV.counts[m[1]] || 0) + 1; var ck = m[1] + '_' + m[2]; SRV.ch[ck] = (SRV.ch[ck] || 0) + 1; }
+    var who = r[0] || {}, srv = r[1] || {}, tn = NET.T.now(); SRV.counts = {}; SRV.ch = {}; SRV.rooms = {};
+    for (var k in who) { var w = who[k]; if (!w || typeof w.r !== 'string' || tn - (w.t || 0) > 70000 || k === NET.pid) continue; SRV.rooms[w.r] = (SRV.rooms[w.r] || 0) + 1; var m = /^([a-z0-9]+)_c(\d+)_r\d+$/.exec(w.r); if (!m) continue; SRV.counts[m[1]] = (SRV.counts[m[1]] || 0) + 1; var ck = m[1] + '_' + m[2]; SRV.ch[ck] = (SRV.ch[ck] || 0) + 1; }
     SRV.list = [];
     for (var id in srv) {
       var s = srv[id]; if (!s || typeof s.n !== 'string' || !/^u[a-z0-9]{6,12}$/.test(id)) continue;
@@ -133,3 +133,50 @@ function fnv64(s) { var out = ''; for (var k = 0; k < 8; k++) { var h = hashStr(
 // いまいる場所を知らせる（人数を数えるため。場所は町の名前だけ）
 function srvWho() { if (!NET.on || !NET.T) return; NET.T.set('who/' + NET.pid, { r: NET.room, t: NET.T.now() }).catch(function () {}); }
 setInterval(srvWho, 25000);
+// ---- 人がいる所へワープ ----------------------------------------------------------------------
+// 同じ町に人がいれば、その人のそばへ。いなければ、人がいる町（チャンネル）へ移ってから、そばへ。
+function leaveRoom() {
+  if (!NET.on) return;
+  (NET.subs || []).forEach(function (f) { try { if (typeof f === 'function') f(); } catch (e) {} }); NET.subs = [];
+  try { NET.T.remove('rooms/' + NET.room + '/p/' + NET.pid); } catch (e) {}
+  Object.keys(NET.peers).forEach(function (id) { var pr = NET.peers[id]; try { voiceHang(id, true); } catch (e) {} R.scene.remove(pr.root); delete NET.peers[id]; });
+  NET.on = false;
+}
+function warpNear(pr) {
+  if (P.driving) vehExit();
+  if (ITEMS.held) release(false); if (NPCHELD.n) npcRelease(false);
+  var a = rand(0, TAU), x = pr.pos.x + Math.cos(a) * 1.8, z = pr.pos.z + Math.sin(a) * 1.8;
+  sfx('warp'); debStars(P.pos.x, P.pos.y + 1, P.pos.z, 6);
+  teleport(x, groundAt(x, z, pr.pos.y + 1.5, 0.3), z, Math.atan2(-(pr.pos.x - x), -(pr.pos.z - z)) + PI);
+  CAM.yaw = Math.atan2(x - pr.pos.x, z - pr.pos.z);
+  debStars(x, P.pos.y + 1, z, 8);
+  sysMsg(pr.name + 'の　そばに　ワープしました!!');
+}
+function warpToPeople() {
+  if (G.inMenu) return;
+  if (!NET_DB_URL) { sysMsg('この版は1人用なので、ワープできません。'); sfx('error'); return; }
+  var ids = Object.keys(NET.peers).filter(function (id) { return NET.peers[id].vis && NET.peers[id].pos; });
+  if (NET.on && ids.length) { warpNear(NET.peers[pick(ids)]); return; }
+  if (!NET.T || !NET.ok) { sysMsg('通信できないので、ワープできません。'); sfx('error'); return; }
+  if (VEH && P.driving) vehExit();
+  sysMsg('人がいる町を　さがしています…', true);
+  srvRefresh(function () {
+    var best = null, bn = 0;
+    for (var room in SRV.rooms) {
+      if (room === NET.room) continue;
+      var sid = room.split('_')[0], s = sid === 'main' ? OFFICIAL_SRV : SRV.list.filter(function (q) { return q.id === sid; })[0];
+      if (!s || (s.h && sid !== PLAYER.srvId)) continue; // パスワード付きのサーバーには勝手に入らない
+      if (SRV.rooms[room] > bn && SRV.rooms[room] < ROOM_MAX) { bn = SRV.rooms[room]; best = { room: room, s: s }; }
+    }
+    if (!best) { sysMsg('いま、ほかに遊んでいる人が　いません（パスワード付きのサーバーはのぞく）。'); sfx('error'); return; }
+    var m = /_c(\d+)_r/.exec(best.room), ch = m ? +m[1] : 1;
+    leaveRoom();
+    PLAYER.srvId = best.s.id; PLAYER.server = best.s.n; PLAYER.ch = ch; PLAYER.channel = CHANNELS[ch - 1] || ('ch.' + ch); saveGame();
+    enterRoom(best.room);
+    sysMsg(PLAYER.server + '　' + PLAYER.channel + '（' + bn + '人）に　移動しました。');
+    var tries = 0, iv = setInterval(function () {
+      tries++; var ids2 = Object.keys(NET.peers).filter(function (id) { return NET.peers[id].vis && NET.peers[id].snaps && NET.peers[id].snaps.length; });
+      if (ids2.length) { clearInterval(iv); warpNear(NET.peers[pick(ids2)]); } else if (tries > 16) clearInterval(iv);
+    }, 400);
+  });
+}

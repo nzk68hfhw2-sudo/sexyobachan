@@ -211,10 +211,12 @@ function openPeople() {
   toggleWin('people', 'まわりの人', 'people', function (bd) {
     var ids = Object.keys(NET.peers);
     el('div', 'kv', bd, '<span>' + cnHTML(NET.on ? '同じ町：' + NET.room : '1人用') + '</span><b>' + NET.count() + '人</b>');
-    if (!ids.length) { el('div', 'desc', bd, cnHTML('いま、ほかの人はいません。')); }
+    var wr = el('div', 'row2', bd); mbtn(wr, '人がいる所へワープ', function () { closeWin('people'); warpToPeople(); }, 'gold', 'people');
+    if (!ids.length) { el('div', 'desc', bd, cnHTML('いま、同じ町に　ほかの人はいません。「人がいる所へワープ」で、人がいる町へ移れます。')); }
     ids.forEach(function (id) {
       var pr = NET.peers[id], r = el('div', 'kv', bd), blk = !!NET.blocked[id];
       el('span', '', r).innerHTML = cnHTML(pr.name + '（' + FRIEND_INFO[pr.char].name + '）');
+      if (!blk) mbtn(r, 'そばへ', function () { closeWin('people'); warpNear(pr); }, '', 'run');
       mbtn(r, blk ? 'もどす' : '見えなくする', function () { if (blk) delete NET.blocked[id]; else { NET.blocked[id] = 1; voiceHang(id); } refreshWin('people'); sysMsg(blk ? pr.name + 'を　見えるようにしました。' : pr.name + 'を　見えなくしました（会話も届きません）。'); }, blk ? 'gold' : 'red');
     });
     el('div', 'desc', bd, cnHTML('「見えなくする」と、その人の姿・吹き出し・会話が、あなたの画面に出なくなります。全員を見えなくするには ⚙設定の「ミュート」。'));

@@ -50,7 +50,7 @@ function localTransport() {
     kind: 'local', set: set, update: function (p, v) { for (var k in v) set(p + '/' + k, v[k]); return Promise.resolve(); }, remove: function (p) { return set(p, null); },
     push: function (p, v) { var k = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); set(p + '/' + k, v); return k; },
     once: function (p) { return new Promise(function (res) { setTimeout(function () { res(get(p)); }, 120); }); },
-    on: function (p, ev, cb, last) { var sb = { p: p, ev: ev, cb: cb }; subs.push(sb); if (ev === 'child_added') { var o = get(p) || {}; var ks = Object.keys(o); if (last) ks = ks.slice(-last); ks.forEach(function (k) { cb(k, o[k]); }); } if (ev === 'value') cb(null, get(p)); return function () { subs.splice(subs.indexOf(sb), 1); }; },
+    on: function (p, ev, cb, last) { var sb = { p: p, ev: ev, cb: cb }; subs.push(sb); if (ev === 'child_added') { var o = get(p) || {}; var ks = Object.keys(o); if (last) ks = ks.slice(-last); ks.forEach(function (k) { cb(k, o[k]); }); } if (ev === 'value') cb(null, get(p)); return function () { subs.splice(subs.indexOf(sb), 1); };  return function () { var q = subs.indexOf(sb); if (q >= 0) subs.splice(q, 1); }; },
     onDisconnectRemove: function (p) { discon.push(p); },
     txnAdd: function (p, d) { return set(p, Math.max(0, (get(p) || 0) + d)); },
     onConnected: function (cb) { setTimeout(function () { cb(true); }, 50); },
@@ -87,13 +87,15 @@ function enterRoom(room) {
   NET.room = room; NET.on = true; NET.joinT = NET.T.now(); var base = 'rooms/' + room + '/';
   NET.T.onDisconnectRemove(base + 'p/' + NET.pid); NET.T.onDisconnectRemove('who/' + NET.pid); setTimeout(srvWho, 500);
   writeMe(true);
-  NET.T.on(base + 'p', 'child_added', peerUpsert); NET.T.on(base + 'p', 'child_changed', peerUpsert); NET.T.on(base + 'p', 'child_removed', function (k) { peerRemove(k); });
-  NET.T.on(base + 'e', 'child_added', onEvent, 40);
+  NET.subs = [];
+  NET.subs.push(NET.T.on(base + 'p', 'child_added', peerUpsert), NET.T.on(base + 'p', 'child_changed', peerUpsert), NET.T.on(base + 'p', 'child_removed', function (k) { peerRemove(k); }));
+  NET.subs.push(NET.T.on(base + 'e', 'child_added', onEvent, 40));
   // 汚染率は人ごと（ほかの人の汚染はもらわない）
   NET.T.once(base + 'i').then(function (all) {
     NET.applying = true; for (var k in (all || {})) applyItemState(k, all[k]); NET.applying = false;
     var upd = function (k, v) { if (!v || v.by === NET.pid) return; var it = findNetItem(k); if (it && (it === ITEMS.held || !it.body.sleep)) { if (it) it.pendState = v; return; } NET.applying = true; applyItemState(k, v); NET.applying = false; };
-    NET.T.on(base + 'i', 'child_changed', upd); NET.T.on(base + 'i', 'child_added', upd);
+    if (NET.room !== room) return;
+    NET.subs.push(NET.T.on(base + 'i', 'child_changed', upd), NET.T.on(base + 'i', 'child_added', upd));
   });
   sysMsg('同時プレイ：町「' + room + '」に入りました。ほかの人と同じ町です。');
   logMsg('sys', 'ほかの人とは　定型文・スタンプ・身ぶりで　話せます。⚙設定で　ミュートできます。');
