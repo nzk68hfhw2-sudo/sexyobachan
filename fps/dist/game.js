@@ -1409,7 +1409,7 @@ function boot() {
         H.modelNote.textContent = (s.boys === 'ok' && s.girls === 'ok') ? '' : '※ 仲間の3Dモデルを読み込めなかったため、かんたんな人形で表示しています'; clearInterval(mi);
       }, 400);
       window.__frReady = true;
-      window.__fr = { G: G, P: P, Q: Q, ENEMIES: ENEMIES, FRIENDS: FRIENDS, MODEL_STATUS: MODEL_STATUS, input: input, gun: gun, errors: RUNTIME_ERRORS, start: startGame, hurt: hurtPlayer, end: endGame };
+      window.__fr = { G: G, P: P, Q: Q, ENEMIES: ENEMIES, FRIENDS: FRIENDS, MODEL_STATUS: MODEL_STATUS, input: input, gun: gun, errors: RUNTIME_ERRORS, start: startGame, killAll: function () { G.queue.length = 0; ENEMIES.slice().forEach(function (e) { killEnemy(e, true); }); }, hurt: hurtPlayer, end: endGame };
       requestAnimationFrame(frame);
     }, 30);
   });
