@@ -180,7 +180,7 @@ function peerUpsert(id, v) {
     pr = NET.peers[id] = { id: id, char: ci, name: decodeName(v.n), pos: new THREE.Vector3(v.x, v.y, v.z), face: v.f || 0, snaps: [], root: root, body: body, mesh: m, st: {}, h: (g2.userData.h || 1.06) * sc, vis: true, gesture: null };
     if (!NET.muted) { logMsg('sys', pr.name + '（' + FRIEND_INFO[ci].name + '）が　町に来ました。'); sfx('uiOpen'); }
   }
-  if ((v.c | 0) !== pr.char) { var ci2 = clamp(v.c | 0, 0, 7), g3 = FRIENDS.lo[ci2]; pr.char = ci2; pr.mesh.geometry = g3; pr.mesh.material = animMat(g3.userData.set || 0); pr.mesh.material.userData.u.uH.value = g3.userData.h || 1.06; var s2 = 1.18 * CHARS[ci2].scale; pr.mesh.scale.set(s2, s2, s2); pr.h = (g3.userData.h || 1.06) * s2; }
+  if ((v.c | 0) !== pr.char) { var ci2 = clamp(v.c | 0, 0, 7), g3 = armGeo(FRIENDS.lo[ci2]); pr.char = ci2; pr.mesh.geometry = g3; pr.mesh.material = animMat(g3.userData.set || 0); pr.mesh.material.userData.u.uH.value = g3.userData.h || 1.06; var s2 = 1.18 * CHARS[ci2].scale; pr.mesh.scale.set(s2, s2, s2); pr.h = (g3.userData.h || 1.06) * s2; }
   pr.name = decodeName(v.n); pr.lastT = v.t || NET.T.now(); pr.recv = Date.now();
   pr.snaps.push({ t: Date.now(), x: v.x, y: v.y, z: v.z, f: v.f || 0 }); if (pr.snaps.length > 12) pr.snaps.shift();
   if (v.g && (!pr.gesture || pr.gesture.id !== v.g)) pr.gesture = { id: v.g, t: 0 };

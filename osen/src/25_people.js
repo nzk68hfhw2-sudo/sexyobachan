@@ -15,7 +15,7 @@ function initMobs() {
   }
 }
 function addMob(idx, x, z, sc, tint) {
-  var geo = FRIENDS.lo[idx] || FRIENDS.hi[idx]; if (!geo) return null;
+  var geo = armGeo(FRIENDS.lo[idx] || FRIENDS.hi[idx]); if (!geo) return null;
   var mesh = new THREE.Mesh(geo, animMat(geo.userData.set || 0)); mesh.material.userData.u.uH.value = geo.userData.h || 1.06; mesh.material.color.setHex(tint); mesh.castShadow = !LITE.on;
   mesh.scale.setScalar(1.18 * sc);
   var root = new THREE.Group(), body = new THREE.Group(); root.add(body); body.add(mesh); R.scene.add(root);

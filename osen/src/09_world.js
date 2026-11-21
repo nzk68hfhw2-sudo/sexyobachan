@@ -15,7 +15,7 @@ function animMat(set) {
   m.userData.u = u;
   m.onBeforeCompile = function (sh) {
     for (var k in u) sh.uniforms[k] = u[k];
-    sh.vertexShader = 'uniform float uArmLo, uH, uLegL, uLegR, uArmL, uArmR, uRaiseL, uRaiseR, uHeadP, uHeadY;\n' +
+    sh.vertexShader = 'attribute float aArm;\nuniform float uArmLo, uH, uLegL, uLegR, uArmL, uArmR, uRaiseL, uRaiseR, uHeadP, uHeadY;\n' +
       'vec3 rx(vec3 p, float a){ float c=cos(a), s=sin(a); return vec3(p.x, p.y*c - p.z*s, p.y*s + p.z*c); }\n' +
       'vec3 rz(vec3 p, float a){ float c=cos(a), s=sin(a); return vec3(p.x*c - p.y*s, p.x*s + p.y*c, p.z); }\n' +
       'vec3 ry(vec3 p, float a){ float c=cos(a), s=sin(a); return vec3(p.x*c + p.z*s, p.y, -p.x*s + p.z*c); }\n' +
@@ -27,7 +27,7 @@ function animMat(set) {
         'vec3 hip = vec3(sd*H*0.045, H*0.32, 0.0);',
         'transformed = rx(transformed - hip, (sd > 0.0 ? uLegR : uLegL) * wl) + hip;',
         // 腕：肩を中心に前後にふる・横に上げる
-        'float wa = smoothstep(H*0.118, H*0.135, abs(position.x)) * (1.0 - smoothstep(H*0.54, H*0.60, position.y)) * smoothstep(H*uArmLo, H*(uArmLo + 0.08), position.y) * (1.0 - smoothstep(0.07*H, 0.12*H, abs(position.z)));',
+        'float wa = aArm;',
         'vec3 sho = vec3(sd*H*0.115, H*0.59, 0.0);',
         'vec3 q = transformed - sho; q = rx(q, (sd > 0.0 ? uArmR : uArmL) * wa); q = rz(q, sd * (sd > 0.0 ? uRaiseR : uRaiseL) * wa); transformed = q + sho;',
         // 頭：首を中心にうなずく・横にふる
@@ -39,7 +39,47 @@ function animMat(set) {
   m.customProgramCacheKey = function () { return 'friendAnim'; };
   return m;
 }
-function animMesh(geo) { var m = new THREE.Mesh(geo, animMat(geo.userData.set || 0)); m.material.userData.u.uH.value = geo.userData.h || 1.06; m.castShadow = true; return m; }
+// 腕を体から切りはなす：形のつながりをたどって「腕」と「体」に分け、点を共有しないようにして腕の印（aArm）を付ける
+// （腕と体をつなぐ三角形が引きのばされて、羽やマントのようになるのを防ぐ）
+function armGeo(geo) {
+  if (!geo || !geo.index || !geo.attributes.position) return geo;
+  if (geo.userData.armGeo) return geo.userData.armGeo;
+  var H = geo.userData.h || 1.06, lo = (geo.userData.set || 0) === 0 ? 0.30 : 0.2;
+  var P = geo.attributes.position.array, idx = geo.index.array, n = P.length / 3, i;
+  function ss(a, b, x) { var t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
+  function w(x, y, z) { return ss(H * 0.118, H * 0.135, Math.abs(x)) * (1 - ss(H * 0.54, H * 0.60, y)) * ss(H * lo, H * (lo + 0.08), y) * (1 - ss(0.07 * H, 0.12 * H, Math.abs(z))); }
+  // 同じ位置の点をまとめて、となり合う点を作る
+  var key = {}, cid = new Int32Array(n), nc = 0;
+  for (i = 0; i < n; i++) { var kk = Math.round(P[i * 3] * 2e4) + ',' + Math.round(P[i * 3 + 1] * 2e4) + ',' + Math.round(P[i * 3 + 2] * 2e4); if (key[kk] === undefined) key[kk] = nc++; cid[i] = key[kk]; }
+  var cp = new Float64Array(nc * 3); for (i = 0; i < n; i++) { cp[cid[i] * 3] = P[i * 3]; cp[cid[i] * 3 + 1] = P[i * 3 + 1]; cp[cid[i] * 3 + 2] = P[i * 3 + 2]; }
+  var adj = []; for (i = 0; i < nc; i++) adj.push([]);
+  for (var t0 = 0; t0 < idx.length; t0 += 3) for (var e = 0; e < 3; e++) { var u = cid[idx[t0 + e]], v2 = cid[idx[t0 + (e + 1) % 3]]; if (u !== v2) { adj[u].push(v2); adj[v2].push(u); } }
+  function dij(seed) {
+    var d = new Float64Array(nc).fill(1e9), heap = [];
+    function push(v, dv) { heap.push([dv, v]); var k = heap.length - 1; while (k > 0) { var pk = (k - 1) >> 1; if (heap[pk][0] <= heap[k][0]) break; var tmp = heap[pk]; heap[pk] = heap[k]; heap[k] = tmp; k = pk; } }
+    function pop() { var top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; var k = 0; for (;;) { var l = k * 2 + 1, r = l + 1, m = k; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === k) break; var tmp = heap[m]; heap[m] = heap[k]; heap[k] = tmp; k = m; } } return top; }
+    for (var q = 0; q < nc; q++) if (seed(q)) { d[q] = 0; push(q, 0); }
+    while (heap.length) { var it = pop(), dv = it[0], v = it[1]; if (dv > d[v]) continue; var A = adj[v]; for (var j = 0; j < A.length; j++) { var o = A[j], dx = cp[o * 3] - cp[v * 3], dy = cp[o * 3 + 1] - cp[v * 3 + 1], dz = cp[o * 3 + 2] - cp[v * 3 + 2], nd = dv + Math.sqrt(dx * dx + dy * dy + dz * dz); if (nd < d[o] - 1e-9) { d[o] = nd; push(o, nd); } } }
+    return d;
+  }
+  var dA = dij(function (q) { return w(cp[q * 3], cp[q * 3 + 1], cp[q * 3 + 2]) > 0.97 && cp[q * 3 + 1] < H * 0.5; });
+  var dB = dij(function (q) { var x = Math.abs(cp[q * 3]), y = cp[q * 3 + 1]; return x < H * 0.075 || y > H * 0.63 || y < H * (lo - 0.03); });
+  var vArm = new Uint8Array(nc); for (i = 0; i < nc; i++) vArm[i] = dA[i] < dB[i] && dA[i] < 1e8 ? 1 : 0;
+  var m0 = new Int32Array(n).fill(-1), m1 = new Int32Array(n).fill(-1), src = [], arm = [], ni = new Uint32Array(idx.length);
+  for (var t = 0; t < idx.length; t += 3) {
+    var a = idx[t], b = idx[t + 1], c = idx[t + 2];
+    var isArm = (vArm[cid[a]] + vArm[cid[b]] + vArm[cid[c]]) === 3 ? 1 : 0, M = isArm ? m1 : m0;
+    for (var k = 0; k < 3; k++) { var v = idx[t + k]; if (M[v] < 0) { M[v] = src.length; src.push(v); arm.push(isArm); } ni[t + k] = M[v]; }
+  }
+  var g = new THREE.BufferGeometry();
+  for (var nm in geo.attributes) { var at = geo.attributes[nm], sz = at.itemSize, arr = new at.array.constructor(src.length * sz); for (i = 0; i < src.length; i++) for (var q2 = 0; q2 < sz; q2++) arr[i * sz + q2] = at.array[src[i] * sz + q2]; g.setAttribute(nm, new THREE.BufferAttribute(arr, sz, at.normalized)); }
+  g.setAttribute('aArm', new THREE.Float32BufferAttribute(arm, 1));
+  g.setIndex(new THREE.BufferAttribute(src.length > 65535 ? ni : new Uint16Array(ni), 1));
+  g.userData = Object.assign({}, geo.userData); g.computeBoundingSphere(); g.computeBoundingBox();
+  geo.userData.armGeo = g; g.userData.armGeo = g;
+  return g;
+}
+function animMesh(geo) { geo = armGeo(geo); var m = new THREE.Mesh(geo, animMat(geo.userData.set || 0)); m.material.userData.u.uH.value = geo.userData.h || 1.06; m.castShadow = true; return m; }
 // 8人のうち idx 番の友達を置く（scale 1 = 身長 約1.25m）
 function addFriend(idx, x, y, z, rot, scale, opt) {
   opt = opt || {};
