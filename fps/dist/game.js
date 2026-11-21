@@ -1479,7 +1479,7 @@ function frame(t) {
 // The password is sent once over HTTPS and hashed with bcrypt on the server.
 // The server returns a random session token; it is kept in localStorage (or in
 // memory when storage is unavailable) and sent in the request body — no cookies.
-var API = { url: 'SUPABASE_URL_HERE', key: 'SUPABASE_KEY_HERE' };
+var API = { url: "https://tzccnrnwexewlwogrkuk.supabase.co", key: "sb_publishable_uEw-i-TZjLyUNEUjry2tZg_4FqgpO9Y" };
 if (window.__FR_API) { API.url = window.__FR_API.url; API.key = window.__FR_API.key; }
 var ACC = { token: null, id: null, best: 0, memOnly: false, checked: false, online: null };
 
