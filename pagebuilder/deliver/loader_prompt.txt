@@ -18,7 +18,7 @@ html,body{margin:0;padding:0;height:100%;background:#f6efe2;overflow:hidden}
 <div id="kpe"></div>
 <script>
 (function(){
-var BASE='https://あなたのサイト名.netlify.app/';
+var BASE='https://friendly-sfogliatella-117cfb.netlify.app/';
 var URL_JS=BASE+'game.js';
 var done=false;
 function hide(){var l=document.getElementById('kpl');if(l)l.style.display='none';}
