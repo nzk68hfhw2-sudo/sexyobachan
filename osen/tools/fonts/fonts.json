@@ -7,8 +7,7 @@
  {
   "id": "OsSub",
   "file": "BIZUDGothic-Bold.ttf",
-  "src": "https://github.com/google/fonts/tree/main/ofl/bizudgothic",
-  "jis1": true
+  "src": "https://github.com/google/fonts/tree/main/ofl/bizudgothic"
  },
  {
   "id": "OsCN",
@@ -21,25 +20,5 @@
   "id": "OsWA1",
   "file": "DelaGothicOne-Regular.ttf",
   "src": "https://github.com/google/fonts/tree/main/ofl/delagothicone"
- },
- {
-  "id": "OsWA2",
-  "file": "ReggaeOne-Regular.ttf",
-  "src": "https://github.com/google/fonts/tree/main/ofl/reggaeone"
- },
- {
-  "id": "OsWA3",
-  "file": "RocknRollOne-Regular.ttf",
-  "src": "https://github.com/google/fonts/tree/main/ofl/rocknrollone"
- },
- {
-  "id": "OsWA4",
-  "file": "MochiyPopOne-Regular.ttf",
-  "src": "https://github.com/google/fonts/tree/main/ofl/mochiypopone"
- },
- {
-  "id": "OsWA5",
-  "file": "YuseiMagic-Regular.ttf",
-  "src": "https://github.com/google/fonts/tree/main/ofl/yuseimagic"
  }
 ]

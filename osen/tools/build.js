@@ -18,6 +18,8 @@ for(const f of files){code+='\n// ===== '+f+' =====\n'+fs.readFileSync(path.join
 const vend=['firebase-app-compat.js','firebase-database-compat.js'].map(f=>fs.readFileSync(path.join(R,'tools/vendor',f),'utf8')).join('\n;\n');
 const vendor='\n/* Firebase JS SDK v10.14.1 (app-compat + database-compat) — Apache License 2.0 — https://github.com/firebase/firebase-js-sdk */\n'+
  '(function(){var g=typeof globalThis!=="undefined"?globalThis:window;var prevFB=g.firebase,prevDef=g.define;g.firebase=undefined;try{g.define=undefined;}catch(e){}\ntry{\n'+vend+'\n}catch(e){g.__osenFirebaseErr=String(e&&e.message||e);}\ng.__osenFirebase=g.firebase;g.firebase=prevFB;try{g.define=prevDef;}catch(e){}})();\n';
+// コードを小さくする（空白を消し、関数の中の名前を短くする。npm i -D terser が入っている時だけ）
+if(!process.argv.includes('--nomin')){try{const T=require('terser');const r=T.minify_sync?T.minify_sync(code,{toplevel:false,compress:{passes:1,keep_fargs:true},mangle:true,format:{comments:false,ascii_only:false}}):null;if(r&&r.code){console.log('minified',code.length,'->',r.code.length);code=r.code;}}catch(e){console.log('minify skipped:',e.message);}}
 let out='/*! 精神汚染ゲーム game.js v'+(/GAME_VERSION = '([^']+)'/.exec(code)||[,''])[1]+' (single-file build) — 説明は source.txt */\n'+vendor+'(function(){\n"use strict";\n';
 out+=code;
 out+='\n// ===== embedded assets (8 friends: 2 GLB models split into 4 each, decimated) =====\n';

@@ -14,7 +14,7 @@ try { var _q = /[?&]osennet=([a-z]+)/.exec(location.search); if (_q) NET_DB_URL 
 // ボイスチャット用の中継サーバー（TURN）。スマホどうしで声がつながらない時だけ設定する。例：[{ urls: 'turn:…', username: '…', credential: '…' }]
 var VOICE_TURN = [];
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '3.3.0';
+var GAME_VERSION = '3.4.0';
 
 var ASSET_BASE = BASE_URL;
 (function detectBase() {
@@ -64,7 +64,7 @@ var FONT_UI = '"OsUI",monospace';
 var FONT_JP = FONT_UI;
 var FONT_SUB = '"OsSub",monospace';
 var FONT_CN = '"OsCN",monospace';
-var WA_FONTS = ['OsWA1', 'OsWA2', 'OsWA3', 'OsWA4', 'OsWA5', 'OsUI', 'OsSub'];
+var WA_FONTS = ['OsWA1', 'OsUI', 'OsSub'];
 var FONT_NAMES = { OsUI: 'DotGothic16', OsSub: 'BIZ UDゴシック', OsCN: 'Noto Sans SC', OsWA1: 'Dela Gothic One', OsWA2: 'Reggae One', OsWA3: 'RocknRoll One', OsWA4: 'Mochiy Pop One', OsWA5: 'Yusei Magic' };
 function loadEmbeddedFonts(cb) {
   var fail = [], names = Object.keys(FONT_B64), left = names.length, t0 = Date.now();

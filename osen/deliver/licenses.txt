@@ -15,7 +15,7 @@
  ・DotGothic16 … UI の文字（角ばったドット風）
  ・BIZ UDゴシック Bold（BIZ UDGothic）… 字幕・説明文（素っ気ない昔風ゴシック）
  ・Noto Sans SC … 一部の漢字だけ中国語の字形にする用
- ・Dela Gothic One / Reggae One / RocknRoll One / Mochiy Pop One / Yusei Magic … ワードアート用
+ ・Dela Gothic One … ワードアート用（v3.4 から1種類に。使う字だけ）
    入手元：Google Fonts の公開リポジトリ（https://github.com/google/fonts）
    OFL では、フォントを埋め込んで配布すること・使う字だけに減らすことが認められています。
    フォントだけを取り出して売ることはできません。
@@ -30,3 +30,4 @@
 ■ 3Dモデル
  ・作者さんが用意した Meshy AI のモデル2つ（4人×2＝8人）
    ※Meshy AI の利用条件（商用・公開の可否など）は、Meshy のプランの規約をご自身で確認してください
+ ・terser（ビルドの時だけ使う圧縮の道具。ゲームの中には入らない）… BSD-2-Clause

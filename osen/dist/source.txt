@@ -1,5 +1,5 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- 精神汚染ゲーム（精神汚染オンライン） v3.3（大暴れ 第1弾＋銃・とくぎ・ロゴ・名前入力・フォトモード・サーバー・車）　source.txt
+ 精神汚染ゲーム（精神汚染オンライン） v3.4（軽量化版：game.js 約2.6MB＋曲 約1.1MB）　source.txt
  （このファイルはゲームの説明書き。動作には関係しません）
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -40,8 +40,8 @@
   ・three.js r128（3D表示）… MIT License（自由に使ってOK）
       https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
   ・フォント（すべて SIL Open Font License 1.1。使う字だけを埋め込み）
-      DotGothic16 / BIZ UDゴシック / Noto Sans SC / Dela Gothic One / Reggae One /
-      RocknRoll One / Mochiy Pop One / Yusei Magic
+      DotGothic16 / BIZ UDゴシック / Noto Sans SC / Dela Gothic One
+      （ゲームの中で使う字だけを入れています。それ以外の字は端末のフォントで表示）
   ・BGM … 制作者が Suno で作った曲（bgm_long.mp3 / bgm_short.mp3。歌なし）
       汚染率が上がると、同じ曲をプログラムで少し遅く・ゆらし・こもらせる（ファイルはそのまま）
       曲が読めない時と、ラジオなどの特別な場面だけ、プログラム（Web Audio）で合成した BGM を使う

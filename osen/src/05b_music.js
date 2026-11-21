@@ -98,7 +98,7 @@ function musTick() {
   // 汚染：少し遅く・音程がゆれる・こもる（ファイルはそのまま）
   var st = AUD.stage || 0, over = typeof G !== 'undefined' && G.pol > 100 ? Math.min(1, (G.pol - 100) / 100) : 0;
   var rate = 1 - Math.min(0.1, st * 0.01) - over * 0.04;
-  if (st >= 3) rate += Math.sin(t * 1.3) * 0.0035 * st + Math.sin(t * 0.37) * 0.002 * st;
+  rate = Math.round(rate * 50) / 50; // 音切れ防止：速さは細かく変えない（0.02きざみ）
   if (MUS.filt && c) MUS.filt.frequency.setTargetAtTime(st < 2 ? 20000 : Math.max(700, 20000 * Math.pow(0.7, st - 1) * (1 - over * 0.5)), c.currentTime, 1.5);
   ['long', 'short'].forEach(function (k) {
     var s = MUS.songs[k], active = musicMode && MUS.want === k && AUD.bgmOn && !document.hidden;
@@ -114,7 +114,7 @@ function musTick() {
       if (a.paused) { musPlayEl(a, s); if (!s.ok) { s.waitT = (s.waitT || 0) + 0.2; if (s.waitT > 25 && AUD.ctx && AUD.ctx.state === 'running' && a.unlocked) musFail(s, '時間内に読み込めなかった'); } }
     } else { if (a.tgt > 0) a.offT = t; a.tgt = 0; }
     s.els.forEach(function (e) {
-      if (Math.abs(e.playbackRate - rate) > 0.002) try { e.playbackRate = rate; } catch (er) {}
+      if (Math.abs(e.playbackRate - rate) > 0.005 && (!e._rt || t - e._rt > 4)) { e._rt = t; try { e.playbackRate = rate; } catch (er) {} }
       if (e.g && c) e.g.gain.setTargetAtTime(e.tgt, c.currentTime, e.tgt > 0 ? 0.8 : 0.7);
       e.lvl += ((e.tgt) - e.lvl) * 0.12; // 目安
       if (!e.g) { try { e.volume = clamp(e.lvl * (AUD.bgmOn ? AUD.bgmVol * 0.5 * MUS.duck : 0), 0, 1); } catch (er) {} }

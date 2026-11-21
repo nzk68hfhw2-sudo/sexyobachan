@@ -4,9 +4,7 @@ module.exports = { touch: true, run: async (page, shot, logs) => {
   await clickText('ログイン'); await page.locator('.li', { hasText: '公式' }).first().tap({ force: true }); await page.waitForTimeout(300);
   await clickText('ch.1'); await clickText('同意する'); await page.waitForTimeout(600);
   // name input
-  await page.locator('.mb', { hasText: '入力' }).first().tap({ force: true }); await page.waitForTimeout(300);
-  await page.locator('input[maxlength="12"]').fill('ぶち壊し太郎'); await shot('a_name');
-  await clickText('決定'); await page.waitForTimeout(200);
+  await page.locator('#os-namein').fill('ぶち壊し太郎'); await shot('a_name');
   await clickText('この人で始める'); await page.waitForTimeout(1500);
   await page.locator('#os-ui .ow .mb', { hasText: 'わかりました' }).first().tap({ force: true }); await page.waitForTimeout(400);
   logs.push('name ' + await page.evaluate(() => __os.PLAYER.name + ' free ' + __os.PLAYER.nameFree));

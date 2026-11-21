@@ -89,8 +89,7 @@ function enterRoom(room) {
   writeMe(true);
   NET.T.on(base + 'p', 'child_added', peerUpsert); NET.T.on(base + 'p', 'child_changed', peerUpsert); NET.T.on(base + 'p', 'child_removed', function (k) { peerRemove(k); });
   NET.T.on(base + 'e', 'child_added', onEvent, 40);
-  NET.T.on(base + 'pol', 'value', function (k, v) { if (typeof v === 'number') { NET.polBase = v; G.pol = v + NET.polDelta; } });
-  NET.T.once(base + 'pol').then(function (v) { if (typeof v !== 'number') NET.T.set(base + 'pol', Math.round(G.pol)); });
+  // 汚染率は人ごと（ほかの人の汚染はもらわない）
   NET.T.once(base + 'i').then(function (all) {
     NET.applying = true; for (var k in (all || {})) applyItemState(k, all[k]); NET.applying = false;
     var upd = function (k, v) { if (!v || v.by === NET.pid) return; var it = findNetItem(k); if (it && (it === ITEMS.held || !it.body.sleep)) { if (it) it.pendState = v; return; } NET.applying = true; applyItemState(k, v); NET.applying = false; };
@@ -228,7 +227,7 @@ NET.update = function (dt) {
   if (NET.myEvents.length && Date.now() - NET.myEvents[0].t > 60000) { var o = NET.myEvents.shift(); NET.T.remove('rooms/' + NET.room + '/e/' + o.key); }
 };
 // 汚染率：つながっている時は差分を集めて送る
-function netPollution(v) { if (NET.on && NET.polBase !== null) { NET.polDelta += v; } }
+function netPollution(v) { }
 // じゃま防止：ほかの人が最近動かした物は、自分には当たらない（閉じこめられない）
 function netPassThrough(it) { return NET.on && it.lastBy && it.lastBy !== 'me' && G.t - (it.lastT || 0) < 25; }
 function netCanGrab(it) {

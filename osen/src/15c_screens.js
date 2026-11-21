@@ -74,7 +74,8 @@ function menuWin(title, icon, w, build, theme) {
   var tb = el('div', 'otb', e); tb.style.cursor = 'default'; tb.appendChild(iconEl(uiIcon(icon), 20)); el('div', 't', tb).innerHTML = cnHTML(title);
   var bd = el('div', 'obd os-scroll', e); build(bd);
   var W = H.W || window.innerWidth, Hh = H.H || window.innerHeight, ww = Math.min(w, W - 24);
-  e.style.width = ww + 'px'; e.style.left = ((W - ww) / 2) + 'px'; e.style.top = Math.max(Hh * 0.24, 70) + 'px';
+  var lb = 0; if (MENU.logo && MENU.logo.style.display !== 'none') { try { lb = MENU.logo.getBoundingClientRect().bottom + 6; } catch (er) {} }
+  e.style.width = ww + 'px'; e.style.left = ((W - ww) / 2) + 'px'; e.style.top = Math.max(Hh * 0.24, 70, lb) + 'px';
   if (Hh < 500) e.style.top = '12px';
   e.style.maxHeight = (Hh - parseInt(e.style.top, 10) - 12) + 'px'; e.style.display = 'flex'; e.style.flexDirection = 'column';
   MENU.win = e; sfx('uiOpen'); return e;
@@ -82,7 +83,7 @@ function menuWin(title, icon, w, build, theme) {
 function showMenu() {
   G.inMenu = true; updatePause();
   MENU.el = el('div', '', UI); MENU.el.id = 'os-menu';
-  var lg = logoImg(); lg.className = 'logo'; MENU.el.appendChild(lg); MENU.logo = lg;
+  var lg = logoImg(); lg.className = 'logo'; var W0 = H.W || window.innerWidth, H0 = H.H || window.innerHeight; lg.style.height = Math.round(Math.min(H0 * 0.18, W0 * 0.92 * 314 / 760)) + 'px'; lg.style.width = 'auto'; MENU.el.appendChild(lg); MENU.logo = lg;
   H.hud.style.display = 'none';
   bgmPlay('title');
   if (NET_DB_URL) srvRefresh();
@@ -140,16 +141,27 @@ function stepCharSel(change) {
   var win = menuWin(change ? 'キャラを変える（着がえ所）' : 'キャラクター選択', 'char', land ? 330 : Math.min(380, W - 20), function (bd) {
     CS.nameEl = el('div', 'cs-name', bd); CS.subEl = el('div', 'cs-sub', bd);
     CS.descEl = el('div', 'desc', bd); CS.stEl = el('div', '', bd);
+    if (!change) {
+      // 名前は自分で入れるのが基本（空のままなら、おまかせの名前）
+      var nb = el('div', '', bd); nb.style.cssText = 'margin:6px 0 4px;';
+      el('div', '', nb).innerHTML = '<span style="color:#ffe7a8;font-size:14px">' + cnHTML('名前（好きな名前を入れてね・12文字まで）') + '</span>';
+      var nr = el('div', '', nb); nr.style.cssText = 'display:flex;gap:6px;align-items:stretch;margin-top:4px;';
+      var ni = document.createElement('input'); ni.type = 'text'; ni.maxLength = 12; ni.id = 'os-namein'; ni.autocomplete = 'off'; ni.value = PLAYER.nameFree ? PLAYER.name : ''; ni.placeholder = PLAYER.name || '名前';
+      ni.style.cssText = 'flex:1;min-width:0;box-sizing:border-box;font:20px ' + FONT_SUB + ';padding:10px 10px;border:3px solid #e8c060;border-radius:4px;background:#fffef0;color:#222;';
+      nr.appendChild(ni);
+      mbtn(nr, 'おまかせ', function () { PLAYER.name = makeName(); ni.value = PLAYER.name; sfx('uiSlot'); });
+      CS.nameErr = el('div', 'desc', nb); CS.nameErr.innerHTML = cnHTML('ほかの人にも見えます。本名・住所・電話番号などは入れないでください。');
+      CS.nameIn = ni;
+    }
     var r = el('div', 'row2', bd); r.style.justifyContent = 'center';
     mbtn(r, '◀', function () { csShow(CS.idx - 1); });
-    mbtn(r, change ? 'この人になる' : 'この人で始める', function () { csDecide(); }, 'gold');
+    mbtn(r, change ? 'この人になる' : 'この人で始める', function () { if (!change && !csNameOk()) return; csDecide(); }, 'gold');
     mbtn(r, '▶', function () { csShow(CS.idx + 1); });
-    if (!change) { var r2 = el('div', 'kv', bd); el('span', '', r2).innerHTML = cnHTML('名前：' + PLAYER.name); var rb = el('div', '', r2); rb.style.display = 'flex'; rb.style.gap = '3px'; mbtn(rb, '入力', function () { openNameInput(function () { r2.firstChild.innerHTML = cnHTML('名前：' + PLAYER.name); }); }, 'gold'); mbtn(rb, 'おまかせ', function () { PLAYER.name = makeName(); PLAYER.nameFree = false; r2.firstChild.innerHTML = cnHTML('名前：' + PLAYER.name); }); }
-    else { var r3 = el('div', 'row2', bd); mbtn(r3, 'やめる', function () { csClose(); }); }
+    if (change) { var r3 = el('div', 'row2', bd); mbtn(r3, 'やめる', function () { csClose(); }); }
   });
   // 横画面は右に、縦画面は下に
   if (land) { win.style.left = 'auto'; win.style.right = '12px'; win.style.top = '12px'; win.style.maxHeight = (Hh - 24) + 'px'; }
-  else { win.style.top = 'auto'; win.style.bottom = 'calc(var(--sb) + 8px)'; win.style.maxHeight = '56%'; }
+  else { win.style.top = 'auto'; win.style.bottom = 'calc(var(--sb) + 8px)'; win.style.maxHeight = '62%'; }
   CS.win = win;
   CS.fill = function () {
     var f = FRIEND_INFO[CS.idx], c2 = CHARS[CS.idx];
@@ -167,6 +179,14 @@ function stepCharSel(change) {
   CS.navL.style.left = '10px'; CS.navR.style.right = land ? 'calc(' + (parseInt(win.style.width, 10) + 24) + 'px)' : '10px';
   CS.navL.style.top = CS.navR.style.top = land ? '42%' : '22%';
   csShow(change ? PLAYER.char : (PLAYER.char || 0));
+}
+function csNameOk() {
+  var ni = CS.nameIn; if (!ni) return true;
+  var t = (ni.value || '').replace(/[\s　]+/g, ' ').trim().slice(0, 12);
+  if (!t) { if (!PLAYER.name) PLAYER.name = makeName(); PLAYER.nameFree = false; return true; }
+  var f = filterMsg(t);
+  if (f.censored || f.text !== t) { CS.nameErr.innerHTML = '<span style="color:#ff8a8a">' + cnHTML('その名前は使えません（ひどい言葉・個人情報っぽい文字）。') + '</span>'; sfx('error'); return false; }
+  PLAYER.name = t; PLAYER.nameFree = true; return true;
 }
 function csDecide() {
   var idx = CS.idx;

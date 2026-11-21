@@ -4,19 +4,19 @@ var WA_STYLES = [
   { n: 'にじいろ', font: 'OsWA1', fill: ['#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff'], dir: 'h', o1: '#ffffff', o2: '#000000', ext: 0, sh: '#555', shape: 'arcUp', hl: 0 },
   { n: 'クローム', font: 'OsWA1', fill: ['#ffffff', '#d8dde6', '#7a8597', '#2a3140', '#c8d0dc', '#ffffff'], dir: 'v', o1: '#ffffff', o2: '#0a1a5c', ext: 10, extC: ['#0a1a5c', '#3a4a8c'], sh: null, shape: 'slant', hl: 1 },
   { n: 'ゴールド', font: 'OsWA1', fill: ['#fff7b0', '#ffd700', '#b8860b', '#ffec80', '#8b6508'], dir: 'v', o1: '#5a3a00', o2: '#ffffff', ext: 8, extC: ['#4a2a00', '#8b5a10'], sh: '#000', shape: 'flat', hl: 1 },
-  { n: 'ファイヤー', font: 'OsWA2', fill: ['#ffff66', '#ffcc00', '#ff6600', '#cc0000'], dir: 'v', o1: '#000', o2: '#ffff00', ext: 0, sh: '#600', shape: 'wave', hl: 0 },
-  { n: 'こおり', font: 'OsWA3', fill: ['#ffffff', '#aaf6ff', '#33ccff', '#0044cc'], dir: 'v', o1: '#ffffff', o2: '#001a66', ext: 6, extC: ['#001a66', '#0055aa'], sh: null, shape: 'arcUp', hl: 1 },
-  { n: 'ピンクむらさき', font: 'OsWA4', fill: ['#ff66ff', '#cc00cc', '#6600cc'], dir: 'h', o1: '#ffff00', o2: '#330033', ext: 0, sh: '#9900ff', shape: 'slant', hl: 0 },
-  { n: 'サンセット', font: 'OsWA2', fill: ['#ffee00', '#ff7700', '#ff0066', '#660099'], dir: 'v', o1: '#000', o2: '#fff', ext: 0, sh: '#000', shape: 'arcDown', hl: 0, stripes: 1 },
+  { n: 'ファイヤー', font: 'OsWA1', fill: ['#ffff66', '#ffcc00', '#ff6600', '#cc0000'], dir: 'v', o1: '#000', o2: '#ffff00', ext: 0, sh: '#600', shape: 'wave', hl: 0 },
+  { n: 'こおり', font: 'OsWA1', fill: ['#ffffff', '#aaf6ff', '#33ccff', '#0044cc'], dir: 'v', o1: '#ffffff', o2: '#001a66', ext: 6, extC: ['#001a66', '#0055aa'], sh: null, shape: 'arcUp', hl: 1 },
+  { n: 'ピンクむらさき', font: 'OsWA1', fill: ['#ff66ff', '#cc00cc', '#6600cc'], dir: 'h', o1: '#ffff00', o2: '#330033', ext: 0, sh: '#9900ff', shape: 'slant', hl: 0 },
+  { n: 'サンセット', font: 'OsWA1', fill: ['#ffee00', '#ff7700', '#ff0066', '#660099'], dir: 'v', o1: '#000', o2: '#fff', ext: 0, sh: '#000', shape: 'arcDown', hl: 0, stripes: 1 },
   { n: 'どくどく', font: 'OsWA1', fill: ['#eaff00', '#66ff00', '#009900', '#003300'], dir: 'v', o1: '#000', o2: '#ff00ff', ext: 7, extC: ['#002200', '#116611'], sh: null, shape: 'wave', hl: 0 },
-  { n: 'ポップ', font: 'OsWA4', fill: ['#ff2222', '#ff5555'], dir: 'v', o1: '#ffffff', o2: '#0000cc', ext: 0, sh: '#0033ff', shape: 'bounce', hl: 0, shOff: [7, 7] },
-  { n: 'スターウォー风', font: 'OsWA5', fill: ['#ffff00', '#ffcc00'], dir: 'v', o1: '#000', o2: '#000', ext: 0, sh: null, shape: 'trap', hl: 0 },
+  { n: 'ポップ', font: 'OsWA1', fill: ['#ff2222', '#ff5555'], dir: 'v', o1: '#ffffff', o2: '#0000cc', ext: 0, sh: '#0033ff', shape: 'bounce', hl: 0, shOff: [7, 7] },
+  { n: 'スターウォー风', font: 'OsWA1', fill: ['#ffff00', '#ffcc00'], dir: 'v', o1: '#000', o2: '#000', ext: 0, sh: null, shape: 'trap', hl: 0 },
   { n: 'むらさき押し出し', font: 'OsWA1', fill: ['#ffffff', '#e0c0ff', '#b070ff'], dir: 'v', o1: '#2a0055', o2: '#ffffff', ext: 14, extC: 'rainbow', sh: null, shape: 'tilt', hl: 1 },
-  { n: 'あわあわ', font: 'OsWA4', fill: ['#ffd1f0', '#ffe9a8', '#c4f5ff'], dir: 'h', o1: '#ff3399', o2: '#ffffff', ext: 0, sh: '#ff99cc', shape: 'inflate', hl: 1 },
+  { n: 'あわあわ', font: 'OsWA1', fill: ['#ffd1f0', '#ffe9a8', '#c4f5ff'], dir: 'h', o1: '#ff3399', o2: '#ffffff', ext: 0, sh: '#ff99cc', shape: 'inflate', hl: 1 },
   { n: 'ドット', font: 'OsUI', fill: ['#00ff66', '#00aa44'], dir: 'v', o1: '#000', o2: '#00ff66', ext: 5, extC: ['#003311', '#006622'], sh: null, shape: 'flat', hl: 0 },
   { n: 'わし', font: 'OsSub', fill: ['#ff3300', '#990000'], dir: 'v', o1: '#ffffff', o2: '#000', ext: 0, sh: '#000', shape: 'grow', hl: 0 },
   { n: 'メタル赤', font: 'OsWA1', fill: ['#ffd6d6', '#ff3030', '#600000', '#ff8080', '#ffffff'], dir: 'v', o1: '#000', o2: '#ffff00', ext: 9, extC: ['#300', '#900'], sh: null, shape: 'arcUp', hl: 1 },
-  { n: 'まわる', font: 'OsWA5', fill: ['#00ffff', '#ff00ff', '#ffff00'], dir: 'h', o1: '#000', o2: '#ffffff', ext: 0, sh: '#000', shape: 'circle', hl: 0 }
+  { n: 'まわる', font: 'OsWA1', fill: ['#00ffff', '#ff00ff', '#ffff00'], dir: 'h', o1: '#000', o2: '#ffffff', ext: 0, sh: '#000', shape: 'circle', hl: 0 }
 ];
 var WA_CACHE = {};
 var WA_FONTS_READY = false;
