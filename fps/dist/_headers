@@ -1,0 +1,23 @@
+/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, HEAD, OPTIONS
+  Access-Control-Allow-Headers: Range, Content-Type
+  Access-Control-Expose-Headers: Content-Length, Content-Range, Accept-Ranges
+  Cross-Origin-Resource-Policy: cross-origin
+  Timing-Allow-Origin: *
+  X-Content-Type-Options: nosniff
+
+/game.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=300, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/models/*.glb
+  Content-Type: model/gltf-binary
+  Cache-Control: public, max-age=604800
+
+/models/*.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=604800

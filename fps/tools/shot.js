@@ -1,0 +1,34 @@
+// usage: node tools/shot.js <outDir> [query]   — smoke test + screenshots (needs tools/serve.js running on 8092)
+const { chromium } = require('playwright');
+const path = require('path'), fs = require('fs');
+const THREE_LOCAL = fs.readFileSync(path.join(__dirname, '..', '..', 'tools', 'three-r128.min.js'));
+(async () => {
+  const out = process.argv[2] || '.', q = process.argv[3] || 'q=2';
+  const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
+  const ctx = await b.newContext({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true });
+  const page = await ctx.newPage(); const logs = [];
+  page.on('console', m => logs.push(m.type() + ': ' + m.text())); page.on('pageerror', e => logs.push('PAGEERROR: ' + e.message + '\n' + (e.stack || '').split('\n').slice(0, 5).join('\n')));
+  await page.route('https://cdnjs.cloudflare.com/**', r => r.fulfill({ body: THREE_LOCAL, contentType: 'application/javascript', headers: { 'Access-Control-Allow-Origin': '*' } }));
+  await page.goto('http://localhost:8092/index.html?' + q);
+  await page.waitForFunction('window.__frReady', null, { timeout: 60000 });
+  await page.waitForFunction('window.__fr.MODEL_STATUS.boys!=="loading"&&window.__fr.MODEL_STATUS.girls!=="loading"', null, { timeout: 60000 });
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: path.join(out, 's1_title.png') });
+  await page.evaluate(() => { window.__fr.start(); window.__fr.G.timer = 0.1; });
+  await page.waitForTimeout(6000);
+  await page.evaluate(() => { const f = window.__fr, e = f.ENEMIES[0]; if (e) { f.P.yaw = Math.atan2(-(e.x - f.P.x), -(e.z - f.P.z)); f.P.pitch = Math.atan2(e.y - 1.66, Math.hypot(e.x - f.P.x, e.z - f.P.z)); } f.input.fire = true; });
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: path.join(out, 's2_fire.png') });
+  await page.evaluate(() => { const f = window.__fr, e = f.ENEMIES[0]; f.input.fire = false; if (e) { e.x = f.P.x + 1; e.z = f.P.z - 5; e.y = 2.2; e.vx = e.vy = e.vz = 0; f.P.yaw = -0.2; f.P.pitch = 0.1; } });
+  await page.waitForTimeout(120);
+  await page.screenshot({ path: path.join(out, 's2b_enemy.png') });
+  await page.evaluate(() => { const f = window.__fr; f.input.fire = false; f.P.x = -6; f.P.z = 2; f.P.yaw = 0.35; f.P.pitch = -0.05; });
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: path.join(out, 's3_friend.png') });
+  await page.evaluate(() => { const f = window.__fr; f.hurt(30, f.P.x + 3, f.P.z); });
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: path.join(out, 's4_hurt.png') });
+  console.log(JSON.stringify(await page.evaluate(() => ({ st: window.__fr.G.state, ph: window.__fr.G.phase, en: window.__fr.ENEMIES.length, models: window.__fr.MODEL_STATUS, fps: window.__fr.Q.fps, tier: window.__fr.Q.tier, errs: window.__fr.errors }))));
+  console.log(logs.filter(l => !/GPU stall|GL Driver/.test(l)).slice(0, 20).join('\n'));
+  await b.close();
+})();
