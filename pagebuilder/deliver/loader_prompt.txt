@@ -6,7 +6,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>こじんページ</title>
+<title>個人ページ</title>
 <style>
 html,body{margin:0;padding:0;height:100%;background:#f6efe2;overflow:hidden}
 #kpl{position:fixed;left:16px;right:16px;top:45%;color:#8a7c66;font:16px sans-serif;text-align:center;letter-spacing:.1em}
@@ -14,7 +14,7 @@ html,body{margin:0;padding:0;height:100%;background:#f6efe2;overflow:hidden}
 </style>
 </head>
 <body>
-<div id="kpl">ノートをひらいています…</div>
+<div id="kpl">読み込み中…</div>
 <div id="kpe"></div>
 <script>
 (function(){

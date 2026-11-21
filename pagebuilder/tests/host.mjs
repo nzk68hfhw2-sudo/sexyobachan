@@ -10,3 +10,10 @@ export async function startHost(gameOrigin, { csp, pre = '' } = {}) {
   await new Promise((r) => srv.listen(0, '127.0.0.1', r));
   return { port: srv.address().port, stop: () => new Promise((r) => srv.close(r)) };
 }
+
+// わたされた HTML をそのまま配る(アプリが作った Gravity 用のコードを、別サイトとして開くため)
+export async function startHtml(html) {
+  const srv = http.createServer((req, res) => { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); res.end(html); });
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  return { port: srv.address().port, stop: () => new Promise((r) => srv.close(r)) };
+}

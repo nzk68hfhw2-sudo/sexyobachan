@@ -1,4 +1,4 @@
-// こじんページビルダー サーバー本体
+// 個人ページビルダー サーバー本体
 // すべての保存は「store」(Netlify Blobs) を通ります。パスワードは bcrypt のハッシュだけを保存します。
 import bcrypt from 'bcryptjs';
 import { createHash, randomBytes } from 'node:crypto';
@@ -43,7 +43,7 @@ function text(v, max, label, multi) {
   if (len(s) > max) throw new E('too_long', `${label}は${max}文字までです`);
   return s;
 }
-function oneOf(v, list, label) { if (!list.includes(v)) throw new E('bad', `${label}がただしくありません`); return v; }
+function oneOf(v, list, label) { if (!list.includes(v)) throw new E('bad', `${label}が正しくありません`); return v; }
 function validDate(d) {
   if (typeof d !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
   const t = new Date(d + 'T00:00:00Z');
@@ -64,7 +64,7 @@ export function createApp(S, opts = {}) {
       if (v === undefined) return cur ? cur.v : def;
       if (await S.set(key, v, cur ? { onlyIfMatch: cur.etag } : { onlyIfNew: true })) return v;
     }
-    throw new E('busy', 'こみあっています。少し待ってもう一度ためしてください');
+    throw new E('busy', '混み合っています。少し待ってからもう一度お試しください');
   }
   async function rate(key, max, winSec) {
     let ok = true;
@@ -119,7 +119,7 @@ export function createApp(S, opts = {}) {
 
   async function target(viewer, b) {
     const u = b.u, p = b.p;
-    if (typeof u !== 'string' || !ID_RE.test(u) || (p !== '@' && !(typeof p === 'string' && PID_RE.test(p)))) throw new E('bad', 'ページの指定がただしくありません');
+    if (typeof u !== 'string' || !ID_RE.test(u) || (p !== '@' && !(typeof p === 'string' && PID_RE.test(p)))) throw new E('bad', 'ページの指定が正しくありません');
     const page = await S.get('page/' + u);
     if (!page) throw new E('notfound', 'ページが見つかりません');
     let post = null;
@@ -206,11 +206,11 @@ export function createApp(S, opts = {}) {
     if (id === ADMIN_ID) {
       if (!ADMIN_CODE || typeof b.adminCode !== 'string' || sha(b.adminCode) !== sha(ADMIN_CODE)) throw new E('admin_code', 'このIDの登録には管理者の合言葉が必要です');
     }
-    if (await S.get('user/' + id)) throw new E('id_taken', 'このIDはもう使われています');
+    if (await S.get('user/' + id)) throw new E('id_taken', 'このIDは既に使われています');
     if (!(await rate(`reg/${ctx.iph}`, L.regPerHour, 3600))) throw new E('rate', '登録の回数が多すぎます。時間をおいてください');
     const pw = await bcrypt.hash(b.pw, L.bcrypt);
     const t = now();
-    if (!(await S.set('user/' + id, { id, pw, at: t, lastPost: 0, lastCmt: 0 }, { onlyIfNew: true }))) throw new E('id_taken', 'このIDはもう使われています');
+    if (!(await S.set('user/' + id, { id, pw, at: t, lastPost: 0, lastCmt: 0 }, { onlyIfNew: true }))) throw new E('id_taken', 'このIDは既に使われています');
     const page = { u: id, name: id, bio: '', icon: '🌱', theme: 'note', bg: '', fg: '', font: 'gothic', deco: 'line', vis: 'public', key: rid(9), hidden: false, at: t, up: t };
     await S.set('page/' + id, page);
     await syncUser(page);
@@ -219,11 +219,11 @@ export function createApp(S, opts = {}) {
 
   A.login = async (b, ctx) => {
     const id = typeof b.id === 'string' ? b.id.trim().toLowerCase() : '';
-    const bad = new E('login_failed', 'IDかパスワードがちがいます');
+    const bad = new E('login_failed', 'IDまたはパスワードが違います');
     if (!ID_RE.test(id)) throw bad;
     const fk = `rl/lf/${id}/${ctx.iph}`;
     const f = await S.get(fk);
-    if (f && now() < f.r && f.n >= L.loginFails) throw new E('locked', `まちがいが続いたので、しばらくログインできません(あと約${Math.ceil((f.r - now()) / 60000)}分)`);
+    if (f && now() < f.r && f.n >= L.loginFails) throw new E('locked', `ログインの失敗が続いたため、しばらくログインできません(あと約${Math.ceil((f.r - now()) / 60000)}分)`);
     const idLock = await S.get(`rl/lfid/${id}`);
     if (idLock && now() < idLock.r && idLock.n >= L.loginFails * 6) throw new E('locked', 'このIDはしばらくログインできません。時間をおいてください');
     const user = await verifyPw(id, b.pw);
@@ -252,7 +252,7 @@ export function createApp(S, opts = {}) {
   A.changePw = async (b) => {
     const u = await need(b);
     if (!(await rate(`pw/${u}`, 5, 900))) throw new E('rate', '回数が多すぎます。時間をおいてください');
-    if (!(await verifyPw(u, b.pw))) throw new E('login_failed', '今のパスワードがちがいます');
+    if (!(await verifyPw(u, b.pw))) throw new E('login_failed', '現在のパスワードが違います');
     pwCheck(b.newPw);
     const pw = await bcrypt.hash(b.newPw, L.bcrypt);
     await mutate('user/' + u, null, (v) => { v.pw = pw; return v; });
@@ -263,7 +263,7 @@ export function createApp(S, opts = {}) {
   A.deleteAccount = async (b) => {
     const u = await need(b);
     if (!(await rate(`pw/${u}`, 5, 900))) throw new E('rate', '回数が多すぎます。時間をおいてください');
-    if (!(await verifyPw(u, b.pw))) throw new E('login_failed', 'パスワードがちがいます');
+    if (!(await verifyPw(u, b.pw))) throw new E('login_failed', 'パスワードが違います');
     await wipeUser(u);
     return {};
   };
@@ -272,10 +272,10 @@ export function createApp(S, opts = {}) {
     const u = await need(b);
     const d = b.page || {};
     const name = text(d.name, L.nameMax, '名前') || u;
-    const bio = text(d.bio, L.bioMax, 'じこしょうかい', true);
+    const bio = text(d.bio, L.bioMax, '自己紹介', true);
     const icon = typeof d.icon === 'string' ? d.icon.trim() : '';
-    if (!icon || icon.length > 16 || /[\u0000-\u007f]/.test(icon)) throw new E('bad', 'アイコンは絵文字を1つえらんでください');
-    for (const k of ['bg', 'fg']) if (d[k] !== '' && !(typeof d[k] === 'string' && COLOR_RE.test(d[k]))) throw new E('bad', '色の指定がただしくありません');
+    if (!icon || icon.length > 16 || /[\u0000-\u007f]/.test(icon)) throw new E('bad', 'アイコンは絵文字を1つ選んでください');
+    for (const k of ['bg', 'fg']) if (d[k] !== '' && !(typeof d[k] === 'string' && COLOR_RE.test(d[k]))) throw new E('bad', '色の指定が正しくありません');
     const page = await mutate('page/' + u, null, (v) => {
       if (!v) throw new E('notfound', 'ページが見つかりません');
       Object.assign(v, {
@@ -297,7 +297,7 @@ export function createApp(S, opts = {}) {
     const body = text(d.body, L.bodyMax, '本文', true);
     if (!body) throw new E('empty', '本文を書いてください');
     if (kind === 'blog' && !title) throw new E('empty', '題名を書いてください');
-    if (!validDate(d.date)) throw new E('bad', '日付がただしくありません');
+    if (!validDate(d.date)) throw new E('bad', '日付が正しくありません');
     const status = oneOf(d.status, ['draft', 'public'], '下書き/公開');
     const vis = oneOf(d.vis, ['public', 'unlisted', 'private'], '公開範囲');
     if (!Array.isArray(d.tags) || d.tags.length > L.tagMax) throw new E('bad', `タグは${L.tagMax}個までです`);
@@ -307,7 +307,7 @@ export function createApp(S, opts = {}) {
     const t = now();
     let post;
     if (d.p !== undefined && d.p !== null && d.p !== '') {
-      if (typeof d.p !== 'string' || !PID_RE.test(d.p)) throw new E('bad', '記事の指定がただしくありません');
+      if (typeof d.p !== 'string' || !PID_RE.test(d.p)) throw new E('bad', '記事の指定が正しくありません');
       // 自分のIDの下にある記事しか読み書きしないので、ほかの人の記事は書き換えられない
       post = await S.get(`post/${u}/${d.p}`);
       if (!post) throw new E('notfound', '記事が見つかりません');
@@ -319,7 +319,7 @@ export function createApp(S, opts = {}) {
       if (wait > 0) throw new E('rate', `続けて投稿できません。あと${Math.ceil(wait / 1000)}秒待ってください`);
       post = { p: rid(9), u, kind, at: t, hidden: false };
     }
-    if (kind === 'diary' && idx.some((e) => e.kind === 'diary' && e.date === d.date && e.p !== post.p)) throw new E('dup', 'その日の日記はもうあります');
+    if (kind === 'diary' && idx.some((e) => e.kind === 'diary' && e.date === d.date && e.p !== post.p)) throw new E('dup', 'その日の日記は既にあります');
     Object.assign(post, { title, body, date: d.date, tags, status, vis, up: t });
     await S.set(`post/${u}/${post.p}`, post);
     await syncPost(post);
@@ -329,7 +329,7 @@ export function createApp(S, opts = {}) {
 
   A.deletePost = async (b) => {
     const u = await need(b);
-    if (typeof b.p !== 'string' || !PID_RE.test(b.p)) throw new E('bad', '記事の指定がただしくありません');
+    if (typeof b.p !== 'string' || !PID_RE.test(b.p)) throw new E('bad', '記事の指定が正しくありません');
     if (!(await S.get(`post/${u}/${b.p}`))) throw new E('notfound', '記事が見つかりません');
     await removePost(u, b.p);
     return {};
@@ -377,7 +377,7 @@ export function createApp(S, opts = {}) {
   };
 
   A.search = async (b) => {
-    const q = text(b.q, 30, 'さがす言葉').toLowerCase().replace(/^[#＃@]/, '');
+    const q = text(b.q, 30, '検索ワード').toLowerCase().replace(/^[#＃@]/, '');
     if (!q) return { users: [], posts: [] };
     const [posts, users] = await Promise.all([S.get('idx/posts'), S.get('idx/users')]);
     const us = users || {};
@@ -422,7 +422,7 @@ export function createApp(S, opts = {}) {
     const list = (await S.get(`cmt/${b.u}/${pk(b.p)}`)) || [];
     const c = list.find((e) => e.c === b.c);
     if (!c) throw new E('notfound', 'コメントが見つかりません');
-    if (!(c.by === viewer || tg.owner || tg.admin)) throw new E('forbidden', 'このコメントは消せません');
+    if (!(c.by === viewer || tg.owner || tg.admin)) throw new E('forbidden', 'このコメントは削除できません');
     await removeComment(b.u, b.p, c.c);
     return social(viewer, b.u, b.p, tg);
   };
@@ -433,7 +433,7 @@ export function createApp(S, opts = {}) {
     const reason = oneOf(b.reason, REASONS, '理由');
     const note = text(b.note, 100, 'メモ');
     const c = b.c === undefined || b.c === null || b.c === '' ? '' : String(b.c);
-    if (c && !/^[A-Za-z0-9_-]{6,24}$/.test(c)) throw new E('bad', 'コメントの指定がただしくありません');
+    if (c && !/^[A-Za-z0-9_-]{6,24}$/.test(c)) throw new E('bad', 'コメントの指定が正しくありません');
     if (!(await rate(`report/${ctx.iph}`, 10, 3600))) throw new E('rate', '通報の回数が多すぎます。時間をおいてください');
     const by = viewer || 'guest';
     const key = `report/${b.u}~${pk(b.p)}~${c || '-'}~${sha(viewer || ctx.iph).slice(0, 12)}`;
@@ -472,7 +472,7 @@ export function createApp(S, opts = {}) {
     const closeIt = async () => { if (rkey && (await S.get(rkey))) await mutate(rkey, null, (v) => { v.open = false; return v; }); };
     if (op === 'close') { await closeIt(); return {}; }
     const u = b.u, p = b.p, c = b.c || '';
-    if (typeof u !== 'string' || !ID_RE.test(u) || (p !== '@' && !(typeof p === 'string' && PID_RE.test(p)))) throw new E('bad', '対象がただしくありません');
+    if (typeof u !== 'string' || !ID_RE.test(u) || (p !== '@' && !(typeof p === 'string' && PID_RE.test(p)))) throw new E('bad', '対象が正しくありません');
     if (op === 'deleteUser') {
       if (isAdmin(u)) throw new E('bad', '管理者は削除できません');
       await wipeUser(u); await closeIt(); return {};
@@ -482,7 +482,7 @@ export function createApp(S, opts = {}) {
       if (op === 'delete') await removeComment(u, p, c);
       else await mutate(`cmt/${u}/${pk(p)}`, [], (a) => { const f = a.find((e) => e.c === c); if (!f) return undefined; f.hidden = hide; return a; });
     } else if (p === '@') {
-      if (op === 'delete') throw new E('bad', 'プロフィールは「アカウント削除」で消してください');
+      if (op === 'delete') throw new E('bad', 'プロフィールは「アカウント削除」で削除してください');
       const page = await mutate('page/' + u, null, (v) => { if (!v) throw new E('notfound', '見つかりません'); v.hidden = hide; return v; });
       await syncUser(page);
     } else if (op === 'delete') {
@@ -506,7 +506,7 @@ export function createApp(S, opts = {}) {
     } catch (e) {
       if (e instanceof E) return { ok: false, err: e.code, msg: e.message };
       console.error('api error', e);
-      return { ok: false, err: 'server', msg: 'サーバーでエラーが起きました。少し待ってためしてください' };
+      return { ok: false, err: 'server', msg: 'サーバーでエラーが起きました。少し待ってからお試しください' };
     }
   }
 
@@ -534,16 +534,16 @@ export function createApp(S, opts = {}) {
     const js = (o) => new Response(`${cb}(${JSON.stringify(o)});`, { status: 200, headers: { ...CORS, 'content-type': 'application/javascript; charset=utf-8' } });
     let d = q.get('d') || '';
     const n = Number(q.get('n') || 1), i = Number(q.get('i') || 0), cid = q.get('cid') || '';
-    if (d.length > 4000 || !Number.isInteger(n) || !Number.isInteger(i) || n < 1 || n > 30 || i < 0 || i >= n) return js({ ok: false, err: 'bad', msg: '送り方がただしくありません' });
+    if (d.length > 4000 || !Number.isInteger(n) || !Number.isInteger(i) || n < 1 || n > 30 || i < 0 || i >= n) return js({ ok: false, err: 'bad', msg: '送り方が正しくありません' });
     if (n > 1) {
-      if (!/^[a-z0-9]{10,32}$/.test(cid)) return js({ ok: false, err: 'bad', msg: '送り方がただしくありません' });
+      if (!/^[a-z0-9]{10,32}$/.test(cid)) return js({ ok: false, err: 'bad', msg: '送り方が正しくありません' });
       const iph = sha('ip:' + (ip || 'unknown')).slice(0, 16);
       if (!(await rate(`chunk/${iph}`, 400, 300))) return js({ ok: false, err: 'rate', msg: '少し待ってください' });
       await S.set(`chunk/${cid}/${i}`, { d, at: now() });
       if (i < n - 1) return js({ ok: true, more: true });
       const parts = await Promise.all(Array.from({ length: n }, (_, j) => S.get(`chunk/${cid}/${j}`)));
       await delPrefix(`chunk/${cid}/`);
-      if (parts.some((x) => !x)) return js({ ok: false, err: 'bad', msg: '送信に失敗しました。もう一度ためしてください' });
+      if (parts.some((x) => !x)) return js({ ok: false, err: 'bad', msg: '送信に失敗しました。もう一度お試しください' });
       d = parts.map((x) => x.d).join('');
     }
     let body = null;

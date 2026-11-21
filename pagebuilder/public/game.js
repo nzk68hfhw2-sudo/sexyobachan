@@ -1,4 +1,4 @@
-/* こじんページ — 個人ページビルダー (game.js 1本で全体が起動します)
+/* 個人ページ — 個人ページビルダー (game.js 1本で全体が起動します)
    ・画面はすべてこのファイルが作ります(画像・音の素材ファイルなし。絵文字とプログラムの描画だけ)。
    ・ほかの人が書いた文章は、必ず「文字」として表示します(innerHTML を使いません)。 */
 (function () {
@@ -7,7 +7,7 @@
   window.__KOJIN_PAGE__ = true;
 
   // ---------------------------------------------------------------- 場所の検出
-  var BASE = '';
+  var BASE = '', VIEW = null; // VIEW: game.js?view=コード で読み込まれたら、そのページだけを表示する
   try {
     var cs = document.currentScript, src = cs && cs.src;
     if (!src) {
@@ -15,6 +15,8 @@
       for (var i = ss.length - 1; i >= 0; i--) if (/\/game\.js(\?|#|$)/.test(ss[i].src || '')) { src = ss[i].src; break; }
     }
     if (src && /^https?:/.test(src)) BASE = src.replace(/game\.js([?#].*)?$/, '');
+    var vm = /[?&]view=([^&#]+)/.exec(src || '');
+    if (vm) VIEW = decodeURIComponent(vm[1]);
   } catch (e) {}
   if (!BASE) BASE = location.origin + '/';
   var API = BASE + 'api';
@@ -23,17 +25,17 @@
   var LIM = { title: 60, body: 4000, bio: 300, name: 20, cmt: 100, tags: 5, tagLen: 15, pwMin: 8 };
   var THEMES = {
     note: { n: 'ノート', e: '📒', bg: '#fffdf5', fg: '#3b3a36', ac: '#e07a5f', pat: 'repeating-linear-gradient(transparent 0 27px, rgba(70,110,200,.16) 27px 28px)' },
-    sakura: { n: 'さくら', e: '🌸', bg: '#fff0f5', fg: '#5a3d4a', ac: '#e8799b', pat: 'radial-gradient(rgba(232,121,155,.22) 3px, transparent 4px)', ps: '26px 26px' },
-    sora: { n: 'そら', e: '☁️', bg: '#eaf6ff', fg: '#2b4a66', ac: '#3d9be0', pat: 'repeating-linear-gradient(135deg, rgba(255,255,255,.6) 0 10px, transparent 10px 20px)' },
-    mori: { n: 'もり', e: '🌳', bg: '#eef5e6', fg: '#2f4a32', ac: '#5a9a4a', pat: 'radial-gradient(rgba(90,154,74,.25) 2px, transparent 3px)', ps: '16px 16px' },
-    yoru: { n: 'よる', e: '🌙', bg: '#1c2033', fg: '#e8e6f5', ac: '#f2c14e', pat: 'radial-gradient(rgba(255,255,255,.7) 1px, transparent 1.5px), radial-gradient(rgba(242,193,78,.6) 1.2px, transparent 2px)', ps: '70px 70px, 110px 110px', pp: '0 0, 35px 50px' },
+    sakura: { n: '桜', e: '🌸', bg: '#fff0f5', fg: '#5a3d4a', ac: '#e8799b', pat: 'radial-gradient(rgba(232,121,155,.22) 3px, transparent 4px)', ps: '26px 26px' },
+    sora: { n: '空', e: '☁️', bg: '#eaf6ff', fg: '#2b4a66', ac: '#3d9be0', pat: 'repeating-linear-gradient(135deg, rgba(255,255,255,.6) 0 10px, transparent 10px 20px)' },
+    mori: { n: '森', e: '🌳', bg: '#eef5e6', fg: '#2f4a32', ac: '#5a9a4a', pat: 'radial-gradient(rgba(90,154,74,.25) 2px, transparent 3px)', ps: '16px 16px' },
+    yoru: { n: '夜', e: '🌙', bg: '#1c2033', fg: '#e8e6f5', ac: '#f2c14e', pat: 'radial-gradient(rgba(255,255,255,.7) 1px, transparent 1.5px), radial-gradient(rgba(242,193,78,.6) 1.2px, transparent 2px)', ps: '70px 70px, 110px 110px', pp: '0 0, 35px 50px' },
     lemon: { n: 'レモン', e: '🍋', bg: '#fffbd6', fg: '#4a4420', ac: '#d49a00', pat: 'linear-gradient(45deg, rgba(224,168,0,.12) 25%, transparent 25% 75%, rgba(224,168,0,.12) 75%), linear-gradient(45deg, rgba(224,168,0,.12) 25%, transparent 25% 75%, rgba(224,168,0,.12) 75%)', ps: '24px 24px', pp: '0 0, 12px 12px' },
     mint: { n: 'ミント', e: '🍃', bg: '#e3f8f1', fg: '#23514a', ac: '#2fa58c', pat: 'linear-gradient(rgba(47,181,154,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(47,181,154,.16) 1px, transparent 1px)', ps: '22px 22px' },
     candy: { n: 'キャンディ', e: '🍬', bg: '#fdeaff', fg: '#5b3a6b', ac: '#c561e0', pat: 'radial-gradient(rgba(197,97,224,.2) 5px, transparent 6px), radial-gradient(rgba(255,160,200,.3) 5px, transparent 6px)', ps: '40px 40px', pp: '0 0, 20px 20px' },
     retro: { n: 'レトロ', e: '📻', bg: '#f3e6cf', fg: '#4b3621', ac: '#b5562b', pat: 'repeating-linear-gradient(0deg, rgba(181,86,43,.09) 0 14px, transparent 14px 28px)' },
-    sumi: { n: 'すみ', e: '🖋️', bg: '#f4f4f1', fg: '#222222', ac: '#555555', pat: 'linear-gradient(rgba(0,0,0,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.05) 1px, transparent 1px)', ps: '12px 12px' },
-    sunset: { n: 'ゆうやけ', e: '🌇', bg: '#ffe3cf', fg: '#5a2e2a', ac: '#e8603c', pat: 'linear-gradient(180deg, rgba(255,190,120,0), rgba(240,110,140,.28))' },
-    galaxy: { n: 'ぎんが', e: '🌌', bg: '#17122b', fg: '#efe9ff', ac: '#b58cff', pat: 'radial-gradient(rgba(255,255,255,.8) 1px, transparent 1.5px), radial-gradient(rgba(181,140,255,.7) 1.5px, transparent 2px), linear-gradient(160deg, rgba(90,60,180,.35), transparent 60%)', ps: '60px 60px, 90px 90px, 100% 100%', pp: '0 0, 30px 45px, 0 0' }
+    sumi: { n: '墨', e: '🖋️', bg: '#f4f4f1', fg: '#222222', ac: '#555555', pat: 'linear-gradient(rgba(0,0,0,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.05) 1px, transparent 1px)', ps: '12px 12px' },
+    sunset: { n: '夕焼け', e: '🌇', bg: '#ffe3cf', fg: '#5a2e2a', ac: '#e8603c', pat: 'linear-gradient(180deg, rgba(255,190,120,0), rgba(240,110,140,.28))' },
+    galaxy: { n: '銀河', e: '🌌', bg: '#17122b', fg: '#efe9ff', ac: '#b58cff', pat: 'radial-gradient(rgba(255,255,255,.8) 1px, transparent 1.5px), radial-gradient(rgba(181,140,255,.7) 1.5px, transparent 2px), linear-gradient(160deg, rgba(90,60,180,.35), transparent 60%)', ps: '60px 60px, 90px 90px, 100% 100%', pp: '0 0, 30px 45px, 0 0' }
   };
   var FONTS = {
     gothic: { n: 'ゴシック', f: '-apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif' },
@@ -43,12 +45,12 @@
     pop: { n: 'ポップ', f: '"Chalkboard SE", "Marker Felt", "Hiragino Maru Gothic ProN", "Comic Sans MS", sans-serif' },
     mono: { n: 'タイプライター', f: '"Courier New", Menlo, "Osaka-Mono", monospace' }
   };
-  var DECOS = { line: '下線', marker: 'マーカー', bar: 'たて線', kakko: '【かっこ】', flower: '✿ お花', dots: 'てんてん', ribbon: 'リボン', star: '★ ほし' };
+  var DECOS = { line: '下線', marker: 'マーカー', bar: '縦線', kakko: '【かっこ】', flower: '✿ 花', dots: '点線', ribbon: 'リボン', star: '★ 星' };
   var ICONS = '🌱 🌸 🌻 🌙 ⭐ ☁️ 🌈 🍀 🍎 🍓 🍋 🍙 🍰 🍩 ☕ 🐱 🐶 🐰 🐻 🐼 🐧 🐥 🦊 🐸 🐳 🦋 🐝 🎈 🎀 🎵 🎨 📚 ✏️ 📷 🎮 ⚽ 🚲 🏠 🗝️ 💎 🔮 🧸 👻 🤖 👾 🌵 🍄 🪐'.split(' ');
   var BGS = ['#fffdf5', '#ffffff', '#fff0f5', '#eaf6ff', '#eef5e6', '#fffbd6', '#fdeaff', '#f3e6cf', '#e8e8e8', '#2b2b2b', '#1c2033', '#17122b'];
   var FGS = ['#222222', '#3b3a36', '#5a3d4a', '#2b4a66', '#2f4a32', '#4b3621', '#5b3a6b', '#ffffff', '#e8e6f5', '#ffe9a8'];
   var VIS = { public: '🌏 全体に公開', unlisted: '🔗 URLを知っている人だけ', private: '🔒 自分だけ' };
-  var REASONS = { personal: '本名・住所・学校名・連絡先が書いてある', abuse: 'いやがらせ・悪口', adult: 'ふさわしくない内容', spam: '宣伝・いたずら', other: 'そのほか' };
+  var REASONS = { personal: '本名・住所・学校名・連絡先が書いてある', abuse: '嫌がらせ・悪口', adult: '不適切な内容', spam: '宣伝・スパム', other: 'その他' };
   var WARN = '⚠️ 本名、住所、学校名、連絡先は書かないでください。';
 
   // ---------------------------------------------------------------- DOM の道具
@@ -82,7 +84,7 @@
   function today() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
   function ago(t) {
     var s = (Date.now() - t) / 1000;
-    if (s < 60) return 'いま'; if (s < 3600) return Math.floor(s / 60) + '分前'; if (s < 86400) return Math.floor(s / 3600) + '時間前';
+    if (s < 60) return 'たった今'; if (s < 3600) return Math.floor(s / 60) + '分前'; if (s < 86400) return Math.floor(s / 3600) + '時間前';
     if (s < 86400 * 30) return Math.floor(s / 86400) + '日前';
     var d = new Date(t); return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
   }
@@ -93,85 +95,9 @@
   }
   function contrast(a, b) { var x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
 
-  // ---------------------------------------------------------------- Gravity のアイコン(自動読み取り)
-  // Gravity がゲームにわたしている情報(URLのうしろ・ページ内の変数・保存データ・画像)の中から、
-  // プロフィール画像らしい https のURLをさがします。見つからなければ絵文字のアイコンを使います。
-  // 見つけたURLはこの端末の中だけで使い、サーバーには送りません。
-  var gIcon = null, gFrom = '';
-  var KEY_RE = /avatar|icon|head_?img|portrait|face_?url|(profile|user|member)_?(image|img|pic|photo)/i;
-  var GLOBAL_RE = /gravity|user|profile|account|member|bridge|native|__INITIAL|__NUXT|__NEXT|app_?(data|info|config)/i;
-  function okImgUrl(u) {
-    try {
-      if (typeof u !== 'string' || u.length > 600) return null;
-      var x = new URL(u, location.href);
-      if (x.protocol === 'https:' || (x.protocol === 'http:' && /^(localhost|127\.0\.0\.1)$/.test(x.hostname))) return x.href;
-    } catch (e) {}
-    return null;
-  }
-  function scanObj(o, depth, path, out, budget) {
-    if (!o || typeof o !== 'object' || depth > 3 || o === window || o.nodeType) return;
-    var ks; try { ks = Object.keys(o); } catch (e) { return; }
-    for (var i = 0; i < ks.length && i < 60 && budget.n-- > 0; i++) {
-      var v; try { v = o[ks[i]]; } catch (e) { continue; }
-      if (typeof v === 'string') { if (KEY_RE.test(ks[i]) && okImgUrl(v)) out.push([path + '.' + ks[i], okImgUrl(v)]); }
-      else if (v && typeof v === 'object') scanObj(v, depth + 1, path + '.' + ks[i], out, budget);
-    }
-  }
-  function envScan() {
-    var found = [], names = { query: [], globals: [], storage: [], imgs: 0, handlers: [] }, budget = { n: 4000 };
-    try {
-      (location.search.slice(1) + '&' + (location.hash || '').replace(/^#\??/, '')).split('&').forEach(function (kv) {
-        var i = kv.indexOf('='), k = i < 0 ? kv : kv.slice(0, i), v = i < 0 ? '' : kv.slice(i + 1);
-        if (!k) return; names.query.push(k);
-        try { v = decodeURIComponent(v); } catch (e) {}
-        if (KEY_RE.test(k) && okImgUrl(v)) found.push(['URL ?' + k, okImgUrl(v)]);
-      });
-    } catch (e) {}
-    try {
-      Object.getOwnPropertyNames(window).forEach(function (k) {
-        if (!GLOBAL_RE.test(k) || /^__kp_|^__KOJIN/.test(k)) return;
-        var v; try { v = window[k]; } catch (e) { return; }
-        if (!v || typeof v !== 'object') return;
-        names.globals.push(k); scanObj(v, 0, 'window.' + k, found, budget);
-      });
-    } catch (e) {}
-    try { if (window.webkit && window.webkit.messageHandlers) names.handlers = Object.keys(window.webkit.messageHandlers); } catch (e) {}
-    ['localStorage', 'sessionStorage'].forEach(function (sn) {
-      try {
-        var st = window[sn];
-        for (var i = 0; i < st.length && i < 60; i++) {
-          var k = st.key(i); if (k === 'kojin_page_token') continue;
-          names.storage.push(k);
-          var v = st.getItem(k);
-          if (v && v.length < 20000 && /^[\[{]/.test(v)) { try { scanObj(JSON.parse(v), 0, sn + '.' + k, found, budget); } catch (e) {} }
-          else if (KEY_RE.test(k) && okImgUrl(v)) found.push([sn + '.' + k, okImgUrl(v)]);
-        }
-      } catch (e) {}
-    });
-    try {
-      Array.prototype.forEach.call(document.querySelectorAll('img'), function (im) {
-        names.imgs++;
-        if (KEY_RE.test((im.className || '') + ' ' + (im.id || '') + ' ' + (im.alt || '')) && okImgUrl(im.currentSrc || im.src)) found.push(['img', okImgUrl(im.currentSrc || im.src)]);
-      });
-    } catch (e) {}
-    return { found: found, names: names };
-  }
-  function detectGravityIcon() { var r = envScan(); if (r.found.length) { gIcon = r.found[0][1]; gFrom = r.found[0][0]; } return r; }
-  function gImg(size) {
-    var im = h('img', { class: 'gi', alt: '', referrerpolicy: 'no-referrer', style: 'width:' + size + 'px;height:' + size + 'px' });
-    im.onerror = function () { im.style.display = 'none'; };
-    im.src = gIcon;
-    return im;
-  }
-  function diagText() {
-    var r = envScan(), n = r.names, host = ''; try { host = location.host; } catch (e) {}
-    return ['Gravityアイコン: ' + (gIcon ? '見つかりました(' + gFrom + ')' : '見つかりません'),
-      '場所: ' + host, 'URLの項目名: ' + (n.query.join(', ') || 'なし'), 'ページ内の変数名: ' + (n.globals.join(', ') || 'なし'),
-      'アプリ連絡口: ' + (n.handlers.join(', ') || 'なし'), '保存データの項目名: ' + (n.storage.join(', ') || 'なし'), 'ページ内の画像: ' + n.imgs + '個',
-      '候補: ' + (r.found.map(function (f) { return f[0]; }).join(', ') || 'なし')].join('\n');
-  }
-
-  // ---------------------------------------------------------------- Gravity に投稿する(文章コピー + カード画像)
+  // ---------------------------------------------------------------- Gravity に投稿する
+  // Gravity の投稿には URL が貼れないので、(1) そのページだけを表示する「ゲーム」のコードを作る
+  // (2) URL をふくまない文章を作る、の2通りを用意します。
   function plainBody(text) {
     return String(text || '').split('\n').map(function (ln) {
       if (/^\s*[-ー―─]{3,}\s*$/.test(ln)) return '— — —';
@@ -183,101 +109,47 @@
     if (arr.length > 400) body = arr.slice(0, 400).join('') + '…';
     var out = head + '\n' + (po.kind === 'diary' && po.title ? po.title + '\n' : '') + '\n' + body + '\n';
     if (po.tags.length) out += '\n' + po.tags.map(function (t) { return '#' + t; }).join(' ') + '\n';
-    if (po.status === 'public' && po.vis === 'public') out += '\n✏️ つづきは「こじんページ」で @' + au.u + ' をさがしてね';
     return out;
   }
-  function loadImg(url) {
-    return new Promise(function (res) {
-      if (!url) return res(null);
-      var im = new Image(), t = setTimeout(function () { res(null); }, 6000);
-      im.crossOrigin = 'anonymous'; im.referrerPolicy = 'no-referrer';
-      im.onload = function () { clearTimeout(t); res(im); }; im.onerror = function () { clearTimeout(t); res(null); };
-      im.src = url;
-    });
+  // そのページだけを表示するローダー(Gravity の AI にそのまま出力させる文章)
+  function loaderText(code) {
+    return ['一字一句変えずに出力してください。書き換えは禁止です。',
+      '以下のHTMLを、そのまま1文字も変えずにゲームのコードとして使ってください。説明文・コメント・改行の追加や削除、URLの変更、ライブラリの追加、iframe化、fetch化、コードの整形・省略はすべて禁止です。',
+      '', '<!DOCTYPE html>', '<html lang="ja">', '<head>', '<meta charset="utf-8">',
+      '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">', '<title>個人ページ</title>',
+      '<style>', 'html,body{margin:0;padding:0;height:100%;background:#f6efe2;overflow:hidden}',
+      '#kpl{position:fixed;left:16px;right:16px;top:45%;color:#8a7c66;font:16px sans-serif;text-align:center}', '</style>',
+      '</head>', '<body>', '<div id="kpl">読み込み中…</div>', '<script>', '(function(){',
+      "var s=document.createElement('script');",
+      "s.src='" + BASE + 'game.js?view=' + encodeURIComponent(code) + "';",
+      's.async=true;',
+      "s.onload=function(){var l=document.getElementById('kpl');if(l)l.style.display='none';};",
+      "s.onerror=function(){var l=document.getElementById('kpl');if(l)l.textContent='読み込めませんでした。通信状態を確認してください。';};",
+      'document.body.appendChild(s);', '})();', '</' + 'script>', '</body>', '</html>'].join('\n');
   }
-  function rrect(x, a, b, w, hh, r) { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + hh, r); x.arcTo(a + w, b + hh, a, b + hh, r); x.arcTo(a, b + hh, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
-  function wrapLines(x, text, maxW, maxLines) {
-    var out = [], cut = false;
-    String(text).split('\n').some(function (para) {
-      var cur = '';
-      Array.from(para).forEach(function (ch) { if (x.measureText(cur + ch).width > maxW && cur) { out.push(cur); cur = ch; } else cur += ch; });
-      out.push(cur);
-      return out.length > maxLines;
-    });
-    if (out.length > maxLines) { out = out.slice(0, maxLines); cut = true; }
-    if (cut) out[maxLines - 1] = Array.from(out[maxLines - 1]).slice(0, -2).join('') + '…';
-    return out;
+  function copyFrom(ta, msg) {
+    var ok = function () { toast(msg); };
+    try { ta.focus(); ta.select(); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, function () { document.execCommand('copy'); ok(); }); else { document.execCommand('copy'); ok(); } } catch (e) { toast('文章を長押しして「すべて選択 → コピー」してください'); }
   }
-  function drawCard(po, au, useIcon) {
-    return loadImg(useIcon ? gIcon : null).then(function (im) {
-      function paint(icon) {
-        var W = 1080, H = 1350, c = document.createElement('canvas'), x = c.getContext('2d'), e = effective(au), dark = lum(e.bg) < 0.25, ff = (FONTS[au.font] || FONTS.gothic).f;
-        c.width = W; c.height = H;
-        x.fillStyle = e.bg; x.fillRect(0, 0, W, H);
-        x.globalAlpha = 0.2; x.fillStyle = e.th.ac; // 水玉もようをプログラムで描く
-        for (var gy = 0; gy < 16; gy++) for (var gx = 0; gx < 13; gx++) { x.beginPath(); x.arc(gx * 90 + (gy % 2 ? 45 : 0), gy * 90, 13, 0, 7); x.fill(); }
-        x.globalAlpha = 1;
-        rrect(x, 60, 60, W - 120, H - 120, 48); x.fillStyle = dark ? 'rgba(20,18,36,.82)' : 'rgba(255,255,255,.9)'; x.fill();
-        x.lineWidth = 5; x.strokeStyle = e.th.ac; x.setLineDash([18, 14]); x.stroke(); x.setLineDash([]);
-        var cx = 170, cy = 190, R = 62;
-        if (icon) {
-          x.save(); x.beginPath(); x.arc(cx, cy, R, 0, 7); x.clip();
-          var sc = Math.max(2 * R / icon.width, 2 * R / icon.height); x.drawImage(icon, cx - icon.width * sc / 2, cy - icon.height * sc / 2, icon.width * sc, icon.height * sc); x.restore();
-          x.beginPath(); x.arc(cx, cy, R, 0, 7); x.lineWidth = 5; x.strokeStyle = e.th.ac; x.stroke();
-        } else { x.font = '100px ' + ff; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = e.fg; x.fillText(au.icon || '🌱', cx, cy + 6); }
-        x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.fillStyle = e.fg;
-        x.font = 'bold 46px ' + ff; x.fillText(wrapLines(x, au.name, W - 400, 1)[0], 260, 185);
-        x.globalAlpha = 0.7; x.font = '34px ' + ff; x.fillText((po.kind === 'diary' ? '📅 日記  ' : '📝 ブログ  ') + fmtDate(po.date), 260, 240); x.globalAlpha = 1;
-        var y = 350;
-        x.font = 'bold 54px ' + ff;
-        wrapLines(x, po.title || fmtDate(po.date) + ' の日記', W - 220, 2).forEach(function (ln) { x.fillText(ln, 110, y); y += 72; });
-        x.fillStyle = e.th.ac; x.fillRect(110, y - 34, W - 220, 6); x.fillStyle = e.fg; y += 44;
-        x.font = '40px ' + ff;
-        var lines = wrapLines(x, plainBody(po.body), W - 220, 60), limit = H - 180; // 空行はせまく送って、入るところまで描く
-        for (var li = 0; li < lines.length; li++) {
-          if (!lines[li]) { y += 26; continue; }
-          var rest = lines.slice(li + 1).some(function (t) { return t; });
-          if (y + 62 > limit && rest) { x.fillText(Array.from(lines[li]).slice(0, -1).join('') + '…', 110, y); break; }
-          x.fillText(lines[li], 110, y); y += 62;
-        }
-        x.globalAlpha = 0.75; x.font = '32px ' + ff; x.textAlign = 'center';
-        x.fillText('✏️ こじんページ ・ @' + au.u, W / 2, H - 105); x.globalAlpha = 1;
-        return c.toDataURL('image/png');
-      }
-      try { return { url: paint(im), icon: !!im }; } catch (e2) { return { url: paint(null), icon: false }; } // 画像が書き出せない設定なら絵文字で描きなおす
-    });
-  }
-  function gravitySheet(po, au) {
+  // what: '日記' '記事' 'ページ' / code: 表示するページのコード / visible: ほかの人が見られる状態か / po,au: 記事のとき
+  function gravitySheet(what, code, visible, vis, po, au) {
     sheet('📮 Gravity に投稿する', function (sh, close) {
-      var ta = h('textarea', { class: 'i', style: 'min-height:150px;font-size:14px', 'aria-label': '投稿用の文章' }); ta.value = shareText(po, au);
-      var useIcon = !!gIcon, cardBox = h('div', { class: 'center' }), iconRow = h('div');
-      function copy() {
-        var ok = function () { toast('コピーしました。Gravity の投稿画面に貼りつけてください'); };
-        try { ta.focus(); ta.select(); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, function () { document.execCommand('copy'); ok(); }); else { document.execCommand('copy'); ok(); } } catch (e) { toast('文章を長押しして「すべて選択 → コピー」してください'); }
+      var kids = [];
+      if (visible) {
+        var ta = h('textarea', { class: 'i', readonly: true, style: 'min-height:130px;font-size:12px', 'aria-label': 'Gravityに送る文章' }); ta.value = loaderText(code);
+        kids.push(h('p', { class: 'note', text: 'Gravity のゲーム投稿として、この' + what + 'そのものを表示できます(ページを作る画面ではなく、' + what + 'だけが開きます)。' }),
+          h('ol', { style: 'margin:6px 0 10px;padding-left:1.4em;font-size:14.5px' }, ['下のボタンで文章をコピーします。', 'Gravity のゲーム作成で、AI にそのまま貼り付けて送ります。', '出来上がったゲームを投稿します。'].map(function (t) { return h('li', { text: t }); })),
+          vis === 'unlisted' ? h('div', { class: 'warn', text: 'この' + what + 'は「URLを知っている人だけ」です。Gravity に投稿すると、投稿を見た人は誰でも読めます。' }) : null,
+          ta, h('div', { style: 'margin-top:8px' }, btn('📋 Gravity の AI に送る文章をコピー', 'full pri', function () { copyFrom(ta, 'コピーしました。Gravity の AI に貼り付けてください'); })),
+          h('p', { class: 'note', text: '投稿したあとに' + what + 'を編集すると、Gravity 側の表示も新しくなります。削除や非公開にすると、表示されなくなります。' }));
+      } else kids.push(h('div', { class: 'warn', text: 'この' + what + 'は、まだ他の人が見られる状態ではありません。「公開する」にして、公開範囲を「全体に公開」か「URLを知っている人だけ」にすると、Gravity に表示できます。' }));
+      if (po) {
+        var tx = h('textarea', { class: 'i', style: 'min-height:120px;font-size:14px', 'aria-label': '投稿用の文章' }); tx.value = shareText(po, au);
+        kids.push(h('label', { class: 'f', text: '文章だけで投稿する場合(URLなし・書きかえ可)' }), tx,
+          h('div', { style: 'margin-top:8px' }, btn('📋 文章をコピー', 'full', function () { copyFrom(tx, 'コピーしました。Gravity の投稿画面に貼り付けてください'); })));
       }
-      function card() {
-        cardBox.textContent = ''; cardBox.appendChild(h('div', { class: 'note', text: 'カードを作っています…' }));
-        drawCard(po, au, useIcon).then(function (r) {
-          cardBox.textContent = '';
-          var im = h('img', { class: 'cardimg', alt: '日記カード', src: r.url });
-          add(cardBox, [im, useIcon && !r.icon ? h('div', { class: 'note', text: 'アイコン画像は書き出せなかったので、絵文字で作りました。' }) : null,
-            h('div', { class: 'col', style: 'margin-top:8px' }, act('🖼️ 画像を保存・共有する', 'full', function () {
-              return fetch(r.url).then(function (x) { return x.blob(); }).then(function (bl) {
-                var f = new File([bl], 'nikki.png', { type: 'image/png' });
-                if (navigator.canShare && navigator.canShare({ files: [f] })) return navigator.share({ files: [f] }).catch(function () {});
-                toast('画像を長押しして「写真に保存」してください');
-              }, function () { toast('画像を長押しして「写真に保存」してください'); });
-            }))]);
-        });
-      }
-      if (gIcon) add(iconRow, [h('label', { class: 'f', text: 'カードのアイコン' }), seg({ g: 'Gravityのアイコン', e: '絵文字 ' + (au.icon || '') }, 'g', function (k) { useIcon = k === 'g'; card(); })]);
-      add(sh, [
-        h('p', { class: 'note', text: 'Gravity の投稿画面には URL が貼れないので、①文章をコピーして貼る ②カード画像を保存して付ける、のどちらか(両方でもOK)で投稿できます。' }),
-        po.status !== 'public' || po.vis !== 'public' ? h('div', { class: 'warn', text: 'この' + (po.kind === 'diary' ? '日記' : '記事') + 'は「全体に公開」ではありません。投稿すると Gravity の人には内容が見えます。' }) : null,
-        h('label', { class: 'f', text: '① 投稿用の文章(書きかえてOK)' }), ta, btn('📋 文章をコピー', 'full pri', copy),
-        iconRow, h('label', { class: 'f', text: '② カード画像' }), cardBox,
-        h('div', { style: 'margin-top:12px' }, btn('とじる', 'full sub', close))]);
-      card();
+      kids.push(h('div', { style: 'margin-top:12px' }, btn('閉じる', 'full sub', close)));
+      add(sh, kids);
     });
   }
 
@@ -347,6 +219,8 @@
     /* Gravity の中では、左上と右上に Gravity のボタンが重なるので、その場所をあける */
     '.top.emb{padding-left:66px;padding-right:176px;min-height:calc(env(safe-area-inset-top,0px) + 58px)}.top.emb canvas{display:none}',
     '.top.emb .tt{flex:1;min-width:0}.top.emb .ttl{font-size:16px;line-height:1.25}.top.emb .who{display:block;max-width:100%;border:0;background:none;padding:0;font-size:11.5px;color:#8a7c66;line-height:1.2}',
+    '.app.viewer .top{display:none}.app.viewer .tabs button{flex-direction:row;gap:6px;font-size:13px;min-height:46px}.app.viewer .tabs button i{font-size:18px}',
+    '.app.viewer.embv .fullpg{padding-top:calc(env(safe-area-inset-top,0px) + 70px)}.app.viewer .fullpg{padding-top:calc(env(safe-area-inset-top,0px) + 18px)}',
     '.bar{height:3px;background:repeating-linear-gradient(90deg,#e07a5f 0 12px,#f2c14e 12px 24px,#81b29a 24px 36px);opacity:0;flex:none}',
     '.bar.on{opacity:1;animation:mv .6s linear infinite}@keyframes mv{to{background-position:36px 0}}',
     '.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}',
@@ -429,7 +303,6 @@
     '.radio{display:block;width:100%;text-align:left;font:inherit;font-size:15px;min-height:46px;border:1.5px solid #bfae8c;background:#fff;border-radius:11px;padding:8px 12px;margin:0 0 7px}.radio.on{background:#3b352c;color:#fff}',
     '.toast{position:absolute;left:14px;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);background:#3b352c;color:#fff;border-radius:14px;padding:11px 14px;font-size:14.5px;z-index:30;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.3)}',
     '.empty{text-align:center;color:#8a7c66;font-size:14px;padding:22px 8px}.center{text-align:center}',
-    '.gi{border-radius:50%;object-fit:cover;flex:none;vertical-align:middle}.cardimg{width:100%;max-width:340px;border-radius:14px;border:1.5px solid #d9c7a3;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}',
     '.code{font-family:Menlo,monospace;font-size:13px;background:#fff;border:1.5px dashed #bfae8c;border-radius:10px;padding:8px 10px;width:100%;color:#3b352c}'
   ].join('\n');
 
@@ -486,17 +359,17 @@
         throw new ApiErr(r ? r.err : 'net', r ? r.msg : '通信に失敗しました');
       }
       return r;
-    }, function () { setBusy(-1); throw new ApiErr('net', '通信に失敗しました。電波のよいところでもう一度ためしてください'); });
+    }, function () { setBusy(-1); throw new ApiErr('net', '通信に失敗しました。通信環境の良い場所でもう一度お試しください'); });
   }
 
   // ---------------------------------------------------------------- 画面の土台
-  var host, root, app, mainEl, barEl, tabsEl, whoEl, ttlEl, stack = [{ v: 'home' }], renderN = 0, seen = {};
+  var host, root, app, mainEl, barEl, tabsEl, whoEl, ttlEl, stack = [{ v: 'home' }], renderN = 0, seen = {}, viewer = false, booted = false;
   function setBusy(d) { busyN = Math.max(0, busyN + d); if (barEl) barEl.className = 'bar' + (busyN ? ' on' : ''); }
   function toast(msg) {
     var t = h('div', { class: 'toast', role: 'status', text: msg }); app.appendChild(t);
     setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 3200);
   }
-  function fail(e) { toast(e && e.msg ? e.msg : 'うまくいきませんでした'); }
+  function fail(e) { toast(e && e.msg ? e.msg : '処理に失敗しました'); }
   function sheet(title, build) {
     var ov = h('div', { class: 'ov' }), sh = h('div', { class: 'sheet', role: 'dialog' }, h('h3', { text: title }));
     function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
@@ -509,7 +382,7 @@
       sheet(title, function (sh, close) {
         add(sh, [h('p', { text: msg }), h('div', { class: 'col', style: 'margin-top:14px' },
           btn(okLabel, 'full ' + (danger ? 'dan' : 'pri'), function () { close(); res(true); }),
-          btn('やめる', 'full sub', function () { close(); res(false); }))]);
+          btn('キャンセル', 'full sub', function () { close(); res(false); }))]);
       });
     });
   }
@@ -521,16 +394,21 @@
   }
   function act(label, cls, fn) { var b = btn(label, cls, null); b.addEventListener('click', guard(b, fn)); return b; }
 
-  function go(v, p) { stack.push({ v: v, p: p || {} }); show(); }
+  function go(v, p) { stack.push({ v: v, p: p || {} }); if (booted) show(); }
   function back() { if (stack.length > 1) stack.pop(); show(); }
   function tab(v) { stack = [{ v: v, p: {} }]; show(); }
   function replace(v, p) { stack[stack.length - 1] = { v: v, p: p || {} }; show(); }
-  var TABS = [['home', '🏠', 'ホーム'], ['search', '🔍', 'さがす'], ['mine', '✏️', 'マイページ'], ['settings', '⚙️', 'せってい']];
+  var TABS = [['home', '🏠', 'ホーム'], ['search', '🔍', '検索'], ['mine', '✏️', 'マイページ'], ['settings', '⚙️', '設定']];
   function refreshChrome() {
     if (!tabsEl) return;
     var cur = stack[0].v;
     tabsEl.textContent = '';
-    if (stack.length > 1) tabsEl.appendChild(h('button', { type: 'button', onclick: back, 'aria-label': 'もどる' }, h('i', { text: '⬅️' }), 'もどる'));
+    if (viewer) { // 表示専用: 戻る と 入口 だけ
+      if (stack.length > 1) tabsEl.appendChild(h('button', { type: 'button', onclick: back, 'aria-label': '戻る' }, h('i', { text: '⬅️' }), '戻る'));
+      tabsEl.appendChild(h('button', { type: 'button', onclick: function () { viewer = false; app.classList.remove('viewer'); if (me) show(); else go('auth'); } }, h('i', { text: '📒' }), me ? '個人ページを開く' : 'ログイン / 自分のページを作る'));
+      return;
+    }
+    if (stack.length > 1) tabsEl.appendChild(h('button', { type: 'button', onclick: back, 'aria-label': '戻る' }, h('i', { text: '⬅️' }), '戻る'));
     TABS.forEach(function (t) {
       tabsEl.appendChild(h('button', { type: 'button', class: cur === t[0] && stack.length === 1 ? 'on' : '', onclick: function () { tab(t[0]); } }, h('i', { text: t[1] }), t[2]));
     });
@@ -540,15 +418,15 @@
     var cur = stack[stack.length - 1], n = ++renderN;
     refreshChrome();
     mainEl.textContent = '';
-    mainEl.appendChild(h('div', { class: 'empty', text: 'よみこみ中…' }));
+    mainEl.appendChild(h('div', { class: 'empty', text: '読み込み中…' }));
     Promise.resolve().then(function () { return VIEWS[cur.v](cur.p || {}); }).then(function (el) {
       if (n !== renderN) return;
       mainEl.textContent = ''; mainEl.appendChild(el); mainEl.scrollTop = 0; refreshChrome();
     }).catch(function (e) {
       if (n !== renderN) return;
       mainEl.textContent = '';
-      mainEl.appendChild(h('div', { class: 'pad' }, h('div', { class: 'err', text: e && e.msg ? e.msg : 'ひょうじできませんでした' }),
-        h('div', { class: 'row', style: 'margin-top:12px' }, btn('もう一度', 'sub', show), stack.length > 1 ? btn('もどる', 'sub', back) : null)));
+      mainEl.appendChild(h('div', { class: 'pad' }, h('div', { class: 'err', text: e && e.msg ? e.msg : '表示できませんでした' }),
+        h('div', { class: 'row', style: 'margin-top:12px' }, btn('もう一度', 'sub', show), stack.length > 1 ? btn('戻る', 'sub', back) : null)));
     });
   }
 
@@ -613,18 +491,18 @@
   }
   function reportSheet(u, p, key, c) {
     sheet('🚩 通報する', function (sh, close) {
-      var reason = null, note = h('input', { class: 'i', maxlength: 100, placeholder: 'メモ(なくてもOK)' });
+      var reason = null, note = h('input', { class: 'i', maxlength: 100, placeholder: 'メモ(任意)' });
       var list = h('div');
       Object.keys(REASONS).forEach(function (k) {
         list.appendChild(h('button', { type: 'button', class: 'radio', onclick: function (ev) {
           reason = k; Array.prototype.forEach.call(list.children, function (x) { x.className = 'radio'; }); ev.currentTarget.className = 'radio on';
         } }, REASONS[k]));
       });
-      add(sh, [h('p', { class: 'note', text: '管理者が内容を確認します。だれが通報したかは相手に伝わりません。' }), list, note,
+      add(sh, [h('p', { class: 'note', text: '管理者が内容を確認します。誰が通報したかは相手に伝わりません。' }), list, note,
         h('div', { class: 'col', style: 'margin-top:12px' }, act('通報を送る', 'full pri', function () {
-          if (!reason) { toast('理由をえらんでください'); return; }
-          return api('report', { u: u, p: p, key: key, c: c || '', reason: reason, note: note.value }).then(function () { close(); toast('通報を送りました。ありがとう'); });
-        }), btn('やめる', 'full sub', close))]);
+          if (!reason) { toast('理由を選んでください'); return; }
+          return api('report', { u: u, p: p, key: key, c: c || '', reason: reason, note: note.value }).then(function () { close(); toast('通報を送信しました。ご協力ありがとうございます'); });
+        }), btn('キャンセル', 'full sub', close))]);
     });
   }
   function social(u, p, key, data) {
@@ -633,20 +511,20 @@
       wrap.textContent = '';
       var likeB = h('button', { type: 'button', class: 'like' + (d.liked ? ' on' : ''), 'aria-pressed': d.liked ? 'true' : 'false' }, (d.liked ? '❤️ ' : '🤍 ') + 'いいね ' + d.stat.likes);
       likeB.addEventListener('click', guard(likeB, function () {
-        if (!me) { toast('いいねにはログインがいります'); return; }
+        if (!me) { toast('いいねするにはログインが必要です'); return; }
         return api('like', { u: u, p: p, key: key }).then(function (r) { d.liked = r.liked; if (typeof r.likes === 'number') d.stat.likes = r.likes; draw(d); });
       }));
-      var inp = h('input', { class: 'i', maxlength: LIM.cmt, placeholder: me ? 'ひとことコメント(' + LIM.cmt + '文字まで)' : 'コメントにはログインがいります', disabled: !me, 'aria-label': 'コメント' });
+      var inp = h('input', { class: 'i', maxlength: LIM.cmt, placeholder: me ? '一言コメント(' + LIM.cmt + '文字まで)' : 'コメントするにはログインが必要です', disabled: !me, 'aria-label': 'コメント' });
       add(wrap, [
         h('div', { class: 'soc' }, likeB, h('span', { class: 'foot', text: '👣 足あと ' + d.stat.views }), h('span', { class: 'grow', style: 'flex:1' }),
           h('button', { class: 'lk', type: 'button', onclick: function () { reportSheet(u, p, key); } }, '🚩 通報')),
-        h('h3', { class: 'hdw', style: 'font-size:16px' }, h('span', { class: 'hd', text: 'ひとことコメント (' + d.comments.length + ')' })),
+        h('h3', { class: 'hdw', style: 'font-size:16px' }, h('span', { class: 'hd', text: '一言コメント (' + d.comments.length + ')' })),
         d.comments.length ? d.comments.map(function (c) {
           return h('div', { class: 'cm' },
             h('div', { class: 'w' }, h('span', { text: c.icon + ' ' + c.name }), h('span', { text: ago(c.at) }), c.hidden ? h('span', { class: 'badge r', text: '非表示中' }) : null, h('span', { class: 'grow' }),
               c.canDel ? h('button', { class: 'lk', type: 'button', onclick: function () {
-                confirmSheet('コメントを消す', 'このコメントを消しますか?', '消す', true).then(function (ok) { if (ok) api('delComment', { u: u, p: p, key: key, c: c.c }).then(function (r) { r.liked = d.liked; draw(r); }).catch(fail); });
-              } }, '消す') : null,
+                confirmSheet('コメントを削除', 'このコメントを削除しますか?', '削除する', true).then(function (ok) { if (ok) api('delComment', { u: u, p: p, key: key, c: c.c }).then(function (r) { r.liked = d.liked; draw(r); }).catch(fail); });
+              } }, '削除') : null,
               h('button', { class: 'lk', type: 'button', onclick: function () { reportSheet(u, p, key, c.c); } }, '通報')),
             h('div', { text: c.text }));
         }) : h('div', { class: 'meta', text: 'まだコメントはありません。' }),
@@ -670,22 +548,22 @@
   VIEWS.home = function () {
     return api('feed').then(function (r) {
       return h('div', { class: 'pad' },
-        !me ? h('div', { class: 'card', style: 'margin-bottom:6px' }, h('div', { style: 'font-weight:700', text: 'ようこそ!じぶんだけのページを作ろう' }),
-          h('div', { class: 'note', style: 'margin:4px 0 10px', text: 'プロフィール・ブログ・日記が書けて、見た目もじゆうに変えられます。' }), btn('✏️ じぶんのページをつくる', 'pri full', function () { go('auth'); })) : null,
+        !me ? h('div', { class: 'card', style: 'margin-bottom:6px' }, h('div', { style: 'font-weight:700', text: 'ようこそ。自分だけのページを作りましょう' }),
+          h('div', { class: 'note', style: 'margin:4px 0 10px', text: 'プロフィール・ブログ・日記が書けて、見た目も自由に変えられます。' }), btn('✏️ 自分のページを作る', 'pri full', function () { go('auth', { to: 'mine' }); })) : null,
         h('h2', { class: 'sec', text: '🏡 新しいページ' }),
         r.pages.length ? h('div', { class: 'chips' }, r.pages.map(userChip)) : h('div', { class: 'empty', text: 'まだページがありません。' }),
         h('h2', { class: 'sec', text: '🆕 新着の記事・日記' }),
-        r.posts.length ? r.posts.map(postCard) : h('div', { class: 'empty', text: 'まだ記事がありません。さいしょの1つを書いてみよう!' }));
+        r.posts.length ? r.posts.map(postCard) : h('div', { class: 'empty', text: 'まだ記事がありません。最初の1件を書いてみませんか。' }));
     });
   };
 
   VIEWS.search = function (p) {
-    var q = h('input', { class: 'i', maxlength: 30, placeholder: 'ユーザー名・タグ・題名', value: p.q || '', 'aria-label': 'さがす言葉', enterkeyhint: 'search' });
+    var q = h('input', { class: 'i', maxlength: 30, placeholder: 'ユーザー名・タグ・題名', value: p.q || '', 'aria-label': '検索ワード', enterkeyhint: 'search' });
     var out = h('div'), codeI = h('input', { class: 'i', placeholder: '例: @namae または URL', 'aria-label': 'ページのコード' });
     function run(tagOnly) {
       var s = q.value.trim(); if (!s) return;
       stack[stack.length - 1].p = { q: s };
-      out.textContent = ''; out.appendChild(h('div', { class: 'empty', text: 'さがしています…' }));
+      out.textContent = ''; out.appendChild(h('div', { class: 'empty', text: '検索中…' }));
       api('search', { q: s, tagOnly: !!tagOnly }).then(function (r) {
         out.textContent = '';
         add(out, [h('h2', { class: 'sec', text: '👤 ページ (' + r.users.length + ')' }), r.users.length ? h('div', { class: 'chips' }, r.users.map(userChip)) : h('div', { class: 'empty', text: '見つかりませんでした。' }),
@@ -697,11 +575,11 @@
     api('feed').then(function (r) { if (r.tags.length) add(tagsBox, [h('h2', { class: 'sec', text: '🏷️ よく使われているタグ' }), r.tags.map(function (t) { return h('button', { class: 'tag', type: 'button', onclick: function () { q.value = t; run(true); } }, '#' + t); })]); }).catch(function () {});
     if (p.q) setTimeout(function () { run(p.tag); }, 0);
     return h('div', { class: 'pad' },
-      h('h2', { class: 'sec', text: '🔍 さがす' }),
-      h('div', { class: 'row' }, h('div', { class: 'grow' }, q), btn('さがす', 'pri', function () { run(); })),
+      h('h2', { class: 'sec', text: '🔍 検索' }),
+      h('div', { class: 'row' }, h('div', { class: 'grow' }, q), btn('検索', 'pri', function () { run(); })),
       out, tagsBox,
-      h('h2', { class: 'sec', text: '🔗 URL・コードでひらく' }),
-      h('div', { class: 'row' }, h('div', { class: 'grow' }, codeI), btn('ひらく', '', function () { if (!openCode(codeI.value)) toast('コードの形がちがうようです'); })));
+      h('h2', { class: 'sec', text: '🔗 URL・コードで開く' }),
+      h('div', { class: 'row' }, h('div', { class: 'grow' }, codeI), btn('開く', '', function () { if (!openCode(codeI.value)) toast('コードの形式が正しくありません'); })));
   };
 
   VIEWS.auth = function (p) {
@@ -717,21 +595,21 @@
       box.textContent = '';
       add(box, [
         seg({ login: 'ログイン', register: '新規登録' }, mode, function (k) { mode = k; draw(); }),
-        field('ID', id, reg ? '半角の英小文字・数字・_ で3〜20文字。本名は使わないでね。' : null),
-        field('パスワード', pw, reg ? LIM.pwMin + '文字以上。ほかのサービスと同じものは使わないでください。' : null),
+        field('ID', id, reg ? '半角の英小文字・数字・_ で3〜20文字。本名は使わないでください。' : null),
+        field('パスワード', pw, reg ? LIM.pwMin + '文字以上。他のサービスと同じものは使わないでください。' : null),
         reg ? field('パスワード(もう一度)', pw2) : null, admBox, err,
         h('div', { style: 'margin-top:16px' }, act(reg ? 'この内容で登録する' : 'ログインする', 'pri full', function () {
           var a = id.value.trim().toLowerCase();
           if (reg && !/^[a-z0-9_]{3,20}$/.test(a)) { showErr('IDは半角の英小文字・数字・_ で3〜20文字にしてください'); return; }
           if (reg && pw.value.length < LIM.pwMin) { showErr('パスワードは' + LIM.pwMin + '文字以上にしてください'); return; }
-          if (reg && pw.value !== pw2.value) { showErr('パスワードが2つでちがっています'); return; }
+          if (reg && pw.value !== pw2.value) { showErr('パスワードが一致しません'); return; }
           return api(reg ? 'register' : 'login', { id: a, pw: pw.value, adminCode: adm.value || undefined }).then(function (r) {
             saveToken(r.token); me = r.me; myPage = r.page;
-            toast(reg ? '登録できました!ようこそ' : 'ログインしました');
-            tab('mine');
+            toast(reg ? '登録が完了しました' : 'ログインしました');
+            if (stack.length > 1 && !p.to) { stack.pop(); show(); } else tab('mine');
           }, function (e) { if (e.code === 'admin_code') admBox.style.display = ''; showErr(e.msg); });
         })),
-        reg ? h('p', { class: 'note', text: '※ パスワードを忘れると元にもどせません(メールアドレスを集めていないため)。忘れないようにしてください。' }) : null
+        reg ? h('p', { class: 'note', text: '※ パスワードを忘れると元に戻せません(メールアドレスを集めていないため)。忘れないようにしてください。' }) : null
       ]);
     }
     draw();
@@ -762,7 +640,7 @@
         pg.hidden ? h('div', { class: 'err', text: 'このページは管理者により非表示になっています。' }) : null,
         pageHead(pg),
         pg.bio ? h('div', { class: 'box' }, renderBody(pg.bio)) : null,
-        r.owner ? h('div', { class: 'row', style: 'justify-content:center' }, btn('🎨 デザイン・プロフィールを編集', 'sm', function () { go('design'); })) : null,
+        r.owner ? h('div', { class: 'row', style: 'justify-content:center' }, btn('🎨 デザイン・プロフィールを編集', 'sm', function () { go('design'); }), btn('📮 Gravityに投稿する', 'sm pri', function () { gravitySheet('ページ', shareCode(pg.u, null, pg.vis === 'unlisted' ? pg.key : null), pg.vis !== 'private' && !pg.hidden, pg.vis); })) : null,
         r.owner ? shareBox(shareCode(pg.u, null, pg.vis === 'unlisted' ? pg.key : null), 'このページの公開範囲: ' + VIS[pg.vis]) : null,
         h('div', { style: 'margin-top:14px' }, seg({ blog: '📝 ブログ', diary: '📅 日記' }, kind, function (x) { kind = x; stack[stack.length - 1].p.kind = x; drawList(); })),
         h('div', { style: 'margin-top:10px' }, listEl),
@@ -784,13 +662,13 @@
       var po = r.post, el = applyDesign(h('div', { class: 'fullpg' }), r.author);
       add(el, [
         h('button', { class: 'pl', type: 'button', style: 'display:flex;align-items:center;gap:8px', onclick: function () { go('page', { u: po.u }); } },
-          r.owner && gIcon && po.kind === 'diary' ? gImg(34) : h('span', { style: 'font-size:24px', text: r.author.icon }), h('span', { class: 't', text: r.author.name }), h('span', { class: 'meta', text: 'のページへ ›' })),
+          h('span', { style: 'font-size:24px', text: r.author.icon }), h('span', { class: 't', text: r.author.name }), h('span', { class: 'meta', text: 'のページへ ›' })),
         po.hidden ? h('div', { class: 'err', text: 'この記事は管理者により非表示になっています。' }) : null,
         h('div', { class: 'meta' }, (po.kind === 'diary' ? '📅 日記 ' : '📝 ブログ ') + fmtDate(po.date) + ' ', r.owner ? stateBadges(po) : null),
         h('h1', { class: 'pt' }, h('span', { class: 'hd', text: po.title || fmtDate(po.date) + ' の日記' })),
         h('div', null, po.tags.map(function (t) { return h('button', { class: 'tag', type: 'button', onclick: function () { go('search', { q: t, tag: true }); } }, '#' + t); })),
         renderBody(po.body),
-        r.owner ? h('div', { class: 'row' }, btn('✏️ 編集する', 'sm', function () { go('edit', { p: po.p }); }), btn('📮 Gravityに投稿する', 'sm pri', function () { gravitySheet(po, r.author); })) : null,
+        r.owner ? h('div', { class: 'row' }, btn('✏️ 編集する', 'sm', function () { go('edit', { p: po.p }); }), btn('📮 Gravityに投稿する', 'sm pri', function () { gravitySheet(po.kind === 'diary' ? '日記' : '記事', shareCode(po.u, po.p), po.status === 'public' && po.vis !== 'private' && !po.hidden, po.vis, po, r.author); })) : null,
         r.owner && po.status === 'public' && po.vis !== 'private' ? shareBox(shareCode(po.u, po.p), 'この記事の公開範囲: ' + VIS[po.vis]) : null,
         social(po.u, po.p, null, r)
       ]);
@@ -799,7 +677,7 @@
   };
 
   VIEWS.mine = function (p) {
-    if (!me) return needLogin('じぶんのページを作るには、ログインか新規登録をしてください。');
+    if (!me) return needLogin('自分のページを作るには、ログインか新規登録をしてください。');
     return api('myPosts').then(function (r) {
       var kind = p.kind || 'blog', body = h('div'), posts = r.posts, d = new Date(), ym = p.ym || [d.getFullYear(), d.getMonth()];
       function row(e) {
@@ -826,7 +704,7 @@
         function mv(n) { var t = new Date(y, m + n, 1); ym = [t.getFullYear(), t.getMonth()]; stack[stack.length - 1].p.ym = ym; draw(); }
         var inMonth = posts.filter(function (e) { return e.kind === 'diary' && e.date.slice(0, 7) === y + '-' + ('0' + (m + 1)).slice(-2); });
         add(body, [h('div', { class: 'row', style: 'justify-content:space-between;margin-bottom:8px' }, btn('‹ 前の月', 'sm sub', function () { mv(-1); }), h('b', { text: y + '年' + (m + 1) + '月' }), btn('次の月 ›', 'sm sub', function () { mv(1); })),
-          cal, h('p', { class: 'note', text: '日にちをタップすると、その日の日記を書けます(1日1つ)。' }), btn('📅 今日の日記を書く', 'pri full', function () { var e = byDate[today()]; go('edit', e ? { p: e.p } : { kind: 'diary', date: today() }); }),
+          cal, h('p', { class: 'note', text: '日付をタップすると、その日の日記を書けます(1日1件)。' }), btn('📅 今日の日記を書く', 'pri full', function () { var e = byDate[today()]; go('edit', e ? { p: e.p } : { kind: 'diary', date: today() }); }),
           h('div', { style: 'height:12px' }), inMonth.map(row)]);
       }
       draw();
@@ -843,20 +721,20 @@
   };
 
   VIEWS.edit = function (p) {
-    if (!me) return needLogin('書くにはログインがいります。');
+    if (!me) return needLogin('書くにはログインが必要です。');
     var load = p.p ? api('getPost', { u: me.id, p: p.p }).then(function (r) { return r.post; }) : Promise.resolve({ kind: p.kind || 'blog', title: '', body: '', date: p.date || today(), tags: [], status: 'draft', vis: 'public' });
     return load.then(function (po) {
       var st = { status: po.status, vis: po.vis };
-      var title = h('input', { class: 'i', maxlength: 80, value: po.title, placeholder: po.kind === 'diary' ? '題名(なくてもOK)' : '題名', 'aria-label': '題名' });
+      var title = h('input', { class: 'i', maxlength: 80, value: po.title, placeholder: po.kind === 'diary' ? '題名(任意)' : '題名', 'aria-label': '題名' });
       var date = h('input', { class: 'i', type: 'date', value: po.date, 'aria-label': '日付' });
-      var tags = h('input', { class: 'i', value: po.tags.join(' '), placeholder: '例: おえかき ねこ', autocapitalize: 'none', 'aria-label': 'タグ' });
+      var tags = h('input', { class: 'i', value: po.tags.join(' '), placeholder: '例: 旅行 読書', autocapitalize: 'none', 'aria-label': 'タグ' });
       var body = h('textarea', { class: 'i', 'aria-label': '本文', placeholder: 'ここに本文を書きます' }); body.value = po.body;
       var cnt = h('div', { class: 'cnt' }), pv = applyDesign(h('div'), myPage || {}), visBox = h('div');
       function tagList() { return tags.value.split(/[\s,、#＃]+/).filter(Boolean).slice(0, 12); }
       function preview() {
         var n = count(body.value); cnt.textContent = n + ' / ' + LIM.body + '文字'; cnt.className = 'cnt' + (n > LIM.body ? ' over' : '');
         pv.textContent = '';
-        add(pv, [h('div', { class: 'meta' }, po.kind === 'diary' && gIcon ? [gImg(30), ' '] : null, (po.kind === 'diary' ? '📅 日記 ' : '📝 ブログ ') + fmtDate(date.value)),
+        add(pv, [h('div', { class: 'meta', text: (po.kind === 'diary' ? '📅 日記 ' : '📝 ブログ ') + fmtDate(date.value) }),
           h('h1', { class: 'pt' }, h('span', { class: 'hd', text: title.value || (po.kind === 'diary' ? fmtDate(date.value) + ' の日記' : '(題名)') })),
           h('div', null, tagList().map(function (t) { return h('span', { class: 'tag', text: '#' + t }); })), renderBody(body.value)]);
       }
@@ -869,7 +747,7 @@
       }
       function drawVis() {
         visBox.textContent = '';
-        add(visBox, st.status === 'draft' ? h('div', { class: 'note', text: '下書きのあいだは、じぶんにしか見えません。' })
+        add(visBox, st.status === 'draft' ? h('div', { class: 'note', text: '下書きの間は、自分にしか見えません。' })
           : [h('label', { class: 'f', text: '公開範囲' }), seg(VIS, st.vis, function (k) { st.vis = k; })]);
       }
       drawVis(); preview();
@@ -877,8 +755,10 @@
         var t = tagList();
         if (t.length > LIM.tags) { toast('タグは' + LIM.tags + '個までです'); return; }
         if (count(body.value) > LIM.body) { toast('本文が長すぎます(' + LIM.body + '文字まで)'); return; }
+        var here = stack[stack.length - 1];
         return api('savePost', { post: { p: p.p || undefined, kind: po.kind, title: title.value, body: body.value, date: date.value, tags: t, status: st.status, vis: st.vis } }).then(function (r) {
           toast(st.status === 'draft' ? '下書きを保存しました' : '保存して公開しました');
+          if (stack[stack.length - 1] !== here) return; // 保存中に別の画面へ移っていたら、そのままにする
           stack.pop(); stack.push({ v: 'post', p: { u: me.id, p: r.post.p } }); show();
         });
       }
@@ -903,7 +783,7 @@
         visBox,
         h('div', { class: 'col', style: 'margin-top:18px' }, act('💾 保存する', 'pri full', save),
           p.p ? btn('🗑️ この記事を削除', 'dan full', function () {
-            confirmSheet('記事を削除', 'この記事を完全に消します。元にはもどせません。', '削除する', true).then(function (ok) {
+            confirmSheet('記事を削除', 'この記事を完全に削除します。元には戻せません。', '削除する', true).then(function (ok) {
               if (ok) api('deletePost', { p: p.p }).then(function () { toast('削除しました'); tab('mine'); }).catch(fail);
             });
           }) : null));
@@ -911,19 +791,19 @@
   };
 
   VIEWS.design = function () {
-    if (!me) return needLogin('ログインがいります。');
+    if (!me) return needLogin('ログインが必要です。');
     return api('me').then(function (r) {
       myPage = r.page;
       var d = JSON.parse(JSON.stringify(r.page)), pv = h('div'), warnEl = h('div'), ctl = h('div');
       var name = h('input', { class: 'i', maxlength: LIM.name, value: d.name, 'aria-label': '名前' });
-      var bio = h('textarea', { class: 'i', style: 'min-height:120px', 'aria-label': 'じこしょうかい' }); bio.value = d.bio;
+      var bio = h('textarea', { class: 'i', style: 'min-height:120px', 'aria-label': '自己紹介' }); bio.value = d.bio;
       var bioCnt = h('div', { class: 'cnt' });
       function preview() {
         d.name = name.value || me.id; d.bio = bio.value;
         var n = count(bio.value); bioCnt.textContent = n + ' / ' + LIM.bio + '文字'; bioCnt.className = 'cnt' + (n > LIM.bio ? ' over' : '');
         var el = applyDesign(h('div'), d);
         add(el, [pageHead(d), d.bio ? h('div', { class: 'box' }, renderBody(d.bio)) : null,
-          h('h3', { class: 'hdw' }, h('span', { class: 'hd', text: '見出しのみほん' })), h('div', { class: 'body' }, h('p', null, 'ふつうの文字と', h('strong', { text: '太字' }), 'はこう見えます。'))]);
+          h('h3', { class: 'hdw' }, h('span', { class: 'hd', text: '見出しの見本' })), h('div', { class: 'body' }, h('p', null, '通常の文字と', h('strong', { text: '太字' }), 'はこのように表示されます。'))]);
         pv.textContent = ''; pv.appendChild(el);
         var e = effective(d); warnEl.textContent = '';
         if (contrast(e.bg, e.fg) < 3) warnEl.appendChild(h('div', { class: 'warn', style: 'margin-top:8px', text: '背景色と文字色が近くて、読みにくいかもしれません。' }));
@@ -933,7 +813,7 @@
         function draw() {
           el.textContent = '';
           list.forEach(function (c) { el.appendChild(h('button', { type: 'button', style: 'background:' + c, class: d[key] === c ? 'on' : '', 'aria-label': c, onclick: function () { d[key] = c; draw(); preview(); } })); });
-          var ci = h('input', { type: 'color', value: isHex(d[key]) ? d[key] : effective(d)[key], 'aria-label': 'じゆうに色をえらぶ' });
+          var ci = h('input', { type: 'color', value: isHex(d[key]) ? d[key] : effective(d)[key], 'aria-label': '自由に色を選ぶ' });
           ci.addEventListener('input', function () { if (isHex(ci.value)) { d[key] = ci.value.toLowerCase(); preview(); } });
           el.appendChild(ci);
           el.appendChild(btn('テーマの色', 'sm sub', function () { d[key] = ''; draw(); preview(); }));
@@ -963,10 +843,10 @@
       name.addEventListener('input', preview); bio.addEventListener('input', preview);
       drawCtl(); preview();
       return h('div', null,
-        h('div', { style: 'position:sticky;top:0;z-index:5;background:#f6efe2;padding:10px 14px 8px;border-bottom:2px dashed #d9c7a3;max-height:38vh;overflow:auto' }, h('div', { class: 'note', text: '👀 プレビュー(下で変えるとすぐ反映)' }), pv),
+        h('div', { style: 'position:sticky;top:0;z-index:5;background:#f6efe2;padding:10px 14px 8px;border-bottom:2px dashed #d9c7a3;max-height:38vh;overflow:auto' }, h('div', { class: 'note', text: '👀 プレビュー(下で変更するとすぐ反映)' }), pv),
         h('div', { class: 'pad' },
           h('div', { class: 'warn', role: 'note', text: WARN }),
-          field('名前(ニックネーム)', name), field('じこしょうかい', bio), bioCnt, ctl,
+          field('名前(ニックネーム)', name), field('自己紹介', bio), bioCnt, ctl,
           h('label', { class: 'f', text: 'プロフィールページの公開範囲' }), seg(VIS, d.vis, function (k) { d.vis = k; }),
           h('div', { style: 'margin-top:18px' }, act('💾 保存する', 'pri full', function () {
             return api('savePage', { page: { name: name.value, bio: bio.value, icon: d.icon, theme: d.theme, bg: d.bg || '', fg: d.fg || '', font: d.font, deco: d.deco, vis: d.vis } }).then(function (r2) {
@@ -983,36 +863,28 @@
         h('div', { class: 'col', style: 'margin-top:10px' },
           me.admin ? btn('🛡️ 管理画面(通報の確認)', 'full pri', function () { go('admin'); }) : null,
           act('ログアウト', 'full', function () { return api('logout').catch(function () {}).then(function () { saveToken(null); me = null; myPage = null; toast('ログアウトしました'); tab('home'); }); }),
-          btn('パスワードを変える', 'full sub', function () {
-            sheet('パスワードを変える', function (sh, close) {
+          btn('パスワードを変更', 'full sub', function () {
+            sheet('パスワードを変更', function (sh, close) {
               var a = h('input', { class: 'i', type: 'password', placeholder: '今のパスワード', autocomplete: 'current-password' }), b = h('input', { class: 'i', type: 'password', placeholder: '新しいパスワード(' + LIM.pwMin + '文字以上)', autocomplete: 'new-password', style: 'margin-top:8px' });
               add(sh, [a, b, h('div', { class: 'col', style: 'margin-top:12px' }, act('変更する', 'full pri', function () {
-                return api('changePw', { pw: a.value, newPw: b.value }).then(function (r) { saveToken(r.token); close(); toast('パスワードを変えました'); });
-              }), btn('やめる', 'full sub', close))]);
+                return api('changePw', { pw: a.value, newPw: b.value }).then(function (r) { saveToken(r.token); close(); toast('パスワードを変更しました'); });
+              }), btn('キャンセル', 'full sub', close))]);
             });
           }),
           btn('アカウントを完全に削除', 'full dan', function () {
             sheet('アカウントの削除', function (sh, close) {
               var a = h('input', { class: 'i', type: 'password', placeholder: 'パスワード', autocomplete: 'current-password', 'aria-label': 'パスワード' });
-              add(sh, [h('p', { text: 'プロフィール・記事・日記・コメント・いいねをすべて消します。元にはもどせません。' }), a,
+              add(sh, [h('p', { text: 'プロフィール・記事・日記・コメント・いいねをすべて削除します。元には戻せません。' }), a,
                 h('div', { class: 'col', style: 'margin-top:12px' }, act('すべて削除する', 'full dan', function () {
                   return api('deleteAccount', { pw: a.value }).then(function () { saveToken(null); me = null; myPage = null; close(); toast('アカウントを削除しました'); tab('home'); });
-                }), btn('やめる', 'full sub', close))]);
+                }), btn('キャンセル', 'full sub', close))]);
             });
           }))));
     } else kids.push(h('div', { class: 'card center' }, h('p', { text: 'ログインしていません。' }), btn('ログイン / 新規登録', 'pri full', function () { go('auth'); })));
-    kids.push(h('h2', { class: 'sec', text: '📖 きまり' }), h('div', { class: 'card' }, h('ul', { style: 'margin:0;padding-left:1.2em;font-size:14.5px' },
-      ['本名、住所、学校名、連絡先は書かないでください。', 'ほかの人をきずつけることは書かないでください。', 'こまった内容を見つけたら「🚩 通報」ボタンで知らせてください。', '画像はのせられません。文字と絵文字だけで楽しもう。', 'パスワードはだれにも教えないでください。'].map(function (t) { return h('li', { text: t }); }))));
-    kids.push(h('h2', { class: 'sec', text: '🪪 Gravity のアイコン' }), h('div', { class: 'card' },
-      h('div', { class: 'row' }, gIcon ? gImg(44) : h('span', { style: 'font-size:30px', text: '🔎' }), h('div', { class: 'grow', style: 'font-size:14.5px', text: gIcon ? '自動で読み取れました。日記と投稿用カードに使います(この端末の中だけで使い、サーバーには送りません)。' : 'いまの場所からは読み取れませんでした。かわりに絵文字のアイコンを使います。' })),
-      h('div', { style: 'margin-top:10px' }, btn('読み取りのようすを見る', 'sm sub', function () {
-        sheet('🔎 読み取りのようす', function (sh, close) {
-          var ta = h('textarea', { class: 'i', readonly: true, style: 'min-height:210px;font-size:12.5px', 'aria-label': '読み取りのようす' }); ta.value = diagText();
-          add(sh, [h('p', { class: 'note', text: '名前だけを表示しています(中身やパスワードは出しません)。うまく読み取れないときは、この画面のスクリーンショットを作った人に送ってください。' }), ta, h('div', { style: 'margin-top:12px' }, btn('とじる', 'full sub', close))]);
-        });
-      }))));
-    kids.push(h('p', { class: 'note center', text: 'こじんページ v1.1 ・ 通信: ' + (transport || '-') }));
-    return h('div', { class: 'pad' }, h('h2', { class: 'sec', text: '⚙️ せってい' }), kids);
+    kids.push(h('h2', { class: 'sec', text: '📖 利用ルール' }), h('div', { class: 'card' }, h('ul', { style: 'margin:0;padding-left:1.2em;font-size:14.5px' },
+      ['本名、住所、学校名、連絡先は書かないでください。', '他の人を傷つける内容は書かないでください。', '問題のある内容を見つけたら「🚩 通報」ボタンで知らせてください。', '画像は載せられません。文字と絵文字でお楽しみください。', 'パスワードは誰にも教えないでください。'].map(function (t) { return h('li', { text: t }); }))));
+    kids.push(h('p', { class: 'note center', text: '個人ページ v1.3 ・ 通信: ' + (transport || '-') }));
+    return h('div', { class: 'pad' }, h('h2', { class: 'sec', text: '⚙️ 設定' }), kids);
   };
 
   VIEWS.admin = function () {
@@ -1021,7 +893,7 @@
       function doAct(rep, op, label, danger) {
         return btn(label, 'sm ' + (danger ? 'dan' : 'sub'), function () {
           var run = function () { api('adminAct', { op: op, u: rep.u, p: rep.p, c: rep.c, rkey: rep.rkey }).then(function () { toast('実行しました'); show(); }).catch(fail); };
-          if (danger) confirmSheet(label, '「' + label + '」を実行します。元にはもどせません。', '実行する', true).then(function (ok) { if (ok) run(); }); else run();
+          if (danger) confirmSheet(label, '「' + label + '」を実行します。元には戻せません。', '実行する', true).then(function (ok) { if (ok) run(); }); else run();
         });
       }
       var open = r.reports.filter(function (x) { return x.open; }).length;
@@ -1030,17 +902,17 @@
         r.reports.length ? r.reports.map(function (rep) {
           var kindN = { page: 'プロフィール', post: '記事・日記', comment: 'コメント' }[rep.kind];
           return h('div', { class: 'card', style: 'margin-bottom:12px' + (rep.open ? '' : ';opacity:.6') },
-            h('div', null, h('span', { class: 'badge ' + (rep.open ? 'r' : 'g'), text: rep.open ? '未対応' : '対応ずみ' }), h('span', { class: 'badge', text: kindN }),
-              rep.hidden ? h('span', { class: 'badge y', text: '非表示中' }) : null, rep.gone ? h('span', { class: 'badge', text: '削除ずみ' }) : null),
+            h('div', null, h('span', { class: 'badge ' + (rep.open ? 'r' : 'g'), text: rep.open ? '未対応' : '対応済み' }), h('span', { class: 'badge', text: kindN }),
+              rep.hidden ? h('span', { class: 'badge y', text: '非表示中' }) : null, rep.gone ? h('span', { class: 'badge', text: '削除済み' }) : null),
             h('div', { class: 'note', text: '理由: ' + (REASONS[rep.reason] || rep.reason) + (rep.note ? ' / メモ: ' + rep.note : '') }),
             h('div', { class: 'note', text: '書いた人: @' + (rep.kind === 'comment' && rep.cby ? rep.cby + '(@' + rep.u + ' のページ上)' : rep.u) + ' ・ 通報: ' + (rep.by === 'guest' ? 'ゲスト' : '@' + rep.by) + ' ・ ' + ago(rep.at) }),
             rep.gone ? null : h('div', { style: 'background:#fff;border:1.5px dashed #bfae8c;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto', text: rep.snippet || '' }),
             h('div', { class: 'row' },
               rep.gone ? null : btn('見る', 'sm sub', function () { if (rep.p === '@') go('page', { u: rep.u }); else go('post', { u: rep.u, p: rep.p }); }),
-              rep.gone ? null : (rep.hidden ? doAct(rep, 'show', '表示にもどす') : doAct(rep, 'hide', '非表示にする')),
+              rep.gone ? null : (rep.hidden ? doAct(rep, 'show', '表示に戻す') : doAct(rep, 'hide', '非表示にする')),
               rep.gone || rep.kind === 'page' ? null : doAct(rep, 'delete', '削除する', true),
               rep.gone ? null : doAct(rep, 'deleteUser', 'このページの持ち主を削除', true),
-              rep.open ? doAct(rep, 'close', '対応ずみにする') : null));
+              rep.open ? doAct(rep, 'close', '対応済みにする') : null));
         }) : h('div', { class: 'empty', text: '通報はありません。' }));
     });
   };
@@ -1059,20 +931,23 @@
     root = host.attachShadow ? host.attachShadow({ mode: 'open' }) : host;
     var st = document.createElement('style'); st.textContent = CSS; root.appendChild(st);
     var logo = h('canvas', { width: 68, height: 68, 'aria-hidden': 'true' });
-    ttlEl = h('div', { class: 'ttl', text: 'こじんページ' }); whoEl = h('div', { class: 'who' });
+    ttlEl = h('div', { class: 'ttl', text: '個人ページ' }); whoEl = h('div', { class: 'who' });
     barEl = h('div', { class: 'bar' }); mainEl = h('div', { class: 'main' }); tabsEl = h('div', { class: 'tabs', role: 'navigation' });
     var emb = false; try { emb = location.origin + '/' !== BASE; } catch (e) {}
     app = h('div', { class: 'app', lang: 'ja' }, emb ? h('div', { class: 'top emb' }, h('div', { class: 'tt' }, ttlEl, whoEl)) : h('div', { class: 'top' }, logo, ttlEl, whoEl), barEl, mainEl, tabsEl);
+    if (VIEW) { // 表示専用モード
+      var keep = stack; stack = [];
+      if (openCode(VIEW)) { viewer = true; app.className += ' viewer' + (emb ? ' embv' : ''); } else stack = keep;
+    }
     root.appendChild(app);
     document.body.appendChild(host);
     try { drawLogo(logo); } catch (e) {}
 
     var deep = null;
     try { var m = /#p=([^&]+)/.exec(location.hash || ''); if (m) deep = decodeURIComponent(m[1]); } catch (e) {}
-    detectGravityIcon();
     token = loadToken();
     var start = token ? api('me').then(function (r) { me = r.me; myPage = r.page; }, function () {}) : Promise.resolve();
-    start.then(function () { show(); if (deep) openCode(deep); });
+    start.then(function () { booted = true; show(); if (deep && !viewer) openCode(deep); });
   }
   if (document.body) boot(); else document.addEventListener('DOMContentLoaded', boot);
 })();

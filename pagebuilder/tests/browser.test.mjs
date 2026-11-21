@@ -2,7 +2,7 @@
 // (別のサイトのページが script タグで game.js を読む)で操作します。
 import { createRequire } from 'node:module';
 import { startBackend, startSite } from './server.mjs';
-import { startHost } from './host.mjs';
+import { startHost, startHtml } from './host.mjs';
 import { runner, ok, eq } from './run.mjs';
 const { chromium, devices } = createRequire(import.meta.url)('playwright');
 
@@ -37,7 +37,7 @@ async function login(pg, id, pw) {
 // ユーザーが書いた内容から、危ないタグが1つも作られていないことを調べる
 const dangerous = (pg) => pg.evaluate(() => {
   const r = document.getElementById('kojin-page-root').shadowRoot;
-  return { xss: window.__xss || 0, bad: r.querySelectorAll('.main script, .main img:not(.gi), .main svg, .main iframe, .main a, .main style, .main details, .main b[onmouseover], .main [onerror], .main [onload]').length };
+  return { xss: window.__xss || 0, bad: r.querySelectorAll('.main script, .main img, .main svg, .main iframe, .main a, .main style, .main details, .main b[onmouseover], .main [onerror], .main [onload]').length };
 });
 
 let pg = await open(HOST), postUrl;
@@ -76,7 +76,7 @@ await R.t('下書きで保存すると、ほかの人には見えない', async 
 });
 await R.t('編集して「公開する」に切り替えると新着に出る', async () => {
   await pg.click('text=✏️ 編集する'); await pg.waitForSelector('[aria-label="題名"]'); await pg.fill('[aria-label="題名"]', 'なおした記事');
-  await pg.click('.seg >> text=公開する'); await pg.click('text=💾 保存する'); await pg.waitForSelector('text=ひとことコメント'); await pg.waitForSelector('h1 >> text=なおした記事');
+  await pg.click('.seg >> text=公開する'); await pg.click('text=💾 保存する'); await pg.waitForSelector('text=一言コメント'); await pg.waitForSelector('h1 >> text=なおした記事');
   ok((await call('feed')).posts.some((e) => e.title === 'なおした記事'), 'feed');
   postUrl = await pg.locator('input.code').inputValue(); ok(postUrl.startsWith(GAME + '/#p=ui_alice'), postUrl);
 });
@@ -87,19 +87,19 @@ await R.t('ブラウザの保存が消えても、ログインし直せばデー
   await login(pg, 'ui_alice', PW); await pg.waitForSelector('text=書いたもの'); await pg.waitForSelector('.card >> text=なおした記事');
 });
 await R.t('まちがったパスワードではログインできず、エラーが出る', async () => {
-  const p2 = await open(HOST); await login(p2, 'ui_alice', 'wrong-password'); await p2.waitForSelector('.err >> text=IDかパスワードがちがいます');
+  const p2 = await open(HOST); await login(p2, 'ui_alice', 'wrong-password'); await p2.waitForSelector('.err >> text=IDまたはパスワードが違います');
   eq((await p2.locator('.who').innerText()).trim(), 'ゲスト', 'guest'); await p2.context().close();
 });
 await R.t('日記: カレンダーの日付をタップして書ける', async () => {
   await pg.click('.seg >> text=日記カレンダー'); await pg.click('.cal button >> text="15"'); await pg.waitForSelector('[aria-label="日付"]');
   ok(/-15$/.test(await pg.inputValue('[aria-label="日付"]')), 'date'); await pg.fill('[aria-label="本文"]', 'きょうの日記'); await pg.click('.seg >> text=公開する'); await pg.click('text=💾 保存する');
-  await pg.waitForSelector('text=きょうの日記'); await tabTo(pg, 'マイページ'); await pg.click('.seg >> text=日記カレンダー'); ok(await pg.locator('.cal button.has').count() === 1, 'マークがつく');
+  await pg.waitForSelector('text=一言コメント'); await pg.waitForSelector('.body >> text=きょうの日記'); await tabTo(pg, 'マイページ'); await pg.click('.seg >> text=日記カレンダー'); ok(await pg.locator('.cal button.has').count() === 1, 'マークがつく');
 });
 await R.t('デザイン: テーマ・色・フォント・飾り・アイコンを変えるとプレビューにすぐ反映され、保存できる', async () => {
   await pg.click('text=🎨 デザイン'); await pg.waitForSelector('text=テーマ (12種類)'); eq(await pg.locator('.grid:not(.em) button').count(), 12, 'themes');
   const look = () => pg.evaluate(() => { const p = document.getElementById('kojin-page-root').shadowRoot.querySelector('.pg'); return [p.style.backgroundColor, p.style.color, p.style.fontFamily, p.getAttribute('data-deco'), p.querySelector('.big').textContent].join('|'); });
   const before = await look();
-  await pg.click('[aria-label="テーマ よる"]'); const a1 = await look(); ok(a1 !== before, 'theme');
+  await pg.click('[aria-label="テーマ 夜"]'); const a1 = await look(); ok(a1 !== before, 'theme');
   await pg.click('.sw >> [aria-label="#fff0f5"]'); await pg.click('.seg >> text=明朝'); await pg.click('.seg >> text=リボン'); await pg.click('.grid.em >> text=🐱');
   const a2 = await look(); ok(a2.includes('rgb(255, 240, 245)') && a2.includes('Mincho') && a2.includes('ribbon') && a2.includes('🐱'), a2);
   await pg.fill('[aria-label="名前"]', 'ありす'); eq(await pg.locator('.pg .nm').first().innerText(), 'ありす', 'name preview');
@@ -114,7 +114,7 @@ await R.t('本文・題名・タグにスクリプトを入れて画面から投
   await pg.fill('[aria-label="題名"]', '<img src=x onerror="window.__xss=1">だいめい'); await pg.fill('[aria-label="タグ"]', '<b>x</b> <i/onclick=1>');
   await pg.fill('[aria-label="本文"]', XSS); await pg.waitForTimeout(300);
   let d = await dangerous(pg); eq(d.xss, 0, 'プレビューで実行されない'); eq(d.bad, 0, 'プレビューに危ないタグなし');
-  await pg.click('.seg >> text=公開する'); await pg.click('text=💾 保存する'); await pg.waitForSelector('text=ひとことコメント'); await pg.waitForTimeout(500);
+  await pg.click('.seg >> text=公開する'); await pg.click('text=💾 保存する'); await pg.waitForSelector('text=一言コメント'); await pg.waitForTimeout(500);
   d = await dangerous(pg); eq(d.xss, 0, '表示で実行されない'); eq(d.bad, 0, '表示に危ないタグなし'); eq(pg.dialogs, 0, 'ダイアログなし');
   ok((await pg.locator('.pg .body').innerText()).includes('<script>window.__xss=1</script>'), '文字としてそのまま見える');
 });
@@ -123,8 +123,8 @@ await R.t('名前・自己紹介・コメントにスクリプトを入れても
   const bob = await call('register', { id: 'ui_bob', pw: PW }); await call('savePage', { t: bob.token, page: { name: '"><img src=x onerror=__xss=1>', bio: '', icon: '🐶', theme: 'sora', bg: '', fg: '', font: 'gothic', deco: 'line', vis: 'public' } });
   await call('comment', { t: bob.token, u: 'ui_alice', p: '@', text: '<img src=x onerror="window.__xss=1"><script>__xss=1</script>' });
   const v = await open(HOST);
-  for (const step of [async () => {}, async () => { await v.click('.chip >> text=🐱'); await v.waitForSelector('text=ひとことコメント'); }, async () => { await v.locator('.pg .pl').first().click(); await v.waitForSelector('text=ひとことコメント'); },
-    async () => { await tabTo(v, 'さがす'); await v.fill('[aria-label="さがす言葉"]', 'ui_'); await v.click('.b >> text=さがす'); await v.waitForSelector('text=ページ (2)'); }]) {
+  for (const step of [async () => {}, async () => { await v.click('.chip >> text=🐱'); await v.waitForSelector('text=一言コメント'); }, async () => { await v.locator('.pg .pl').first().click(); await v.waitForSelector('text=一言コメント'); },
+    async () => { await tabTo(v, '検索'); await v.fill('[aria-label="検索ワード"]', 'ui_'); await v.click('.b >> text=検索'); await v.waitForSelector('text=ページ (2)'); }]) {
     await step(); await v.waitForTimeout(300); const d = await dangerous(v); eq(d.xss, 0, '実行されない'); eq(d.bad, 0, '危ないタグなし');
   }
   eq(v.dialogs, 0, 'dialog'); eq(v.errors.length, 0, v.errors.join()); await v.context().close();
@@ -140,17 +140,17 @@ await R.t('ほかの人としてログインし、いいね・コメント・足
 });
 await R.t('ほかの人の記事には「編集する」ボタンが出ない', async () => { eq(await bobPg.locator('text=✏️ 編集する').count(), 0, 'no edit'); });
 await R.t('通報ボタンから通報でき、管理者に届く', async () => {
-  await bobPg.click('.soc >> text=通報'); await bobPg.click('.radio >> text=いやがらせ'); await bobPg.click('text=通報を送る'); await bobPg.waitForSelector('.toast >> text=通報を送りました');
-  await bobPg.locator('.cm .lk', { hasText: '通報' }).first().click(); await bobPg.click('.radio >> text=宣伝'); await bobPg.click('text=通報を送る'); await bobPg.waitForSelector('.toast >> text=通報を送りました');
+  await bobPg.click('.soc >> text=通報'); await bobPg.click('.radio >> text=嫌がらせ'); await bobPg.click('text=通報を送る'); await bobPg.waitForSelector('.toast >> text=通報を送信しました');
+  await bobPg.locator('.cm .lk', { hasText: '通報' }).first().click(); await bobPg.click('.radio >> text=宣伝'); await bobPg.click('text=通報を送る'); await bobPg.waitForSelector('.toast >> text=通報を送信しました');
 });
 await R.t('公開範囲を「自分だけ」に切り替えると、ほかの人はURLでも開けない', async () => {
   const pid = decodeURIComponent(postUrl.split('#p=')[1]).split('/')[1];
   await tabTo(pg, 'マイページ'); await pg.click('.card >> text=なおした記事'); await pg.waitForSelector('[aria-label="題名"]'); await pg.click('.seg >> text=自分だけ'); await pg.click('text=💾 保存する'); await pg.waitForSelector('.badge >> text=自分だけ');
-  await tabTo(bobPg, 'さがす'); await bobPg.fill('[aria-label="ページのコード"]', postUrl); await bobPg.click('.b >> text=ひらく'); await bobPg.waitForSelector('.err >> text=ページが見つかりません');
+  await tabTo(bobPg, '検索'); await bobPg.fill('[aria-label="ページのコード"]', postUrl); await bobPg.click('.b >> text=開く'); await bobPg.waitForSelector('.err >> text=ページが見つかりません');
   await tabTo(bobPg, 'ホーム'); await bobPg.waitForSelector('text=新着の記事'); eq(await bobPg.locator('.card >> text=なおした記事').count(), 0, '新着から消える');
   // 「URLを知っている人だけ」に変えると、URLでは開けるが新着には出ない
   await pg.click('text=✏️ 編集する'); await pg.waitForSelector('[aria-label="題名"]'); await pg.click('.seg >> text=URLを知っている人だけ'); await pg.click('text=💾 保存する'); await pg.waitForSelector('.badge >> text=URLのみ');
-  await tabTo(bobPg, 'さがす'); await bobPg.fill('[aria-label="ページのコード"]', postUrl); await bobPg.click('.b >> text=ひらく'); await bobPg.waitForSelector('h1 >> text=なおした記事');
+  await tabTo(bobPg, '検索'); await bobPg.fill('[aria-label="ページのコード"]', postUrl); await bobPg.click('.b >> text=開く'); await bobPg.waitForSelector('h1 >> text=なおした記事');
   ok(!(await call('feed')).posts.some((e) => e.p === pid), 'feed');
 });
 await R.t('公開URL(#p=…)を直接開くと、その記事が開く', async () => { const ctx = await br.newContext({ ...devices['iPhone 13'] }); const v = await ctx.newPage(); await v.goto(postUrl); await v.waitForSelector('h1 >> text=なおした記事'); await ctx.close(); });
@@ -160,13 +160,13 @@ await R.t('管理者は合言葉つきで登録でき、通報を見て非表示
   await a.fill('[aria-label="ID"]', 'punpun2005'); await a.fill('[aria-label="パスワード"]', PW); await a.fill('[aria-label="パスワード(もう一度)"]', PW);
   await a.click('text=この内容で登録する'); await a.waitForSelector('.err >> text=管理者の合言葉が必要です');
   await a.fill('[aria-label="管理者の合言葉"]', 'test-admin-code'); await a.click('text=この内容で登録する'); await a.waitForSelector('text=書いたもの');
-  await tabTo(a, 'せってい'); await a.click('text=管理画面'); await a.waitForSelector('text=通報の一覧(未対応 2件)'); // 記事1件とコメント1件
+  await tabTo(a, '設定'); await a.click('text=管理画面'); await a.waitForSelector('text=通報の一覧(未対応 2件)'); // 記事1件とコメント1件
   const card = a.locator('.card', { hasText: 'コメント' }).filter({ hasText: '未対応' }); ok((await card.innerText()).includes('すてき!'), '内容が見える');
   await card.locator('text=非表示にする').click(); await a.waitForSelector('.badge.y >> text=非表示中');
   await a.locator('.card', { hasText: '非表示中' }).locator('.b >> text=削除する').click(); await a.click('.sheet >> text=実行する'); await a.waitForSelector('text=通報の一覧(未対応 1件)');
   const d = await dangerous(a); eq(d.xss + d.bad, 0, '管理画面でもスクリプトは動かない'); await a.context().close();
 });
-await R.t('ふつうの人には管理画面のボタンが出ない', async () => { await tabTo(bobPg, 'せってい'); await bobPg.waitForSelector('text=ログアウト'); eq(await bobPg.locator('text=管理画面').count(), 0, 'no admin'); });
+await R.t('ふつうの人には管理画面のボタンが出ない', async () => { await tabTo(bobPg, '設定'); await bobPg.waitForSelector('text=ログアウト'); eq(await bobPg.locator('text=管理画面').count(), 0, 'no admin'); });
 
 await R.t('記事を画面から削除できる', async () => {
   await pg.click('text=✏️ 編集する'); await pg.click('text=この記事を削除'); await pg.click('.sheet >> text=削除する'); await pg.waitForSelector('.toast >> text=削除しました');
@@ -176,43 +176,48 @@ await R.t('記事を画面から削除できる', async () => {
 console.log('■ ログアウトとアカウント削除(画面から)');
 await R.t('ログアウトできる', async () => { await bobPg.click('text=ログアウト'); await bobPg.waitForSelector('.toast >> text=ログアウトしました'); eq((await bobPg.locator('.who').innerText()).trim(), 'ゲスト', 'guest'); eq(await bobPg.evaluate(() => localStorage.getItem('kojin_page_token')), null, 'token removed'); });
 await R.t('アカウントを完全に削除できる', async () => {
-  await tabTo(pg, 'せってい'); await pg.click('text=アカウントを完全に削除'); await pg.fill('.sheet [aria-label="パスワード"]', PW); await pg.click('text=すべて削除する'); await pg.waitForSelector('.toast >> text=アカウントを削除しました');
+  await tabTo(pg, '設定'); await pg.click('text=アカウントを完全に削除'); await pg.fill('.sheet [aria-label="パスワード"]', PW); await pg.click('text=すべて削除する'); await pg.waitForSelector('.toast >> text=アカウントを削除しました');
   eq((await call('getPage', { u: 'ui_alice' })).err, 'notfound', 'page gone'); eq((await call('login', { id: 'ui_alice', pw: PW })).err, 'login_failed', 'login');
 });
 await R.t('ここまでの操作で画面のエラーは0件', async () => { eq(pg.errors.length + bobPg.errors.length, 0, [...pg.errors, ...bobPg.errors].join(' / ')); eq(pg.dialogs + bobPg.dialogs, 0, 'dialogs'); });
 await pg.context().close(); await bobPg.context().close();
 
-console.log('■ Gravity に投稿する・Gravity のアイコン');
-await R.t('日記に「Gravityに投稿する」があり、URLなしの文章とカード画像が作られる', async () => {
+console.log('■ Gravity に投稿する(日記そのものを表示)');
+let loaderHtml;
+const phone = async (url) => { const ctx = await br.newContext({ ...devices['iPhone 13'] }); const v = await ctx.newPage(); v.errors = []; v.on('pageerror', (e) => v.errors.push(e.message)); await v.goto(url); return v; };
+await R.t('自分の日記の「Gravityに投稿する」で、その日記だけを開くコードと、URLなしの文章が作られる', async () => {
   const c = await open(HOST); await register(c, 'ui_share'); await c.click('.seg >> text=日記カレンダー'); await c.click('.cal button >> text="10"');
   await c.fill('[aria-label="題名"]', 'はれの日'); await c.fill('[aria-label="本文"]', '# さんぽ\n**こうえん**にいった。\n- はな\n> きれい\n---\n<script>window.__xss=1</script>'); await c.click('.seg >> text=公開する'); await c.click('text=💾 保存する');
-  await c.waitForSelector('text=ひとことコメント'); await c.click('text=📮 Gravityに投稿する'); await c.waitForSelector('.cardimg');
+  await c.waitForSelector('text=一言コメント'); await c.click('text=📮 Gravityに投稿する');
+  const lt = await c.inputValue('[aria-label="Gravityに送る文章"]');
+  ok(lt.startsWith('一字一句変えずに出力してください。'), '指示文'); ok(new RegExp("s\\.src='" + GAME + "/game\\.js\\?view=ui_share%2F[A-Za-z0-9_-]{8,20}';").test(lt), lt); ok(!/iframe|fetch\(/.test(lt.slice(lt.indexOf('<!DOCTYPE'))), 'iframe・fetch を使わない');
+  loaderHtml = lt.slice(lt.indexOf('<!DOCTYPE'));
   const txt = await c.inputValue('[aria-label="投稿用の文章"]');
-  ok(!/https?:\/\//.test(txt), 'URLをふくまない'); ok(txt.includes('の日記') && txt.includes('はれの日') && txt.includes('■ さんぽ') && txt.includes('こうえんにいった。') && txt.includes('・はな'), txt); ok(txt.includes('@ui_share をさがしてね'), '道しるべ');
-  const im = await c.evaluate(() => { const i = document.getElementById('kojin-page-root').shadowRoot.querySelector('.cardimg'); return i.decode().then(() => [i.naturalWidth, i.naturalHeight, i.src.slice(0, 22)]); });
-  eq(im.join(), '1080,1350,data:image/png;base64,', 'card'); eq((await dangerous(c)).xss, 0, 'xss'); eq(c.errors.length, 0, c.errors.join());
-  await c.click('text=📋 文章をコピー'); await c.waitForSelector('.toast'); await c.context().close();
+  ok(!/https?:\/\//.test(txt), 'URLをふくまない'); ok(txt.includes('の日記') && txt.includes('はれの日') && txt.includes('■ さんぽ') && txt.includes('こうえんにいった。') && txt.includes('・はな'), txt);
+  await c.click('text=📋 Gravity の AI に送る文章をコピー'); await c.waitForSelector('.toast'); eq(c.errors.length, 0, c.errors.join()); await c.context().close();
 });
-await R.t('ほかの人の日記には「Gravityに投稿する」が出ない', async () => { const v = await open(HOST); await v.click('.card >> text=はれの日'); await v.waitForSelector('text=ひとことコメント'); eq(await v.locator('text=Gravityに投稿する').count(), 0, 'none'); await v.context().close(); });
-await R.t('Gravity がアイコンのURLをわたしていれば自動で読み取り、日記とカードに貼る', async () => {
-  const gh = await startHost(GAME, { pre: `window.gravityUser={nickname:'x',profile:{avatarUrl:'${GAME}/test-icon.png?cors=1'}};` });
-  const c = await open(`http://localhost:${gh.port}/`); await login(c, 'ui_share', PW); await c.waitForSelector('text=書いたもの');
-  await c.click('.seg >> text=日記カレンダー'); await c.click('.cal button.has'); await c.waitForSelector('.pad .pg img.gi'); // 編集プレビューにデフォルトで貼られる
-  await c.click('.tabs >> text=もどる'); await c.click('text=👀 ページを見る'); await c.click('.seg >> text=日記'); await c.click('.pg .pl >> text=はれの日'); await c.waitForSelector('.pl img.gi');
-  await c.click('text=📮 Gravityに投稿する'); await c.waitForSelector('.cardimg'); await c.waitForSelector('.seg >> text=Gravityのアイコン'); eq(await c.locator('text=書き出せなかった').count(), 0, 'アイコン入りで書き出せた');
-  const sent = JSON.stringify(await call('getPage', { u: 'ui_share' })) + JSON.stringify(await call('feed')); ok(!sent.includes('test-icon'), 'アイコンのURLはサーバーに送らない');
-  await c.context().close(); await gh.stop();
+await R.t('そのコードを Gravity と同じ条件で開くと、ページを作る画面ではなく日記そのものが表示される', async () => {
+  const hs = await startHtml(loaderHtml); const v = await phone(`http://localhost:${hs.port}/`); await v.waitForSelector('h1 >> text=はれの日');
+  ok((await v.locator('.pg .body').innerText()).includes('こうえんにいった。'), '本文'); eq(await v.locator('.top').isVisible(), false, '上の帯なし'); eq(await v.locator('text=新着の記事').count(), 0, '新着なし');
+  eq((await v.locator('.tabs button').allInnerTexts()).join('|').replace(/\s+/g, ' ').trim(), '📒 ログイン / 自分のページを作る', '下のボタンは入口だけ'); eq(await v.locator('text=編集する').count(), 0, '編集なし'); eq(await v.locator('#kpl').isVisible(), false, 'loading');
+  const top = await v.evaluate(() => document.getElementById('kojin-page-root').shadowRoot.querySelector('.fullpg').firstElementChild.getBoundingClientRect().top); ok(top >= 60, 'Gravity のボタンの下から始まる: ' + top);
+  const d = await dangerous(v); eq(d.xss + d.bad, 0, 'スクリプトは動かない'); eq(v.errors.length, 0, v.errors.join());
+  // そのままログインすると、同じ日記に戻っていいねできる
+  await v.click('text=ログイン / 自分のページを作る'); await v.fill('[aria-label="ID"]', 'ui_share'); await v.fill('[aria-label="パスワード"]', PW); await v.click('text=ログインする');
+  await v.waitForSelector('h1 >> text=はれの日'); await v.click('.like'); await v.waitForSelector('.like.on >> text=いいね 1'); await v.context().close(); await hs.stop();
 });
-await R.t('アイコン画像が書き出し禁止でも、絵文字に切りかえてカードを作れる。危ないURLは使わない', async () => {
-  const gh = await startHost(GAME, { pre: `window.userInfo={avatar:'${GAME}/test-icon.png'};window.profileData={icon:'javascript:window.__xss=1'};` });
-  const c = await open(`http://localhost:${gh.port}/`); await login(c, 'ui_share', PW); await c.waitForSelector('text=書いたもの');
-  await c.click('.card >> text=はれの日').catch(() => {}); await c.click('.seg >> text=日記カレンダー'); await c.click('.cal button.has'); await c.click('.tabs >> text=もどる');
-  await c.click('text=👀 ページを見る'); await c.click('.seg >> text=日記'); await c.click('.pg .pl >> text=はれの日'); await c.click('text=📮 Gravityに投稿する'); await c.waitForSelector('.cardimg'); await c.waitForSelector('text=書き出せなかった');
-  eq((await dangerous(c)).xss, 0, 'xss'); await c.context().close(); await gh.stop();
+await R.t('自分のページ(プロフィール)も同じように投稿でき、一覧から日記を開いて戻れる', async () => {
+  const c = await open(HOST); await login(c, 'ui_share', PW); await c.waitForSelector('text=書いたもの'); await c.click('text=👀 ページを見る'); await c.waitForSelector('.phead'); await c.click('text=📮 Gravityに投稿する');
+  const lt = await c.inputValue('[aria-label="Gravityに送る文章"]'); ok(lt.includes("game.js?view=%40ui_share';"), lt); eq(await c.locator('[aria-label="投稿用の文章"]').count(), 0, 'ページには文章欄なし'); await c.context().close();
+  const hs = await startHtml(lt.slice(lt.indexOf('<!DOCTYPE'))); const v = await phone(`http://localhost:${hs.port}/`); await v.waitForSelector('.phead >> text=@ui_share');
+  await v.click('.seg >> text=日記'); await v.click('.pl >> text=はれの日'); await v.waitForSelector('h1 >> text=はれの日'); await v.click('.tabs >> text=戻る'); await v.waitForSelector('.phead'); await v.context().close(); await hs.stop();
 });
-await R.t('アイコンが読み取れない場所では絵文字を使い、読み取りのようすを確認できる', async () => {
-  const c = await open(HOST); await tabTo(c, 'せってい'); await c.waitForSelector('text=いまの場所からは読み取れませんでした'); await c.click('text=読み取りのようすを見る');
-  ok((await c.inputValue('[aria-label="読み取りのようす"]')).includes('Gravityアイコン: 見つかりません'), 'diag'); await c.context().close();
+await R.t('日記を「自分だけ」にすると、Gravity 側でも表示されなくなる。投稿シートにも注意が出る', async () => {
+  const me2 = await call('login', { id: 'ui_share', pw: PW }); const mine = (await call('myPosts', { t: me2.token })).posts[0]; const full = (await call('getPost', { t: me2.token, u: 'ui_share', p: mine.p })).post;
+  ok((await call('savePost', { t: me2.token, post: { ...full, vis: 'private' } })).ok, 'private');
+  const hs = await startHtml(loaderHtml); const v = await phone(`http://localhost:${hs.port}/`); await v.waitForSelector('.err >> text=ページが見つかりません'); eq(await v.locator('text=こうえん').count(), 0, '本文は出ない'); await v.context().close(); await hs.stop();
+  const c = await open(HOST); await login(c, 'ui_share', PW); await c.waitForSelector('text=書いたもの'); await c.click('text=👀 ページを見る'); await c.click('.seg >> text=日記'); await c.click('.pl >> text=はれの日'); await c.click('text=📮 Gravityに投稿する');
+  await c.waitForSelector('.sheet .warn >> text=まだ他の人が見られる状態ではありません'); eq(await c.locator('[aria-label="Gravityに送る文章"]').count(), 0, 'コードは出さない'); await c.context().close();
 });
 
 console.log('■ fetch が禁止された場所(きびしい条件)と、サイトを直接開いた場合');
@@ -220,9 +225,9 @@ await R.t('fetch が禁止されていても script タグ方式に自動で切�
   const c = await open(`http://localhost:${cspHost.port}/`); await register(c, 'ui_csp');
   await c.click('text=新しいブログ記事を書く'); await c.fill('[aria-label="題名"]', 'きびしい場所から'); const long = 'ながい文。'.repeat(700);
   await c.fill('[aria-label="本文"]', long); await c.click('.seg >> text=公開する'); await c.click('text=💾 保存する'); await c.waitForSelector('h1 >> text=きびしい場所から');
-  eq((await c.locator('.pg .body').innerText()).trim(), long, 'body'); await tabTo(c, 'せってい'); await c.waitForSelector('text=通信: jsonp'); await c.context().close();
+  eq((await c.locator('.pg .body').innerText()).trim(), long, 'body'); await tabTo(c, '設定'); await c.waitForSelector('text=通信: jsonp'); await c.context().close();
 });
-await R.t('Netlify のURLを直接開いても動く(index.html)', async () => { const d = await open(GAME + '/'); await d.waitForSelector('.card >> text=きびしい場所から'); await tabTo(d, 'せってい'); await d.waitForSelector('text=通信: fetch'); await d.context().close(); });
+await R.t('Netlify のURLを直接開いても動く(index.html)', async () => { const d = await open(GAME + '/'); await d.waitForSelector('.card >> text=きびしい場所から'); await tabTo(d, '設定'); await d.waitForSelector('text=通信: fetch'); await d.context().close(); });
 await R.t('パソコンなど広い画面でも表示がくずれない', async () => {
   const ctx = await br.newContext({ viewport: { width: 1280, height: 800 } }); const d = await ctx.newPage(); await d.goto(HOST); await d.waitForSelector('text=新着の記事');
   ok(await d.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'no overflow'); await ctx.close();
