@@ -1,6 +1,6 @@
 // ---- game state, player, waves, quality manager, main loop -------------------
 var P = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, speed: 0, bob: 0, hp: 100, lookDX: 0, lookDY: 0, landDip: 0, hurtT: 99, deadT: 0 };
-var G = { state: 'loading', phase: '', wave: 0, score: 0, rescued: 0, stats: { shots: 0, hits: 0, kills: 0 }, shake: 0, vig: 0, time: 0, timer: 0, queue: [], spawnT: 0, titleT: 0 };
+var G = { state: 'loading', phase: '', wave: 0, score: 0, stats: { shots: 0, hits: 0, kills: 0 }, shake: 0, vig: 0, time: 0, timer: 0, queue: [], spawnT: 0, titleT: 0 };
 var Q = { tier: 1, mode: store.get('qmode', 'auto'), prScale: 1, acc: 0, frames: 0, bad: 0, good: 0, fps: 60 };
 
 function applyQuality() {
@@ -48,38 +48,38 @@ function onResize() {
 }
 
 function buildWave(w) {
-  var n = 3 + w, g = w >= 3 ? Math.floor((w - 1) / 2) : 0, k = w >= 2 ? Math.floor(w / 2) : 0, list = [], i;
-  for (i = 0; i < g; i++) list.push('gunner'); for (i = 0; i < k; i++) list.push('kami'); while (list.length < n) list.push('scout');
-  for (i = list.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = list[i]; list[i] = list[j]; list[j] = t; }
-  return list;
+  var n = 3 + Math.round(w * 1.3), list = [], i, dr = w >= 4 ? Math.floor((w - 2) / 2) : 0;
+  for (i = 0; i < n; i++) list.push({ f: Math.floor(Math.random() * 8) });
+  list[0] = { f: w - 1, leader: true };                  // each wave is led by one of the eight
+  for (i = 0; i < dr; i++) list.push({ d: i === 0 && w >= 6 ? 'gunner' : (i % 2 ? 'kami' : 'scout') });
+  for (i = list.length - 1; i > 1; i--) { var j = 1 + Math.floor(Math.random() * i), t = list[i]; list[i] = list[j]; list[j] = t; }
+  return list.reverse();                                  // popped from the end: leader comes out last
 }
 function startGame() {
-  clearEnemies(); resetFriends();
+  clearEnemies();
   P.x = SPAWN_POS[0]; P.z = SPAWN_POS[1]; P.y = 0; P.yaw = 0; P.pitch = 0; P.vx = P.vz = 0; P.hp = 100; P.hurtT = 99; P.deadT = 0; P.bob = 0;
-  G.score = 0; G.rescued = 0; G.wave = 0; G.stats = { shots: 0, hits: 0, kills: 0 }; G.shake = 0; G.vig = 0; G.time = 0; G.queue = [];
+  G.score = 0; G.wave = 0; G.stats = { shots: 0, hits: 0, kills: 0 }; G.shake = 0; G.vig = 0; G.time = 0; G.queue = []; G.navT = 0;
   gun.ammo = WEAPON.mag; gun.reloadT = 0; gun.cool = 0.3; gun.recP = gun.recY = gun.recPV = gun.recYV = 0; gun.root.visible = true;
   hudCache = {}; H.hitT = 0; H.dmgT = 0; input.fire = false; input.lookX = input.lookY = 0; if (input.resetTouch) input.resetTouch();
+  updateNav(P.x, P.z);
   G.state = 'playing'; ROOT.classList.add('fr-play'); showScreen(null);
   if (!input.usedTouch && renderer.domElement.requestPointerLock) { try { renderer.domElement.requestPointerLock(); } catch (e) {} }
   nextWave();
 }
 function nextWave() {
   G.wave++; G.phase = 'intro'; G.timer = 3; G.queue = buildWave(G.wave);
-  var f = FRIENDS[G.wave - 1]; banner('WAVE ' + G.wave, '「' + f.name + '」のケージを守るドローンを全滅させろ', 3); SFX.alarm();
+  banner('WAVE ' + G.wave, 'リーダーは「' + FRIEND_NAMES[G.wave - 1] + '」　全員倒せ', 3); SFX.alarm();
 }
 function updateFlow(dt) {
-  var f = FRIENDS[G.wave - 1];
+  G.navT -= dt; if (G.navT <= 0) { G.navT = 0.35; updateNav(P.x, P.z); }
   if (G.phase === 'intro') { G.timer -= dt; if (G.timer <= 0) { G.phase = 'fight'; G.spawnT = 0; } }
   else if (G.phase === 'fight') {
-    var maxAlive = Math.min(3 + Math.floor(G.wave / 2), Q.tier === 0 ? 5 : 6);
+    var maxAlive = Math.min(3 + Math.floor(G.wave / 2), Q.tier === 0 ? 5 : 6), alive = aliveCount();
     G.spawnT -= dt;
-    if (G.queue.length && ENEMIES.length < maxAlive && G.spawnT <= 0) { spawnEnemy(G.queue.pop(), G.wave); G.spawnT = 1.1; }
-    if (!G.queue.length && !ENEMIES.length) { G.phase = 'rescue'; banner('エリア確保', '緑に光るケージに近づいて「' + f.name + '」を助けよう', 3.5); SFX.ui(); }
-  } else if (G.phase === 'rescue') {
-    if (Math.hypot(P.x - f.x, P.z - f.z) < 2.5) {
-      f.state = 'free'; G.rescued++; SFX.cage(); SFX.rescue(); P.hp = Math.min(100, P.hp + 45); addScore(500, f.name + ' を救出');
-      fxSparks(f.x, 1.2, f.z, 0, 1, 0, 30, 6); fxFlash(f.x, 1.2, f.z, 4, 0.3, 0x9dffd0);
-      G.phase = 'rest'; G.timer = G.wave >= 8 ? 2.8 : 2.4; banner('救出成功！', G.rescued + ' / 8 人', 2.2);
+    if (G.queue.length && alive < maxAlive && G.spawnT <= 0) { var q = G.queue.pop(); if (q.d) spawnEnemy(q.d, G.wave); else spawnFriend(q.f, G.wave, q.leader); G.spawnT = 1.2; }
+    if (!G.queue.length && !alive && P.hp > 0) {
+      P.hp = Math.min(100, P.hp + 40); addScore(300 + G.wave * 50, 'WAVE ' + G.wave + ' クリア'); SFX.rescue();
+      G.phase = 'rest'; G.timer = G.wave >= 8 ? 3 : 3.2; banner(G.wave >= 8 ? '全ウェーブ制圧！' : 'WAVE ' + G.wave + ' クリア', G.wave >= 8 ? '' : 'HP 回復　次にそなえろ', 2.6);
     }
   } else if (G.phase === 'rest') { G.timer -= dt; if (G.timer <= 0) { if (G.wave >= 8) endGame(true); else nextWave(); } }
 }
@@ -94,18 +94,18 @@ function endGame(win) {
   var acc = G.stats.shots ? Math.round(G.stats.hits / G.stats.shots * 100) : 0, bonus = 0;
   if (win) { bonus = Math.max(0, Math.round((720 - G.time) * 5)) + Math.round(P.hp) * 10; G.score += bonus; SFX.win(); }
   G.state = 'result'; ROOT.classList.remove('fr-play'); if (document.exitPointerLock) { try { document.exitPointerLock(); } catch (e) {} }
-  H.rTitle.innerHTML = win ? 'MISSION <span>COMPLETE</span>' : 'MISSION <span>FAILED</span>'; H.rSub.textContent = win ? '全員救出！' : 'WAVE ' + G.wave + ' で力尽きた';
+  H.rTitle.innerHTML = win ? 'MISSION <span>COMPLETE</span>' : 'MISSION <span>FAILED</span>'; H.rSub.textContent = win ? '全8ウェーブ制圧！' : 'WAVE ' + G.wave + ' で力尽きた';
   H.rScore.textContent = G.score;
-  H.rStat.innerHTML = ''; [['救出した仲間', G.rescued + ' / 8'], ['撃破数', G.stats.kills], ['命中率', acc + '%'], ['タイム', Math.floor(G.time / 60) + ':' + ('0' + Math.floor(G.time % 60)).slice(-2)], ['クリアボーナス', bonus]].forEach(function (r) { el('span', null, H.rStat, r[0]); el('b', null, H.rStat, String(r[1])); });
+  H.rStat.innerHTML = ''; [['到達ウェーブ', (win ? 8 : G.wave) + ' / 8'], ['撃破数', G.stats.kills], ['命中率', acc + '%'], ['タイム', Math.floor(G.time / 60) + ':' + ('0' + Math.floor(G.time % 60)).slice(-2)], ['クリアボーナス', bonus]].forEach(function (r) { el('span', null, H.rStat, r[0]); el('b', null, H.rStat, String(r[1])); });
   var best = store.get('best', 0), isBest = G.score > best; if (isBest) store.set('best', G.score);
   H.rNote.textContent = isBest ? 'この端末のベストスコア更新！' : 'この端末のベスト： ' + best;
-  G.last = { score: G.score, rescued: G.rescued, kills: G.stats.kills, acc: acc, time: Math.round(G.time), win: !!win };
-  if (typeof onGameResult === 'function') onGameResult(G.last);
+  G.last = { score: G.score, wave: win ? 8 : G.wave, kills: G.stats.kills, acc: acc, time: Math.round(G.time), win: !!win };
+  H.rSave.textContent = ''; onGameResult(G.last);
   showScreen('result');
 }
 function pauseGame() { if (G.state !== 'playing') return; G.state = 'paused'; ROOT.classList.remove('fr-play'); input.fire = false; if (input.resetTouch) input.resetTouch(); if (document.exitPointerLock) { try { document.exitPointerLock(); } catch (e) {} } showScreen('paused'); }
 function resumeGame() { G.state = 'playing'; ROOT.classList.add('fr-play'); showScreen(null); if (!input.usedTouch && renderer.domElement.requestPointerLock) { try { renderer.domElement.requestPointerLock(); } catch (e) {} } }
-function toTitle() { clearEnemies(); resetFriends(); G.state = 'title'; G.phase = ''; G.wave = 0; ROOT.classList.remove('fr-play'); gun.root.visible = false; if (AU.ok) AU.hum.gain.value = 0; showScreen('title'); }
+function toTitle() { clearEnemies(); G.state = 'title'; G.phase = ''; G.wave = 0; ROOT.classList.remove('fr-play'); gun.root.visible = false; if (AU.ok) AU.hum.gain.value = 0; showScreen('title'); }
 
 function updatePlayer(dt) {
   pollKeys();
@@ -138,11 +138,11 @@ function frame(t) {
   var dt = Math.min(0.05, (t - lastT) / 1000 || 0.016); lastT = t;
   if (G.state === 'playing') {
     G.time += dt; updatePlayer(dt); updateWeapon(dt); updateFlow(dt); updateEnemies(dt); updateBolts(dt); updateFX(dt);
-    updateFriends(dt, P.x, P.z, G.wave - 1, G.phase); updateHUD(dt); autoQuality(dt);
+    updateLineup(dt, 0, 0, false); updateHUD(dt); autoQuality(dt);
   } else if (G.state === 'title' || G.state === 'result') {
     G.titleT += dt; var a = G.titleT * 0.07 + 1.2;
-    if (G.state === 'title') { camera.position.set(Math.cos(a) * 20, 5.5, Math.sin(a) * 20 + 4); camera.rotation.set(0, 0, 0); camera.lookAt(0, 1.4, 0); }
-    updateFX(dt); updateFriends(dt, camera.position.x, camera.position.z, -1, '');
+    if (G.state === 'title') { camera.position.set(Math.sin(a * 3) * 2.5, 1.5, 28.5); camera.rotation.set(0, 0, 0); camera.lookAt(0, 1.75, 21.5); }
+    updateFX(dt); updateEnemies(dt); updateLineup(dt, camera.position.x, camera.position.z, G.state === 'title');
   }
   updateSun();
   renderer.render(scene, camera);

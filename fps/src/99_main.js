@@ -14,7 +14,7 @@ function boot() {
     Q.tier = Q.mode === 'auto' ? initialTier() : Q.mode;
     setTimeout(function () {            // let the "LOADING" text paint first
       buildTextures(renderer, Q.tier === 0);
-      buildWorld(); buildWeapon(); buildEnemyAssets(); buildFriends(); buildUI(); setupInput();
+      buildWorld(); buildWeapon(); buildEnemyAssets(); buildFriends(); buildUI(); buildAccountUI(); setupInput();
       gun.root.visible = false;
       window.addEventListener('resize', onResize); window.addEventListener('orientationchange', function () { setTimeout(onResize, 300); });
       document.addEventListener('visibilitychange', function () { if (document.hidden && G.state === 'playing') pauseGame(); });
@@ -27,7 +27,7 @@ function boot() {
         H.modelNote.textContent = (s.boys === 'ok' && s.girls === 'ok') ? '' : '※ 仲間の3Dモデルを読み込めなかったため、かんたんな人形で表示しています'; clearInterval(mi);
       }, 400);
       window.__frReady = true;
-      window.__fr = { G: G, P: P, Q: Q, ENEMIES: ENEMIES, FRIENDS: FRIENDS, MODEL_STATUS: MODEL_STATUS, input: input, gun: gun, errors: RUNTIME_ERRORS, start: startGame, killAll: function () { G.queue.length = 0; ENEMIES.slice().forEach(function (e) { killEnemy(e, true); }); }, hurt: hurtPlayer, end: endGame };
+      window.__fr = { G: G, P: P, Q: Q, ENEMIES: ENEMIES, MODELS: MODELS, ACC: ACC, MODEL_STATUS: MODEL_STATUS, input: input, gun: gun, errors: RUNTIME_ERRORS, start: startGame, killAll: function () { G.queue.length = 0; ENEMIES.slice().forEach(function (e) { if (!e.dead) killEnemy(e, true); }); }, spawnFriend: spawnFriend, hurt: hurtPlayer, end: endGame };
       requestAnimationFrame(frame);
     }, 30);
   });

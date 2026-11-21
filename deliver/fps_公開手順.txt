@@ -1,0 +1,64 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ FRIENDS WARFARE を公開する手順（はじめての人向け）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+全体の流れ：  A. Supabase を用意 → B. Claude に2つの値を送る → C. Netlify に置く → D. Gravity に出す
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+A. Supabase（ログインと記録の保存先）を用意する  ※最初の1回だけ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 1. Safari で https://supabase.com を開き、「Start your project」からアカウントを作る
+ 2. 「New project」を押す
+    ・Name：好きな名前（例 friends-warfare）
+    ・Database Password：「Generate a password」で自動作成し、メモに保存（ゲームのパスワードとは別物）
+    ・Region：Northeast Asia (Tokyo)
+    ・プランは Free のまま「Create new project」→ 1〜2分待つ
+ 3. 左のメニューから「SQL Editor」を開く
+ 4. fps/supabase/setup.sql の中身を全部コピーして貼り付け、「Run」を押す
+    → 下に「セットアップ完了」と出れば成功（まちがえて2回実行しても大丈夫）
+ 5. 左下の歯車「Project Settings」→「API Keys」を開き、次の2つをコピーする
+    ・Project URL  …  https://xxxxxxxx.supabase.co  の形
+    ・Publishable key … sb_publishable_ で始まる長い文字
+    ※「Secret key」（sb_secret_ で始まるもの）は絶対にコピーしない・人に見せない
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+B. Claude に2つの値を送る
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 6. A-5 の「Project URL」と「Publishable key」をこのチャットに貼る
+    → Claude がゲームに組み込み、公開用の zip を作り直して渡します
+    （この2つは公開されても問題ない値です。Secret key と Database Password は送らないでください）
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+C. Netlify に置く
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ★ 料理研究所（gentle-panda-8e3c08）とは別の、新しいサイトを作るのがおすすめです。
+    同じサイトに上書きすると料理研究所が消えます。
+ 7. Netlify にログインした状態で https://app.netlify.com/drop を開く
+ 8. 受け取った zip（friends-warfare-site.zip）をアップロードする
+ 9. 表示された新しい URL（https://○○○.netlify.app/）をメモし、Claude に伝える
+    → Claude がその URL 入りのローダーを作って渡します
+10. Safari で確認する
+    ・https://○○○.netlify.app/          → ゲームが動く
+    ・https://○○○.netlify.app/game.js   → 長い文字がずらっと出る
+    ・タイトル画面に「ゲストプレイ中」と「ログイン / 新規登録」ボタンが出ていればログインも準備OK
+ ※ 次からの更新は、そのサイトの「Deploys」→ 一番下の「browse to upload」で新しい zip を上書き（URL は変わらない）
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+D. Gravity に出す
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+11. Claude から受け取ったローダーの文面（fps_loader_prompt.txt）を、Gravity の AI にそのまま全部貼る
+12. 出力されたコードの URL が自分の Netlify の URL と1文字も違わないか確認する
+13. Gravity の中で開き、タイトル画面を確認する
+    ・「ログイン / 新規登録」ボタンが出る → Gravity の中でもログインが使える
+    ・「※ サーバーに接続できません」と出る → Gravity が外部との通信を止めている。
+      その場合 Gravity の中ではゲストプレイのみ（ゲーム自体は遊べます）
+14. うまくいったローダーはメモに保存しておく（作り直すとポイントが減るため）
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+知っておくこと
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ・Supabase の無料プランは、1週間ほど誰も使わないと一時停止します（事前にメールが来ます）。
+   止まったら Supabase を開いて「Restore project」を押せば戻ります。データは消えません。
+ ・パスワードを忘れた人のパスワードは、だれにも（あなたにも）分かりません。新しい ID を作ってもらってください。
+ ・ログインを5回まちがえると、その ID は15分ロックされます。
+ ・投稿文には「※銃声などの大きな音、画面が赤く光る・ゆれる演出があります」と書いておくと親切です。
+ ・ログイン状態は Gravity の中と Netlify の URL を直接開いたときで別々です（同じ ID でどちらからもログインはできます）。

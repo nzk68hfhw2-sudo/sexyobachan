@@ -34,6 +34,7 @@ var BASE_CSS = [
 '.fr-stat{display:grid;grid-template-columns:auto auto;gap:4px 18px;margin:10px auto;font-size:14px;text-align:left}.fr-stat b{text-align:right;font-variant-numeric:tabular-nums}',
 '.fr-big{font-size:44px;font-weight:900;color:#ffb14a;font-variant-numeric:tabular-nums}',
 '.fr-note{font-size:11px!important;opacity:.65!important}',
+'.fr-in{display:block;width:min(300px,78vw);margin:7px auto;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.45);color:#fff;font-size:16px;box-sizing:border-box;-webkit-user-select:text;user-select:text;outline:none}',
 '.fr-load{position:absolute;left:0;right:0;top:46%;text-align:center;font-size:14px;letter-spacing:.2em;font-weight:700}'
 ].join('\n');
 
@@ -57,8 +58,8 @@ function buildUI() {
 
   // title
   var t = H.title = el('div', 'fr-screen fr-scroll', UI);
-  el('h1', null, t).innerHTML = 'FRIENDS <span>RESCUE</span>'; el('h3', null, t, 'ともだち救出作戦');
-  el('p', null, t, '警備ドローンに占拠されたコンテナヤード。ケージに閉じ込められた8人の仲間を、全員たすけ出せ。');
+  el('h1', null, t).innerHTML = 'FRIENDS <span>WARFARE</span>'; el('h3', null, t, 'ともだちサバゲー');
+  el('p', null, t, '夕暮れのコンテナヤードで、8人の仲間たちとドローンを相手に撃ち合うサバイバルゲーム。全8ウェーブを勝ち抜け。');
   H.account = el('div', 'fr-account', t);
   H.playBtn = el('button', 'fr-b pri', t, 'プレイ'); onTap(H.playBtn, function () { audioInit(); SFX.ui(); startGame(); });
   var hb = el('button', 'fr-b', t, 'あそびかた'); onTap(hb, function () { audioInit(); SFX.ui(); showScreen('help'); });
@@ -70,7 +71,7 @@ function buildUI() {
   el('h3', null, hp, 'あそびかた');
   el('p', null, hp, '【スマホ】画面の左側をドラッグで移動（大きく前に倒すとダッシュ）／右側をドラッグで視点／赤いボタンを押している間ずっと射撃（押したまま動かすと視点も動く）／「リロード」で弾を補充');
   el('p', null, hp, '【PC】クリックで開始・射撃／マウスで視点／WASD で移動／Shift でダッシュ／R でリロード／Esc で一時停止');
-  el('p', null, hp, '【ルール】ドローンを全滅させると仲間のケージが緑に光る。近づくと救出でき、HPが回復する。8人全員を助けたらクリア。ドローンの赤く光る目は弱点（ダメージ2倍）。赤い弾はよけられる。黄色いドローンは体当たりして自爆する。');
+  el('p', null, hp, '【ルール】出てくる相手を全員倒すと次のウェーブへ。ウェーブを越えるたびにHPが回復し、全8ウェーブでクリア。頭に当てるとヘッドショット（ダメージ2倍）。ひとまわり大きい相手はそのウェーブのリーダーで、しぶとい。赤い弾は見てからよけられる。後半は空からドローンも来る（赤く光る目が弱点、黄色いドローンは体当たりで自爆）。');
   onTap(el('button', 'fr-b', hp, 'もどる'), function () { SFX.ui(); showScreen('title'); });
 
   var st = H.settings = el('div', 'fr-screen fr-scroll', UI);
@@ -94,10 +95,11 @@ function buildUI() {
   onTap(el('button', 'fr-b pri', rs, 'もういちど'), function () { SFX.ui(); startGame(); });
   onTap(el('button', 'fr-b', rs, 'タイトルへ'), function () { SFX.ui(); toTitle(); });
 }
+var SCREENS = ['title', 'help', 'settings', 'paused', 'result'];
 function showScreen(name) {
-  ['title', 'help', 'settings', 'paused', 'result'].forEach(function (n) { H[n].classList.toggle('on', n === name); });
+  SCREENS.forEach(function (n) { H[n].classList.toggle('on', n === name); });
   if (name === 'settings') refreshQualityUI();
-  if (name === 'title') { H.best.textContent = store.get('best', 0) ? 'この端末のベストスコア： ' + store.get('best', 0) : ''; if (typeof refreshAccountUI === 'function') refreshAccountUI(); }
+  if (name === 'title') { H.best.textContent = store.get('best', 0) ? 'この端末のベストスコア： ' + store.get('best', 0) : ''; refreshAccountUI(); }
 }
 var hudCache = {};
 function setTxt(k, e, v) { if (hudCache[k] !== v) { hudCache[k] = v; e.textContent = v; } }
@@ -106,9 +108,9 @@ function updateHUD(dt) {
   if (hudCache.hp !== hp) { hudCache.hp = hp; H.hpfill.style.width = hp + '%'; H.hptxt.textContent = 'HP ' + hp; H.hpbox.classList.toggle('low', hp <= 30); }
   setTxt('score', H.score, String(G.score));
   var am = gun.reloadT > 0 ? 'リロード中…' : gun.ammo + ' / ' + WEAPON.mag; if (hudCache.am !== am) { hudCache.am = am; H.ammo.textContent = am; H.ammo.classList.toggle('low', gun.ammo <= 6 && gun.reloadT <= 0); H.ammo.style.fontSize = gun.reloadT > 0 ? '15px' : ''; }
-  var left = G.queue.length + ENEMIES.length;
-  setTxt('wave', H.wave, 'WAVE ' + G.wave + ' / 8　' + (G.phase === 'fight' ? '敵 のこり ' + left : G.phase === 'rescue' ? '仲間のケージへ！' : ''));
-  var dk = G.rescued + '|' + G.wave + '|' + G.phase; if (hudCache.dk !== dk) { hudCache.dk = dk; for (var i = 0; i < 8; i++) H.dots.children[i].className = FRIENDS[i] && FRIENDS[i].state === 'free' ? 'on' : (i === G.wave - 1 ? 'cur' : ''); }
+  var left = G.queue.length + aliveCount();
+  setTxt('wave', H.wave, 'WAVE ' + G.wave + ' / 8　' + (G.phase === 'fight' ? 'のこり ' + left + ' 人' : ''));
+  if (hudCache.dk !== G.wave) { hudCache.dk = G.wave; for (var i = 0; i < 8; i++) H.dots.children[i].className = i < G.wave - 1 ? 'on' : (i === G.wave - 1 ? 'cur' : ''); }
   // crosshair spread
   var sp = 7 + gun.bloom * 700 + Math.min(10, P.speed * 1.6), L = 9;
   var c = H.cl; c[0].style.cssText = 'left:' + (-sp - L) + 'px;top:-1px;width:' + L + 'px;height:2px'; c[1].style.cssText = 'left:' + sp + 'px;top:-1px;width:' + L + 'px;height:2px';
@@ -119,15 +121,6 @@ function updateHUD(dt) {
   if (H.dmgT > 0) { H.dmgT -= dt; var rel = Math.atan2((H.dmgX - P.x) * Math.cos(P.yaw) - (H.dmgZ - P.z) * Math.sin(P.yaw), -(H.dmgX - P.x) * Math.sin(P.yaw) - (H.dmgZ - P.z) * Math.cos(P.yaw));
     H.dmg.style.opacity = Math.min(1, H.dmgT / 0.5); H.dmg.style.transform = 'rotate(' + rel.toFixed(3) + 'rad)'; } else if (hudCache.dmgOn) H.dmg.style.opacity = 0;
   hudCache.dmgOn = H.dmgT > 0;
-  // objective marker
-  var f = FRIENDS[G.wave - 1];
-  if (G.phase === 'rescue' && f) {
-    _v1.set(f.x, 2.4, f.z).project(camera); var behind = _v1.z > 1, w = window.innerWidth, h = window.innerHeight;
-    var sx = (_v1.x * 0.5 + 0.5) * w, sy = (-_v1.y * 0.5 + 0.5) * h; if (behind) { sx = w - sx; sy = h - 60; }
-    sx = clamp(sx, 44, w - 44); sy = clamp(sy, 90, h - 120);
-    H.mark.style.display = 'block'; H.mark.style.transform = 'translate(' + sx.toFixed(0) + 'px,' + sy.toFixed(0) + 'px)'; setTxt('mk', H.mark, f.name + ' ' + Math.round(Math.hypot(f.x - P.x, f.z - P.z)) + 'm');
-  } else if (hudCache.mkOn) H.mark.style.display = 'none';
-  hudCache.mkOn = G.phase === 'rescue';
   if (H.banT > 0) { H.banT -= dt; if (H.banT <= 0) H.banner.style.opacity = 0; }
 }
 function hudHit(crit, kill) { H.hitT = 0.18; H.hitm.className = 'fr-hitm' + (kill ? ' k' : crit ? ' c' : ''); }

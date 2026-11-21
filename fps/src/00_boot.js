@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// FRIENDS RESCUE — browser FPS (three.js r128). Everything is created by this
+// FRIENDS WARFARE — browser FPS (three.js r128). Everything is created by this
 // one file: DOM, CSS, canvas, textures, sounds. Loaded with <script src>.
 // BASE_URL is only a fallback: the folder of game.js is detected automatically.
 // ---------------------------------------------------------------------------

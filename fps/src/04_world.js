@@ -5,7 +5,6 @@ var CIRCLES = [];   // {x,z,r} (cages) — block walking only
 var ARENA = 31;
 var SUN_DIR;
 var MAT = {};
-var CAGE_POS = [[-8, -3], [11, -7], [23, 8], [-24, -15], [26, -26], [-26, 21], [3, -28], [18, 25]];
 var SPAWN_POS = [0, 26];
 
 function stdMat(o) { return new THREE.MeshStandardMaterial(o); }
@@ -92,7 +91,6 @@ function buildWorld() {
   var barrelG = new THREE.CylinderGeometry(0.3, 0.3, 0.9, 14);
   function free(x, z, rad) {
     if (Math.abs(x - SPAWN_POS[0]) < 4 && Math.abs(z - SPAWN_POS[1]) < 4) return false;
-    for (var i = 0; i < CAGE_POS.length; i++) if (Math.hypot(x - CAGE_POS[i][0], z - CAGE_POS[i][1]) < rad + 2.6) return false;
     for (var j = 0; j < COLS.length; j++) { var c = COLS[j]; if (x > c.x0 - rad && x < c.x1 + rad && z > c.z0 - rad && z < c.z1 + rad) return false; }
     return true;
   }
@@ -120,7 +118,7 @@ function buildWorld() {
     var lamp = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.2), lampM); lamp.position.set(p[0] + 0.85, 6.44, p[1]); scene.add(lamp);
     addCol(p[0], 3.25, p[1], 0.22, 6.5, 0.22);
   });
-  CAGE_POS.forEach(function (p) { CIRCLES.push({ x: p[0], z: p[1], r: 1.0 }); });
+  buildNav();
 }
 
 // ray vs world (boxes + ground). o,d = THREE.Vector3 (d normalized). returns {t, nx, ny, nz} or null
@@ -155,4 +153,39 @@ function obstacleTop(x, z, rad) {
   var top = 0;
   for (var i = 4; i < COLS.length; i++) { var c = COLS[i]; if (x > c.x0 - rad && x < c.x1 + rad && z > c.z0 - rad && z < c.z1 + rad && c.y1 > top && c.y1 < 6) top = c.y1; }
   return top;
+}
+
+// ---- walking grid + flow field toward the player (for ground enemies) -------
+var NAV = { n: 64, blocked: null, dist: null, q: null };
+function buildNav() {
+  var n = NAV.n; NAV.blocked = new Uint8Array(n * n); NAV.dist = new Int16Array(n * n); NAV.q = new Int32Array(n * n);
+  for (var j = 0; j < n; j++) for (var i = 0; i < n; i++) {
+    var x = i - 32 + 0.5, z = j - 32 + 0.5, b = Math.abs(x) > ARENA - 0.3 || Math.abs(z) > ARENA - 0.3;
+    for (var k = 0; k < COLS.length && !b; k++) { var c = COLS[k]; if (c.y0 < 1.3 && c.y1 > 0.35 && x > c.x0 - 0.5 && x < c.x1 + 0.5 && z > c.z0 - 0.5 && z < c.z1 + 0.5) b = true; }
+    NAV.blocked[j * n + i] = b ? 1 : 0;
+  }
+}
+function navCell(x, z) { return clamp(Math.floor(z + 32), 0, 63) * 64 + clamp(Math.floor(x + 32), 0, 63); }
+function updateNav(px, pz) {
+  var n = NAV.n, d = NAV.dist, q = NAV.q, bl = NAV.blocked, head = 0, tail = 0, s = navCell(px, pz);
+  d.fill(-1); d[s] = 0; q[tail++] = s;
+  while (head < tail) {
+    var c = q[head++], ci = c % n, cj = (c / n) | 0, nd = d[c] + 1;
+    if (ci > 0 && d[c - 1] < 0 && !bl[c - 1]) { d[c - 1] = nd; q[tail++] = c - 1; }
+    if (ci < n - 1 && d[c + 1] < 0 && !bl[c + 1]) { d[c + 1] = nd; q[tail++] = c + 1; }
+    if (cj > 0 && d[c - n] < 0 && !bl[c - n]) { d[c - n] = nd; q[tail++] = c - n; }
+    if (cj < n - 1 && d[c + n] < 0 && !bl[c + n]) { d[c + n] = nd; q[tail++] = c + n; }
+  }
+}
+// direction (unit, in out[0],out[1]) from x,z toward the player along the field; false if unknown
+function navDir(x, z, out) {
+  var n = NAV.n, d = NAV.dist, bl = NAV.blocked, c = navCell(x, z), ci = c % n, cj = (c / n) | 0, best = d[c] < 0 ? 32000 : d[c], bi = 0, bj = 0;
+  for (var dj = -1; dj <= 1; dj++) for (var di = -1; di <= 1; di++) {
+    if (!di && !dj) continue; var i = ci + di, j = cj + dj; if (i < 0 || j < 0 || i >= n || j >= n) continue;
+    var k = j * n + i; if (d[k] < 0) continue;
+    if (di && dj && (bl[cj * n + i] || bl[j * n + ci])) continue;
+    var v = d[k] + (di && dj ? 0.4 : 0); if (v < best) { best = v; bi = di; bj = dj; }
+  }
+  if (!bi && !bj) return false;
+  var tx = ci + bi - 32 + 0.5 - x, tz = cj + bj - 32 + 0.5 - z, l = Math.hypot(tx, tz) || 1; out[0] = tx / l; out[1] = tz / l; return true;
 }

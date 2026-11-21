@@ -69,6 +69,7 @@ var SFX = {
     AU.lp.frequency.cancelScheduledValues(t); AU.lp.frequency.setValueAtTime(700, t); AU.lp.frequency.exponentialRampToValueAtTime(20000, t + 0.9); },
   alarm: function () { if (!AU.ok) return; var t = AU.ctx.currentTime; for (var i = 0; i < 3; i++) { auTone(t + i * 0.36, 0.16, 660, 660, 0.09, 'square'); auTone(t + i * 0.36 + 0.17, 0.16, 495, 495, 0.09, 'square'); } },
   rescue: function () { if (!AU.ok) return; var t = AU.ctx.currentTime; [523, 659, 784, 1047, 1319].forEach(function (f, i) { auTone(t + i * 0.09, 0.4, f, f, 0.13, 'triangle', 0, 0.01); auTone(t + i * 0.09, 0.3, f * 2, f * 2, 0.04, 'sine'); }); },
+  down: function (pan, vol) { if (!AU.ok) return; var t = AU.ctx.currentTime; auTone(t, 0.28, 520, 170, 0.12 * vol, 'triangle', pan, 0.02); auNoise(t + 0.3, 0.12, 700, 120, 0.4 * vol, 'lowpass', pan); auTone(t + 0.3, 0.14, 110, 50, 0.4 * vol, 'sine', pan); },
   cage: function () { if (!AU.ok) return; var t = AU.ctx.currentTime; auTone(t, 0.6, 900, 80, 0.14, 'sawtooth'); auNoise(t, 0.5, 6000, 400, 0.14, 'bandpass', 0, 2); },
   ui: function () { if (!AU.ok) return; var t = AU.ctx.currentTime; auTone(t, 0.05, 880, 880, 0.08, 'triangle'); },
   win: function () { if (!AU.ok) return; var t = AU.ctx.currentTime; [392, 523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { auTone(t + i * 0.13, 0.5, f, f, 0.12, 'triangle', 0, 0.01); }); },

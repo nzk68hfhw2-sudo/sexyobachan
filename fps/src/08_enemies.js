@@ -3,13 +3,18 @@ var ENEMIES = [], BOLTS = [], DR = {};
 var ETYPE = {
   scout:  { hp: 70,  scale: 1.0, speed: 6.5, score: 100, dmg: 9,  burst: 1, cd: [1.7, 2.8], range: [9, 15] },
   gunner: { hp: 170, scale: 1.45, speed: 4.2, score: 250, dmg: 8,  burst: 3, cd: [2.4, 3.4], range: [11, 17] },
-  kami:   { hp: 45,  scale: 0.8, speed: 9.5, score: 150, dmg: 30, burst: 0, cd: [9, 9], range: [4, 6] }
+  kami:   { hp: 45,  scale: 0.8, speed: 9.5, score: 150, dmg: 30, burst: 0, cd: [9, 9], range: [4, 6] },
+  rifle:  { hp: 100, scale: 1.0, speed: 3.3, score: 100, dmg: 8,  burst: 2, cd: [1.6, 2.7], range: [8, 15], friend: true },
+  rush:   { hp: 80,  scale: 1.0, speed: 5.0, score: 120, dmg: 6,  burst: 3, cd: [1.2, 2.0], range: [3.5, 6.5], friend: true }
 };
+var FRIEND_ROLE = ['rifle', 'rifle', 'rush', 'rifle', 'rifle', 'rush', 'rifle', 'rush'];
+function aliveCount() { var n = 0; for (var i = 0; i < ENEMIES.length; i++) if (!ENEMIES[i].dead) n++; return n; }
 function buildEnemyAssets() {
   DR.body = new THREE.SphereGeometry(0.42, 16, 10); DR.arm = new THREE.BoxGeometry(1.25, 0.05, 0.09); DR.motor = new THREE.CylinderGeometry(0.06, 0.06, 0.12, 8);
   DR.rotor = new THREE.CircleGeometry(0.27, 14); DR.eye = new THREE.SphereGeometry(0.12, 12, 8); DR.barrel = new THREE.CylinderGeometry(0.035, 0.035, 0.4, 8); DR.fin = new THREE.BoxGeometry(0.5, 0.04, 0.5);
   DR.metal = stdMat({ color: 0x24262a, roughness: 0.4, metalness: 0.9, roughnessMap: TEX.metalRgh, envMapIntensity: 1 });
   DR.shell = { scout: stdMat({ color: 0x59616b, roughness: 0.45, metalness: 0.7 }), gunner: stdMat({ color: 0x6d2620, roughness: 0.4, metalness: 0.7 }), kami: stdMat({ color: 0xc79a1a, roughness: 0.5, metalness: 0.5 }) };
+  DR.blaster = new THREE.BoxGeometry(0.07, 0.11, 0.42); DR.blasterTip = new THREE.MeshBasicMaterial({ color: 0xff3a22 }); DR.tipG = new THREE.BoxGeometry(0.035, 0.035, 0.03);
   DR.rotorM = new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false });
   var bg = new THREE.CylinderGeometry(0.045, 0.045, 0.9, 6); bg.rotateX(Math.PI / 2);
   var bm = new THREE.MeshBasicMaterial({ color: 0xff5a3a, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
@@ -43,7 +48,7 @@ function spawnEnemy(type, wave) {
     ang: a, dir: Math.random() < 0.5 ? 1 : -1, ring: rnd(T.range[0], T.range[1]), alt: rnd(2.3, 4.6), t: Math.random() * 9, cd: rnd(1.2, 2.6), charge: 0, burst: 0, burstT: 0, hitFlash: 0, dive: 0, beepT: 0, r: 0.5 * T.scale, wave: wave, dirT: rnd(2, 5) };
   e.g.position.set(e.x, e.y, e.z); scene.add(e.g); ENEMIES.push(e); return e;
 }
-function removeEnemy(e) { scene.remove(e.g); e.eyeM.dispose(); var i = ENEMIES.indexOf(e); if (i >= 0) ENEMIES.splice(i, 1); }
+function removeEnemy(e) { scene.remove(e.g); if (e.eyeM) e.eyeM.dispose(); if (e.mat) e.mat.dispose(); var i = ENEMIES.indexOf(e); if (i >= 0) ENEMIES.splice(i, 1); }
 function clearEnemies() { while (ENEMIES.length) removeEnemy(ENEMIES[0]); BOLTS.forEach(function (b) { b.on = false; b.m.visible = false; }); }
 
 function raySphere(o, d, cx, cy, cz, r) {
@@ -53,7 +58,15 @@ function raySphere(o, d, cx, cy, cz, r) {
 function rayEnemies(o, d, maxT) {
   var best = null;
   for (var i = 0; i < ENEMIES.length; i++) {
-    var e = ENEMIES[i], t = raySphere(o, d, e.x, e.y, e.z, e.r * 1.12);
+    var e = ENEMIES[i], t;
+    if (e.dead) continue;
+    if (e.friend) {
+      var h = e.h, th = raySphere(o, d, e.x, e.y + 0.79 * h, e.z, 0.215 * h), tb = raySphere(o, d, e.x, e.y + 0.45 * h, e.z, 0.18 * h), tl = raySphere(o, d, e.x, e.y + 0.17 * h, e.z, 0.15 * h);
+      var tm = 1e9, cr = false; if (th > 0) { tm = th; cr = true; } if (tb > 0 && tb < tm) { tm = tb; cr = false; } if (tl > 0 && tl < tm) { tm = tl; cr = false; }
+      if (tm < maxT && (!best || tm < best.t)) best = { e: e, t: tm, crit: cr };
+      continue;
+    }
+    t = raySphere(o, d, e.x, e.y, e.z, e.r * 1.12);
     if (t > 0 && t < maxT && (!best || t < best.t)) {
       var s = e.T.scale, fx = Math.sin(e.g.rotation.y), fz = Math.cos(e.g.rotation.y);
       var te = raySphere(o, d, e.x + fx * 0.42 * s, e.y - 0.02 * s, e.z + fz * 0.42 * s, 0.17 * s);
@@ -67,9 +80,16 @@ function volAt(x, y, z) { return clamp(1.3 - Math.hypot(x - P.x, z - P.z) / 34, 
 
 function damageEnemy(e, dmg, crit, hx, hy, hz) {
   e.hp -= dmg; e.hitFlash = 0.1; hudHit(crit, e.hp <= 0);
+  if (e.friend) { fxSmoke(hx, hy, hz, 0.35, 0.45, 0xf4f1ea, 0.5); e.stagger = 0.18; }
   if (e.hp <= 0) killEnemy(e, true, crit); else SFX.hit();
 }
 function killEnemy(e, byPlayer, crit) {
+  if (e.friend) {
+    if (e.dead) return;
+    e.dead = 0.0001; e.charge = 0; e.burst = 0; SFX.down(panTo(e.x, e.z), volAt(e.x, e.y, e.z));
+    if (byPlayer) { G.stats.kills++; addScore(Math.round(e.T.score * (e.leader ? 3 : 1)) + (crit ? 50 : 0), e.name + (crit ? ' をヘッドショット' : ' を倒した')); SFX.kill(); }
+    return;
+  }
   fxExplosion(e.x, e.y, e.z, e.type === 'gunner'); SFX.boom(panTo(e.x, e.z), volAt(e.x, e.y, e.z));
   if (byPlayer) { G.stats.kills++; addScore(e.T.score + (crit ? 50 : 0), crit ? 'クリティカル撃破' : '撃破'); SFX.kill(); }
   var d = Math.hypot(e.x - P.x, e.y - (P.y + 1.2), e.z - P.z);
@@ -79,6 +99,7 @@ function killEnemy(e, byPlayer, crit) {
 function fireBolt(e, spreadMul) {
   var b = null; for (var i = 0; i < BOLTS.length; i++) if (!BOLTS[i].on) { b = BOLTS[i]; break; } if (!b) return;
   var s = e.T.scale, fx = Math.sin(e.g.rotation.y), fz = Math.cos(e.g.rotation.y), ox = e.x + fx * 0.5 * s, oy = e.y - 0.2 * s, oz = e.z + fz * 0.5 * s;
+  if (e.friend) { ox = e.x + fx * 0.45 * e.h + fz * 0.2 * e.h; oy = e.y + 0.5 * e.h; oz = e.z + fz * 0.45 * e.h - fx * 0.2 * e.h; }
   var sp = 27 + e.wave * 0.8, dist = Math.hypot(P.x - ox, P.z - oz), lead = dist / sp * 0.55, err = Math.max(0.25, 1.15 - e.wave * 0.1) * (spreadMul || 1);
   var tx = P.x + P.vx * lead + rnd(-err, err), ty = P.y + 1.25 + rnd(-err, err) * 0.6, tz = P.z + P.vz * lead + rnd(-err, err);
   var dx = tx - ox, dy = ty - oy, dz = tz - oz, l = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
@@ -106,6 +127,7 @@ function updateEnemies(dt) {
   var nearest = 99;
   for (var i = ENEMIES.length - 1; i >= 0; i--) {
     var e = ENEMIES[i], T = e.T; e.t += dt;
+    if (e.friend) { updateFriendEnemy(e, dt, i); continue; }
     var dxp = P.x - e.x, dzp = P.z - e.z, dist = Math.hypot(dxp, dzp), d3 = Math.hypot(dist, P.y + 1.4 - e.y); if (d3 < nearest) nearest = d3;
     var see = losClear(e.x, e.y, e.z, P.x, P.y + 1.4, P.z), alive = P.hp > 0;
     var tx, ty, tz, maxSp = T.speed;
@@ -144,5 +166,69 @@ function updateEnemies(dt) {
     var c = e.eyeM.color;
     if (e.hitFlash > 0) c.setRGB(1, 1, 1); else if (e.charge > 0) { var u = 1 - e.charge / 0.45; c.setRGB(1, 0.2 + u * 0.8, 0.1 + u * 0.7); } else if (T.burst === 0) c.setRGB(1, 0.7, 0.12); else c.setRGB(1, 0.16, 0.1);
   }
-  if (AU.ok) AU.hum.gain.value = damp(AU.hum.gain.value, ENEMIES.length ? clamp(0.16 - nearest * 0.006, 0.015, 0.14) : 0, 3, dt);
+  if (AU.ok) AU.hum.gain.value = damp(AU.hum.gain.value, nearest < 90 ? clamp(0.16 - nearest * 0.006, 0.015, 0.14) : 0, 3, dt);
+}
+
+// ---- the eight friends as ground enemies (models have no skeleton: animated by code)
+var _nd = [0, 0];
+function spawnFriend(idx, wave, leader) {
+  var role = FRIEND_ROLE[idx], T = ETYPE[role], x = 0, z = 0, ok = false;
+  for (var tr = 0; tr < 60 && !ok; tr++) {
+    x = rnd(-ARENA + 2, ARENA - 2); z = rnd(-ARENA + 2, ARENA - 2); var c = navCell(x, z), d = NAV.dist[c];
+    ok = !NAV.blocked[c] && d > (tr < 40 ? 20 : 12) && (tr > 25 || !losClear(x, 1.3, z, P.x, 1.5, P.z));
+  }
+  var sc = leader ? 1.22 : 1, mat = (MODELS[idx] ? MODELS[idx].material : PH.mat).clone();
+  var e = { friend: true, idx: idx, name: FRIEND_NAMES[idx], type: role, T: T, leader: !!leader, hp: T.hp * (leader ? 2.3 : 1) * (1 + wave * 0.04), x: x, y: 0, z: z, vx: 0, vz: 0, h: FRIEND_H * sc, r: 0.34,
+    t: Math.random() * 9, cd: rnd(1.5, 3), charge: 0, burst: 0, burstT: 0, hitFlash: 0, stagger: 0, dead: 0, wave: wave, dir: Math.random() < 0.5 ? 1 : -1, dirT: rnd(1, 3), ring: rnd(T.range[0], T.range[1]), mat: mat, rise: 0.6 };
+  e.g = new THREE.Group(); e.body = new THREE.Group(); e.g.add(e.body);
+  var m = makeFriendMesh(idx, mat); m.scale.setScalar(e.h); e.body.add(m);
+  var bl = new THREE.Mesh(DR.blaster, DR.metal); bl.position.set(0.2 * e.h, 0.5 * e.h, 0.22 * e.h); bl.castShadow = true; e.body.add(bl);
+  e.tip = new THREE.Mesh(DR.tipG, DR.blasterTip.clone()); e.tip.position.set(0.2 * e.h, 0.5 * e.h, 0.22 * e.h + 0.22); e.body.add(e.tip); e.eyeM = e.tip.material;
+  e.g.position.set(x, 0, z); e.g.rotation.y = Math.atan2(P.x - x, P.z - z); scene.add(e.g); ENEMIES.push(e);
+  fxSmoke(x, 0.9, z, 1.3, 0.7, 0xdfe8ee, 0.8); fxFlash(x, 1, z, 2.2, 0.25, 0x9fd8ff);
+  return e;
+}
+function updateFriendEnemy(e, dt, i) {
+  var T = e.T, b = e.body;
+  if (e.dead) {                           // fall over, then sink away in a puff
+    e.dead += dt; var k = Math.min(1, e.dead / 0.42);
+    b.rotation.x = -1.5 * k * k; b.position.y = 0.16 * e.h * k;
+    if (e.dead > 1.7) { if (!e.puff) { e.puff = 1; fxSmoke(e.x, 0.3, e.z, 1.2, 0.8, 0xe8e4dc, 0.7); } e.g.position.y = -(e.dead - 1.7) * 1.4; }
+    if (e.dead > 2.3) removeEnemy(e);
+    return 99;
+  }
+  var dxp = P.x - e.x, dzp = P.z - e.z, dist = Math.hypot(dxp, dzp) || 0.001, alive = P.hp > 0;
+  var see = losClear(e.x, e.h * 0.8, e.z, P.x, P.y + 1.4, P.z), mx = 0, mz = 0, sp = T.speed * (1 + e.wave * 0.02);
+  e.dirT -= dt; if (e.dirT <= 0) { e.dirT = rnd(1.2, 3.2); e.dir = -e.dir; e.ring = rnd(T.range[0], T.range[1]); }
+  if (e.stagger > 0) { e.stagger -= dt; sp *= 0.25; }
+  var firing = e.charge > 0 || e.burst > 0;
+  if (!see || dist > e.ring + 2) { if (navDir(e.x, e.z, _nd)) { mx = _nd[0]; mz = _nd[1]; } else { mx = dxp / dist; mz = dzp / dist; } }
+  else if (dist < e.ring - 2) { mx = -dxp / dist * 0.7 + (-dzp / dist) * e.dir * 0.6; mz = -dzp / dist * 0.7 + (dxp / dist) * e.dir * 0.6; }
+  else { mx = (-dzp / dist) * e.dir * 0.75; mz = (dxp / dist) * e.dir * 0.75; }
+  if (firing) { mx *= 0.25; mz *= 0.25; }
+  for (var j = 0; j < ENEMIES.length; j++) { var o = ENEMIES[j]; if (j === i || !o.friend || o.dead) continue; var sx = e.x - o.x, sz = e.z - o.z, sl = sx * sx + sz * sz; if (sl < 1.1 && sl > 0.0001) { var f = (1.1 - sl) * 1.4; mx += sx * f; mz += sz * f; } }
+  var kk = 1 - Math.exp(-7 * dt); e.vx += (mx * sp - e.vx) * kk; e.vz += (mz * sp - e.vz) * kk;
+  var px = e.x, pz = e.z; collideMove(e, e.x + e.vx * dt, e.z + e.vz * dt, 0.34, 0);
+  var dpx = e.x - P.x, dpz = e.z - P.z, dp = Math.hypot(dpx, dpz); if (dp < 0.8 && dp > 0.001) { e.x = P.x + dpx / dp * 0.8; e.z = P.z + dpz / dp * 0.8; }
+  var moved = Math.hypot(e.x - px, e.z - pz) / Math.max(dt, 0.001);
+  if (moved < sp * 0.25 && (mx || mz) && !firing) { e.stuck = (e.stuck || 0) + dt; if (e.stuck > 0.5) { e.dir = -e.dir; e.stuck = 0; } } else e.stuck = 0;
+  // hop-walk animation (no skeleton): bounce, lean, sway
+  e.walk = (e.walk || 0) + moved * dt * 3.1;
+  var amp = Math.min(1, moved / 2.5), hop = Math.abs(Math.sin(e.walk)) * 0.11 * amp;
+  if (e.rise > 0) e.rise = Math.max(0, e.rise - dt);
+  e.g.position.set(e.x, hop, e.z); b.scale.y = 1 - e.rise * 0.5 + Math.sin(e.walk * 2) * 0.03 * amp; b.scale.x = b.scale.z = 1;
+  var faceP = see && dist < 24, yaw = faceP ? Math.atan2(dxp, dzp) : Math.atan2(e.vx, e.vz);
+  if (faceP || moved > 0.3) e.g.rotation.y += angDiff(yaw, e.g.rotation.y) * Math.min(1, dt * 7);
+  var fwd = e.vx * Math.sin(e.g.rotation.y) + e.vz * Math.cos(e.g.rotation.y), side = e.vx * Math.cos(e.g.rotation.y) - e.vz * Math.sin(e.g.rotation.y);
+  b.rotation.x = damp(b.rotation.x, clamp(fwd * 0.05, -0.2, 0.25) - (e.stagger > 0 ? 0.28 : 0), 10, dt);
+  b.rotation.z = Math.sin(e.walk) * 0.09 * amp - clamp(side * 0.04, -0.15, 0.15);
+  // shooting
+  if (alive) {
+    if (e.burst > 0) { e.burstT -= dt; if (e.burstT <= 0) { fireBolt(e, T.burst > 2 ? 1.7 : 1.15); e.burst--; e.burstT = T.burst > 2 ? 0.13 : 0.22; } }
+    else if (e.charge > 0) { e.charge -= dt; if (e.charge <= 0) { e.burst = T.burst + (e.leader ? 1 : 0); e.burstT = 0; e.cd = rnd(T.cd[0], T.cd[1]) * Math.max(0.6, 1 - e.wave * 0.035); } }
+    else { e.cd -= dt; if (e.cd <= 0 && see && dist < T.range[1] + 6) { e.charge = 0.5; SFX.charge(panTo(e.x, e.z), volAt(e.x, e.y, e.z)); } }
+  }
+  if (e.hitFlash > 0) { e.hitFlash -= dt; e.mat.emissive.setRGB(0.5, 0.12, 0.08); } else e.mat.emissive.setRGB(0, 0, 0);
+  var c = e.eyeM.color; if (e.charge > 0) { var u = 1 - e.charge / 0.5; c.setRGB(1, 0.3 + u * 0.7, 0.2 + u * 0.8); e.tip.scale.setScalar(1 + u * 2.2); } else { c.setRGB(0.8, 0.12, 0.08); e.tip.scale.setScalar(1); }
+  return dist;
 }

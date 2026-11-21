@@ -1,5 +1,4 @@
 // ---- minimal GLB reader + the 8 friends (Meshy models) ----------------------
-var FRIENDS = [];        // {group, model, cage, bars, beacon, x, z, state, t, name}
 var FRIEND_NAMES = ['ハル', 'メガネ', 'ツン', 'ナギ', 'ロング', 'ミディ', 'ボブ', 'ウェーブ'];
 var MODEL_STATUS = { boys: 'loading', girls: 'loading' };
 
@@ -79,57 +78,40 @@ function loadModelFile(key, cb) {
   });
 }
 
-var CAGE_G = {};
+
+var MODELS = [];         // 8 entries {geometry, material} (null until loaded)
+var LINEUP = [];         // title-screen display
+var PH = {};
 function buildFriends() {
-  var barM = new THREE.MeshBasicMaterial({ color: 0x59d8ff, transparent: true, opacity: 0.85 });
-  var baseM = stdMat({ color: 0x24272b, roughness: 0.45, metalness: 0.9, roughnessMap: TEX.metalRgh });
-  CAGE_G.bar = new THREE.CylinderGeometry(0.026, 0.026, 1.95, 6); CAGE_G.base = new THREE.CylinderGeometry(0.95, 1.0, 0.1, 24); CAGE_G.ring = new THREE.TorusGeometry(0.85, 0.035, 6, 24);
-  CAGE_G.beacon = new THREE.CylinderGeometry(0.5, 0.5, 60, 12, 1, true);
-  var phG = new THREE.CylinderGeometry(0.2, 0.24, 0.75, 10), phH = new THREE.SphereGeometry(0.27, 14, 10), phM = stdMat({ color: 0xf2f2f2, roughness: 0.6 });
-  CAGE_POS.forEach(function (p, i) {
-    var f = { x: p[0], z: p[1], state: 'caged', t: Math.random() * 6, name: FRIEND_NAMES[i], open: 0 };
-    f.group = new THREE.Group(); f.group.position.set(p[0], 0, p[1]); scene.add(f.group);
-    f.model = new THREE.Group(); f.model.position.y = 0.1; f.group.add(f.model);
-    var b = new THREE.Mesh(phG, phM); b.position.y = 0.4; var h = new THREE.Mesh(phH, phM); h.position.y = 0.98; f.placeholder = new THREE.Group(); f.placeholder.add(b); f.placeholder.add(h); f.model.add(f.placeholder);
-    f.cage = new THREE.Group(); f.group.add(f.cage);
-    var base = new THREE.Mesh(CAGE_G.base, baseM); base.position.y = 0.05; base.receiveShadow = true; f.group.add(base);
-    f.bars = new THREE.Group(); f.cage.add(f.bars);
-    f.barM = barM.clone();
-    for (var k = 0; k < 12; k++) { var a = k / 12 * Math.PI * 2, bar = new THREE.Mesh(CAGE_G.bar, f.barM); bar.position.set(Math.cos(a) * 0.85, 1.07, Math.sin(a) * 0.85); f.bars.add(bar); }
-    var top = new THREE.Mesh(CAGE_G.ring, baseM); top.rotation.x = Math.PI / 2; top.position.y = 2.06; f.cage.add(top);
-    f.beacon = new THREE.Mesh(CAGE_G.beacon, new THREE.MeshBasicMaterial({ color: 0x66e0ff, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
-    f.beacon.position.y = 30; f.beacon.visible = false; f.group.add(f.beacon);
-    FRIENDS.push(f);
-  });
+  PH.body = new THREE.CylinderGeometry(0.16, 0.2, 0.62, 10); PH.body.translate(0, 0.31, 0);
+  PH.head = new THREE.SphereGeometry(0.24, 14, 10); PH.head.translate(0, 0.78, 0);
+  PH.mat = stdMat({ color: 0xf2f2f2, roughness: 0.6 });
+  for (var i = 0; i < 8; i++) {
+    MODELS.push(null);
+    var g = new THREE.Group(); g.position.set((i - 3.5) * 0.95, 0, 21.5 + Math.abs(i - 3.5) * 0.3); g.add(makeFriendMesh(i, null)); scene.add(g); LINEUP.push(g);
+  }
   ['boys', 'girls'].forEach(function (key, fi) {
     loadModelFile(key, function (err, list) {
       if (err || !list) return;
-      list.slice(0, 4).forEach(function (m, i) {
-        var f = FRIENDS[fi * 4 + i], mesh = new THREE.Mesh(m.geometry, m.material);
-        mesh.scale.setScalar(1.3); mesh.castShadow = true; mesh.receiveShadow = true;
-        f.model.remove(f.placeholder); f.model.add(mesh); f.mesh = mesh;
+      list.slice(0, 4).forEach(function (m, k) {
+        var idx = fi * 4 + k; MODELS[idx] = m;
+        var g = LINEUP[idx]; while (g.children.length) g.remove(g.children[0]); g.add(makeFriendMesh(idx, null));
       });
     });
   });
 }
-function resetFriends() {
-  FRIENDS.forEach(function (f) { f.state = 'caged'; f.open = 0; f.cage.visible = true; f.bars.scale.y = 1; f.bars.position.y = 0; f.barM.opacity = 0.85; f.barM.color.set(0x59d8ff); f.beacon.visible = false; f.model.position.y = 0.1; });
+// returns an Object3D of height 1 (feet at y=0, facing +z). mat: optional per-instance material
+function makeFriendMesh(idx, mat) {
+  var m = MODELS[idx], o;
+  if (m) { o = new THREE.Mesh(m.geometry, mat || m.material); o.castShadow = true; o.receiveShadow = true; }
+  else { o = new THREE.Group(); var b = new THREE.Mesh(PH.body, mat || PH.mat), h = new THREE.Mesh(PH.head, mat || PH.mat); b.castShadow = h.castShadow = true; o.add(b); o.add(h); }
+  o.scale.setScalar(FRIEND_H); return o;
 }
-function updateFriends(dt, px, pz, activeIdx, phase) {
-  for (var i = 0; i < FRIENDS.length; i++) {
-    var f = FRIENDS[i]; f.t += dt;
-    var want = Math.atan2(px - f.x, pz - f.z);
-    f.model.rotation.y += angDiff(want, f.model.rotation.y) * Math.min(1, dt * 3);
-    if (f.state === 'caged') {
-      f.model.position.y = 0.1; f.model.rotation.z = Math.sin(f.t * 1.3) * 0.04;
-      var act = i === activeIdx;
-      f.barM.opacity = act ? 0.75 + Math.sin(f.t * 8) * 0.2 : 0.55;
-      f.barM.color.set(act ? (phase === 'rescue' ? 0x7dffb0 : 0xff6a4a) : 0x59d8ff);
-      f.beacon.visible = act && phase === 'rescue'; if (f.beacon.visible) f.beacon.material.opacity = 0.16 + Math.sin(f.t * 4) * 0.06;
-    } else {
-      if (f.open < 1) { f.open = Math.min(1, f.open + dt * 1.6); f.bars.scale.y = 1 - f.open; f.bars.position.y = -f.open * 0.2; if (f.open >= 1) f.cage.visible = false; }
-      f.model.position.y = 0.1 + Math.abs(Math.sin(f.t * 5.2)) * 0.22; f.model.rotation.z = Math.sin(f.t * 5.2) * 0.07;
-      f.beacon.visible = false;
-    }
+var FRIEND_H = 1.68;
+function updateLineup(dt, cx, cz, show) {
+  for (var i = 0; i < LINEUP.length; i++) {
+    var g = LINEUP[i]; g.visible = show; if (!show) continue;
+    g.rotation.y += angDiff(Math.atan2(cx - g.position.x, cz - g.position.z), g.rotation.y) * Math.min(1, dt * 3);
+    g.position.y = Math.abs(Math.sin(G.titleT * 3 + i * 0.8)) * 0.06;
   }
 }
