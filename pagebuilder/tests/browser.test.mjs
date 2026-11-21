@@ -55,6 +55,10 @@ await R.t('下のボタンは親指で押しやすい大きさ(高さ44px以上)
   ok(hs.length === 4 && hs.every((x) => x >= 44), hs.join(','));
 });
 
+await R.t('Gravity のボタンが重なる左上・右上に、こちらの表示を置かない', async () => {
+  const r = await pg.evaluate(() => { const sr = document.getElementById('kojin-page-root').shadowRoot, b = (q) => sr.querySelector(q).getBoundingClientRect(); return { t: b('.top .ttl'), w: b('.top .who'), vw: innerWidth, logo: getComputedStyle(sr.querySelector('.top')).paddingLeft }; });
+  ok(r.t.left >= 60 && r.w.left >= 60 && r.t.right <= r.vw - 170 && r.w.right <= r.vw - 170, JSON.stringify(r));
+});
 console.log('■ 登録とログイン(画面から)');
 await R.t('新規登録ができ、マイページが開く', async () => { await register(pg, 'ui_alice'); ok(await pg.locator('.who').innerText().then((t) => t.includes('ui_alice')), 'who'); });
 await R.t('書く画面に「本名、住所、学校名、連絡先は書かないでください」が出る', async () => {

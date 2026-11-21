@@ -344,6 +344,9 @@
     '.top canvas{width:34px;height:34px;flex:none}',
     '.top .ttl{font-weight:700;font-size:17px;letter-spacing:.06em;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
     '.top .who{font-size:12px;background:#fff;border:1.5px solid #d9c7a3;border-radius:99px;padding:2px 10px;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+    /* Gravity の中では、左上と右上に Gravity のボタンが重なるので、その場所をあける */
+    '.top.emb{padding-left:66px;padding-right:176px;min-height:calc(env(safe-area-inset-top,0px) + 58px)}.top.emb canvas{display:none}',
+    '.top.emb .tt{flex:1;min-width:0}.top.emb .ttl{font-size:16px;line-height:1.25}.top.emb .who{display:block;max-width:100%;border:0;background:none;padding:0;font-size:11.5px;color:#8a7c66;line-height:1.2}',
     '.bar{height:3px;background:repeating-linear-gradient(90deg,#e07a5f 0 12px,#f2c14e 12px 24px,#81b29a 24px 36px);opacity:0;flex:none}',
     '.bar.on{opacity:1;animation:mv .6s linear infinite}@keyframes mv{to{background-position:36px 0}}',
     '.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}',
@@ -1058,7 +1061,8 @@
     var logo = h('canvas', { width: 68, height: 68, 'aria-hidden': 'true' });
     ttlEl = h('div', { class: 'ttl', text: 'こじんページ' }); whoEl = h('div', { class: 'who' });
     barEl = h('div', { class: 'bar' }); mainEl = h('div', { class: 'main' }); tabsEl = h('div', { class: 'tabs', role: 'navigation' });
-    app = h('div', { class: 'app', lang: 'ja' }, h('div', { class: 'top' }, logo, ttlEl, whoEl), barEl, mainEl, tabsEl);
+    var emb = false; try { emb = location.origin + '/' !== BASE; } catch (e) {}
+    app = h('div', { class: 'app', lang: 'ja' }, emb ? h('div', { class: 'top emb' }, h('div', { class: 'tt' }, ttlEl, whoEl)) : h('div', { class: 'top' }, logo, ttlEl, whoEl), barEl, mainEl, tabsEl);
     root.appendChild(app);
     document.body.appendChild(host);
     try { drawLogo(logo); } catch (e) {}
