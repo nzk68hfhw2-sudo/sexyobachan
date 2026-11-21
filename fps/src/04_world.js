@@ -166,8 +166,8 @@ function buildNav() {
   }
 }
 function navCell(x, z) { return clamp(Math.floor(z + 32), 0, 63) * 64 + clamp(Math.floor(x + 32), 0, 63); }
-function updateNav(px, pz) {
-  var n = NAV.n, d = NAV.dist, q = NAV.q, bl = NAV.blocked, head = 0, tail = 0, s = navCell(px, pz);
+function updateNav(px, pz, dist) {
+  var n = NAV.n, d = dist || NAV.dist, q = NAV.q, bl = NAV.blocked, head = 0, tail = 0, s = navCell(px, pz);
   d.fill(-1); d[s] = 0; q[tail++] = s;
   while (head < tail) {
     var c = q[head++], ci = c % n, cj = (c / n) | 0, nd = d[c] + 1;
@@ -178,8 +178,8 @@ function updateNav(px, pz) {
   }
 }
 // direction (unit, in out[0],out[1]) from x,z toward the player along the field; false if unknown
-function navDir(x, z, out) {
-  var n = NAV.n, d = NAV.dist, bl = NAV.blocked, c = navCell(x, z), ci = c % n, cj = (c / n) | 0, best = d[c] < 0 ? 32000 : d[c], bi = 0, bj = 0;
+function navDir(x, z, out, dist) {
+  var n = NAV.n, d = dist || NAV.dist, bl = NAV.blocked, c = navCell(x, z), ci = c % n, cj = (c / n) | 0, best = d[c] < 0 ? 32000 : d[c], bi = 0, bj = 0;
   for (var dj = -1; dj <= 1; dj++) for (var di = -1; di <= 1; di++) {
     if (!di && !dj) continue; var i = ci + di, j = cj + dj; if (i < 0 || j < 0 || i >= n || j >= n) continue;
     var k = j * n + i; if (d[k] < 0) continue;

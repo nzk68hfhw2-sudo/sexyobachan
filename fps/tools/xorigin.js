@@ -12,19 +12,19 @@ const loader = fs.readFileSync(path.join(__dirname, '..', '..', 'deliver', 'fps_
   if (process.argv[2] === 'blockxhr') await page.route('**/*.glb', r => r.abort());
   await page.goto('http://127.0.0.1:8093/');
   await page.waitForFunction('window.__frReady', null, { timeout: 60000 });
-  await page.waitForFunction('window.__fr.MODEL_STATUS.boys!=="loading"&&window.__fr.MODEL_STATUS.girls!=="loading"', null, { timeout: 60000 });
+  await page.waitForFunction('["boys","girls","boys_lod","girls_lod"].every(k=>window.__fr.MODEL_STATUS[k]!=="loading")', null, { timeout: 60000 });
   // real touch flow: tap PLAY, drag left stick, drag look, hold fire
-  await page.touchscreen.tap(195, await page.evaluate(() => { const r = document.querySelector('.fr-b.pri').getBoundingClientRect(); return r.top + r.height / 2; }));
+  await page.locator('.fr-screen.on button', { hasText: 'サバイバル' }).tap();
   await page.waitForTimeout(800);
   const cdp = await page.context().newCDPSession(page);
   const T = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
-  const before = await page.evaluate(() => ({ x: window.__fr.P.x, z: window.__fr.P.z, yaw: window.__fr.P.yaw, ammo: window.__fr.gun.ammo }));
+  const before = await page.evaluate(() => ({ x: window.__fr.P.x, z: window.__fr.P.z, yaw: window.__fr.P.yaw, ammo: window.__fr.gun.ammo.ar }));
   await T('touchStart', [{ x: 80, y: 650, id: 1 }]); await T('touchMove', [{ x: 80, y: 600, id: 1 }]);
   await T('touchMove', [{ x: 80, y: 600, id: 1 }, { x: 300, y: 400, id: 2 }]); await T('touchMove', [{ x: 80, y: 600, id: 1 }, { x: 240, y: 400, id: 2 }]);
   const fr = await page.evaluate(() => { const r = document.querySelector('.fr-fire').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
   await T('touchMove', [{ x: 80, y: 600, id: 1 }, { x: 240, y: 400, id: 2 }, { x: fr.x, y: fr.y, id: 3 }]);
   await page.waitForTimeout(1500);
-  const after = await page.evaluate(() => ({ x: window.__fr.P.x, z: window.__fr.P.z, yaw: window.__fr.P.yaw, ammo: window.__fr.gun.ammo, state: window.__fr.G.state, models: window.__fr.MODEL_STATUS, origin: location.origin, errs: window.__fr.errors }));
+  const after = await page.evaluate(() => ({ x: window.__fr.P.x, z: window.__fr.P.z, yaw: window.__fr.P.yaw, ammo: window.__fr.gun.ammo.ar, state: window.__fr.G.state, models: window.__fr.MODEL_STATUS, origin: location.origin, errs: window.__fr.errors }));
   await T('touchEnd', []);
   if (process.argv[3]) await page.screenshot({ path: process.argv[3] });
   console.log(JSON.stringify({ before, after }));

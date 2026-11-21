@@ -14,8 +14,9 @@ const THREE_LOCAL = fs.readFileSync(path.join(__dirname, '..', '..', 'tools', 't
   }
   await page.waitForFunction(() => window.__fr.G.state === 'result', null, { timeout: 90000 }).catch(async e => { console.log('STUCK', JSON.stringify(await page.evaluate(() => ({ s: window.__fr.G.state, p: window.__fr.G.phase, t: window.__fr.G.timer, w: window.__fr.G.wave, e: window.__fr.errors }))), errs.join('|')); throw e; });
   console.log('victory:', JSON.stringify(await page.evaluate(() => ({ last: window.__fr.G.last, title: document.querySelector('.fr-screen.on h1').textContent }))));
+  await page.evaluate(() => document.querySelector('.fr-res button.pri').click());
   if (process.argv[2]) await page.screenshot({ path: process.argv[2] });
-  await page.evaluate(() => { window.__fr.start(); window.__fr.hurt(200, 0, 0); });
+  await page.waitForFunction(() => window.__fr.G.state === 'playing', null, { timeout: 15000 }); await page.evaluate(() => { window.__fr.hurt(200, 0, 0); });
   await page.waitForFunction(() => window.__fr.G.state === 'result', null, { timeout: 90000 }).catch(async e => { console.log('STUCK', JSON.stringify(await page.evaluate(() => ({ s: window.__fr.G.state, p: window.__fr.G.phase, t: window.__fr.G.timer, w: window.__fr.G.wave, e: window.__fr.errors }))), errs.join('|')); throw e; });
   console.log('death:', JSON.stringify(await page.evaluate(() => ({ last: window.__fr.G.last, title: document.querySelector('.fr-screen.on h1').textContent }))), 'errors:', errs.length, errs.slice(0, 3).join(' | '));
   await b.close();

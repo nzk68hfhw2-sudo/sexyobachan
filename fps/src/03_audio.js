@@ -45,16 +45,23 @@ function auTone(t, dur, f0, f1, vol, type, pan, attack) {
   g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
   o.connect(g); g.connect(auOut(pan)); o.start(t); o.stop(t + dur + 0.02);
 }
+// per weapon: [crack, body length, body start freq, thump freq, tail, volume]
+var SHOT_SND = { ar: [1, 0.16, 3800, 170, 1, 1], pistol: [0.8, 0.1, 4200, 240, 0.5, 0.8], shotgun: [0.9, 0.3, 2400, 120, 1.5, 1.15], sniper: [1.3, 0.34, 3000, 110, 2.2, 1.2], smg: [0.7, 0.1, 4600, 220, 0.6, 0.75], lmg: [1, 0.2, 3200, 140, 1.2, 1.05], magnum: [1.2, 0.26, 2800, 130, 1.8, 1.15], rocket: [0.3, 0.4, 1500, 90, 1.5, 1] };
 var SFX = {
-  shot: function () { if (!AU.ok) return; var t = AU.ctx.currentTime;
-    auNoise(t, 0.03, 9000, 3000, 0.9, 'highpass');
-    auNoise(t, 0.16, 3800, 300, 0.95, 'lowpass');
-    auTone(t, 0.11, 170, 48, 0.9, 'sine');
-    auNoise(t + 0.05, 0.55, 1400, 180, 0.16, 'lowpass');
-    auNoise(t + 0.19, 0.5, 700, 120, 0.07, 'lowpass'); },
+  shot: function (id) { if (!AU.ok) return; var t = AU.ctx.currentTime, k = SHOT_SND[id] || SHOT_SND.ar;
+    auNoise(t, 0.03, 9000, 3000, 0.9 * k[0], 'highpass');
+    auNoise(t, k[1], k[2], 300, 0.95 * k[5], 'lowpass');
+    auTone(t, 0.11 + k[1] * 0.3, k[3], k[3] * 0.28, 0.9 * k[5], 'sine');
+    auNoise(t + 0.05, 0.55 * k[4], 1400, 180, 0.16 * k[4], 'lowpass');
+    auNoise(t + 0.19, 0.5 * k[4], 700, 120, 0.07 * k[4], 'lowpass');
+    if (id === 'rocket') { auNoise(t, 0.7, 500, 3500, 0.5, 'bandpass', 0, 1.5); } },
   empty: function () { if (!AU.ok) return; var t = AU.ctx.currentTime; auNoise(t, 0.03, 4000, 2000, 0.3, 'bandpass', 0, 4); auTone(t, 0.04, 1400, 900, 0.08, 'square'); },
   click: function (dt, f, v) { if (!AU.ok) return; var t = AU.ctx.currentTime + (dt || 0); auNoise(t, 0.045, f || 3000, 900, v || 0.35, 'bandpass', 0, 3); auTone(t, 0.06, (f || 3000) * 0.4, (f || 3000) * 0.3, 0.07, 'triangle'); },
-  reload: function () { SFX.click(0.1, 2200, 0.3); SFX.click(0.75, 2800, 0.36); SFX.click(0.85, 1800, 0.25); SFX.click(1.35, 3600, 0.4); SFX.click(1.45, 2500, 0.4); },
+  reload: function (d) { var k = (d || 1.7) / 1.7; SFX.click(0.1 * k, 2200, 0.3); SFX.click(0.75 * k, 2800, 0.36); SFX.click(0.85 * k, 1800, 0.25); SFX.click(1.35 * k, 3600, 0.4); SFX.click(1.45 * k, 2500, 0.4); },
+  throwS: function () { if (!AU.ok) return; var t = AU.ctx.currentTime; auNoise(t, 0.18, 600, 2400, 0.25, 'bandpass', 0, 1.2); },
+  pickup: function () { if (!AU.ok) return; var t = AU.ctx.currentTime; auTone(t, 0.1, 660, 660, 0.12, 'triangle'); auTone(t + 0.08, 0.16, 990, 990, 0.12, 'triangle'); },
+  coin: function () { if (!AU.ok) return; var t = AU.ctx.currentTime; auTone(t, 0.07, 1568, 1568, 0.1, 'square'); auTone(t + 0.07, 0.25, 2093, 2093, 0.1, 'square'); },
+  streak: function (n) { if (!AU.ok) return; var t = AU.ctx.currentTime, base = 440 * Math.pow(1.122, Math.min(n, 10)); [1, 1.26, 1.5, 2].forEach(function (m, i) { auTone(t + i * 0.07, 0.3, base * m, base * m, 0.11, 'sawtooth', 0, 0.01); }); },
   step: function (run) { if (!AU.ok) return; var t = AU.ctx.currentTime; auNoise(t, 0.07, rnd(500, 800), 150, run ? 0.2 : 0.13, 'lowpass'); auNoise(t, 0.03, 3000, 1500, 0.03, 'bandpass'); },
   shell: function () { if (!AU.ok) return; var t = AU.ctx.currentTime + 0.35; var f = rnd(3000, 4400); auTone(t, 0.09, f, f * 0.98, 0.035, 'sine'); auTone(t + 0.11, 0.06, f * 1.2, f * 1.19, 0.02, 'sine'); },
   impact: function (pan, vol) { if (!AU.ok) return; var t = AU.ctx.currentTime; auNoise(t, 0.05, 5000, 1200, 0.16 * vol, 'bandpass', pan, 2); },

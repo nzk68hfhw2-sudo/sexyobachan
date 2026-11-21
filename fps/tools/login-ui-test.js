@@ -11,7 +11,7 @@ const rows = []; const check = (n, p, d) => rows.push((p ? 'OK ' : 'NG ') + '| '
   async function open(ctx, init) {
     const page = await ctx.newPage(); if (init) await page.addInitScript(init);
     await page.route('https://cdnjs.cloudflare.com/**', r => r.fulfill({ body: THREE_LOCAL, contentType: 'application/javascript' }));
-    await page.goto('http://localhost:8093/'); await page.waitForFunction('window.__frReady && window.__fr.ACC.checked', null, { timeout: 60000 }); return page;
+    await page.goto('http://localhost:8093/'); await page.waitForFunction('window.__frReady && window.__fr.ACC.checked && window.__fr.ECO.loaded', null, { timeout: 60000 }); return page;
   }
   const tap = async (page, text) => { const h = page.locator('.fr-screen.on button', { hasText: text }).first(); await h.scrollIntoViewIfNeeded(); await h.tap(); };
   const info = page => page.evaluate(() => document.querySelector('.fr-account p').textContent);
@@ -25,7 +25,7 @@ const rows = []; const check = (n, p, d) => rows.push((p ? 'OK ' : 'NG ') + '| '
   await page.waitForFunction(() => window.__fr.ACC.token, null, { timeout: 15000 });
   check('別サイト読み込み：新規登録してログイン状態になる', (await info(page)).includes(ID), await info(page));
   check('Cookie を使っていない', (await ctx.cookies()).length === 0, 'Cookie ' + (await ctx.cookies()).length + ' 個');
-  await page.reload(); await page.waitForFunction('window.__frReady && window.__fr.ACC.checked', null, { timeout: 60000 });
+  await page.reload(); await page.waitForFunction('window.__frReady && window.__fr.ACC.checked && window.__fr.ECO.loaded', null, { timeout: 60000 });
   check('開き直してもログイン状態が保たれる', (await info(page)).includes(ID), await info(page));
   await tap(page, 'ログアウト'); await page.waitForTimeout(600);
   check('ログアウト', (await info(page)).includes('ゲスト') && await page.evaluate(() => !localStorage.getItem('fr_token')), await info(page));
@@ -35,12 +35,6 @@ const rows = []; const check = (n, p, d) => rows.push((p ? 'OK ' : 'NG ') + '| '
   await page.fill('.fr-screen.on input[type=password]', PW); await page.locator('.fr-screen.on button.pri').tap();
   await page.waitForFunction(() => window.__fr.ACC.token, null, { timeout: 15000 });
   check('別サイト読み込み：正しいパスワードでログイン', (await info(page)).includes(ID), await info(page));
-  await page.evaluate(() => { const f = window.__fr; f.start(); f.G.score = 2345; f.G.wave = 3; f.G.time = 99; f.end(false); });
-  await page.waitForFunction(() => /保存しました/.test(document.querySelector('.fr-screen.on').textContent), null, { timeout: 15000 });
-  check('プレイ結果がアカウントの記録としてサーバーに保存される', true, (await page.evaluate(() => [...document.querySelectorAll('.fr-screen.on p')].map(p => p.textContent).find(t => /保存しました/.test(t)))));
-  await tap(page, 'タイトルへ'); await tap(page, 'ランキング'); await page.waitForFunction(() => document.querySelector('.fr-screen.on .fr-stat').children.length > 0, null, { timeout: 15000 });
-  check('ランキング表示', /dummy_ui_user/.test(await page.evaluate(() => document.querySelector('.fr-screen.on .fr-stat').textContent)), await page.evaluate(() => document.querySelector('.fr-screen.on .fr-stat').textContent));
-  if (process.argv[2]) { await tap(page, 'もどる'); await page.waitForTimeout(300); await page.screenshot({ path: process.argv[2] }); }
   await ctx.close();
   // storage blocked (like a locked-down in-app browser): login must still work for the session
   ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });

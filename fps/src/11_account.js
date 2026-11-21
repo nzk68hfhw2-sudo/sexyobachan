@@ -43,16 +43,17 @@ function errText(r) {
 function setSession(r) {
   ACC.token = r.token; ACC.id = r.id; ACC.best = r.best || 0; ACC.memOnly = false;
   try { localStorage.setItem('fr_token', r.token); if (localStorage.getItem('fr_token') !== r.token) ACC.memOnly = true; } catch (e) { ACC.memOnly = true; }
+  ecoRefresh();
 }
-function clearSession() { ACC.token = null; ACC.id = null; ACC.best = 0; try { localStorage.removeItem('fr_token'); } catch (e) {} }
+function clearSession() { var had = !!ACC.token; ACC.token = null; ACC.id = null; ACC.best = 0; try { localStorage.removeItem('fr_token'); } catch (e) {} if (had) ecoRefresh(); }
 function accountInit() {
-  if (!apiReady()) { ACC.checked = true; return refreshAccountUI(); }
+  if (!apiReady()) { ACC.checked = true; ecoRefresh(); return refreshAccountUI(); }
   var t = null; try { t = localStorage.getItem('fr_token'); } catch (e) {}
-  if (!t) { ACC.checked = true; rpc('fr_leaderboard', {}, function (r) { ACC.online = !!r.ok; refreshAccountUI(); }); return refreshAccountUI(); }
+  if (!t) { ACC.checked = true; ecoRefresh(); rpc('fr_leaderboard', {}, function (r) { ACC.online = !!r.ok; refreshAccountUI(); }); return refreshAccountUI(); }
   rpc('fr_me', { p_token: t }, function (r) {
     ACC.checked = true; ACC.online = r.error !== 'NETWORK';
     if (r.ok) { ACC.token = t; ACC.id = r.id; ACC.best = r.best || 0; } else if (r.error === 'NOT_LOGGED_IN') clearSession();
-    refreshAccountUI();
+    ecoRefresh(); refreshAccountUI();
   });
 }
 function validateInputs(id, pw, isRegister) {
@@ -83,26 +84,23 @@ function doDelete() {
   });
 }
 function showRanking() {
-  showScreen('rank'); H.rankList.innerHTML = ''; H.rankMsg.textContent = '読み込み中…';
+  showScreen('rank'); H.rankList.innerHTML = ''; H.rankList2.innerHTML = ''; H.rankMsg.textContent = '読み込み中…';
   rpc('fr_leaderboard', {}, function (r) {
     if (!r.ok) { H.rankMsg.textContent = errText(r); return; }
-    H.rankMsg.textContent = r.rows.length ? '' : 'まだ記録がありません';
-    r.rows.forEach(function (row, i) { el('span', null, H.rankList, (i + 1) + '. ' + row.id + (row.id === ACC.id ? '（あなた）' : '')); el('b', null, H.rankList, String(row.best)); });
+    H.rankMsg.textContent = '';
+    if (!r.rows.length) el('span', null, H.rankList, 'まだ記録がありません');
+    r.rows.forEach(function (row, i) { el('span', null, H.rankList, (i + 1) + '. ' + row.id + (row.lv ? '（Lv ' + row.lv + ' ' + titleOf(row.lv) + '）' : '') + (row.id === ACC.id ? ' ←あなた' : '')); el('b', null, H.rankList, String(row.best)); });
   });
-}
-function onGameResult(last) {
-  if (!apiReady()) return;
-  if (!ACC.token) { H.rNote.textContent += '　／　ログインすると記録がサーバーに保存されます'; return; }
-  H.rSave.textContent = '記録をサーバーに保存中…';
-  rpc('fr_submit_score', { p_token: ACC.token, p_score: last.score, p_wave: last.wave, p_kills: last.kills, p_acc: last.acc, p_time: last.time, p_win: last.win }, function (r) {
-    if (r.ok) { ACC.best = r.best; H.rSave.textContent = '保存しました（' + ACC.id + '）　自己ベスト ' + r.best + '　／　ランキング ' + r.rank + ' 位'; }
-    else { H.rSave.textContent = '保存できませんでした： ' + errText(r); if (r.error === 'NOT_LOGGED_IN') clearSession(); }
+  rpc('fr_leaderboard_tdm', {}, function (r) {
+    if (!r.ok) return;
+    if (!r.rows.length) el('span', null, H.rankList2, 'まだ記録がありません');
+    r.rows.forEach(function (row, i) { el('span', null, H.rankList2, (i + 1) + '. ' + row.id + '（Lv ' + row.lv + ' ' + titleOf(row.lv) + '）' + (row.id === ACC.id ? ' ←あなた' : '')); el('b', null, H.rankList2, row.wins + ' 勝 ' + row.losses + ' 敗'); });
   });
 }
 function buildAccountUI() {
   var a = H.account; a.style.cssText = 'margin:6px 0 4px';
   H.accInfo = el('p', null, a, ''); H.accBtns = el('div', null, a); H.accMsg = el('p', 'fr-note', a, '');
-  H.rSave = el('p', null, H.result, ''); H.result.insertBefore(H.rSave, H.rNote.nextSibling);
+  H.rSave = el('p', 'fr-note', H.result, ''); H.result.insertBefore(H.rSave, H.rNote.nextSibling);
   function field(parent, ph, type, ac) { var i = el('input', 'fr-in', parent); i.type = type; i.placeholder = ph; i.autocomplete = ac; i.setAttribute('autocapitalize', 'off'); i.setAttribute('autocorrect', 'off'); i.spellcheck = false; i.maxLength = type === 'password' ? 72 : 16;
     ['touchstart', 'touchmove', 'touchend'].forEach(function (n) { i.addEventListener(n, function (e) { e.stopPropagation(); }, { passive: true }); }); return i; }
   var s = H.auth = el('div', 'fr-screen fr-scroll', UI);
@@ -119,7 +117,8 @@ function buildAccountUI() {
   var db = el('button', 'fr-b', d, '削除する'); db.style.background = '#b3261e'; onTap(db, doDelete);
   onTap(el('button', 'fr-b sm', d, 'やめる'), function () { H.dPw.value = ''; H.dMsg.textContent = ''; showScreen('title'); });
   var r = H.rank = el('div', 'fr-screen fr-scroll', UI);
-  el('h3', null, r, 'ランキング'); H.rankList = el('div', 'fr-stat', r); H.rankMsg = el('p', null, r, '');
+  el('h3', null, r, 'チーム戦 勝利数ランキング'); H.rankList2 = el('div', 'fr-stat', r);
+  el('h3', null, r, 'サバイバル スコアランキング'); H.rankList = el('div', 'fr-stat', r); H.rankMsg = el('p', null, r, '');
   onTap(el('button', 'fr-b sm', r, 'もどる'), function () { showScreen('title'); });
   SCREENS.push('auth', 'del', 'rank');
   accountInit();
@@ -128,14 +127,14 @@ function refreshAccountUI() {
   if (!H.accInfo) return;
   var b = H.accBtns; b.innerHTML = ''; H.accMsg.textContent = '';
   function btn(t, fn) { var x = el('button', 'fr-b sm', b, t); x.style.display = 'inline-block'; x.style.width = 'auto'; x.style.margin = '3px'; x.style.padding = '8px 14px'; onTap(x, function () { audioInit(); SFX.ui(); fn(); }); }
-  if (!apiReady()) { H.accInfo.textContent = ''; H.accMsg.textContent = 'ログイン機能は準備中です（ゲストで遊べます）'; return; }
+  if (!apiReady()) { H.accInfo.textContent = 'ゲストプレイ中（記録・コイン・持ち物はこの端末だけ。端末を変えると消えます）'; H.accMsg.textContent = 'ログイン機能は準備中です'; return; }
   if (!ACC.checked) { H.accInfo.textContent = 'ログイン状態を確認中…'; return; }
   if (ACC.token) {
     H.accInfo.textContent = 'ログイン中： ' + ACC.id + '　／　自己ベスト ' + ACC.best;
     btn('ランキング', showRanking); btn('ログアウト', doLogout); btn('アカウント削除', function () { showScreen('del'); });
     if (ACC.memOnly) H.accMsg.textContent = '※ このアプリでは保存ができないため、閉じるとログアウトされます';
   } else {
-    H.accInfo.textContent = 'ゲストプレイ中（記録はこの端末だけ）';
+    H.accInfo.textContent = 'ゲストプレイ中（記録・コイン・持ち物はこの端末だけ。端末を変えると消えます）';
     btn('ログイン / 新規登録', function () { showScreen('auth'); }); btn('ランキング', showRanking);
     if (ACC.online === false) H.accMsg.textContent = '※ サーバーに接続できません。このアプリの中ではログインが使えない可能性があります';
   }

@@ -1,6 +1,6 @@
 // ---- minimal GLB reader + the 8 friends (Meshy models) ----------------------
 var FRIEND_NAMES = ['ハル', 'メガネ', 'ツン', 'ナギ', 'ロング', 'ミディ', 'ボブ', 'ウェーブ'];
-var MODEL_STATUS = { boys: 'loading', girls: 'loading' };
+var MODEL_STATUS = { boys: 'loading', girls: 'loading', boys_lod: 'loading', girls_lod: 'loading' };
 
 function parseGLB(buf) {
   var dv = new DataView(buf);
@@ -99,13 +99,17 @@ function buildFriends() {
         var idx = fi * 4 + k; MODELS[idx] = m;
         var g = LINEUP[idx]; while (g.children.length) g.remove(g.children[0]); g.add(makeFriendMesh(idx, null));
       });
+      loadModelFile(key + '_lod', function (e2, lods) {      // low-poly copies for far-away bots
+        if (e2 || !lods) return; lods.slice(0, 4).forEach(function (m, k) { if (MODELS[fi * 4 + k]) MODELS[fi * 4 + k].lod = m.geometry; });
+      });
+      if (typeof refreshAvatar === 'function') refreshAvatar();
     });
   });
 }
 // returns an Object3D of height 1 (feet at y=0, facing +z). mat: optional per-instance material
-function makeFriendMesh(idx, mat) {
+function makeFriendMesh(idx, mat, lod) {
   var m = MODELS[idx], o;
-  if (m) { o = new THREE.Mesh(m.geometry, mat || m.material); o.castShadow = true; o.receiveShadow = true; }
+  if (m) { o = new THREE.Mesh(lod && m.lod ? m.lod : m.geometry, mat || m.material); o.castShadow = true; o.receiveShadow = true; }
   else { o = new THREE.Group(); var b = new THREE.Mesh(PH.body, mat || PH.mat), h = new THREE.Mesh(PH.head, mat || PH.mat); b.castShadow = h.castShadow = true; o.add(b); o.add(h); }
   o.scale.setScalar(FRIEND_H); return o;
 }

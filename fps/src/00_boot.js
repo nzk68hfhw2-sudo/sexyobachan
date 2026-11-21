@@ -8,7 +8,7 @@ window.__frLoaded = true;
 
 var BASE_URL = 'https://comforting-bublanina-fb9718.netlify.app/';
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-var GAME_VERSION = '1.0.0';
+var GAME_VERSION = '2.0.0';
 var THREE;
 
 var ASSET_BASE = BASE_URL;

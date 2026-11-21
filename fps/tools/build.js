@@ -15,7 +15,7 @@ if (fs.existsSync(cfgPath)) {
   console.log('api config applied:', cfg.url);
 } else console.log('no api-config.json: login stays in "準備中" mode');
 fs.writeFileSync(path.join(root, 'dist', 'game.js'), out);
-for (const n of ['boys', 'girls']) {
+for (const n of ['boys', 'girls', 'boys_lod', 'girls_lod']) {
   const b = fs.readFileSync(path.join(root, 'dist', 'models', n + '.glb'));
   fs.writeFileSync(path.join(root, 'dist', 'models', n + '.glb.js'), 'window.__frAsset&&window.__frAsset(' + JSON.stringify(n) + ',"' + b.toString('base64') + '");\n');
 }
@@ -29,7 +29,7 @@ console.log('built', files.length, 'files', out.length, 'bytes');
   const b64 = n => fs.readFileSync(path.join(root, 'dist', 'models', n + '.glb')).toString('base64');
   const html = '<!doctype html>\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<title>FRIENDS WARFARE</title>\n<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}</style>\n</head>\n<body>\n'
     + '<script>/* three.js r128 (MIT License) */\n' + esc(three) + '\n</script>\n'
-    + '<script>window.__frInline={boys:"' + b64('boys') + '",girls:"' + b64('girls') + '"};</script>\n'
+    + '<script>window.__frInline={boys:"' + b64('boys') + '",girls:"' + b64('girls') + '",boys_lod:"' + b64('boys_lod') + '",girls_lod:"' + b64('girls_lod') + '"};</script>\n'
     + '<script>\n' + esc(game) + '\n</script>\n</body>\n</html>\n';
   const outDir = path.join(root, '..', 'deliver'); fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, 'friends-warfare.html'), html);
