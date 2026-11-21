@@ -164,6 +164,7 @@ function openSettings() {
     vol('効果音', 'sound', function () { return AUD.sfxOn; }, function () { return AUD.sfxVol; }, function (on, v) { audioSetSfx(on, v); });
     el('div', 'desc', bd).innerHTML = cnHTML('※iPhone のマナーモード（消音）中は、音が鳴りません。') + '<br>' + cnHTML('曲：' + musStatus());
     row('軽量モード（古いスマホ用）', 'lite', function () { return LITE.on; }, function (v) { setLite(v); });
+    row('汚染の見た目を消す', 'pollution', function () { return POLFX.off; }, function (v) { polFxToggle(v); });
     row('刺激ひかえめモード', 'eye', function () { return REDUCED.on; }, function (v) { REDUCED.on = v; });
     row('ボイスチャット（近くの人と声で話す）', 'sound', function () { return VOICE.on; }, function () { voiceToggle(); });
     var tp = el('div', 'kv', bd); el('span', '', tp).innerHTML = cnHTML('上の余白（Gravity用）'); var tpg = el('div', '', tp); tpg.style.display = 'flex'; tpg.style.gap = '3px';

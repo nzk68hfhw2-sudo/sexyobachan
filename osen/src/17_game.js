@@ -63,13 +63,13 @@ function updateGame(dt) {
   // --- 時間 ---
   if (!G.paused) G.tod = (G.tod + dt / 110) % 4;
   if (G.naiTimer > 0) { G.naiTimer -= dt; if (G.naiTimer <= 0) G.naiTarget = 0; }
-  if (G.stage >= 9) G.naiTarget = 1;
-  if (G.stage >= 6 && G.stage < 9 && Math.random() < dt / 90 && G.naiTimer <= 0) { G.naiTarget = 1; G.naiTimer = 20; }
+  if (visStage() >= 9) G.naiTarget = 1;
+  if (visStage() >= 6 && G.stage < 9 && Math.random() < dt / 90 && G.naiTimer <= 0) { G.naiTarget = 1; G.naiTimer = 20; }
   G.naiT = lerp(G.naiT, G.naiTarget, 1 - Math.exp(-dt * 0.8));
   var tIdx = G.naiT > 0.5 ? 4 : Math.floor(G.tod + 0.35) % 4;
   if (G.started && !G.visitedTimes[tIdx]) { G.visitedTimes[tIdx] = 1; zukanFind('t_' + TIMES[tIdx].id, '時間帯：' + TIMES[tIdx].name); if (t > 5) { popWA(TIMES[tIdx].wa, { area: true, style: [4, 2, 6, 12, 10][tIdx] }); } }
   var tl = TIMES[tIdx].name + (G.area ? '　' + G.area.name : '　道'); if (H.time._t !== tl) { H.time._t = tl; H.time.innerHTML = cnHTML(tl); H.stArea.innerHTML = cnHTML('◆' + (G.area ? G.area.wa : '道') + ' ' + (NET && NET.on ? '（' + NET.count() + '人）' : '')); }
-  var crazy = (G.crazySkyT > 0 ? 1 : 0) * 0.85 + (G.pol >= 130 ? Math.min(0.7, (G.pol - 130) / 100) : 0);
+  var crazy = POLFX.off ? 0 : (G.crazySkyT > 0 ? 1 : 0) * 0.85 + (G.pol >= 130 ? Math.min(0.7, (G.pol - 130) / 100) : 0);
   if (G.crazySkyT > 0) G.crazySkyT -= dt;
   var lamps = applyTimeOfDay(G.tod, G.naiT, Math.min(1, crazy), t);
   if (G.skyT > 0) { G.skyT -= dt; if (!_tmpC) _tmpC = new THREE.Color(); _tmpC.setHSL(G.skyHue, 0.9, 0.55); var k = Math.min(1, G.skyT / 3, (25 - G.skyT) / 2); R.skyU.top.value.lerp(_tmpC, k); _tmpC.setHSL((G.skyHue + 0.3) % 1, 0.9, 0.7); R.skyU.mid.value.lerp(_tmpC, k); R.scene.fog.color.lerp(_tmpC, k * 0.6); }
@@ -93,11 +93,11 @@ function updateGame(dt) {
     var ang = t * 0.05; R.camera.position.set(Math.sin(ang) * 60, 38, Math.cos(ang) * 60); R.camera.lookAt(0, 0, 0);
   } else updatePlayer(dt);
   // カメラ演出
-  var fov = 70 + (G.fovT > 0 ? Math.sin((6 - G.fovT) / 6 * PI) * (REDUCED.on ? 10 : 35) : 0) + (G.stage >= 7 && !REDUCED.on ? Math.sin(t * 0.4) * 4 : 0);
+  var fov = 70 + (G.fovT > 0 ? Math.sin((6 - G.fovT) / 6 * PI) * (REDUCED.on ? 10 : 35) : 0) + (visStage() >= 7 && !REDUCED.on ? Math.sin(t * 0.4) * 4 : 0);
   if (G.fovT > 0) G.fovT -= dt;
   if (Math.abs(R.camera.fov - fov) > 0.01) { R.camera.fov = fov; R.camera.updateProjectionMatrix(); }
   var roll = 0; if (G.tiltT > 0) { G.tiltT -= dt; roll = G.tiltA * Math.sin(Math.min(1, (5 - G.tiltT) / 0.8, G.tiltT / 0.8) * PI / 2); }
-  if (G.stage >= 3 && !REDUCED.on) roll += Math.sin(t * 0.3) * 0.015 * Math.min(4, G.stage - 2);
+  if (visStage() >= 3 && !REDUCED.on) roll += Math.sin(t * 0.3) * 0.015 * Math.min(4, G.stage - 2);
   P.roll = lerp(P.roll || 0, roll, 1 - Math.exp(-dt * 5));
   if (G.flipT > 0) { G.flipT -= dt; CANVAS_HOST.style.transform = G.flipT > 0 ? 'scaleX(-1)' : ''; }
   // --- エリア ---
@@ -166,8 +166,22 @@ function updateGame(dt) {
   updateFlare(R.skyU.sunDir.value, sunVis);
 }
 var _tmp2 = null;
+// 汚染の見た目を消すボタン（数字や遊びはそのまま。見た目だけふつうに戻す）
+var POLFX = { off: false };
+function visStage() { return POLFX.off ? 0 : G.stage; }
+function polFxToggle(off) {
+  POLFX.off = off; polVisual(); if (H.bPol) { H.bPol._lab.innerHTML = cnHTML(off ? '汚染ON' : '汚染OFF'); H.bPol.classList.toggle('on', off); }
+  if (off) WORLD.friends.forEach(function (f) { if (f.clone && (f.wander || f.skyWalk)) f.life = 0.01; });
+  sysMsg(off ? '汚染の見た目を　消しました（汚染率は　そのまま）。' : '汚染の見た目を　もどしました。', true); saveGame();
+}
+function polVisual() {
+  var s = visStage(); AUD.stage = s; redrawSigns(signLevel(s));
+  ['ground_grass', 'ground_asphalt', 'ground_tiles', 'ground_dirt', 'ground_side'].forEach(function (k) { var m = MATS[k]; if (!m) return; if (!m._orig) m._orig = m.map; var want = s >= 8 ? TEX.checker : m._orig; if (m.map !== want) { m.map = want; m.needsUpdate = true; } });
+  if (R.upperTown) R.upperTown.visible = s >= 8;
+  if (s < 9 && G.naiTimer > 1000) { G.naiTimer = 0; G.naiTarget = 0; }
+}
 function applyPollutionFX(dt, t) {
-  var p = G.pol, s = G.stage, red = REDUCED.on ? 0.4 : 1;
+  var p = POLFX.off ? 0 : G.pol, s = visStage(), red = REDUCED.on ? 0.4 : 1;
   U.uDef.value = smooth((p - 42) / 45) * (1 + (p > 130 ? Math.min(1.5, (p - 130) / 100) : 0)) * (REDUCED.on ? 0.6 : 1);
   U.uWob.value = p > 200 && !REDUCED.on ? 0.4 : 0;
   var pu = R.postU;
@@ -180,7 +194,7 @@ function applyPollutionFX(dt, t) {
   pu.split.value = s >= 9 && !REDUCED.on ? 1 : 0;
   pu.vig.value = 0.25 + (s >= 3 ? 0.15 : 0);
   if (G.tintT > 0) { G.tintT -= dt; var tk = Math.min(1, G.tintT / 1.5, (10 - G.tintT) / 1) * red; pu.tint.value.setRGB(1, 1, 1).lerp(G.tintC, tk); } else pu.tint.value.setRGB(1, 1, 1);
-  if (!G.started || G.paused) return;
+  if (!G.started || G.paused || POLFX.off) return;
   // 第四段階：友達がふえる
   if (s >= 4) {
     G.spawnFT = (G.spawnFT || 0) - dt;
@@ -217,7 +231,7 @@ function loop(ts) {
     feelCamera(Math.min(raw, 0.1));
     autoQuality(Math.min(raw, 0.5));
     if (CS.on) { renderCharSel(dt); return; }
-    var usePost = !LITE.on && R.quality >= 1 && (G.stage >= 1 || G.tintT > 0);
+    var usePost = !LITE.on && R.quality >= 1 && ((visStage() >= 1) || G.tintT > 0);
     if (usePost) { ensureRT(); R.renderer.setRenderTarget(R.rt); R.renderer.render(R.scene, R.camera); R.renderer.setRenderTarget(null); R.renderer.render(R.postScene, R.postCam); }
     else R.renderer.render(R.scene, R.camera);
   } catch (e) {

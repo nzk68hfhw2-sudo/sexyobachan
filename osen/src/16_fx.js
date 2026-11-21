@@ -248,15 +248,10 @@ function onStageChange(prev, s) {
   var st = STAGES[s];
   zukanFind('s_' + s, '汚染：' + st.name);
   if (s > prev) { sfx('stage'); popWA(st.wa, { imp: true, big: true, style: [12, 0, 5, 3, 7, 14, 10, 1, 15, 9, 6][s] }); caption(st.desc, { preset: 'type', color: 'y' }); }
-  redrawSigns(signLevel(s));
-  AUD.stage = s;
-  // 100%より上：地面がワードアート
-  var crazyGround = s >= 8;
-  ['ground_grass', 'ground_asphalt', 'ground_tiles', 'ground_dirt', 'ground_side'].forEach(function (k) { var m = MATS[k]; if (!m) return; if (!m._orig) m._orig = m.map; var want = crazyGround ? TEX.checker : m._orig; if (m.map !== want) { m.map = want; m.needsUpdate = true; } });
   if (s >= 8 && !R.upperTown) buildUpperTown();
-  if (R.upperTown) R.upperTown.visible = s >= 8;
-  if (s >= 9 && !G.skyWalkers) { G.skyWalkers = true; for (var i = 0; i < 8; i++) { var f = addFriend(i, rand(-60, 60), 38, rand(-60, 60), rand(0, TAU), 3, { clone: true, lo: true, col: false }); f.skyWalk = true; } }
-  if (s >= 9) { G.naiTarget = 1; G.naiTimer = 99999; }
+  polVisual();
+  if (s >= 9 && !G.skyWalkers && !POLFX.off) { G.skyWalkers = true; for (var i = 0; i < 8; i++) { var f = addFriend(i, rand(-60, 60), 38, rand(-60, 60), rand(0, TAU), 3, { clone: true, lo: true, col: false }); f.skyWalk = true; } }
+  if (s >= 9 && !POLFX.off) { G.naiTarget = 1; G.naiTimer = 99999; }
   else if (G.naiTimer > 1000) { G.naiTimer = 0; G.naiTarget = 0; }
   if (s < 9 && G.skyWalkers) { G.skyWalkers = false; WORLD.friends.forEach(function (f) { if (f.skyWalk) f.life = 0.01; }); }
 }

@@ -12,6 +12,7 @@ var SCR_CSS = [
   '#os-menu .logo{position:absolute;left:50%;top:calc(var(--st) + 14px);transform:translateX(-50%);max-width:92vw;max-height:19vh;pointer-events:none;}',
   '.fld{display:flex;align-items:center;gap:8px;margin:6px 0;} .fld span{width:64px;color:#ffe7a8;font-size:13px;}',
   '.fld div{flex:1;padding:6px 8px;background:#f4f0e0;color:#222;border:2px solid;border-color:#333 #ddd #ddd #333;font-size:14px;}',
+  '.cs-faces{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:0 0 6px;}', '.cs-face{width:100%;aspect-ratio:1;border:2px solid #5a4a2a;border-radius:4px;background:#1a1a2a;pointer-events:auto;cursor:pointer;opacity:.75;}', '.cs-face.sel{border-color:#ffe23a;box-shadow:0 0 6px #ffd040;opacity:1;}',
   '.srv{display:flex;align-items:center;gap:8px;} .srv .nm{flex:1;} .srv .gg{width:104px;}',
   '.li.srv.off{border:1px solid #e8c060!important;background:linear-gradient(#4a3a14,#1e1606)!important;box-shadow:0 0 8px rgba(232,192,96,.5);}', '.li.srv.pv{background:linear-gradient(#3a1a50,#1a0a28)!important;border:1px solid #b070e0!important;}',
   '.bdg{font-style:normal;font-size:10px;padding:1px 5px;margin-right:6px;border-radius:3px;background:#e8c060;color:#1a1008;vertical-align:middle;}', '.bdg.pv{background:#b070e0;color:#fff;}', '.bdg.us{background:#4a90c0;color:#fff;}',
@@ -139,6 +140,12 @@ function stepCharSel(change) {
   H.hud.style.display = 'none';
   var W = H.W, Hh = H.H, land = W > Hh;
   var win = menuWin(change ? 'キャラを変える（着がえ所）' : 'キャラクター選択', 'char', land ? 330 : Math.min(380, W - 20), function (bd) {
+    // 8人の顔（タップですぐ選べる）
+    var fr = el('div', 'cs-faces', bd); CS.faces = [];
+    for (var fi = 0; fi < 8; fi++) (function (i) {
+      var c = document.createElement('canvas'); c.width = c.height = 96; try { c.getContext('2d').drawImage(faceCanvas(i), 0, 0, 96, 96); } catch (e) {}
+      c.className = 'cs-face'; fr.appendChild(c); tapBtn(c, function () { csShow(i); }); CS.faces.push(c);
+    })(fi);
     CS.nameEl = el('div', 'cs-name', bd); CS.subEl = el('div', 'cs-sub', bd);
     CS.descEl = el('div', 'desc', bd); CS.stEl = el('div', '', bd);
     if (!change) {
@@ -165,6 +172,7 @@ function stepCharSel(change) {
   CS.win = win;
   CS.fill = function () {
     var f = FRIEND_INFO[CS.idx], c2 = CHARS[CS.idx];
+    if (CS.faces) CS.faces.forEach(function (c, i) { c.classList.toggle('sel', i === CS.idx); });
     CS.nameEl.innerHTML = cnHTML(f.full); CS.subEl.innerHTML = cnHTML((CS.idx < 4 ? '女の子' : '男の子') + '　／　とくぎ：' + c2.skill.name);
     CS.descEl.innerHTML = cnHTML(c2.intro + '\n【とくぎ】' + c2.skill.desc).replace(/\n/g, '<br>');
     function b(n, v) { return '<div class="kv"><span>' + cnHTML(n) + '</span><span class="gg hp" style="width:55%;display:inline-block"><i style="width:' + Math.round(v * 100 / 1.6) + '%"></i><b>' + v.toFixed(2) + '</b></span></div>'; }
@@ -211,7 +219,7 @@ function renderCharSel(dt) {
   var W = H.W, Hh = H.H, land = W > Hh;
   CS.cam.aspect = W / Hh;
   if (land) { CS.cam.setViewOffset(W, Hh, W * 0.16, 0, W, Hh); CS.cam.position.set(0, 1.0, 4.0); }
-  else { CS.cam.clearViewOffset(); CS.cam.position.set(0, 0.55, 5.4); }
-  CS.cam.lookAt(0, land ? 0.75 : 0.3, 0); CS.cam.updateProjectionMatrix();
+  else { CS.cam.setViewOffset(W, Hh, 0, Hh * 0.25, W, Hh); CS.cam.position.set(0, 0.7, 5.6); } // 縦画面：ウィンドウの上に全身が見えるように
+  CS.cam.lookAt(0, land ? 0.75 : 0.62, 0); CS.cam.updateProjectionMatrix();
   R.renderer.render(CS.scene, CS.cam);
 }

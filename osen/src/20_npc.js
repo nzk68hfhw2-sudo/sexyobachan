@@ -65,7 +65,7 @@ function updateNPCs(dt) {
     if (n.pr.hop > 0) { ex = ex || {}; ex.bounce = Math.sin((1 - n.pr.hop) * PI) * 0.6; ex.L_raiseL = ex.L_raiseR = 0.6; }
     bodyAnim(n.root, n.body, n.st, dt, Math.hypot(e.vel.x, e.vel.z), false, e.onGround, e.vel.y, ex);
     n.root.position.copy(e.pos); n.root.rotation.y = n.face + (n.pr.spin > 0 ? G.t * 12 : 0);
-    var big = G.stage >= 4 ? 1 + smooth((G.pol - 60) / 40) * 0.6 : 1;
+    var big = visStage() >= 4 ? 1 + smooth((G.pol - 60) / 40) * 0.6 : 1;
     n.root.scale.setScalar((n.pr.scl || 1) * big);
     n.pr.center.set(e.pos.x, e.pos.y + 0.7, e.pos.z);
   });
