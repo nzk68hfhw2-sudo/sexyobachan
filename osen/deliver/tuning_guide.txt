@@ -55,3 +55,8 @@ GitHub の osen/src/24_smash.js のいちばん上にある「TUNE」に、ま�
 ■ とくぎ（src/26_arms.js の skillGo と skillUpdate）
   メテオの爆発 8×範囲、竜巻 3秒、着地の爆発 8、ミサイル 8発、大爆発 10、ビーム 3秒、吸いこみ 2.4秒、地割れ 12回
   とくぎの待ち時間は src/14_player.js の P.skillCd = 6（秒）
+
+■ 車（src/29_vehicles.js の VEH_TYPES）
+  max: 最高速度／acc: 加速／turn: 曲がりやすさ／mass: 重さ（こわす力）／hp: 固さ
+  置く場所は initVehicles の一覧
+■ 爆発・衝撃の音（src/05_audio.js の _boom と _punch）

@@ -319,6 +319,7 @@ function smashBlast(p, r, pw, src, self, noItems) {
     for (i = 0; i < N.length; i++) { var it = N[i], bb = it.body; if (it === ITEMS.held || it.broken || bb.fixed) continue; var dx = bb.pos.x - p.x, dz = bb.pos.z - p.z, dd = Math.hypot(dx, dz); if (dd > r) continue; var k = (1 - dd / r) * (5 + pw * 2.5) * TUNE.flyPow / Math.sqrt(Math.max(1, effMass(bb))); bb.vel.x += dx / (dd || 1) * k; bb.vel.z += dz / (dd || 1) * k; bb.vel.y += k * 0.7 + 2; bb.av.set(rand(-6, 6), rand(-6, 6), rand(-6, 6)); bb.thrownT = 1; wake(it); itemHit(it, pw * (1 - dd / r), dx, dz, src); }
   }
   if (typeof npcBlast === 'function') npcBlast(p, r * 1.2, 4 + pw * 2, src);
+  if (typeof vehBlast === 'function') vehBlast(p, r, pw, src);
 }
 // ===== 重い物（自販機・ポストなど）もこわれる =====
 var ITEM_BRK = {
@@ -638,8 +639,8 @@ function openShop() {
     });
   }, { w: 320, h: 470 });
 }
-function smashSave() { return { tp: TOPPAD.mode, gc: GUN.cur, p: SMASH.pts, tp: SMASH.totalPts, y: SMASH.yen, bc: SMASH.best.combo, by: SMASH.best.yen, u: SMASH.up, b: SMASH.breaks, f: SMASH.flights, v: FEEL.vib }; }
-function smashLoad(d) { if (!d) return; SMASH.pts = d.p | 0; SMASH.totalPts = d.tp | 0; SMASH.yen = +d.y || 0; SMASH.best.combo = d.bc | 0; SMASH.best.yen = +d.by || 0; SMASH.up = d.u || {}; SMASH.breaks = d.b | 0; SMASH.flights = d.f | 0; FEEL.vib = d.v !== false; GUN.cur = (d.gc | 0) % GUNS.length; if (d.tp) { TOPPAD.mode = d.tp; applyTopPad(); } }
+function smashSave() { return { ph: SMASH.photoHinted ? 1 : 0, tp: TOPPAD.mode, gc: GUN.cur, p: SMASH.pts, tp: SMASH.totalPts, y: SMASH.yen, bc: SMASH.best.combo, by: SMASH.best.yen, u: SMASH.up, b: SMASH.breaks, f: SMASH.flights, v: FEEL.vib }; }
+function smashLoad(d) { if (!d) return; SMASH.pts = d.p | 0; SMASH.totalPts = d.tp | 0; SMASH.yen = +d.y || 0; SMASH.best.combo = d.bc | 0; SMASH.best.yen = +d.by || 0; SMASH.up = d.u || {}; SMASH.breaks = d.b | 0; SMASH.flights = d.f | 0; FEEL.vib = d.v !== false; GUN.cur = (d.gc | 0) % GUNS.length; SMASH.photoHinted = !!d.ph; if (d.tp) { TOPPAD.mode = d.tp; applyTopPad(); } }
 // ---- 同時プレイ：ほかの人がこわした物（0.5秒ごとにまとめて送る。破片は各自の画面で計算） ----
 var SNQ = { q: [], t: 0 };
 function smashNetQ(k, d) { if (!NET.on || NET.applying) return; if (SNQ.q.length < 40) SNQ.q.push([k, d]); }

@@ -93,6 +93,7 @@ function updatePlayer(dt) {
   if (P.scaleT > 0) { P.scaleT -= dt; if (P.scaleT <= 0) P.scaleTarget = 1; }
   if (P.skillCd > 0) P.skillCd -= dt;
   P.scale = lerp(P.scale, P.scaleTarget || 1, 1 - Math.exp(-dt * 3));
+  if (P.driving) { vehDrive(dt, mv); P.root.position.copy(P.pos); updateCamera(dt); return; }
   // 移動（カメラの向き基準）
   var base = (mv.run ? TUNE.runSpeed : TUNE.walkSpeed) * c2.speed * P.speedMul * (P.inWater ? 0.6 : 1) * (0.55 + 0.45 * P.scale) * (ITEMS.held ? 0.85 : 1);
   var fy = CAM.yaw, wx = mv.x * Math.cos(fy) + mv.z * Math.sin(fy), wz = -mv.x * Math.sin(fy) + mv.z * Math.cos(fy);

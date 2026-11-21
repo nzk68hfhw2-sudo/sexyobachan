@@ -49,8 +49,9 @@ function findTarget() {
     test(pr.center, pr.rad * Math.max(1, pr.scl), pr);
   }
   for (i = 0; i < ITEMS.list.length; i++) { var it = ITEMS.list[i]; if (it.prop || it.gone || it.broken || it === ITEMS.held || it.onHead) continue; test(it.body.pos, Math.max(it.body.ex, it.body.ey, it.body.ez) + 0.2, it); }
-  npcTarget(test);
+  npcTarget(test); vehTarget(test);
   if (!best) return null;
+  if (best.wheels) return { key: 'v' + best.id, name: best.t.n, kind: '乗り物', hint: '乗る（運転して突っこめる）', veh: best, count: 1 };
   if (best.ent) return { key: 'n' + best.uid, name: npcName(best), kind: '住人', hint: '持つ（投げられる）／体当たり', npc: best, count: 1 };
   var fnpc = best.fr && best.fr.npc ? NPCS.filter(function (q) { return q.pr === best && !q.mob; })[0] : null;
   if (best.def) { var itm = best.item; return { key: 'p' + best.def.id, name: best.def.n, kind: itm ? '持てる物（重さ ' + effMass(itm.body).toFixed(1) + '）' : (best.dressing ? '着がえ所' : (best.fr ? '住人' : '町の物')), hint: itm ? '持つ／さわる／いじる' : fnpc ? '持つ（投げられる）／さわると話す' : (best.dressing ? 'さわるとキャラを変えられる' : best.shop ? 'さわると強化屋が開く' : 'さわる'), prop: best, item: itm, npc: fnpc, count: best.count };

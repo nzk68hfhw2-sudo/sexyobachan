@@ -76,6 +76,7 @@ function rayHits(o, d, maxD, pierce, rad) {
     for (var i = 0; i < L.length; i++) { var b = L[i], k = 'b' + b.id; if (seen[k]) continue; seen[k] = 1; out.push({ b: b, t: t, x: x, y: y, z: z }); if (!pierce) { out.end = t; return out; } }
     var N = itemsNear(x, z, 1.5 + r);
     for (i = 0; i < N.length; i++) { var it = N[i], bb = it.body, k2 = 'i' + it.id; if (seen[k2] || it === ITEMS.held || it.broken || it.onHead) continue; if (Math.abs(bb.pos.x - x) < bb.ex + 0.1 + r && Math.abs(bb.pos.y - y) < bb.ey + 0.1 + r && Math.abs(bb.pos.z - z) < bb.ez + 0.1 + r) { seen[k2] = 1; out.push({ it: it, t: t, x: x, y: y, z: z }); if (!pierce) { out.end = t; return out; } } }
+    for (i = 0; i < VEH.list.length; i++) { var vv = VEH.list[i], k4 = 'v' + vv.id; if (seen[k4] || vv.broken || P.driving === vv) continue; if (Math.hypot(vv.pos.x - x, vv.pos.z - z) < vv.t.W * 0.6 + r && y > vv.pos.y && y < vv.pos.y + vv.t.H) { seen[k4] = 1; out.push({ veh: vv, t: t, x: x, y: y, z: z }); if (!pierce) { out.end = t; return out; } } }
     for (i = 0; i < NPCS.length; i++) { var n = NPCS[i], k3 = 'n' + n.uid; if (seen[k3] || !n.ent.visible || n.state === 'held') continue; npcCenter(n, _rc); if (Math.abs(_rc.x - x) < 0.4 + r && Math.abs(_rc.z - z) < 0.4 + r && Math.abs(_rc.y - y) < n.ent.h * 0.5 + 0.1 + r) { seen[k3] = 1; out.push({ n: n, t: t, x: x, y: y, z: z }); if (!pierce) { out.end = t; return out; } } }
   }
   out.end = maxD; return out;
@@ -83,7 +84,8 @@ function rayHits(o, d, maxD, pierce, rad) {
 // 当たった物に効果
 function applyHit(h, dmg, d, kb, key) {
   var src = { kind: 'gun', key: key, air: !P.onGround, p: { x: h.x, y: h.y, z: h.z } };
-  if (h.b) brkHit(h.b, dmg, d.x, d.z, src);
+  if (h.veh) { h.veh.vx += d.x * kb * 0.15; h.veh.vz += d.z * kb * 0.15; vehDamage(h.veh, dmg * 0.6, src); sfx('hit_metal', 3); }
+  else if (h.b) brkHit(h.b, dmg, d.x, d.z, src);
   else if (h.it) { var bb = h.it.body; if (!bb.fixed) { var k = kb / Math.sqrt(Math.max(0.6, effMass(bb))) * TUNE.flyPow; bb.vel.x += d.x * k; bb.vel.y += Math.max(1.5, d.y * k + k * 0.3); bb.vel.z += d.z * k; bb.av.set(rand(-8, 8), rand(-8, 8), rand(-8, 8)); bb.thrownT = 1; wake(h.it); } if (!itemHit(h.it, dmg, d.x, d.z, src) && !ITEM_BRK[h.it.type]) smashEvent('hit', 1, 0, src, itemName(h.it)); }
   else if (h.n) { var s = Math.max(6, kb) * TUNE.flyPow * (1 + smashUp('fly') * 0.2); npcLaunch(h.n, d.x * s + rand(-1, 1), 3.5 + s * 0.35, d.z * s + rand(-1, 1), src); }
   debBurst(h.x, h.y, h.z, SPARK_COL || 0xffe080, 3, 'box', 2.5);
@@ -157,6 +159,7 @@ function projUpdate(dt) {
       if (y < gy + 0.1) { if (pr.kind === 'grenade' && pr.v.y < -2) { pr.p.y = gy + 0.12; pr.v.y = -pr.v.y * 0.45; pr.v.x *= 0.7; pr.v.z *= 0.7; sfx('hit_metal', 6); } else if (pr.kind === 'grenade') { pr.p.y = gy + 0.12; pr.v.y = 0; pr.v.x *= 0.9; pr.v.z *= 0.9; } else boom = true; }
       if (!boom && pr.kind !== 'grenade' && staticHit(x, y, z)) boom = true;
       if (!boom && pr.t > 0.05) { if (brkQuery(x - 0.15, y - 0.15, z - 0.15, x + 0.15, y + 0.15, z + 0.15).length) boom = true; }
+      if (!boom && pr.t > 0.05) for (var kv = 0; kv < VEH.list.length; kv++) { var vv = VEH.list[kv]; if (!vv.broken && P.driving !== vv && Math.hypot(vv.pos.x - x, vv.pos.z - z) < vv.t.W * 0.7 && y > vv.pos.y && y < vv.pos.y + vv.t.H) { boom = true; break; } }
       if (!boom && pr.t > 0.05) for (var k = 0; k < NPCS.length; k++) { var n = NPCS[k]; if (!n.ent.visible || n.state === 'held') continue; if (Math.abs(n.ent.pos.x - x) < 0.45 && Math.abs(n.ent.pos.z - z) < 0.45 && y > n.ent.pos.y - 0.2 && y < n.ent.pos.y + n.ent.h + 0.2) { boom = true; break; } }
     }
     if (pr.life <= 0) boom = true;

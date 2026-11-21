@@ -93,6 +93,7 @@ function stepLogin() {
     el('div', 'fld', bd, '<span>ＩＤ</span><div>' + cnHTML(LOGIN.id) + '</div>');
     el('div', 'fld', bd, '<span>パスワード</span><div>' + LOGIN.pw + '</div>');
     el('div', 'desc', bd, cnHTML('※ＩＤとパスワードは自動で入っています。本物ではありません。何も送信しません。'));
+    var sn = el('div', 'desc', bd, cnHTML('♪音が聞こえない場合は消音モードを解除したり、右下のボイスを何回か押してみるか、アプリを落としてみてね')); sn.style.color = '#ffe7a8';
     var r = el('div', 'row2', bd); r.style.justifyContent = 'center';
     mbtn(r, 'ログイン', function () { audioInit(); sfx('uiLogin'); stepServer(); }, 'gold', 'key');
     mbtn(r, '会員登録', function () { sysMsg('会員登録は　すでに　完了しています（していない）。'); });

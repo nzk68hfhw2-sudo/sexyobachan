@@ -116,17 +116,18 @@ function updateGame(dt) {
   if (tg) { G.gazeT += dt; addPollution(dt * 0.15); } else G.gazeT = 0;
   // ボタンの表示を、いまできる事に合わせる
   var held = ITEMS.held, hn = NPCHELD.n;
-  if (held || hn) setMainBtn('投げる', 'throw'); else if (tg && (tg.item || tg.npc)) setMainBtn('持つ', 'grab'); else setMainBtn('さわる', 'touch');
+  if (P.driving) setMainBtn('降りる', 'exit'); else if (held || hn) setMainBtn('投げる', 'throw'); else if (tg && tg.veh) setMainBtn('乗る', 'run'); else if (tg && (tg.item || tg.npc)) setMainBtn('持つ', 'grab'); else setMainBtn('さわる', 'touch');
   if (H.bSub._m !== !!(held || hn)) { H.bSub._m = !!(held || hn); H.bSub.innerHTML = ''; H.bSub.appendChild(iconEl(uiIcon(held || hn ? 'put' : 'special'), 24)); el('span', '', H.bSub).innerHTML = cnHTML(held || hn ? '置く' : 'いじる'); }
   var showSub = !!(held || hn || (tg && tg.item));
   H.bSub.style.display = IN.isTouch && showSub ? '' : 'none'; H.bTouch2.style.display = IN.isTouch && tg && tg.prop && (tg.item || tg.npc) && !held && !hn ? '' : 'none';
   H.hold.style.display = (held || (tg && tg.item)) ? 'flex' : 'none'; H.holdBtns[0].classList.toggle('off', !held);
   if (!G.paused && !G.inMenu) {
     if (IN.put) { IN.put = false; if (held) release(false); else if (hn) npcRelease(false); }
-    if (IN.main) { IN.main = false; var mt = IN.mainTouch; IN.mainTouch = false; if (hn) npcRelease(mt); else if (held) release(!!mt); else if (tg && tg.npc) npcGrab(tg.npc); else if (tg && tg.item) grab(tg.item); else if (tg && tg.prop) touchProp(tg.prop); }
+    if (IN.main) { IN.main = false; var mt = IN.mainTouch; IN.mainTouch = false; if (P.driving) vehExit(); else if (hn) npcRelease(mt); else if (held) release(!!mt); else if (tg && tg.veh) vehEnter(tg.veh); else if (tg && tg.npc) npcGrab(tg.npc); else if (tg && tg.item) grab(tg.item); else if (tg && tg.prop) touchProp(tg.prop); }
     if (IN.touch2) { IN.touch2 = false; if (tg && tg.prop) touchProp(tg.prop); }
     if (IN.throwIt && hn) { IN.throwIt = false; npcRelease(true); }
-    if (IN.tackle) { IN.tackle = false; smashTackle(); }
+    if (IN.tackle) { IN.tackle = false; if (P.driving) { if (!(P.boostCd > 0)) { P.boostT = 2; P.boostCd = 3.5; sfx('gunRocket'); feel(1, 0.5); } } else smashTackle(); }
+    if (P.boostCd > 0) P.boostCd -= dt;
     itemActions(tg);
   }
   IN.main = IN.touch2 = IN.put = IN.tackle = false; IN.mainTouch = false;
@@ -153,7 +154,7 @@ function updateGame(dt) {
   G.monoT -= dt; if (G.monoT <= 0 && G.started && !G.paused) { G.monoT = rand(35, 70); if (G.stage < 5) caption(pick(MONOLOGUE), { preset: 'fade' }); }
   // 保存
   G.saveT -= dt; if (G.saveT <= 0) { G.saveT = 10; saveGame(); }
-  updateItems(dt); updateNPCs(dt); if (!G.inMenu) { smashUpdate(dt); armsUpdate(dt); }
+  updateItems(dt); updateNPCs(dt); if (!G.inMenu) { smashUpdate(dt); armsUpdate(dt); vehUpdate(dt); }
   updateProps(dt, t); updateFriends(dt, t); updateWA3D(dt, t); updateCaptions(dt);
   if (!G.inMenu) updateHUD(dt);
   if (NET && NET.update) NET.update(dt);

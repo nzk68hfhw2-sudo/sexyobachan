@@ -13,6 +13,9 @@ function audioInit() {
     AUD.master = c.createGain(); AUD.master.gain.value = 0.85;
     AUD.bgmBus = c.createGain(); AUD.bgmBus.gain.value = 0;
     AUD.sfxBus = c.createGain(); AUD.sfxBus.gain.value = AUD.sfxOn ? 0.5 * AUD.sfxVol : 0;
+    // 爆発・衝撃用：少し歪ませて「ドカーン」と太くする
+    AUD.boomBus = c.createGain(); AUD.boomBus.gain.value = 1; var ws = c.createWaveShaper(), cv = new Float32Array(1024); for (var q = 0; q < 1024; q++) { var xq = q / 511.5 - 1; cv[q] = Math.tanh(xq * 2.4) / Math.tanh(2.4); } ws.curve = cv; ws.oversample = '2x';
+    AUD.boomBus.connect(ws); ws.connect(AUD.sfxBus);
     AUD.bgmBus.connect(AUD.comp); AUD.sfxBus.connect(AUD.comp); AUD.comp.connect(AUD.master); AUD.master.connect(c.destination);
     // 25% pulse wave
     var n = 32, re = new Float32Array(n), im = new Float32Array(n);
@@ -94,6 +97,26 @@ function _osc(type, f, t, dur, vol, bus, opt) {
   node.connect(g); g.connect(bus || AUD.sfxBus);
   o.start(t); o.stop(t + dur + 0.02);
   return o;
+}
+// 爆発（size 0.5〜1.8）：低いドン＋バリバリ＋ゴロゴロの余韻
+function _boom(t, size, pitch) {
+  var c = AUD.ctx, B = AUD.boomBus || AUD.sfxBus, k = Math.pow(2, (pitch || 0) / 24);
+  _osc('sine', 95 * k, t, 0.9 + size * 0.5, 0.42 * Math.min(1.3, size), B, { slide: 26, a: 0.003, r: 0.7 });
+  _osc('sine', 190 * k, t, 0.14, 0.3, B, { slide: 45, a: 0.002, r: 0.1 });
+  _osc('triangle', 60 * k, t + 0.02, 0.5 + size * 0.4, 0.22, B, { slide: 22, r: 0.4 });
+  var s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); s.buffer = AUD.noiseBuf; s.loop = true; f.type = 'lowpass'; f.Q.value = 0.8;
+  f.frequency.setValueAtTime(2600, t); f.frequency.exponentialRampToValueAtTime(160, t + 0.7 + size * 0.4);
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.38 * Math.min(1.3, size), t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.0 + size * 0.6);
+  s.connect(f); f.connect(g); g.connect(B); s.start(t); s.stop(t + 1.8 + size);
+  _noise(t, 0.2, 0.14, 2800, B);
+  _noise(t + 0.12, 1.4 + size, 0.12 * size, 0, B, 140);
+  for (var i = 0; i < 5 + size * 4; i++) _noise(t + 0.08 + Math.random() * (0.5 + size * 0.4), 0.03, 0.05 + Math.random() * 0.05, 1800, B);
+}
+// 衝撃（当たった・ぶつかった）：パンチのある低い音
+function _punch(t, size, pitch) {
+  var B = AUD.boomBus || AUD.sfxBus, k = Math.pow(2, (pitch || 0) / 24);
+  _osc('sine', 160 * k, t, 0.16 + size * 0.1, 0.32 * size, B, { slide: 42, a: 0.002, r: 0.12 });
+  _noise(t, 0.07, 0.2 * size, 0, B, 2400); _noise(t, 0.25 + size * 0.15, 0.08 * size, 0, B, 380);
 }
 function _noise(t, dur, vol, hp, bus, lp) {
   var c = AUD.ctx, s = c.createBufferSource(), g = c.createGain(), f = c.createBiquadFilter();
@@ -192,38 +215,39 @@ function sfx(name, p) {
     case 'eat': for (i = 0; i < 3; i++) _noise(t + i * 0.12, 0.06, 0.08, 0, null, 2500); break;
     case 'chat': _osc('square', 1046, t, 0.04, 0.04, null, { lp: 3000 }); _osc('square', 1318, t + 0.05, 0.05, 0.04, null, { lp: 3000 }); break;
     case 'hit_glass': _osc('sine', 2200 * Math.pow(2, p / 12), t, 0.12, 0.06, null, { slide: 1500 }); _noise(t, 0.08, 0.09, 3000); break;
-    case 'hit_wood': _noise(t, 0.08, 0.14, 0, null, 1400); _osc('triangle', 160 * Math.pow(2, p / 12), t, 0.1, 0.14, null, { slide: 90 }); break;
-    case 'hit_metal': [1, 2.76].forEach(function (h, k) { _osc('sine', 420 * h * Math.pow(2, p / 12), t, 0.25 - k * 0.08, 0.06 / (k + 1), null, { r: 0.2 }); }); _noise(t, 0.05, 0.1, 0, null, 1800); break;
-    case 'hit_concrete': _osc('sine', 110 * Math.pow(2, p / 24), t, 0.18, 0.18, null, { slide: 55 }); _noise(t, 0.12, 0.12, 0, null, 700); break;
+    case 'hit_wood': _punch(t, 0.7, p); _noise(t, 0.08, 0.12, 0, null, 1400); break;
+    case 'hit_metal': _punch(t, 0.6, p); [1, 2.76].forEach(function (h, k) { _osc('sine', 420 * h * Math.pow(2, p / 12), t, 0.25 - k * 0.08, 0.05 / (k + 1), null, { r: 0.2 }); }); break;
+    case 'hit_concrete': _punch(t, 0.8, p); _noise(t, 0.1, 0.1, 0, null, 900); break;
     case 'hit_plant': _noise(t, 0.15, 0.1, 0, null, 2200); _osc('triangle', 200, t, 0.08, 0.08, null, { slide: 120 }); break;
     case 'hit_paper': _noise(t, 0.06, 0.08, 2000); break;
-    case 'hitHeavy': _osc('sine', 120 * Math.pow(2, p / 24), t, 0.16, 0.18, null, { slide: 50 }); _noise(t, 0.07, 0.12, 0, null, 1200); break;
-    case 'brk_glass': _noise(t, 0.35, 0.14, 2500); for (i = 0; i < 6; i++) _osc('sine', (1800 + Math.random() * 3000) * Math.pow(2, p / 12), t + i * 0.035 + Math.random() * 0.03, 0.18, 0.04, null, { r: 0.15 }); _osc('sine', 140, t, 0.15, 0.12, null, { slide: 60 }); break;
-    case 'brk_wood': _noise(t, 0.12, 0.2, 0, null, 1600); _noise(t + 0.06, 0.25, 0.12, 0, null, 700); _osc('sine', 120 * Math.pow(2, p / 24), t, 0.3, 0.2, null, { slide: 45 }); _osc('square', 300, t, 0.05, 0.04, null, { lp: 1200 }); break;
-    case 'brk_metal': [1, 2.76, 5.4, 8.9].forEach(function (h, k) { _osc('sine', 260 * h * Math.pow(2, p / 12), t, 0.7 - k * 0.12, 0.07 / (k + 1), null, { r: 0.5 }); }); _osc('saw', 180, t + 0.05, 0.6, 0.04, null, { slide: 70, lp: 900 }); _osc('sine', 90, t, 0.3, 0.18, null, { slide: 40 }); break;
-    case 'brk_concrete': _noise(t, 0.6, 0.2, 0, null, 500); _osc('sine', 70 * Math.pow(2, p / 24), t, 0.5, 0.22, null, { slide: 32 }); _noise(t + 0.1, 0.4, 0.08, 0, null, 2000); break;
-    case 'brk_plant': _noise(t, 0.4, 0.14, 0, null, 2600); _noise(t, 0.12, 0.16, 0, null, 900); _osc('sine', 110, t, 0.25, 0.16, null, { slide: 50 }); break;
+    case 'hitHeavy': _punch(t, 0.9, p); break;
+    case 'brk_glass': _punch(t, 0.7, p); _noise(t, 0.35, 0.14, 2500); for (i = 0; i < 6; i++) _osc('sine', (1800 + Math.random() * 3000) * Math.pow(2, p / 12), t + i * 0.035 + Math.random() * 0.03, 0.18, 0.04, null, { r: 0.15 }); break;
+    case 'brk_wood': _punch(t, 1.0, p); _noise(t, 0.12, 0.18, 0, null, 1600); _noise(t + 0.06, 0.25, 0.1, 0, null, 700); break;
+    case 'brk_metal': _punch(t, 1.1, p); [1, 2.76, 5.4, 8.9].forEach(function (h, k) { _osc('sine', 260 * h * Math.pow(2, p / 12), t, 0.7 - k * 0.12, 0.06 / (k + 1), null, { r: 0.5 }); }); _osc('saw', 180, t + 0.05, 0.6, 0.04, null, { slide: 70, lp: 900 }); break;
+    case 'brk_concrete': _boom(t, 0.9, -6 + p * 0.5); _noise(t + 0.1, 0.4, 0.08, 2000); break;
+    case 'brk_plant': _punch(t, 0.8, p); _noise(t, 0.4, 0.13, 0, null, 2600); break;
     case 'brk_paper': _noise(t, 0.2, 0.12, 1500); _osc('sine', 300, t, 0.1, 0.06, null, { slide: 600 }); break;
     case 'crack': _noise(t, 0.1, 0.14, 0, null, 2400); _osc('square', 220 * Math.pow(2, (p || 0) / 12), t, 0.06, 0.05, null, { lp: 1500, slide: 110 }); break;
-    case 'crumble': _noise(t, 0.5, 0.18, 0, null, 380); _osc('sine', 62 * Math.pow(2, p / 24), t, 0.45, 0.2, null, { slide: 30 }); break;
-    case 'rumble': _noise(t, 1.6, 0.1, 0, null, 220); _osc('sine', 45, t, 1.4, 0.12, null, { a: 0.2, r: 1, vib: 0.1, vibF: 7 }); break;
-    case 'thudBig': _osc('sine', 85, t, 0.35, 0.22, null, { slide: 38 }); _noise(t, 0.2, 0.14, 0, null, 600); break;
+    case 'crumble': _boom(t, 1.0, -10 + (p || 0)); break;
+    case 'rumble': _noise(t, 1.8, 0.14, 0, AUD.boomBus, 180); _osc('sine', 42, t, 1.6, 0.2, AUD.boomBus, { a: 0.15, r: 1.1, vib: 0.1, vibF: 7 }); break;
+    case 'thudBig': _punch(t, 1.2, -4); _noise(t + 0.05, 0.5, 0.08, 0, AUD.boomBus, 300); break;
     case 'tackle': _noise(t, 0.3, 0.12, 0, null, 1400); _osc('square', 180, t, 0.12, 0.05, null, { slide: 90, lp: 900 }); break;
     case 'spill': for (i = 0; i < 7; i++) _osc('sine', 900 + Math.random() * 1500, t + i * 0.05 + Math.random() * 0.04, 0.08, 0.03); break;
     case 'pon': _osc('sine', 380, t, 0.14, 0.14, null, { slide: 1100 }); _osc('triangle', 1760, t + 0.1, 0.25, 0.04, null, { r: 0.2 }); break;
     case 'comboUp': [0, 4, 7, 12].forEach(function (m, k) { _osc('square', mtof(72 + p + m), t + k * 0.04, 0.09, 0.035, null, { lp: 3500 }); }); break;
     case 'npcFly': _osc('sine', 300, t, 0.35, 0.1, null, { slide: 900, vib: 0.08, vibF: 12 }); _osc('sine', 110, t, 0.12, 0.16, null, { slide: 60 }); _noise(t, 0.08, 0.1, 0, null, 1500); break;
-    case 'npcLand': _osc('sine', 160, t, 0.18, 0.12, null, { vib: 0.3, vibF: 18, slide: 90 }); _noise(t, 0.06, 0.06, 0, null, 900); break;
+    case 'npcLand': _punch(t, 0.5, 6); _osc('sine', 160, t, 0.18, 0.08, null, { vib: 0.3, vibF: 18, slide: 90 }); break;
     case 'snap': _noise(t, 0.05, 0.12, 4000); _osc('sine', 2400, t, 0.06, 0.03); break;
     case 'clap': for (i = 0; i < 3; i++) _noise(t + i * 0.13, 0.04, 0.07, 1800); break;
-    case 'gunPistol': _osc('square', 900 * Math.pow(2, p / 12), t, 0.07, 0.06, null, { slide: 220, lp: 2600 }); _noise(t, 0.05, 0.07, 0, null, 2500); break;
+    case 'gunPistol': _punch(t, 0.45, 14); _osc('square', 900 * Math.pow(2, p / 12), t, 0.06, 0.05, null, { slide: 220, lp: 2600 }); _noise(t, 0.05, 0.08, 0, null, 3000); break;
     case 'gunMg': _osc('square', 600 * Math.pow(2, p / 12), t, 0.04, 0.035, null, { slide: 200, lp: 2000 }); _noise(t, 0.03, 0.05, 0, null, 2200); break;
-    case 'gunShot': _noise(t, 0.25, 0.16, 0, null, 1300); _osc('sine', 140, t, 0.18, 0.16, null, { slide: 50 }); break;
-    case 'gunRocket': _noise(t, 0.5, 0.1, 0, null, 900); _osc('saw', 120, t, 0.35, 0.04, null, { slide: 260, lp: 700 }); break;
+    case 'gunShot': _punch(t, 1.0, 4); _noise(t, 0.3, 0.18, 0, null, 1600); break;
+    case 'gunRocket': _noise(t, 0.6, 0.12, 0, null, 900); _punch(t, 0.6, 8); _osc('saw', 120, t, 0.35, 0.04, null, { slide: 260, lp: 700 }); break;
     case 'gunPoi': _osc('sine', 300, t, 0.12, 0.12, null, { slide: 600 }); _osc('sine', 600, t + 0.05, 0.1, 0.05, null, { slide: 900 }); break;
     case 'gunBeam': _osc('sine', 1200 * Math.pow(2, p / 24), t, 0.14, 0.035, null, { vib: 0.05, vibF: 30 }); _osc('saw', 300, t, 0.14, 0.02, null, { lp: 1500 }); break;
     case 'gunAir': _noise(t, 0.4, 0.15, 0, null, 600); _osc('sine', 90, t, 0.3, 0.15, null, { slide: 40 }); break;
-    case 'boom': _noise(t, 0.8, 0.22, 0, null, 420); _osc('sine', 80 * Math.pow(2, (p || 0) / 36), t, 0.6, 0.24, null, { slide: 30 }); _noise(t + 0.05, 0.5, 0.08, 0, null, 2400); break;
+    case 'boom': _boom(t, clamp(-(p || -4) / 5, 0.6, 1.8), 0); break;
+    case 'crash': _punch(t, 1.1, 0); _noise(t, 0.4, 0.14, 1500); for (i = 0; i < 5; i++) _osc('sine', 1500 + Math.random() * 3000, t + 0.02 + i * 0.03, 0.12, 0.03, null, { r: 0.1 }); _osc('saw', 220, t, 0.25, 0.05, null, { slide: 90, lp: 900 }); break;
     case 'train': _osc('square', 660, t, 0.6, 0.04, null, { lp: 1500 }); _osc('square', 784, t, 0.6, 0.04, null, { lp: 1500 }); break;
   }
 }
