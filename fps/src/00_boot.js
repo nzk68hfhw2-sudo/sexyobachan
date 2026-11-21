@@ -6,7 +6,7 @@
 if (window.__frLoaded) { return; }
 window.__frLoaded = true;
 
-var BASE_URL = 'https://gentle-panda-8e3c08.netlify.app/';
+var BASE_URL = 'https://comforting-bublanina-fb9718.netlify.app/';
 var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
 var GAME_VERSION = '1.0.0';
 var THREE;

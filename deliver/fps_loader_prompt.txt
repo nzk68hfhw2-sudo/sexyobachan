@@ -18,7 +18,7 @@ html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden}
 <div id="fre"></div>
 <script>
 (function(){
-var BASE='https://gentle-panda-8e3c08.netlify.app/';
+var BASE='https://comforting-bublanina-fb9718.netlify.app/';
 var URL_JS=BASE+'game.js';
 var done=false;
 function hide(){var l=document.getElementById('frl');if(l)l.style.display='none';}
