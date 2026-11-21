@@ -19,7 +19,7 @@ const THREE_LOCAL = fs.readFileSync(path.join(__dirname, 'three-r128.min.js'));
   const st = (p) => p.evaluate(() => ({ on: __os.VOICE.on, pcs: Object.keys(__os.VOICE.pcs).map(k => [__os.VOICE.pcs[k].pc.connectionState, !!__os.VOICE.pcs[k].gain, +(__os.VOICE.pcs[k].level || 0).toFixed(3)]), peerV: Object.values(__os.NET.peers).map(p => p.v) }));
   logs.push('A ' + JSON.stringify(await st(A)) + ' B ' + JSON.stringify(await st(B)));
   // move B far away -> hang up
-  await B.evaluate(() => __os.teleport(60, 0.05, -44, 0)); await A.waitForTimeout(5000);
+  await B.evaluate(() => __os.teleport(120, 0.05, 90, 0)); await A.waitForTimeout(5000);
   logs.push('far: A ' + JSON.stringify(await st(A)) + ' B ' + JSON.stringify(await st(B)));
   await B.evaluate(() => __os.teleport(3, 0.05, -44, 0)); await A.waitForTimeout(7000);
   logs.push('back: A ' + JSON.stringify(await st(A)));

@@ -166,7 +166,9 @@ function openSettings() {
     row('軽量モード（古いスマホ用）', 'lite', function () { return LITE.on; }, function (v) { setLite(v); });
     row('汚染の見た目を消す', 'pollution', function () { return POLFX.off; }, function (v) { polFxToggle(v); });
     row('刺激ひかえめモード', 'eye', function () { return REDUCED.on; }, function (v) { REDUCED.on = v; });
-    row('ボイスチャット（近くの人と声で話す）', 'sound', function () { return VOICE.on; }, function () { voiceToggle(); });
+    row('ボイスチャット（同じ町の人と声で話す）', 'sound', function () { return VOICE.on; }, function () { voiceToggle(); });
+    var vr = el('div', 'kv', bd); el('span', '', vr).innerHTML = cnHTML('　└ 声が届くはんい'); var vg = el('div', '', vr); vg.style.display = 'flex'; vg.style.gap = '3px';
+    [[true, '町じゅう'], [false, '近くだけ']].forEach(function (m) { mbtn(vg, m[1], function () { VOICE.all = m[0]; saveGame(); refreshWin('set'); }, VOICE.all === m[0] ? 'gold' : ''); });
     var tp = el('div', 'kv', bd); el('span', '', tp).innerHTML = cnHTML('上の余白（Gravity用）'); var tpg = el('div', '', tp); tpg.style.display = 'flex'; tpg.style.gap = '3px';
     [['auto', '自動'], ['on', 'あり'], ['off', 'なし']].forEach(function (m) { mbtn(tpg, m[1], function () { TOPPAD.mode = m[0]; applyTopPad(); layoutUI(); saveGame(); refreshWin('set'); }, TOPPAD.mode === m[0] ? 'gold' : ''); });
     row('振動（使える端末だけ）', 'burst', function () { return FEEL.vib; }, function (v) { FEEL.vib = v; });

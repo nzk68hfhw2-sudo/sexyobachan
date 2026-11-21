@@ -1,6 +1,6 @@
-// ---- ボイスチャット（近くの人とだけ。WebRTC で端末どうし直接つなぐ。つなぎ役は Firebase） ----------------
+// ---- ボイスチャット（同じ町の人なら、どこにいても話せる。設定で「近くの人だけ」にもできる。WebRTC で端末どうし直接つなぐ。つなぎ役は Firebase） ----------------
 // 声は Firebase を通らない（端末どうし直接）。声の検閲はできないので、最初に注意を出す。
-var VOICE = { on: false, stream: null, pcs: {}, t: 0, near: 25, level: 0, an: null };
+var VOICE = { on: false, stream: null, pcs: {}, t: 0, near: 25, level: 0, an: null, all: true };
 function voiceIce() { return [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }].concat(VOICE_TURN || []); }
 function voiceToggle() {
   if (VOICE.on) { voiceStop(); return; }
@@ -10,7 +10,7 @@ function voiceToggle() {
 }
 function openVoiceConfirm() {
   openWin('vconf', 'ボイスチャット', 'sound', function (bd) {
-    el('div', 'desc', bd, cnHTML('マイクを使って、近く（だいたい２５ｍ以内）にいる人と声で話せます。\n◆【大事】話す相手も「ボイス」をONにして、マイクを「許可」している時だけ　声がつながります（おたがいの許可が必要）。\n◆声は　そのまま相手に届きます。検閲はできません。\n◆本名・住所・学校・電話番号など、個人情報は話さないで下さい。\n◆いやな人は　⚙設定→「まわりの人」で　見えなくする（声も消えます）。\n◆イヤホンを使うと、音がハウリングしにくくなります。\n◆iPhone では、ボイスチャット中はゲームの音が小さくなる事があります。').replace(/\n/g, '<br>'));
+    el('div', 'desc', bd, cnHTML('マイクを使って、同じ町にいる人と声で話せます（遠くにいても聞こえます。⚙設定で「近くの人だけ」にもできます）。\n◆【大事】話す相手も「ボイス」をONにして、マイクを「許可」している時だけ　声がつながります（おたがいの許可が必要）。\n◆声は　そのまま相手に届きます。検閲はできません。\n◆本名・住所・学校・電話番号など、個人情報は話さないで下さい。\n◆いやな人は　⚙設定→「まわりの人」で　見えなくする（声も消えます）。\n◆イヤホンを使うと、音がハウリングしにくくなります。\n◆iPhone では、ボイスチャット中はゲームの音が小さくなる事があります。').replace(/\n/g, '<br>'));
     var r = el('div', 'row2', bd);
     mbtn(r, 'はじめる（マイクを使う）', function () { PLAYER.voiceOk = true; saveGame(); closeWin('vconf'); voiceStart(); }, 'gold', 'sound');
     mbtn(r, 'やめる', function () { closeWin('vconf'); });
@@ -76,13 +76,13 @@ function updateVoice(dt) {
   var check = VOICE.t <= 0; if (check) VOICE.t = 0.7;
   for (var id in NET.peers) {
     var pr = NET.peers[id], d = pr.pos.distanceTo(P.pos), o = VOICE.pcs[id];
-    var want = VOICE.on && NET.on && pr.v && !NET.blocked[id] && !NET.muted && d < VOICE.near;
+    var want = VOICE.on && NET.on && pr.v && !NET.blocked[id] && !NET.muted && (VOICE.all || d < VOICE.near);
     if (check) {
       if (want && !o && NET.pid < id) voiceCall(id);
-      if (o && (!VOICE.on || !pr.v || NET.blocked[id] || NET.muted || d > VOICE.near + 8)) voiceHang(id);
+      if (o && (!VOICE.on || !pr.v || NET.blocked[id] || NET.muted || (!VOICE.all && d > VOICE.near + 8))) voiceHang(id);
       if (o && !o.gain && Date.now() - o.born > 25000 && o.pc.connectionState !== 'connected') voiceHang(id);
     }
-    if (o && o.gain) { var gv = NET.blocked[id] || NET.muted ? 0 : clamp(1 - (d - 4) / (VOICE.near - 4), 0, 1); o.gain.gain.setTargetAtTime(gv * 1.6, AUD.ctx.currentTime, 0.1); o.level = levelOf(o.an, o.buf); pr.talking = o.level > 0.06; }
+    if (o && o.gain) { var gv = NET.blocked[id] || NET.muted ? 0 : VOICE.all ? 1 : clamp(1 - (d - 4) / (VOICE.near - 4), 0, 1); o.gain.gain.setTargetAtTime(gv * 1.6, AUD.ctx.currentTime, 0.1); o.level = levelOf(o.an, o.buf); pr.talking = o.level > 0.06; }
     else pr.talking = false;
   }
   for (var k in VOICE.pcs) if (!NET.peers[k]) voiceHang(k, true);
